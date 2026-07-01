@@ -1,0 +1,61 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - release/*
+      - main
+
+pr:
+  branches:
+    include:
+      - develop
+      - release/*
+      - main
+
+variables:
+  - group: terraform-shared
+
+jobs:
+- job: DiscoverChanges
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    fetchDepth: 0
+  - template: templates/discover-changes.yml
+    parameters:
+      path: $(Build.SourcesDirectory)
+
+- job: ValidateTargets
+  dependsOn: DiscoverChanges
+  pool:
+    vmImage: ubuntu-latest
+  strategy:
+    matrix:
+      dev:
+        environmentName: dev
+        target: hub
+      staging:
+        environmentName: staging
+        target: app1
+      prod:
+        environmentName: prod
+        target: app2
+  steps:
+  - checkout: self
+  - template: templates/terraform-init.yml
+    parameters:
+      workingDirectory: .
+      environmentName: ${{ variables['environmentName'] }}
+  - template: templates/terraform-validate.yml
+    parameters:
+      workingDirectory: .
+      environmentName: ${{ variables['environmentName'] }}
+  - template: templates/terraform-plan.yml
+    parameters:
+      workingDirectory: .
+      environmentName: ${{ variables['environmentName'] }}
+  - template: templates/infracost.yml
+    parameters:
+      workingDirectory: .
+      environmentName: ${{ variables['environmentName'] }}

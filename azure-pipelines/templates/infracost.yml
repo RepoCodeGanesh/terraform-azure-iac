@@ -1,0 +1,21 @@
+parameters:
+  - name: workingDirectory
+    type: string
+  - name: environmentName
+    type: string
+
+steps:
+- bash: |
+    set -euo pipefail
+    echo "Installing Infracost CLI"
+    curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+    echo "Converting Terraform plan to JSON"
+    terraform -chdir=${{ parameters.workingDirectory }} show -json tfplan.out > tfplan.json
+
+    echo "Running Infracost breakdown"
+    infracost breakdown --path=${{ parameters.workingDirectory }} --terraform-plan-file=tfplan.json --format=table --log-level=info
+    infracost breakdown --path=${{ parameters.workingDirectory }} --terraform-plan-file=tfplan.json --format=json --out-file=infracost.json
+  displayName: 'Infracost analysis - ${{ parameters.environmentName }}'
+  env:
+    INFRACOST_API_KEY: $(INFRACOST_API_KEY)

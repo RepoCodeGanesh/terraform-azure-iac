@@ -1,0 +1,15 @@
+parameters:
+  - name: workingDirectory
+    type: string
+  - name: environmentName
+    type: string
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform validate - ${{ parameters.environmentName }}'
+  inputs:
+    azureSubscription: '${{ parameters.environmentName }}'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform -chdir=${{ parameters.workingDirectory }} validate

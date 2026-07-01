@@ -1,0 +1,21 @@
+trigger:
+  paths:
+    include:
+      - modules/*
+      - modules/**/*
+
+pr:
+  paths:
+    include:
+      - modules/*
+      - modules/**/*
+
+jobs:
+- job: ModuleUpdate
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+  - script: |
+      echo "Module change detected. Triggering validation for hub, app1 and app2."
+    displayName: 'Report module update'

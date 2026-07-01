@@ -1,0 +1,36 @@
+trigger: none
+
+pr: none
+
+parameters:
+- name: environmentName
+  displayName: Environment
+  type: string
+  default: dev
+  values:
+    - dev
+    - staging
+    - prod
+
+variables:
+  - group: terraform-shared
+
+jobs:
+- deployment: DeployTerraform
+  displayName: 'Deploy Terraform to ${{ parameters.environmentName }}'
+  environment: ${{ parameters.environmentName }}
+  pool:
+    vmImage: ubuntu-latest
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - checkout: self
+        - template: templates/terraform-init.yml
+          parameters:
+            workingDirectory: .
+            environmentName: ${{ parameters.environmentName }}
+        - template: templates/terraform-apply.yml
+          parameters:
+            workingDirectory: .
+            environmentName: ${{ parameters.environmentName }}
