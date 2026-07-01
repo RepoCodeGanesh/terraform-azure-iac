@@ -8,7 +8,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Terraform validate - ${{ parameters.environmentName }}'
   inputs:
-    azureSubscription: '${{ parameters.environmentName }}'
+    azureSubscription: '${{ parameters.environmentName == ''dev'' && ''dev'' || parameters.environmentName == ''staging'' && ''staging'' || ''prod'' }}'
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
