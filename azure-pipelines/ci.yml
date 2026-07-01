@@ -1,3 +1,32 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - release/*
+      - main
+
+pr:
+  branches:
+    include:
+      - develop
+      - release/*
+      - main
+
+variables:
+  TF_BACKEND_STORAGE_ACCOUNT: htcusdevstate01
+  TF_BACKEND_CONTAINER: tfstate
+
+jobs:
+- job: DiscoverChanges
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+    - checkout: self
+      fetchDepth: 0
+    - template: templates/discover-changes.yml
+      parameters:
+        path: $(Build.SourcesDirectory)
+
 - job: ValidateTargets
   dependsOn: DiscoverChanges
   pool:
@@ -8,7 +37,7 @@
         environmentName: dev
         target: hub
         tfBackendResourceGroup: ht-centralindia-dev-rg-hub-01
-        azureSubscriptionName: dev
+        azureSubscriptionName: development
       staging:
         environmentName: staging
         target: app1
@@ -18,26 +47,27 @@
         environmentName: prod
         target: app2
         tfBackendResourceGroup: ht-centralindia-prod-rg-hub-01
-        azureSubscriptionName: prod
+        azureSubscriptionName: production
+  condition: and(succeeded(), ne(variables['terraformTargets'], ''))
   steps:
-  - checkout: self
-  - template: templates/terraform-init.yml
-    parameters:
-      workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
-      backendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
-      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
-  - template: templates/terraform-validate.yml
-    parameters:
-      workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
-      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
-  - template: templates/terraform-plan.yml
-    parameters:
-      workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
-      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
-  - template: templates/infracost.yml
-    parameters:
-      workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
+    - checkout: self
+    - template: templates/terraform-init.yml
+      parameters:
+        workingDirectory: .
+        environmentName: ${{ matrix.environmentName }}
+        backendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
+        azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
+    - template: templates/terraform-validate.yml
+      parameters:
+        workingDirectory: .
+        environmentName: ${{ matrix.environmentName }}
+        azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
+    - template: templates/terraform-plan.yml
+      parameters:
+        workingDirectory: .
+        environmentName: ${{ matrix.environmentName }}
+        azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
+    - template: templates/infracost.yml
+      parameters:
+        workingDirectory: .
+        environmentName: ${{ matrix.environmentName }}
