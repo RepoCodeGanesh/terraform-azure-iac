@@ -1,32 +1,3 @@
-trigger:
-  branches:
-    include:
-      - develop
-      - release/*
-      - main
-
-pr:
-  branches:
-    include:
-      - develop
-      - release/*
-      - main
-
-variables:
-  TF_BACKEND_STORAGE_ACCOUNT: htcusdevstate01
-  TF_BACKEND_CONTAINER: tfstate
-
-jobs:
-- job: DiscoverChanges
-  pool:
-    vmImage: ubuntu-latest
-  steps:
-  - checkout: self
-    fetchDepth: 0
-  - template: templates/discover-changes.yml
-    parameters:
-      path: $(Build.SourcesDirectory)
-
 - job: ValidateTargets
   dependsOn: DiscoverChanges
   pool:
@@ -48,29 +19,25 @@ jobs:
         target: app2
         tfBackendResourceGroup: ht-centralindia-prod-rg-hub-01
         azureSubscriptionName: prod
-  variables:
-    environmentName: ${{ matrix.environmentName }}
-    tfBackendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
-    azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   steps:
   - checkout: self
   - template: templates/terraform-init.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables.environmentName }}
-      backendResourceGroup: ${{ variables.tfBackendResourceGroup }}
-      azureSubscriptionName: ${{ variables.azureSubscriptionName }}
+      environmentName: ${{ matrix.environmentName }}
+      backendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
+      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   - template: templates/terraform-validate.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables.environmentName }}
-      azureSubscriptionName: ${{ variables.azureSubscriptionName }}
+      environmentName: ${{ matrix.environmentName }}
+      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   - template: templates/terraform-plan.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables.environmentName }}
-      azureSubscriptionName: ${{ variables.azureSubscriptionName }}
+      environmentName: ${{ matrix.environmentName }}
+      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   - template: templates/infracost.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables.environmentName }}
+      environmentName: ${{ matrix.environmentName }}
