@@ -13,7 +13,8 @@ parameters:
     - prod
 
 variables:
-  - group: terraform-shared
+  TF_BACKEND_STORAGE_ACCOUNT: htcusdevstate01
+  TF_BACKEND_CONTAINER: tfstate
 
 jobs:
 - deployment: DeployTerraform
@@ -30,6 +31,7 @@ jobs:
           parameters:
             workingDirectory: .
             environmentName: ${{ parameters.environmentName }}
+            backendResourceGroup: ${{ parameters.environmentName == 'dev' && 'ht-centralindia-dev-rg-hub-01' || parameters.environmentName == 'staging' && 'ht-centralindia-staging-rg-hub-01' || 'ht-centralindia-prod-rg-hub-01' }}
         - template: templates/terraform-apply.yml
           parameters:
             workingDirectory: .

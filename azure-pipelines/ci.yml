@@ -13,7 +13,8 @@ pr:
       - main
 
 variables:
-  - group: terraform-shared
+  TF_BACKEND_STORAGE_ACCOUNT: htcusdevstate01
+  TF_BACKEND_CONTAINER: tfstate
 
 jobs:
 - job: DiscoverChanges
@@ -35,18 +36,22 @@ jobs:
       dev:
         environmentName: dev
         target: hub
+        tfBackendResourceGroup: ht-centralindia-dev-rg-hub-01
       staging:
         environmentName: staging
         target: app1
+        tfBackendResourceGroup: ht-centralindia-staging-rg-hub-01
       prod:
         environmentName: prod
         target: app2
+        tfBackendResourceGroup: ht-centralindia-prod-rg-hub-01
   steps:
   - checkout: self
   - template: templates/terraform-init.yml
     parameters:
       workingDirectory: .
       environmentName: $(environmentName)
+      backendResourceGroup: $(tfBackendResourceGroup)
   - template: templates/terraform-validate.yml
     parameters:
       workingDirectory: .
