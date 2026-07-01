@@ -48,25 +48,29 @@ jobs:
         target: app2
         tfBackendResourceGroup: ht-centralindia-prod-rg-hub-01
         azureSubscriptionName: prod
+  variables:
+    environmentName: ${{ matrix.environmentName }}
+    tfBackendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
+    azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   steps:
   - checkout: self
   - template: templates/terraform-init.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
-      backendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
-      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
+      environmentName: ${{ variables.environmentName }}
+      backendResourceGroup: ${{ variables.tfBackendResourceGroup }}
+      azureSubscriptionName: ${{ variables.azureSubscriptionName }}
   - template: templates/terraform-validate.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
-      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
+      environmentName: ${{ variables.environmentName }}
+      azureSubscriptionName: ${{ variables.azureSubscriptionName }}
   - template: templates/terraform-plan.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
-      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
+      environmentName: ${{ variables.environmentName }}
+      azureSubscriptionName: ${{ variables.azureSubscriptionName }}
   - template: templates/infracost.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ matrix.environmentName }}
+      environmentName: ${{ variables.environmentName }}
