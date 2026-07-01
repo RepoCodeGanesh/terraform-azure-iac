@@ -46,16 +46,16 @@ jobs:
   - template: templates/terraform-init.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables['environmentName'] }}
+      environmentName: $(environmentName)
   - template: templates/terraform-validate.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables['environmentName'] }}
+      environmentName: $(environmentName)
   - template: templates/terraform-plan.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables['environmentName'] }}
+      environmentName: $(environmentName)
   - template: templates/infracost.yml
     parameters:
       workingDirectory: .
-      environmentName: ${{ variables['environmentName'] }}
+      environmentName: $(environmentName)
