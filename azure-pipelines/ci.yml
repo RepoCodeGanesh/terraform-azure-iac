@@ -37,14 +37,17 @@ jobs:
         environmentName: dev
         target: hub
         tfBackendResourceGroup: ht-centralindia-dev-rg-hub-01
+        azureSubscriptionName: dev
       staging:
         environmentName: staging
         target: app1
         tfBackendResourceGroup: ht-centralindia-staging-rg-hub-01
+        azureSubscriptionName: staging
       prod:
         environmentName: prod
         target: app2
         tfBackendResourceGroup: ht-centralindia-prod-rg-hub-01
+        azureSubscriptionName: prod
   steps:
   - checkout: self
   - template: templates/terraform-init.yml
@@ -52,14 +55,17 @@ jobs:
       workingDirectory: .
       environmentName: $(environmentName)
       backendResourceGroup: $(tfBackendResourceGroup)
+      azureSubscriptionName: $(azureSubscriptionName)
   - template: templates/terraform-validate.yml
     parameters:
       workingDirectory: .
       environmentName: $(environmentName)
+      azureSubscriptionName: $(azureSubscriptionName)
   - template: templates/terraform-plan.yml
     parameters:
       workingDirectory: .
       environmentName: $(environmentName)
+      azureSubscriptionName: $(azureSubscriptionName)
   - template: templates/infracost.yml
     parameters:
       workingDirectory: .

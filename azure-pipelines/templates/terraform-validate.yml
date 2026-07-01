@@ -3,12 +3,14 @@ parameters:
     type: string
   - name: environmentName
     type: string
+  - name: azureSubscriptionName
+    type: string
 
 steps:
 - task: AzureCLI@2
   displayName: 'Terraform validate - ${{ parameters.environmentName }}'
   inputs:
-    azureSubscription: ${{ parameters.environmentName }}
+    azureSubscription: ${{ parameters.azureSubscriptionName }}
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |

@@ -5,6 +5,8 @@ parameters:
     type: string
   - name: backendResourceGroup
     type: string
+  - name: azureSubscriptionName
+    type: string
 
 steps:
 - task: TerraformInstaller@1
@@ -14,7 +16,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Terraform init - ${{ parameters.environmentName }}'
   inputs:
-    azureSubscription: ${{ parameters.environmentName }}
+    azureSubscription: ${{ parameters.azureSubscriptionName }}
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
