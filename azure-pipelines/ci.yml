@@ -53,20 +53,20 @@ jobs:
   - template: templates/terraform-init.yml
     parameters:
       workingDirectory: .
-      environmentName: $(environmentName)
-      backendResourceGroup: $(tfBackendResourceGroup)
-      azureSubscriptionName: $(azureSubscriptionName)
+      environmentName: ${{ matrix.environmentName }}
+      backendResourceGroup: ${{ matrix.tfBackendResourceGroup }}
+      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   - template: templates/terraform-validate.yml
     parameters:
       workingDirectory: .
-      environmentName: $(environmentName)
-      azureSubscriptionName: $(azureSubscriptionName)
+      environmentName: ${{ matrix.environmentName }}
+      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   - template: templates/terraform-plan.yml
     parameters:
       workingDirectory: .
-      environmentName: $(environmentName)
-      azureSubscriptionName: $(azureSubscriptionName)
+      environmentName: ${{ matrix.environmentName }}
+      azureSubscriptionName: ${{ matrix.azureSubscriptionName }}
   - template: templates/infracost.yml
     parameters:
       workingDirectory: .
-      environmentName: $(environmentName)
+      environmentName: ${{ matrix.environmentName }}
