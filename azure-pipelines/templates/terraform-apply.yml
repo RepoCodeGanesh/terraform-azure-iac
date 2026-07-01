@@ -8,7 +8,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Terraform apply - ${{ parameters.environmentName }}'
   inputs:
-    azureSubscription: '${{ parameters.environmentName == ''dev'' && ''dev'' || parameters.environmentName == ''staging'' && ''staging'' || ''prod'' }}'
+    azureSubscription: ${{ parameters.environmentName }}
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
