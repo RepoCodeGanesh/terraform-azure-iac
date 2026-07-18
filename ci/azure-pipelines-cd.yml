@@ -68,6 +68,8 @@ stages:
           runOnce:
             deploy:
               steps:
+                - checkout: self
+
                 - download: current
                   artifact: selected-targets
 
