@@ -1,7 +1,7 @@
-subscription_id       = "859a785c-bd38-402d-b595-1f444f0fb9bf"
+subscription_id       = "859a785c-bd38-402d-b595-1f44f40fb9bf"
 tenant_id             = "4cef0d84-84d6-4ed0-8abe-773b015bcf99"
 environment           = "dev"
-location              = "eastus2"
+location              = "centralindia"
 resource_group_prefix = "ht-cind"
 workspace             = "root"
 
@@ -11,7 +11,7 @@ hub_storage_account = "htcinddevsahub02"
 backend_container   = "tfstate"
 key_vault_name      = "ht-cind-dev-kv-hub-02"
 
-enabled_modules = [
+enabled_apps = [
   "staticwebapi",
   "serverless",
   "securems"

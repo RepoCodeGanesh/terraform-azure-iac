@@ -14,10 +14,10 @@ locals {
   spoke_rg_name   = "${local.name_base}-rg-spoke-01"
   spoke_vnet_name = "${local.name_base}-vnet-spoke-01"
 
-  module_names = toset(["staticwebapi", "serverless", "securems"])
-  selected_modules = {
-    for name in local.module_names : name => name
-    if contains(var.enabled_modules, name)
+  app_names = toset(["staticwebapi", "serverless", "securems"])
+  selected_apps = {
+    for name in local.app_names : name => name
+    if contains(var.enabled_apps, name)
   }
 
   tags = merge({

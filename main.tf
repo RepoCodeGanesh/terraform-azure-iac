@@ -55,9 +55,9 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
 }
 
 module "staticwebapi" {
-  for_each = contains(keys(local.selected_modules), "staticwebapi") ? { staticwebapi = true } : {}
+  for_each = contains(keys(local.selected_apps), "staticwebapi") ? { staticwebapi = true } : {}
 
-  source = "./modules/staticwebapi"
+  source = "./apps/staticwebapi"
 
   resource_group_name = azurerm_resource_group.spoke.name
   environment         = var.environment
@@ -77,9 +77,9 @@ module "staticwebapi" {
 }
 
 module "serverless" {
-  for_each = contains(keys(local.selected_modules), "serverless") ? { serverless = true } : {}
+  for_each = contains(keys(local.selected_apps), "serverless") ? { serverless = true } : {}
 
-  source = "./modules/serverless"
+  source = "./apps/serverless"
 
   resource_group_name = azurerm_resource_group.spoke.name
   environment         = var.environment
@@ -99,9 +99,9 @@ module "serverless" {
 }
 
 module "securems" {
-  for_each = contains(keys(local.selected_modules), "securems") ? { securems = true } : {}
+  for_each = contains(keys(local.selected_apps), "securems") ? { securems = true } : {}
 
-  source = "./modules/securems"
+  source = "./apps/securems"
 
   resource_group_name = azurerm_resource_group.spoke.name
   environment         = var.environment

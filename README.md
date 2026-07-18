@@ -6,7 +6,7 @@ This is a simplified development-only Terraform repository for a hub-and-spoke l
 
 | Setting | Value |
 | --- | --- |
-| Subscription ID | `859a785c-bd38-402d-b595-1f444f0fb9bf` |
+| Subscription ID | `859a785c-bd38-402d-b595-1f44f40fb9bf` |
 | Tenant ID | `4cef0d84-84d6-4ed0-8abe-773b015bcf99` |
 | Hub resource group | `ht-cind-dev-rg-hub-01` |
 | Hub Key Vault | `ht-cind-dev-kv-hub-02` |
@@ -23,7 +23,7 @@ This is a simplified development-only Terraform repository for a hub-and-spoke l
 ├── docs/
 ├── examples/dev/
 ├── hub/
-├── modules/
+├── apps/
 │   ├── securems/
 │   ├── serverless/
 │   └── staticwebapi/
@@ -34,7 +34,7 @@ This is a simplified development-only Terraform repository for a hub-and-spoke l
 
 ```bash
 bash scripts/preflight-hub-check.sh \
-  --subscription 859a785c-bd38-402d-b595-1f444f0fb9bf \
+  --subscription 859a785c-bd38-402d-b595-1f44f40fb9bf \
   --hub-rg ht-cind-dev-rg-hub-01 \
   --storage htcinddevsahub02 \
   --container tfstate \
@@ -50,13 +50,14 @@ terraform init \
 terraform plan -var-file=examples/dev/terraform.tfvars
 ```
 
-## Module Selection
+## Deployment Selection
 
-Azure DevOps cannot dynamically populate a YAML parameter dropdown from repository folders during the same run. The CD pipeline therefore uses a queue-time variable:
+Azure DevOps cannot dynamically populate a YAML parameter dropdown from repository folders during the same run. The CD pipeline therefore uses a queue-time variable and validates it against `hub` plus the folders under `apps/`:
 
 ```text
-SELECTED_MODULES=all
-SELECTED_MODULES=staticwebapi,serverless
+SELECTED_TARGETS=all
+SELECTED_TARGETS=hub
+SELECTED_TARGETS=staticwebapi,serverless
 ```
 
-The pipeline discovers `modules/*`, validates the requested module names, and then runs `scripts/run-module.sh` for each selected module.
+The pipeline discovers `apps/*`, adds the reserved `hub` target, validates the requested targets, and then runs `scripts/run-target.sh` for each selected target. Each folder under `apps/` is a wrapper that calls pinned Terraform Registry modules.

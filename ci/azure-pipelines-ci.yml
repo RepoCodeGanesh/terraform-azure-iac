@@ -18,7 +18,7 @@ variables:
   BACKEND_STORAGE_ACCOUNT: "htcinddevsahub02"
   BACKEND_CONTAINER: "tfstate"
   BACKEND_KEY: "cindia-dev-root.tfstate"
-  SUBSCRIPTION_ID: "859a785c-bd38-402d-b595-1f444f0fb9bf"
+  SUBSCRIPTION_ID: "859a785c-bd38-402d-b595-1f44f40fb9bf"
   TENANT_ID: "4cef0d84-84d6-4ed0-8abe-773b015bcf99"
 
 steps:
@@ -51,13 +51,13 @@ steps:
 
   - script: |
       set -euo pipefail
-      bash scripts/list-modules.sh > modules.json
-      cat modules.json
-    displayName: "List modules"
+      bash scripts/list-targets.sh > deployment-targets.json
+      cat deployment-targets.json
+    displayName: "List deployment targets"
 
   - task: PublishBuildArtifacts@1
-    displayName: "Publish modules list"
+    displayName: "Publish deployment target list"
     inputs:
-      pathToPublish: "modules.json"
-      artifactName: "modules-list"
+      pathToPublish: "deployment-targets.json"
+      artifactName: "deployment-targets"
       publishLocation: "Container"

@@ -7,7 +7,7 @@ variable "tenant_id" {
 variable "subscription_id" {
   type        = string
   description = "Azure subscription ID for the dev environment"
-  default     = "859a785c-bd38-402d-b595-1f444f0fb9bf"
+  default     = "859a785c-bd38-402d-b595-1f44f40fb9bf"
 }
 
 variable "environment" {
@@ -24,7 +24,7 @@ variable "environment" {
 variable "location" {
   description = "Azure region for spoke resources."
   type        = string
-  default     = "eastus2"
+  default     = "centralindia"
 }
 
 variable "resource_group_prefix" {
@@ -101,8 +101,8 @@ variable "spoke_subnets" {
   }
 }
 
-variable "enabled_modules" {
-  description = "App modules to instantiate. CI/CD validates operator selections against folders under modules/."
+variable "enabled_apps" {
+  description = "App wrappers to instantiate. CI/CD validates operator selections against folders under apps/."
   type        = set(string)
   default     = ["staticwebapi", "serverless", "securems"]
 }
