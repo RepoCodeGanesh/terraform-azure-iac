@@ -4,7 +4,7 @@ pr: none
 resources:
   pipelines:
     - pipeline: ciBuild
-      source: "CI Pipeline Name"
+      source: "terraform-iac-ci"
       trigger: none
 
 variables:
