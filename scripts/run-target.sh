@@ -75,6 +75,10 @@ else
     terraform apply -var-file="${VAR_FILE}" "${TARGETS[@]}" -auto-approve
   fi
   if [ "${TARGET_NAME}" != "hub" ]; then
-    terraform output -json module_outputs | jq --arg target_name "${TARGET_NAME}" '.[$target_name]'
+    if terraform output -json module_outputs >"${PLAN_DIR}/${TARGET_NAME}-outputs.json" 2>/dev/null; then
+      jq --arg target_name "${TARGET_NAME}" '.[$target_name]' "${PLAN_DIR}/${TARGET_NAME}-outputs.json"
+    else
+      echo "module_outputs is not available in state yet; apply completed successfully."
+    fi
   fi
 fi
