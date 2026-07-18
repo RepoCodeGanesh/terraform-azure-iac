@@ -35,7 +35,7 @@ stages:
               echo "Available modules:"
               jq -r '.[]' modules.json
               echo "Requested modules: $(SELECTED_MODULES)"
-              ./scripts/validate-modules.sh --selected "$(SELECTED_MODULES)" --modules-json modules.json > selected-modules.txt
+              bash scripts/validate-modules.sh --selected "$(SELECTED_MODULES)" --modules-json modules.json > selected-modules.txt
               echo "Validated modules:"
               cat selected-modules.txt
             displayName: "Validate queue-time selection"
@@ -81,7 +81,7 @@ stages:
                       az account set --subscription "$(SUBSCRIPTION_ID)"
                       while read -r module_name; do
                         [ -n "${module_name}" ] || continue
-                        ./scripts/run-module.sh \
+                        bash scripts/run-module.sh \
                           --module "${module_name}" \
                           --action apply \
                           --backend-rg "$(BACKEND_RESOURCE_GROUP)" \

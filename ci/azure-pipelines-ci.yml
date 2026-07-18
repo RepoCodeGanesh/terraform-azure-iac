@@ -29,7 +29,7 @@ steps:
       scriptLocation: inlineScript
       inlineScript: |
         set -euo pipefail
-        ./scripts/preflight-hub-check.sh \
+        bash scripts/preflight-hub-check.sh \
           --subscription "$(SUBSCRIPTION_ID)" \
           --hub-rg "$(BACKEND_RESOURCE_GROUP)" \
           --storage "$(BACKEND_STORAGE_ACCOUNT)" \
@@ -50,7 +50,7 @@ steps:
 
   - script: |
       set -euo pipefail
-      ./scripts/list-modules.sh > modules.json
+      bash scripts/list-modules.sh > modules.json
       cat modules.json
     displayName: "List modules"
 

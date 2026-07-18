@@ -13,8 +13,14 @@ module "container_group" {
   os_type             = "Linux"
   restart_policy      = "Always"
   dns_name_label      = local.dns_label
-  ip_address_type     = "Public"
   tags                = var.tags
+
+  exposed_ports = [
+    {
+      port     = 80
+      protocol = "TCP"
+    }
+  ]
 
   containers = {
     app = {

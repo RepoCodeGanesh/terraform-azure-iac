@@ -33,7 +33,7 @@ This is a simplified development-only Terraform repository for a hub-and-spoke l
 ## Local Usage
 
 ```bash
-./scripts/preflight-hub-check.sh \
+bash scripts/preflight-hub-check.sh \
   --subscription 859a785c-bd38-402d-b595-1f444f0fb9bf \
   --hub-rg ht-cind-dev-rg-hub-01 \
   --storage htcinddevsahub02 \
