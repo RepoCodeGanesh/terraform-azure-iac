@@ -1,0 +1,22 @@
+subscription_id      = "859a785c-bd38-402d-b595-1f444f0fb9bf"
+tenant_id            = "4cef0d84-84d6-4ed0-8abe-773b015bcf99"
+environment          = "dev"
+location             = "eastus2"
+resource_group_prefix = "ht-cind"
+workspace            = "root"
+
+hub_rg_name          = "ht-cind-dev-rg-hub-01"
+hub_vnet_name        = "ht-cind-dev-vnet-hub-01"
+hub_storage_account  = "htcinddevsahub02"
+backend_container    = "tfstate"
+key_vault_name       = "ht-cind-dev-kv-hub-02"
+
+enabled_modules = [
+  "staticwebapi",
+  "serverless",
+  "securems"
+]
+
+tags = {
+  cost_center = "learning"
+}
