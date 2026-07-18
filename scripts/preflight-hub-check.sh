@@ -29,15 +29,43 @@ done
 
 command -v az >/dev/null 2>&1 || { echo "Azure CLI is required." >&2; exit 1; }
 
+echo "Using subscription ${SUBSCRIPTION}."
 az account set --subscription "${SUBSCRIPTION}"
-az group show --name "${HUB_RG}" --query id -o tsv >/dev/null
-az storage account show --resource-group "${HUB_RG}" --name "${STORAGE}" --query id -o tsv >/dev/null
-az keyvault show --resource-group "${HUB_RG}" --name "${KEYVAULT}" --query id -o tsv >/dev/null
 
-az storage container exists \
+echo "Checking hub resource group ${HUB_RG}."
+if ! hub_rg_id=$(az group show --name "${HUB_RG}" --query id -o tsv); then
+  echo "Hub resource group was not found or the identity cannot read it: ${HUB_RG}" >&2
+  exit 1
+fi
+echo "Found hub resource group: ${hub_rg_id}"
+
+echo "Checking hub storage account ${STORAGE}."
+if ! storage_id=$(az storage account show --resource-group "${HUB_RG}" --name "${STORAGE}" --query id -o tsv); then
+  echo "Storage account was not found in ${HUB_RG} or the identity cannot read it: ${STORAGE}" >&2
+  exit 1
+fi
+echo "Found storage account: ${storage_id}"
+
+echo "Checking hub Key Vault ${KEYVAULT}."
+if ! keyvault_id=$(az keyvault show --resource-group "${HUB_RG}" --name "${KEYVAULT}" --query id -o tsv); then
+  echo "Key Vault was not found in ${HUB_RG} or the identity cannot read it: ${KEYVAULT}" >&2
+  exit 1
+fi
+echo "Found Key Vault: ${keyvault_id}"
+
+echo "Checking backend container ${CONTAINER} in ${STORAGE}."
+if ! container_exists=$(az storage container exists \
   --account-name "${STORAGE}" \
   --name "${CONTAINER}" \
   --auth-mode login \
-  --query exists -o tsv | grep -qi true
+  --query exists -o tsv); then
+  echo "Could not check container ${CONTAINER}. Grant Storage Blob Data Reader or Storage Blob Data Contributor on ${STORAGE}." >&2
+  exit 1
+fi
+
+if [ "${container_exists}" != "true" ]; then
+  echo "Container ${CONTAINER} was not found in storage account ${STORAGE}." >&2
+  exit 1
+fi
 
 echo "Preflight checks passed for dev hub ${HUB_RG}."

@@ -46,9 +46,15 @@ variable "hub_rg_name" {
 }
 
 variable "hub_vnet_name" {
-  description = "Existing dev hub virtual network name."
+  description = "Dev hub virtual network name to create in the existing hub resource group."
   type        = string
   default     = "ht-cind-dev-vnet-hub-01"
+}
+
+variable "hub_address_space" {
+  description = "CIDR range for the dev hub VNet."
+  type        = list(string)
+  default     = ["10.41.0.0/16"]
 }
 
 variable "hub_storage_account" {

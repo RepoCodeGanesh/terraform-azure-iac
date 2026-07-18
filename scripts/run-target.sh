@@ -50,9 +50,9 @@ terraform init \
 if [ "${TARGET_NAME}" = "hub" ]; then
   TARGETS=(
     "-target=data.azurerm_resource_group.hub"
-    "-target=data.azurerm_virtual_network.hub"
     "-target=data.azurerm_storage_account.hub_state"
     "-target=data.azurerm_key_vault.hub"
+    "-target=azurerm_virtual_network.hub"
     "-target=azurerm_resource_group.spoke"
     "-target=azurerm_virtual_network.spoke"
     "-target=azurerm_subnet.spoke"

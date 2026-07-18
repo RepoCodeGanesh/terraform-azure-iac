@@ -2,11 +2,6 @@ data "azurerm_resource_group" "hub" {
   name = var.hub_rg_name
 }
 
-data "azurerm_virtual_network" "hub" {
-  name                = var.hub_vnet_name
-  resource_group_name = data.azurerm_resource_group.hub.name
-}
-
 data "azurerm_storage_account" "hub_state" {
   name                = var.hub_storage_account
   resource_group_name = data.azurerm_resource_group.hub.name
@@ -15,6 +10,14 @@ data "azurerm_storage_account" "hub_state" {
 data "azurerm_key_vault" "hub" {
   name                = var.key_vault_name
   resource_group_name = data.azurerm_resource_group.hub.name
+}
+
+resource "azurerm_virtual_network" "hub" {
+  name                = var.hub_vnet_name
+  resource_group_name = data.azurerm_resource_group.hub.name
+  location            = var.location
+  address_space       = var.hub_address_space
+  tags                = local.tags
 }
 
 resource "azurerm_resource_group" "spoke" {
@@ -41,16 +44,16 @@ resource "azurerm_subnet" "spoke" {
 }
 
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
-  name                      = "${azurerm_virtual_network.spoke.name}-to-${data.azurerm_virtual_network.hub.name}"
+  name                      = "${azurerm_virtual_network.spoke.name}-to-${azurerm_virtual_network.hub.name}"
   resource_group_name       = azurerm_resource_group.spoke.name
   virtual_network_name      = azurerm_virtual_network.spoke.name
-  remote_virtual_network_id = data.azurerm_virtual_network.hub.id
+  remote_virtual_network_id = azurerm_virtual_network.hub.id
 }
 
 resource "azurerm_virtual_network_peering" "hub_to_spoke" {
-  name                      = "${data.azurerm_virtual_network.hub.name}-to-${azurerm_virtual_network.spoke.name}"
+  name                      = "${azurerm_virtual_network.hub.name}-to-${azurerm_virtual_network.spoke.name}"
   resource_group_name       = data.azurerm_resource_group.hub.name
-  virtual_network_name      = data.azurerm_virtual_network.hub.name
+  virtual_network_name      = azurerm_virtual_network.hub.name
   remote_virtual_network_id = azurerm_virtual_network.spoke.id
 }
 
