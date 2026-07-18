@@ -48,17 +48,26 @@ steps:
           --container "$(BACKEND_CONTAINER)" \
           --keyvault "ht-cind-dev-kv-hub-02"
 
-  - script: |
-      set -euo pipefail
-      terraform fmt -check -recursive
-      terraform init \
-        -backend-config="resource_group_name=$(BACKEND_RESOURCE_GROUP)" \
-        -backend-config="storage_account_name=$(BACKEND_STORAGE_ACCOUNT)" \
-        -backend-config="container_name=$(BACKEND_CONTAINER)" \
-        -backend-config="key=$(BACKEND_KEY)" \
-        -backend-config="use_azuread_auth=true"
-      terraform validate
+  - task: AzureCLI@2
     displayName: "Terraform fmt, init, validate"
+    inputs:
+      azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+        az account set --subscription "$(SUBSCRIPTION_ID)"
+        terraform fmt -check -recursive
+        terraform init \
+          -backend-config="resource_group_name=$(BACKEND_RESOURCE_GROUP)" \
+          -backend-config="storage_account_name=$(BACKEND_STORAGE_ACCOUNT)" \
+          -backend-config="container_name=$(BACKEND_CONTAINER)" \
+          -backend-config="key=$(BACKEND_KEY)" \
+          -backend-config="use_azuread_auth=true"
+        terraform validate
+    env:
+      ARM_SUBSCRIPTION_ID: "$(SUBSCRIPTION_ID)"
+      ARM_TENANT_ID: "$(TENANT_ID)"
 
   - script: |
       set -euo pipefail
