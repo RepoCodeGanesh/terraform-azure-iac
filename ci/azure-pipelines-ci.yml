@@ -24,7 +24,7 @@ steps:
   - task: AzureCLI@2
     displayName: "Preflight hub check"
     inputs:
-      azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+      azureSubscription: "dev:dev"
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |

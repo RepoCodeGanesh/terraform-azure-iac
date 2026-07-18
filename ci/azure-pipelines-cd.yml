@@ -73,7 +73,7 @@ stages:
                 - task: AzureCLI@2
                   displayName: "Apply selected modules"
                   inputs:
-                    azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    azureSubscription: "dev:dev"
                     scriptType: bash
                     scriptLocation: inlineScript
                     inlineScript: |

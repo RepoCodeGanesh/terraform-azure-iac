@@ -2,7 +2,7 @@
 
 Before running Terraform:
 
-- Confirm the Azure DevOps service connection can access subscription `859a785c-bd38-402d-b595-1f444f0fb9bf`.
+- Confirm the Azure DevOps service connection `dev:dev` can access subscription `859a785c-bd38-402d-b595-1f444f0fb9bf`.
 - Confirm resource group `ht-cind-dev-rg-hub-01` exists.
 - Confirm storage account `htcinddevsahub02` exists.
 - Confirm blob container `tfstate` exists.
