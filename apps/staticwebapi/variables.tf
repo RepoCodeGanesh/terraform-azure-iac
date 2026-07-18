@@ -11,6 +11,8 @@ variable "key_vault_ref" {
     name = string
     uri  = string
   })
+  default  = null
+  nullable = true
 }
 variable "naming_prefix" { type = string }
 variable "instance_id" { type = string }

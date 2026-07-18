@@ -70,9 +70,9 @@ variable "backend_container" {
 }
 
 variable "key_vault_name" {
-  description = "Existing dev hub Key Vault used for references."
+  description = "Optional existing dev hub Key Vault used for references. Leave empty to skip Key Vault lookup."
   type        = string
-  default     = "ht-cind-dev-kv-hub-02"
+  default     = ""
 }
 
 variable "spoke_count" {

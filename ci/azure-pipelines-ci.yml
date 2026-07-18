@@ -20,6 +20,7 @@ variables:
   BACKEND_KEY: "cindia-dev-root.tfstate"
   SUBSCRIPTION_ID: "859a785c-bd38-402d-b595-1f44f40fb9bf"
   TENANT_ID: "4cef0d84-84d6-4ed0-8abe-773b015bcf99"
+  KEY_VAULT_NAME: ""
 
 steps:
   - script: |
@@ -45,8 +46,7 @@ steps:
           --subscription "$(SUBSCRIPTION_ID)" \
           --hub-rg "$(BACKEND_RESOURCE_GROUP)" \
           --storage "$(BACKEND_STORAGE_ACCOUNT)" \
-          --container "$(BACKEND_CONTAINER)" \
-          --keyvault "ht-cind-dev-kv-hub-02"
+          --container "$(BACKEND_CONTAINER)"
 
   - task: AzureCLI@2
     displayName: "Terraform fmt, init, validate"

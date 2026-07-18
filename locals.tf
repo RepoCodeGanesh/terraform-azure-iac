@@ -20,6 +20,12 @@ locals {
     if contains(var.enabled_apps, name)
   }
 
+  key_vault_ref = var.key_vault_name == "" ? null : {
+    id   = data.azurerm_key_vault.hub[0].id
+    name = data.azurerm_key_vault.hub[0].name
+    uri  = data.azurerm_key_vault.hub[0].vault_uri
+  }
+
   tags = merge({
     environment = var.environment
     workload    = "cind-learning"

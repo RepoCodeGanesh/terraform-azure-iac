@@ -8,6 +8,8 @@ data "azurerm_storage_account" "hub_state" {
 }
 
 data "azurerm_key_vault" "hub" {
+  count = var.key_vault_name == "" ? 0 : 1
+
   name                = var.key_vault_name
   resource_group_name = data.azurerm_resource_group.hub.name
 }
@@ -69,14 +71,10 @@ module "staticwebapi" {
   tenant_id           = var.tenant_id
   vnet_id             = azurerm_virtual_network.spoke.id
   subnet_map          = { for name, subnet in azurerm_subnet.spoke : name => subnet.id }
-  key_vault_ref = {
-    id   = data.azurerm_key_vault.hub.id
-    name = data.azurerm_key_vault.hub.name
-    uri  = data.azurerm_key_vault.hub.vault_uri
-  }
-  naming_prefix = local.name_base
-  instance_id   = "01"
-  tags          = local.tags
+  key_vault_ref       = local.key_vault_ref
+  naming_prefix       = local.name_base
+  instance_id         = "01"
+  tags                = local.tags
 }
 
 module "serverless" {
@@ -91,14 +89,10 @@ module "serverless" {
   tenant_id           = var.tenant_id
   vnet_id             = azurerm_virtual_network.spoke.id
   subnet_map          = { for name, subnet in azurerm_subnet.spoke : name => subnet.id }
-  key_vault_ref = {
-    id   = data.azurerm_key_vault.hub.id
-    name = data.azurerm_key_vault.hub.name
-    uri  = data.azurerm_key_vault.hub.vault_uri
-  }
-  naming_prefix = local.name_base
-  instance_id   = "01"
-  tags          = local.tags
+  key_vault_ref       = local.key_vault_ref
+  naming_prefix       = local.name_base
+  instance_id         = "01"
+  tags                = local.tags
 }
 
 module "securems" {
@@ -113,12 +107,8 @@ module "securems" {
   tenant_id           = var.tenant_id
   vnet_id             = azurerm_virtual_network.spoke.id
   subnet_map          = { for name, subnet in azurerm_subnet.spoke : name => subnet.id }
-  key_vault_ref = {
-    id   = data.azurerm_key_vault.hub.id
-    name = data.azurerm_key_vault.hub.name
-    uri  = data.azurerm_key_vault.hub.vault_uri
-  }
-  naming_prefix = local.name_base
-  instance_id   = "01"
-  tags          = local.tags
+  key_vault_ref       = local.key_vault_ref
+  naming_prefix       = local.name_base
+  instance_id         = "01"
+  tags                = local.tags
 }

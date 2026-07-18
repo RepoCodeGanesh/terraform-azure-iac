@@ -19,7 +19,7 @@ output "hub" {
     vnet_id             = azurerm_virtual_network.hub.id
     vnet_name           = azurerm_virtual_network.hub.name
     storage_account_id  = data.azurerm_storage_account.hub_state.id
-    key_vault_id        = data.azurerm_key_vault.hub.id
+    key_vault_id        = try(data.azurerm_key_vault.hub[0].id, null)
   }
 }
 

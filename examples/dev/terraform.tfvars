@@ -10,7 +10,7 @@ hub_vnet_name       = "ht-cind-dev-vnet-hub-01"
 hub_address_space   = ["10.41.0.0/16"]
 hub_storage_account = "htcinddevsahub02"
 backend_container   = "tfstate"
-key_vault_name      = "ht-cind-dev-kv-hub-02"
+key_vault_name      = ""
 
 enabled_apps = [
   "staticwebapi",
