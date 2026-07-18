@@ -1,0 +1,94 @@
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+    - pipeline: ciBuild
+      source: "CI Pipeline Name"
+      trigger: none
+
+variables:
+  TF_WORKING_DIR: "."
+  BACKEND_RESOURCE_GROUP: "ht-cind-dev-rg-hub-01"
+  BACKEND_STORAGE_ACCOUNT: "htcinddevsahub02"
+  BACKEND_CONTAINER: "tfstate"
+  BACKEND_KEY: "cindia-dev-root.tfstate"
+  SUBSCRIPTION_ID: "859a785c-bd38-402d-b595-1f444f0fb9bf"
+  TENANT_ID: "4cef0d84-84d6-4ed0-8abe-773b015bcf99"
+  SELECTED_MODULES: "all"
+
+stages:
+  - stage: Prepare
+    displayName: "Prepare module selection"
+    jobs:
+      - job: ValidateSelection
+        displayName: "Validate selected modules"
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - download: ciBuild
+            artifact: modules-list
+
+          - script: |
+              set -euo pipefail
+              cp "$(Pipeline.Workspace)/ciBuild/modules-list/modules.json" modules.json
+              echo "Available modules:"
+              jq -r '.[]' modules.json
+              echo "Requested modules: $(SELECTED_MODULES)"
+              ./scripts/validate-modules.sh --selected "$(SELECTED_MODULES)" --modules-json modules.json > selected-modules.txt
+              echo "Validated modules:"
+              cat selected-modules.txt
+            displayName: "Validate queue-time selection"
+
+          - publish: selected-modules.txt
+            artifact: selected-modules
+
+      - job: Approval
+        displayName: "Manual approval"
+        dependsOn: ValidateSelection
+        pool: server
+        steps:
+          - task: ManualValidation@0
+            inputs:
+              notifyUsers: ""
+              instructions: "Approve deployment of the modules selected in SELECTED_MODULES. Use all or a comma-separated list such as staticwebapi,serverless."
+
+  - stage: Deploy
+    displayName: "Deploy selected modules"
+    dependsOn: Prepare
+    condition: succeeded()
+    jobs:
+      - deployment: DeployModules
+        displayName: "Terraform apply for selected modules"
+        environment: "dev"
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: selected-modules
+
+                - task: AzureCLI@2
+                  displayName: "Apply selected modules"
+                  inputs:
+                    azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az account set --subscription "$(SUBSCRIPTION_ID)"
+                      while read -r module_name; do
+                        [ -n "${module_name}" ] || continue
+                        ./scripts/run-module.sh \
+                          --module "${module_name}" \
+                          --action apply \
+                          --backend-rg "$(BACKEND_RESOURCE_GROUP)" \
+                          --backend-account "$(BACKEND_STORAGE_ACCOUNT)" \
+                          --backend-container "$(BACKEND_CONTAINER)" \
+                          --backend-key "$(BACKEND_KEY)"
+                      done < "$(Pipeline.Workspace)/selected-modules/selected-modules.txt"
+                  env:
+                    ARM_SUBSCRIPTION_ID: "$(SUBSCRIPTION_ID)"
+                    ARM_TENANT_ID: "$(TENANT_ID)"

@@ -1,0 +1,62 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  TF_WORKING_DIR: "."
+  BACKEND_RESOURCE_GROUP: "ht-cind-dev-rg-hub-01"
+  BACKEND_STORAGE_ACCOUNT: "htcinddevsahub02"
+  BACKEND_CONTAINER: "tfstate"
+  BACKEND_KEY: "cindia-dev-root.tfstate"
+  SUBSCRIPTION_ID: "859a785c-bd38-402d-b595-1f444f0fb9bf"
+  TENANT_ID: "4cef0d84-84d6-4ed0-8abe-773b015bcf99"
+
+steps:
+  - task: AzureCLI@2
+    displayName: "Preflight hub check"
+    inputs:
+      azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+        ./scripts/preflight-hub-check.sh \
+          --subscription "$(SUBSCRIPTION_ID)" \
+          --hub-rg "$(BACKEND_RESOURCE_GROUP)" \
+          --storage "$(BACKEND_STORAGE_ACCOUNT)" \
+          --container "$(BACKEND_CONTAINER)" \
+          --keyvault "ht-cind-dev-kv-hub-02"
+
+  - script: |
+      set -euo pipefail
+      terraform fmt -check -recursive
+      terraform init \
+        -backend-config="resource_group_name=$(BACKEND_RESOURCE_GROUP)" \
+        -backend-config="storage_account_name=$(BACKEND_STORAGE_ACCOUNT)" \
+        -backend-config="container_name=$(BACKEND_CONTAINER)" \
+        -backend-config="key=$(BACKEND_KEY)" \
+        -backend-config="use_azuread_auth=true"
+      terraform validate
+    displayName: "Terraform fmt, init, validate"
+
+  - script: |
+      set -euo pipefail
+      ./scripts/list-modules.sh > modules.json
+      cat modules.json
+    displayName: "List modules"
+
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish modules list"
+    inputs:
+      pathToPublish: "modules.json"
+      artifactName: "modules-list"
+      publishLocation: "Container"
