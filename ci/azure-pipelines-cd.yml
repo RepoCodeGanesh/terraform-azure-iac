@@ -8,6 +8,7 @@ resources:
       trigger: none
 
 variables:
+  AZURE_SERVICE_CONNECTION: "dev"
   TF_WORKING_DIR: "."
   BACKEND_RESOURCE_GROUP: "ht-cind-dev-rg-hub-01"
   BACKEND_STORAGE_ACCOUNT: "htcinddevsahub02"
@@ -73,7 +74,7 @@ stages:
                 - task: AzureCLI@2
                   displayName: "Apply selected modules"
                   inputs:
-                    azureSubscription: "dev:dev"
+                    azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
                     scriptType: bash
                     scriptLocation: inlineScript
                     inlineScript: |

@@ -12,6 +12,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
+  AZURE_SERVICE_CONNECTION: "dev"
   TF_WORKING_DIR: "."
   BACKEND_RESOURCE_GROUP: "ht-cind-dev-rg-hub-01"
   BACKEND_STORAGE_ACCOUNT: "htcinddevsahub02"
@@ -24,7 +25,7 @@ steps:
   - task: AzureCLI@2
     displayName: "Preflight hub check"
     inputs:
-      azureSubscription: "dev:dev"
+      azureSubscription: "$(AZURE_SERVICE_CONNECTION)"
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |

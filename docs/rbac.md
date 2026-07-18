@@ -1,6 +1,6 @@
 # RBAC
 
-Use least privilege for the Azure DevOps service connection identity named `dev:dev`:
+Use least privilege for the Azure DevOps service connection identity named `dev`:
 
 - `Storage Blob Data Contributor` on storage account `htcinddevsahub02`.
 - `Key Vault Reader` on Key Vault `ht-cind-dev-kv-hub-02`.
