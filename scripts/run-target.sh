@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat >&2 <<USAGE
-Usage: $0 --target <hub|app-name> --action <plan|apply> --backend-rg <resource-group> --backend-account <account> --backend-container <container> --backend-key <key> [--var-file <path>]
+Usage: $0 --target <hub|app-name> --action <plan|apply> --backend-rg <resource-group> --backend-account <account> --backend-container <container> --backend-key <key> [--var-file <path>] [--plan-dir <path>]
 USAGE
   exit 1
 }
@@ -15,6 +15,7 @@ BACKEND_ACCOUNT="htcinddevsahub02"
 BACKEND_CONTAINER="tfstate"
 BACKEND_KEY="cindia-dev-root.tfstate"
 VAR_FILE="examples/dev/terraform.tfvars"
+PLAN_DIR="tfplans"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -25,6 +26,7 @@ while [ "$#" -gt 0 ]; do
     --backend-container) BACKEND_CONTAINER="$2"; shift 2 ;;
     --backend-key) BACKEND_KEY="$2"; shift 2 ;;
     --var-file) VAR_FILE="$2"; shift 2 ;;
+    --plan-dir) PLAN_DIR="$2"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; usage ;;
   esac
 done
@@ -64,9 +66,14 @@ else
 fi
 
 if [ "${ACTION}" = "plan" ]; then
-  terraform plan -var-file="${VAR_FILE}" "${TARGETS[@]}" -out="${TARGET_NAME}.tfplan"
+  mkdir -p "${PLAN_DIR}"
+  terraform plan -var-file="${VAR_FILE}" "${TARGETS[@]}" -out="${PLAN_DIR}/${TARGET_NAME}.tfplan"
 else
-  terraform apply -var-file="${VAR_FILE}" "${TARGETS[@]}" -auto-approve
+  if [ -f "${PLAN_DIR}/${TARGET_NAME}.tfplan" ]; then
+    terraform apply -auto-approve "${PLAN_DIR}/${TARGET_NAME}.tfplan"
+  else
+    terraform apply -var-file="${VAR_FILE}" "${TARGETS[@]}" -auto-approve
+  fi
   if [ "${TARGET_NAME}" != "hub" ]; then
     terraform output -json module_outputs | jq --arg target_name "${TARGET_NAME}" '.[$target_name]'
   fi
