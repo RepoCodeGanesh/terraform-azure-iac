@@ -63,10 +63,14 @@ stages:
           - script: |
               set -euo pipefail
               : > selected-targets.txt
-              if [ "${{ parameters.deployHub }}" = "true" ]; then echo "hub" >> selected-targets.txt; fi
-              if [ "${{ parameters.deployStaticWebApi }}" = "true" ]; then echo "staticwebapi" >> selected-targets.txt; fi
-              if [ "${{ parameters.deployServerless }}" = "true" ]; then echo "serverless" >> selected-targets.txt; fi
-              if [ "${{ parameters.deploySecureMs }}" = "true" ]; then echo "securems" >> selected-targets.txt; fi
+              deploy_hub="$(echo '${{ parameters.deployHub }}' | tr '[:upper:]' '[:lower:]')"
+              deploy_staticwebapi="$(echo '${{ parameters.deployStaticWebApi }}' | tr '[:upper:]' '[:lower:]')"
+              deploy_serverless="$(echo '${{ parameters.deployServerless }}' | tr '[:upper:]' '[:lower:]')"
+              deploy_securems="$(echo '${{ parameters.deploySecureMs }}' | tr '[:upper:]' '[:lower:]')"
+              if [ "${deploy_hub}" = "true" ]; then echo "hub" >> selected-targets.txt; fi
+              if [ "${deploy_staticwebapi}" = "true" ]; then echo "staticwebapi" >> selected-targets.txt; fi
+              if [ "${deploy_serverless}" = "true" ]; then echo "serverless" >> selected-targets.txt; fi
+              if [ "${deploy_securems}" = "true" ]; then echo "securems" >> selected-targets.txt; fi
               if [ ! -s selected-targets.txt ]; then
                 echo "No targets selected. Select at least one target."
                 exit 1
