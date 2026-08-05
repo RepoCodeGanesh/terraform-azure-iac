@@ -392,9 +392,15 @@ resource "azurerm_api_management_backend" "function_backend" {
 # Using azapi_resource instead of azurerm_api_management_api because azurerm v4
 # transforms the payload in ways that trigger 400 ValidationError on Consumption
 # tier APIM. azapi sends a raw ARM PUT with exactly what the ARM API expects.
+#
+# Name MUST be "dvob-ai-assistant" — a pre-existing API in this APIM instance
+# already owns the path "ai-assistant". APIM enforces unique paths per instance,
+# so we PUT to the existing resource name to update it rather than create a duplicate.
+# The gateway URL (https://apim.../ai-assistant/...) is unchanged — it is determined
+# by the "path" property, not the resource "name".
 resource "azapi_resource" "apim_ai_assistant_api" {
   type      = "Microsoft.ApiManagement/service/apis@2022-08-01"
-  name      = "ai-assistant"
+  name      = "dvob-ai-assistant"
   parent_id = data.azurerm_api_management.shared.id
 
   body = {
