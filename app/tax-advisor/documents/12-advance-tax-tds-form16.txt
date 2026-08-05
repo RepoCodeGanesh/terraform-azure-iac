@@ -10,37 +10,16 @@ Advance tax must be paid if estimated tax liability > ₹10,000 in a financial y
 Applicable if you have income beyond salary (capital gains, freelance, rent, etc.)
 Salaried employees: TDS by employer usually covers tax; advance tax only if additional income.
 
-ADVANCE TAX DUE DATES (FY 2025-26):
-  15 June 2025:     15% of estimated annual tax
-  15 September 2025: 45% of estimated annual tax (cumulative)
-  15 December 2025:  75% of estimated annual tax (cumulative)
-  15 March 2026:    100% of estimated annual tax
+ADVANCE TAX DUE DATES (FY 2026-27):
+  15 June 2026:     15% of estimated annual tax
+  15 September 2026: 45% of estimated annual tax (cumulative)
+  15 December 2026:  75% of estimated annual tax (cumulative)
+  15 March 2027:    100% of estimated annual tax
 
 INTEREST FOR NON-PAYMENT (Section 234B and 234C):
   234B: 1% per month if advance tax paid < 90% of assessed tax
   234C: 1% per month for deferment of each installment
   These interest charges are added when filing ITR.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TDS ON SALARY (Section 192)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Employer deducts TDS monthly based on projected annual income and declared investments.
-
-How it works:
-  1. Declare regime choice (old/new) to employer at start of financial year
-  2. Submit investment declaration Form 12BB (HRA receipts, 80C proofs, etc.)
-  3. Employer calculates estimated annual tax and divides by 12 months
-  4. Each month, TDS = estimated monthly tax
-  5. At year end, submit actual proof of investments — employer adjusts final TDS
-
-FORM 12BB — Investment Declaration:
-  Submit to employer at start of year with:
-  - HRA: Rent receipts + landlord PAN (if rent > ₹1L/year)
-  - Section 80C: LIC premium, ELSS, PPF passbook, EPF statement, etc.
-  - Section 80D: Health insurance premium receipts
-  - Home loan: Interest certificate from bank
-  - LTA: Travel bills
-  Submit proofs before March end for final TDS computation
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FORM 16 — TDS CERTIFICATE FOR SALARY
@@ -56,52 +35,8 @@ Two parts:
            - Net taxable income
            - Total TDS deducted
 
-How to use Form 16 for ITR:
-  - Pre-fill ITR using AIS/Form 26AS data
-  - Cross-check Form 16 Part B with your own calculations
-  - If TDS > actual tax: Refund due
-  - If TDS < actual tax: Pay self-assessment tax before filing
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FORM 26AS — TAX CREDIT STATEMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Available at: www.incometax.gov.in → e-File → Income Tax Returns → View Form 26AS
-Shows:
-  - TDS deducted by employer, banks, clients
-  - Advance tax paid
-  - Self-assessment tax paid
-  - TCS collected
-  - Any high-value transactions
-
-Annual Information Statement (AIS):
-  More comprehensive than 26AS; includes MF transactions, interest, dividends.
-  Available on income tax portal.
-  Useful for accurate capital gains reporting.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TAX REFUND PROCESS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Refund arises when: TDS deducted > actual tax liability
-
-Steps:
-  1. File ITR with correct bank account (pre-validated, same PAN)
-  2. e-Verify return within 30 days (Aadhaar OTP / net banking / EVC)
-  3. Income Tax Dept processes and issues refund to bank account
-  4. Timeline: Usually 2-8 weeks after e-verification
-  5. Refund interest: 6% per year if refund > 10% of assessed tax (Section 244A)
-
-Track refund: www.incometax.gov.in → Services → Refund Reissue / Status
-Or: NSDL portal → tin.tin.nsdl.com/oltas/refundstatuslogin.html
-
-COMMON REASONS FOR EXCESS TDS:
-  - Employer didn't account for declared investments
-  - Switched from old to new regime at last minute
-  - Had capital loss to set off against gains
-  - Left job mid-year (excess TDS due to lower total income)
-  - Bank deducted TDS on FD interest but total income below taxable limit
-
-HOW TO CLAIM TDS REFUND ON FD INTEREST (Form 15G/15H):
-  Form 15G: Submit to bank if income < basic exemption limit (non-senior)
-  Form 15H: Submit to bank if income < basic exemption limit (senior citizen 60+)
-  Effect: Bank will NOT deduct TDS on FD interest
-  Must be submitted at start of each financial year
+TAX REFUND PROCESS:
+  Refund arises when: TDS deducted > actual tax liability
+  File ITR with correct bank account (pre-validated)
+  e-Verify return within 30 days
+  Income Tax Dept processes and issues refund

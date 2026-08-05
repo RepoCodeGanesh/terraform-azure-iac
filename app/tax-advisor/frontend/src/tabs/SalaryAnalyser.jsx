@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
 
 const SAMPLE_SLIP = `Basic Salary: ₹85,000 / month
 House Rent Allowance (HRA): ₹34,000 / month

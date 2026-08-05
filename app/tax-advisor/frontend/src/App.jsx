@@ -18,7 +18,7 @@ export default function App() {
             <div className="logo-text">
               TaxBot <span>India</span>
             </div>
-            <span className="header-badge">FY 2025-26</span>
+            <span className="header-badge">FY 2026-27</span>
           </div>
 
           <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>

@@ -28,21 +28,9 @@ Belated returns cannot carry forward most losses (except house property loss).
 Still file even if late — penalties are less costly than non-filing.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Q: Is it mandatory to file ITR if TDS was already deducted?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A: Filing is mandatory if:
-  - Total income exceeds basic exemption limit (₹2.5L old / ₹3L new)
-  - You want to claim TDS refund
-  - You have foreign assets or foreign income
-  - Turnover from business > ₹60L
-  - TDS deducted > ₹25,000 (or ₹50K for senior citizens) during the year
-  - Electricity consumption > 1 lakh units in a year
-Even if no tax is due, filing is advisable for visa purposes, loan applications.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Q: How do I know which tax regime is better for me?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A: Calculate tax under both regimes:
+A: Calculate tax under both regimes for FY 2026-27:
   NEW REGIME: Apply slabs, no deductions (except employer NPS, standard deduction)
   OLD REGIME: Apply slabs after all deductions (80C, 80D, HRA, home loan, etc.)
   
@@ -52,40 +40,3 @@ A: Calculate tax under both regimes:
     Salary ₹20L: Deductions need to exceed ~₹4.25L
   
   Use TaxBot's Regime Comparator for exact calculation.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Q: My employer deducted tax under old regime but I want new regime. What to do?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A: When filing ITR, choose new regime. Recalculate tax. If you've overpaid TDS,
-claim refund in ITR. The regime in ITR supersedes employer's TDS calculation.
-Inform employer next year at start of FY to deduct TDS under new regime.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Q: I have ESOP from my company. How is it taxed?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A: Two tax events:
-  1. Exercise: FMV - Exercise Price = Perquisite income (taxable as salary, TDS by employer)
-  2. Sale: Sale price - FMV at exercise = Capital gains
-     - Listed shares: LTCG (12.5% if 12+ months), STCG (20% if <12 months)
-     - Unlisted shares: LTCG (12.5% if 24+ months), STCG (slab if <24 months)
-  File ITR-2 for ESOP. Employer deducts TDS on perquisite at time of exercise.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Q: I have an FD with ₹5 lakh. Is interest taxable?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A: Yes, FD interest is 100% taxable at your slab rate (not 30% flat).
-TDS: Bank deducts 10% TDS if interest > ₹40,000/year (₹50,000 for senior citizens).
-To avoid TDS: Submit Form 15G (non-senior) or 15H (senior) if income is below exemption.
-Report interest income in ITR even if Form 15G submitted.
-Senior citizens: Deduct up to ₹50,000 under Section 80TTB.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Q: How are freelance/consulting income taxed?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A: If annual receipts < ₹75 lakh: Use Section 44ADA presumptive taxation.
-   50% of receipts = professional income (no books of accounts needed).
-   Example: Receipts ₹20L → Taxable income = ₹10L (50%)
-   TDS: Clients deduct 10% TDS on payments > ₹30,000 per professional (Section 194J).
-   File ITR-4 if using presumptive taxation. ITR-3 if maintaining accounts.
-   Can avail all deductions (80C, 80D, etc.) in old regime.
-   Cannot opt for 44ADA in new regime — declare actual income.

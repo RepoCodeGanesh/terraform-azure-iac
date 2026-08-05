@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
 
 const QUICK_PROMPTS = [
   "I earn ₹18L per year. Which tax regime is better for me?",
   "How can I save tax using Section 80CCD(2) employer NPS?",
-  "What is the capital gains tax on equity mutual funds in FY 2025-26?",
+  "What is the capital gains tax on equity mutual funds in FY 2026-27?",
   "Can I claim HRA and home loan interest deduction together?",
   "What is Section 87A rebate limit under the New Regime?",
 ]
@@ -14,7 +14,7 @@ export default function ChatAdvisor() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Namaste! 🙏 I am TaxBot India, your AI tax advisor for FY 2025-26 (AY 2026-27).\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!",
+      content: "Welcome 🙏 I am TaxBot India, your AI tax advisor for FY 2026-27 (AY 2027-28).\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!",
     },
   ])
   const [input, setInput] = useState('')

@@ -1,7 +1,7 @@
-CAPITAL GAINS TAX — FY 2025-26
+CAPITAL GAINS TAX — FY 2026-27
 ================================
 
-SOURCE: Income Tax Act 1961, Sections 112, 112A, 111A as amended by Finance Act 2024
+SOURCE: Income Tax Act 1961, Sections 112, 112A, 111A as amended by Finance Act 2024 / 2025
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EQUITY AND EQUITY MUTUAL FUNDS
@@ -10,7 +10,7 @@ EQUITY AND EQUITY MUTUAL FUNDS
 LONG TERM CAPITAL GAINS (LTCG) — Section 112A
   Holding period: More than 12 months
   Tax rate: 12.5% (FLAT, no indexation)
-  Exemption: First ₹1,25,000 of LTCG is exempt (Budget 2024 enhanced from ₹1L)
+  Exemption: First ₹1,25,000 of LTCG is exempt (enhanced from ₹1L)
   Applies to: Listed equity shares, equity-oriented mutual funds, units of business trust
   STT paid: YES (required)
   87A rebate: NOT available on LTCG under 112A
@@ -26,7 +26,7 @@ LONG TERM CAPITAL GAINS (LTCG) — Section 112A
 
 SHORT TERM CAPITAL GAINS (STCG) — Section 111A
   Holding period: 12 months or less
-  Tax rate: 20% FLAT (Budget 2024: increased from 15%)
+  Tax rate: 20% FLAT
   Applies to: Listed equity shares, equity-oriented mutual funds
   STT paid: YES (required)
   
@@ -42,19 +42,15 @@ DEBT MUTUAL FUNDS (post March 2023):
   - ALL gains taxed at SLAB RATE regardless of holding period
   - No LTCG/STCG distinction for debt funds purchased after April 2023
   - Indexation: NOT available for debt funds post March 2023
-  
-  Exception: For debt funds purchased before April 2023:
-  - LTCG (24+ months holding): 20% with indexation OR 10% without (whichever lower)
-  - Already grandfathered for existing holdings
 
 GOLD ETF / GOLD MUTUAL FUNDS:
   Holding period for LTCG: More than 24 months
-  LTCG rate: 12.5% without indexation (Finance Act 2024 change)
+  LTCG rate: 12.5% without indexation
   STCG: Slab rate
 
 REAL ESTATE / PROPERTY:
   Holding period for LTCG: More than 24 months
-  LTCG rate: 12.5% WITHOUT indexation (Budget 2024 removed indexation!)
+  LTCG rate: 12.5% WITHOUT indexation
     Exception: Option available for property purchased before 23 July 2024:
     12.5% without indexation OR 20% with indexation (whichever is lower)
   STCG: Slab rate
@@ -77,12 +73,3 @@ ITR FORM FOR CAPITAL GAINS
   ITR-1 (Sahaj) CANNOT be used if you have any capital gains
   
   For LTCG up to ₹1.25L (all exempt): Still report in ITR-2, no tax
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PLANNING TIPS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Harvest ₹1.25L LTCG tax-free every year and reinvest (tax loss/gain harvesting)
-- Use equity index funds (low cost, long-term, LTCG efficiency)
-- For property sold: Consider 54EC bonds to save LTCG tax
-- Stagger redemptions across FYs to stay within ₹1.25L LTCG exemption
-- SIP equity funds held 12+ months qualify for LTCG treatment on each installment

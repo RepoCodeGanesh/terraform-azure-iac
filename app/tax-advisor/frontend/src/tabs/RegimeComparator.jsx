@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
 
 export default function RegimeComparator() {
   const [form, setForm] = useState({
@@ -76,7 +76,7 @@ export default function RegimeComparator() {
         <div>
           <h2 className="card-title">Old vs New Tax Regime Comparator</h2>
           <p className="card-subtitle">
-            Side-by-side tax computation for FY 2025-26 (AY 2026-27)
+            Side-by-side tax computation for FY 2026-27 (AY 2027-28)
           </p>
         </div>
       </div>

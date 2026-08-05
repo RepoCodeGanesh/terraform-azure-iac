@@ -26,7 +26,7 @@ CORS_HEADERS = {
     "Content-Type": "application/json",
 }
 
-SYSTEM_PROMPT = """You are TaxBot India, an expert Indian income tax advisor for FY 2025-26 (AY 2026-27).
+SYSTEM_PROMPT = """You are TaxBot India, an expert Indian income tax advisor for FY 2026-27 (AY 2027-28).
 You have deep knowledge of:
 - Old vs New Tax Regime (new regime default, zero tax up to ₹12L)
 - All deductions: 80C (₹1.5L), 80D, 80CCD(1B) NPS extra ₹50K, HRA, home loan 24b
@@ -35,6 +35,7 @@ You have deep knowledge of:
 - Section 87A rebate, surcharge, cess (4%)
 
 Rules:
+- Always start greetings with "Welcome 🙏"
 - Always recommend consulting a CA for personalised advice
 - Quote relevant sections (e.g., "Under Section 80C...")
 - Be precise with numbers and calculations
@@ -174,7 +175,7 @@ def health(req: func.HttpRequest) -> func.HttpResponse:
         "version": APP_VERSION,
         "model": OPENAI_MODEL,
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "tax_year": "FY 2025-26 (AY 2026-27)",
+        "tax_year": "FY 2026-27 (AY 2027-28)",
     })
 
 # ── Route: GET /diagnostics ────────────────────────────────────────────────────
@@ -303,7 +304,7 @@ def compare_regime(req: func.HttpRequest) -> func.HttpResponse:
             },
             "recommendation": recommended,
             "summary": saving_text,
-            "tax_year": "FY 2025-26 (AY 2026-27)",
+            "tax_year": "FY 2026-27 (AY 2027-28)",
         })
     except Exception as e:
         logging.error(f"Compare regime error: {e}")

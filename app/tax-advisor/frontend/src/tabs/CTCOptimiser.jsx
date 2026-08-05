@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
 
 const SAMPLE_CTC = `Total CTC: ₹22,00,000 / year
 Basic Salary: ₹9,00,000 / year (₹75,000 / month)

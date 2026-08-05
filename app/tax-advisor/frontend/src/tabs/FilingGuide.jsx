@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 
 const FAQS = [
   {
-    q: "Which ITR form should I file for FY 2025-26?",
+    q: "Which ITR form should I file for FY 2026-27?",
     a: `• ITR-1 (Sahaj): Income up to ₹50L from Salary, 1 House Property & Interest. NO capital gains.
 • ITR-2: Salaried with Capital Gains (Mutual Funds, Stocks), Foreign Assets, or >₹50L income.
 • ITR-3: Business / Freelance / F&O Trading income.
@@ -10,7 +10,7 @@ const FAQS = [
   },
   {
     q: "What is the new zero-tax limit in Budget 2025?",
-    a: "Under the New Tax Regime (FY 2025-26), net taxable income up to ₹12,00,000 has ZERO tax due to Section 87A rebate. For salaried employees with standard deduction of ₹75,000, gross salary up to ₹12,75,000 is completely tax-free!",
+    a: "Under the New Tax Regime (FY 2026-27), net taxable income up to ₹12,00,000 has ZERO tax due to Section 87A rebate. For salaried employees with standard deduction of ₹75,000, gross salary up to ₹12,75,000 is completely tax-free!",
   },
   {
     q: "How does Section 80CCD(2) Employer NPS work?",
@@ -38,7 +38,7 @@ export default function FilingGuide() {
         <div>
           <h2 className="card-title">ITR Filing Guide & Tax FAQs</h2>
           <p className="card-subtitle">
-            Forms selection, key deadlines, capital gains & compliance guidance for FY 2025-26
+            Forms selection, key deadlines, capital gains & compliance guidance for FY 2026-27
           </p>
         </div>
       </div>
@@ -46,25 +46,25 @@ export default function FilingGuide() {
       <div className="result-grid" style={{ marginBottom: '24px' }}>
         <div className="result-panel">
           <h3 style={{ fontSize: '15px', color: 'var(--saffron)', marginBottom: '8px' }}>
-            📅 Key ITR Filing Deadlines (FY 2025-26)
+            📅 Key ITR Filing Deadlines (FY 2026-27)
           </h3>
           <ul className="tip-list">
             <li className="tip-item">
               <span className="tip-icon">⏰</span>
               <div>
-                <strong>31 July 2026:</strong> Non-audit individual tax returns (ITR-1, 2, 4)
+                <strong>31 July 2027:</strong> Non-audit individual tax returns (ITR-1, 2, 4)
               </div>
             </li>
             <li className="tip-item">
               <span className="tip-icon">⏰</span>
               <div>
-                <strong>31 October 2026:</strong> Audit cases & businesses
+                <strong>31 October 2027:</strong> Audit cases & businesses
               </div>
             </li>
             <li className="tip-item">
               <span className="tip-icon">⏰</span>
               <div>
-                <strong>31 December 2026:</strong> Belated return / Revised return filing
+                <strong>31 December 2027:</strong> Belated return / Revised return filing
               </div>
             </li>
           </ul>

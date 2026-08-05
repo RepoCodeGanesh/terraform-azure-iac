@@ -4,7 +4,7 @@ SECTION 87A REBATE — ZERO TAX FOR LOWER INCOME
 SOURCE: Income Tax Act 1961, Section 87A as amended by Finance Act 2025
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NEW TAX REGIME — SECTION 87A REBATE FY 2025-26
+NEW TAX REGIME — SECTION 87A REBATE FY 2026-27
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Maximum Rebate: ₹60,000
 Eligible if: Net taxable income ≤ ₹12,00,000
@@ -41,7 +41,7 @@ MARGINAL RELIEF:
   Marginal relief applies until the tax equals what it would be without relief
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OLD TAX REGIME — SECTION 87A REBATE FY 2025-26
+OLD TAX REGIME — SECTION 87A REBATE FY 2026-27
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Maximum Rebate: ₹12,500
 Eligible if: Net taxable income ≤ ₹5,00,000

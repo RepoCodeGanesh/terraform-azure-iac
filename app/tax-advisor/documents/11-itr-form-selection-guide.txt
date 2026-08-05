@@ -1,7 +1,7 @@
 ITR FORM SELECTION GUIDE — WHICH ITR TO FILE
 =============================================
 
-SOURCE: Income Tax Department, India | FY 2025-26 (AY 2026-27)
+SOURCE: Income Tax Department, India | FY 2026-27 (AY 2027-28)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ITR-1 (SAHAJ) — Simplest Form
@@ -37,16 +37,6 @@ WHO SHOULD FILE:
   ✅ NRI (with Indian income)
   ✅ ESOP taxation
 
-WHO CANNOT FILE ITR-2:
-  ❌ Business or professional income (turnover from any business)
-  ❌ Partnership firm income
-
-WHEN SALARIED PERSON USES ITR-2:
-  - Sold any mutual funds / stocks during the year (even at a loss)
-  - Has rental income from second property
-  - Income > ₹50L
-  - Has foreign assets (even zero income)
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ITR-3 — Business/Professional Income + Capital Gains
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -56,9 +46,6 @@ WHO SHOULD FILE:
   ✅ Partner's salary/interest from partnership firm
   ✅ F&O trading income
   ✅ Intraday equity trading (speculative business income)
-  ✅ Can also include salary, capital gains, house property
-
-NOTE: F&O losses are business losses — file ITR-3 to carry forward
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ITR-4 (SUGAM) — Presumptive Taxation
@@ -66,46 +53,18 @@ ITR-4 (SUGAM) — Presumptive Taxation
 WHO SHOULD FILE:
   ✅ Small business opting Section 44AD (presumptive income = 8% of turnover, 6% if digital)
   ✅ Professionals opting Section 44ADA (50% of receipts = income)
-    — Doctors, CAs, lawyers, engineers, architects, freelancers
-    — Annual receipts up to ₹75 lakh (Budget 2025 enhanced for those with ≥50% digital receipts)
+    — Annual receipts up to ₹75 lakh
   ✅ Transport business Section 44AE
 
-WHO CANNOT FILE ITR-4:
-  ❌ Capital gains
-  ❌ More than one house property with losses
-  ❌ Income above ₹50L
-  ❌ Foreign income/assets
-  ❌ Director in company
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-QUICK DECISION TREE
+IMPORTANT DEADLINES (FY 2026-27 / AY 2027-28)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Q1: Do you have business/professional income?
-  YES → ITR-3 (if not presumptive) or ITR-4 (if presumptive)
-  NO  → Continue
-
-Q2: Do you have capital gains (any amount)?
-  YES → ITR-2
-  NO  → Continue
-
-Q3: Do you have income > ₹50L or foreign assets or 2+ properties?
-  YES → ITR-2
-  NO  → ITR-1
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IMPORTANT DEADLINES (FY 2025-26 / AY 2026-27)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Original filing deadline:     31 July 2026 (for non-audit cases)
-  Audit cases:                  31 October 2026
-  Belated return:               31 December 2026
-  Revised return:               31 December 2026
+  Original filing deadline:     31 July 2027 (for non-audit cases)
+  Audit cases:                  31 October 2027
+  Belated return:               31 December 2027
+  Revised return:               31 December 2027
   
   Penalty for late filing:
     Income < ₹5L: ₹1,000
     Income > ₹5L: ₹5,000 (if filed after 31 July but before 31 Dec)
     Plus: Interest @ 1%/month on unpaid tax (Section 234A)
-
-ITR FILING MODES:
-  - Income Tax e-Filing portal: www.incometax.gov.in
-  - Authorized e-Return Intermediaries (ERIs) — CAs, tax portals
-  - Offline utility available for ITR-2, ITR-3
