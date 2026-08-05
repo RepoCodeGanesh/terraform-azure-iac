@@ -389,32 +389,35 @@ resource "azurerm_api_management_backend" "function_backend" {
 }
 
 # ─── APIM API definition for DevOnboard AI Assistant ──────────────────────────
-resource "azurerm_api_management_api" "ai_assistant" {
-  provider              = azurerm.shared
-  name                  = "ai-assistant"
-  resource_group_name   = data.azurerm_resource_group.shared.name
-  api_management_name   = data.azurerm_api_management.shared.name
-  revision              = "1"
-  display_name          = "DevOnboard AI Assistant"
-  path                  = "ai-assistant"
-  protocols             = ["https"]
-  api_type              = "http"
-  subscription_required = false
+# Using azapi_resource instead of azurerm_api_management_api because azurerm v4
+# transforms the payload in ways that trigger 400 ValidationError on Consumption
+# tier APIM. azapi sends a raw ARM PUT with exactly what the ARM API expects.
+resource "azapi_resource" "apim_ai_assistant_api" {
+  type      = "Microsoft.ApiManagement/service/apis@2022-08-01"
+  name      = "ai-assistant"
+  parent_id = data.azurerm_api_management.shared.id
 
-  # Required by APIM ARM API for HTTP-type APIs without an import spec.
-  # The policy-level set-backend-service overrides this at runtime.
-  service_url = "https://${module.function_app.default_hostname}/api"
+  body = {
+    properties = {
+      displayName          = "DevOnboard AI Assistant"
+      path                 = "ai-assistant"
+      protocols            = ["https"]
+      serviceUrl           = "https://${module.function_app.default_hostname}/api"
+      subscriptionRequired = false
+    }
+  }
 
   depends_on = [
     azurerm_api_management_backend.function_backend
   ]
 }
 
-# POST /chat operation (azapi — azurerm v4 removed azurerm_api_management_operation)
+
+# POST /chat operation
 resource "azapi_resource" "chat_post" {
   type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
   name      = "chat-post"
-  parent_id = azurerm_api_management_api.ai_assistant.id
+  parent_id = azapi_resource.apim_ai_assistant_api.id
 
   body = {
     properties = {
@@ -425,14 +428,14 @@ resource "azapi_resource" "chat_post" {
     }
   }
 
-  depends_on = [azurerm_api_management_api.ai_assistant]
+  depends_on = [azapi_resource.apim_ai_assistant_api]
 }
 
 # GET /health operation
 resource "azapi_resource" "health_get" {
   type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
   name      = "health-get"
-  parent_id = azurerm_api_management_api.ai_assistant.id
+  parent_id = azapi_resource.apim_ai_assistant_api.id
 
   body = {
     properties = {
@@ -443,14 +446,14 @@ resource "azapi_resource" "health_get" {
     }
   }
 
-  depends_on = [azurerm_api_management_api.ai_assistant]
+  depends_on = [azapi_resource.apim_ai_assistant_api]
 }
 
 # GET /diagnostics operation
 resource "azapi_resource" "diagnostics_get" {
   type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
   name      = "diagnostics-get"
-  parent_id = azurerm_api_management_api.ai_assistant.id
+  parent_id = azapi_resource.apim_ai_assistant_api.id
 
   body = {
     properties = {
@@ -461,18 +464,21 @@ resource "azapi_resource" "diagnostics_get" {
     }
   }
 
-  depends_on = [azurerm_api_management_api.ai_assistant]
+  depends_on = [azapi_resource.apim_ai_assistant_api]
 }
 
 
 # APIM Policy: CORS + forward to Function App backend
-resource "azurerm_api_management_api_policy" "ai_assistant_cors" {
-  provider            = azurerm.shared
-  api_name            = azurerm_api_management_api.ai_assistant.name
-  api_management_name = data.azurerm_api_management.shared.name
-  resource_group_name = data.azurerm_resource_group.shared.name
+# azapi_resource used because the parent API is also managed by azapi.
+resource "azapi_resource" "ai_assistant_cors_policy" {
+  type      = "Microsoft.ApiManagement/service/apis/policies@2022-08-01"
+  name      = "policy"
+  parent_id = azapi_resource.apim_ai_assistant_api.id
 
-  xml_content = <<XML
+  body = {
+    properties = {
+      format = "xml"
+      value  = <<XML
 <policies>
   <inbound>
     <cors allow-credentials="false">
@@ -508,9 +514,11 @@ resource "azurerm_api_management_api_policy" "ai_assistant_cors" {
   </on-error>
 </policies>
 XML
+    }
+  }
 
   depends_on = [
-    azurerm_api_management_api.ai_assistant,
+    azapi_resource.apim_ai_assistant_api,
     azurerm_api_management_backend.function_backend,
   ]
 }
