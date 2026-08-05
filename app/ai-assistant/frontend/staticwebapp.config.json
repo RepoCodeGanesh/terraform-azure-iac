@@ -2,8 +2,7 @@
   "routes": [
     {
       "route": "/api/*",
-      "rewrite": "https://func-ht-dvob-p-cin-01.azurewebsites.net/api/*",
-      "statusCode": 200
+      "rewrite": "https://func-ht-dvob-p-cin-01.azurewebsites.net/api/*"
     }
   ],
   "responseOverrides": {
