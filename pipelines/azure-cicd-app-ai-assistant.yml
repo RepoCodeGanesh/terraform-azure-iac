@@ -211,7 +211,7 @@ stages:
           cat << 'EOF' > /tmp/policy.json
           {
             "properties": {
-              "value": "<policies><inbound><cors allow-credentials=\"true\"><allowed-origins><origin>https://gray-water-0b170560f.7.azurestaticapps.net</origin><origin>https://stapp-ht-dvob-p-cin-01.azurestaticapps.net</origin><origin>http://localhost:5173</origin></allowed-origins><allowed-methods preflight-result-max-age=\"300\"><method>GET</method><method>POST</method><method>OPTIONS</method></allowed-methods><allowed-headers><header>Authorization</header><header>Content-Type</header><header>Accept</header></allowed-headers></cors><set-backend-service base-url=\"https://func-ht-dvob-p-cin-01.azurewebsites.net/api\" /><base /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>",
+              "value": "<policies><inbound><cors allow-credentials=\"true\"><allowed-origins><origin>https://green-tree-04d02240f.7.azurestaticapps.net</origin><origin>https://stapp-ht-dvob-p-cin-01.azurestaticapps.net</origin><origin>http://localhost:5173</origin></allowed-origins><allowed-methods preflight-result-max-age=\"300\"><method>GET</method><method>POST</method><method>OPTIONS</method></allowed-methods><allowed-headers><header>Authorization</header><header>Content-Type</header><header>Accept</header></allowed-headers></cors><set-backend-service base-url=\"https://func-ht-dvob-p-cin-01.azurewebsites.net/api\" /><base /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>",
               "format": "rawxml"
             }
           }

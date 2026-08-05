@@ -1,0 +1,86 @@
+HRA EXEMPTION — HOUSE RENT ALLOWANCE TAX RULES
+================================================
+
+SOURCE: Income Tax Act 1961, Section 10(13A) read with Rule 2A
+AVAILABILITY: OLD TAX REGIME ONLY (HRA exemption not available in new regime)
+
+WHAT IS HRA?
+HRA (House Rent Allowance) is a salary component paid by employers.
+The amount exempt from tax is calculated as the MINIMUM of three values.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HRA EXEMPTION FORMULA — MINIMUM OF THESE THREE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Actual HRA received from employer
+2. 50% of (Basic + DA) — for metro cities
+   40% of (Basic + DA) — for non-metro cities
+3. Actual rent paid MINUS 10% of (Basic + DA)
+
+METRO CITIES (50% rule applies):
+  Mumbai, Delhi (including NCR), Kolkata, Chennai
+
+NON-METRO CITIES (40% rule applies):
+  Bangalore, Hyderabad, Pune, Ahmedabad, and all other cities
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORKED EXAMPLE — METRO CITY (Mumbai)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Monthly figures:
+  Basic salary:    ₹50,000/month → ₹6,00,000/year
+  HRA received:    ₹20,000/month → ₹2,40,000/year
+  Rent paid:       ₹22,000/month → ₹2,64,000/year
+  City: Mumbai (metro)
+
+Calculation (annual):
+  1. Actual HRA received:            ₹2,40,000
+  2. 50% of Basic:                   ₹3,00,000
+  3. Rent paid - 10% of Basic:       ₹2,64,000 - ₹60,000 = ₹2,04,000
+
+  HRA Exempt = MINIMUM = ₹2,04,000
+  Taxable HRA = ₹2,40,000 - ₹2,04,000 = ₹36,000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORKED EXAMPLE — NON-METRO (Bangalore)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Monthly figures:
+  Basic salary:    ₹60,000/month → ₹7,20,000/year
+  HRA received:    ₹24,000/month → ₹2,88,000/year
+  Rent paid:       ₹28,000/month → ₹3,36,000/year
+  City: Bangalore (non-metro — 40%)
+
+Calculation (annual):
+  1. Actual HRA received:            ₹2,88,000
+  2. 40% of Basic:                   ₹2,88,000
+  3. Rent paid - 10% of Basic:       ₹3,36,000 - ₹72,000 = ₹2,64,000
+
+  HRA Exempt = MINIMUM = ₹2,64,000
+  Taxable HRA = ₹2,88,000 - ₹2,64,000 = ₹24,000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANT CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. MUST be actually paying rent — exemption not available if living in own house
+2. Rent receipts/agreement required as proof
+3. If annual rent > ₹1,00,000: landlord's PAN mandatory
+4. Cannot claim HRA exemption AND home loan deduction for same property/city
+   (But possible if renting in one city, property in another city)
+5. Rent paid to parents is valid — must be genuine, proper rent agreement needed
+   Landlord parent must declare rent as income in their ITR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80GG — HRA FOR THOSE NOT RECEIVING HRA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+For salaried employees NOT receiving HRA component OR self-employed:
+  Deduction: MINIMUM of —
+  1. Actual rent paid - 10% of adjusted gross income
+  2. ₹5,000 per month (₹60,000 per year)
+  3. 25% of adjusted gross income
+
+Conditions: Must not own residential property anywhere in India.
+
+TIPS:
+- Increase basic salary component in your CTC to maximize HRA exemption
+- Keep all rent receipts and rental agreement
+- If staying with parents, create proper rent agreement and ensure parents declare income
+- For freelancers/self-employed: use Section 80GG if you pay rent

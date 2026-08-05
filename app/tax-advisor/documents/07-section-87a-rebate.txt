@@ -1,0 +1,66 @@
+SECTION 87A REBATE — ZERO TAX FOR LOWER INCOME
+================================================
+
+SOURCE: Income Tax Act 1961, Section 87A as amended by Finance Act 2025
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEW TAX REGIME — SECTION 87A REBATE FY 2025-26
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Maximum Rebate: ₹60,000
+Eligible if: Net taxable income ≤ ₹12,00,000
+
+Effect:
+  - Total income up to ₹12,00,000 → Tax = ZERO
+  - For salaried: With standard deduction ₹75,000:
+    Gross salary up to ₹12,75,000 → ZERO tax under new regime
+
+Calculation example (₹12L income, new regime):
+  Gross income:                    ₹12,00,000
+  Less: Standard deduction:          (₹75,000)
+  Net taxable income:              ₹11,25,000
+  Tax on ₹11,25,000 (new slabs):     ₹57,500
+  Less: 87A rebate (≤₹12L):        (₹57,500) [full rebate since ₹11.25L < ₹12L]
+  Tax payable:                              ₹0
+  Total tax: ZERO
+
+  Wait — but gross is ₹12L which is exactly the limit:
+  Standard deduction applies, so net taxable = ₹11.25L < ₹12L → full rebate
+  Therefore: Gross salary of ₹12,75,000 = ZERO tax in new regime
+
+What if income is ₹12,76,000 (just over)?
+  Net taxable = ₹12,76,000 - ₹75,000 = ₹12,01,000
+  87A rebate NOT applicable (exceeds ₹12L limit)
+  Tax = full tax on ₹12,01,000 as per new slabs ≈ ₹61,200 + cess
+  This "cliff edge" effect means ₹1,000 extra salary costs ₹60,000+ in tax!
+
+MARGINAL RELIEF:
+  To prevent this cliff, marginal relief is available:
+  If income slightly exceeds ₹12L, tax is limited to:
+  Tax = (Net income - ₹12,00,000)
+  So for ₹12,01,000: Tax = ₹1,000 (not ₹61,200)
+  Marginal relief applies until the tax equals what it would be without relief
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OLD TAX REGIME — SECTION 87A REBATE FY 2025-26
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Maximum Rebate: ₹12,500
+Eligible if: Net taxable income ≤ ₹5,00,000
+
+Effect: If income ≤ ₹5L after all deductions → Zero tax under old regime
+
+Practical use:
+  If income is ₹6L but has 80C ₹1.5L + 80D ₹25K + standard deduction ₹50K:
+  Net taxable = ₹6L - ₹50K - ₹1.5L - ₹25K = ₹3.75L → below ₹5L → Zero tax (old regime)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+87A NOT APPLICABLE ON:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- LTCG under Section 112A (equity/mutual fund long-term gains)
+- Special rate incomes (crypto, lottery, etc.)
+- Non-residents (NRIs)
+
+KEY PLANNING INSIGHT:
+  For income between ₹12L and ₹12.75L (gross salary):
+  → New regime: Near zero tax due to marginal relief
+  → Old regime: May have higher tax if deductions are limited
+  → The ₹12L zero-tax threshold in new regime is a game changer for this bracket

@@ -1,0 +1,95 @@
+BUDGET 2025 KEY TAX CHANGES — FY 2025-26
+=========================================
+
+SOURCE: Finance Act 2025 (Union Budget 2025-26), CBDT Circulars
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ZERO TAX UP TO ₹12 LAKH — BIGGEST CHANGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Section 87A rebate enhanced to ₹60,000 under new tax regime.
+Net taxable income up to ₹12,00,000 → ZERO tax.
+For salaried with ₹75K standard deduction:
+  Gross salary up to ₹12,75,000 → ZERO tax.
+This is a major relief for middle-income earners (previously ₹7L limit).
+
+NEW REGIME REVISED SLABS (FY 2025-26):
+  Up to ₹4L:     0%
+  ₹4L–₹8L:       5%
+  ₹8L–₹12L:      10%
+  ₹12L–₹16L:     15%
+  ₹16L–₹20L:     20%
+  ₹20L–₹24L:     25%
+  Above ₹24L:    30%
+(Previous structure had ₹3L zero, different brackets)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. EMPLOYER NPS LIMIT INCREASED TO 14% (Budget 2024 effect)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Section 80CCD(2): Employer NPS contribution limit raised from 10% to 14% for private sector.
+Previously 14% only for central government employees.
+Now uniformly 14% for ALL employees.
+Works in BOTH old and new tax regime.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. STANDARD DEDUCTION INCREASED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+New regime: ₹75,000 (increased from ₹50,000 in Budget 2024)
+Old regime: ₹50,000 (unchanged)
+Family pension: ₹25,000 (new regime, Budget 2024)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. LTCG ON EQUITY — 12.5% (Budget 2024)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LTCG on listed equity / equity MF increased from 10% to 12.5%.
+STCG increased from 15% to 20%.
+LTCG exemption increased from ₹1L to ₹1.25L per year.
+No indexation benefit retained for equity.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. REAL ESTATE — INDEXATION REMOVED (Budget 2024)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+For property sold after 23 July 2024:
+  LTCG rate: 12.5% without indexation
+  Exception (grandfathering): For property bought before 23 July 2024:
+    Choose LOWER of: 12.5% without indexation vs 20% with indexation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. UPDATED RETURN — 4 YEARS NOW ALLOWED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Updated return (Section 139(8A)) can now be filed up to 4 years from end of assessment year.
+Earlier: 2 years only.
+Additional tax: 25% if filed within 12 months, 50% if within 24 months, 60% if 25-48 months.
+Use this to correct mistakes or disclose missed income.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. TDS RATE RATIONALISATION (Budget 2024)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Several TDS rates reduced:
+  - Section 194D (insurance commission): 5% → 2%
+  - Section 194DA (life insurance maturity): 5% → 2%
+  - Section 194G (lottery commission): 5% → 2%
+  - Section 194H (commission/brokerage): 5% → 2%
+  - Section 194IB (rent by individual): 5% → 2%
+  - Section 194M (professional fees by individual): 5% → 2%
+TDS threshold for rent (Section 194I): No change.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. NPS VATSALYA SCHEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+New NPS scheme for minors, opened by parents.
+Contribution by parent qualifies for Section 80CCD(1B) (within ₹50K limit)
+At 18, minor's NPS Vatsalya converts to regular NPS Tier-1.
+Partial withdrawal allowed after 3 years for education/disability.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. PRESUMPTIVE TAXATION THRESHOLD ENHANCED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Section 44ADA (professionals): Threshold raised to ₹75 lakh if ≥50% of receipts are digital.
+Section 44AD (small business): ₹3 crore if ≥50% receipts digital.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10. VIVAD SE VISHWAS SCHEME 2024
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dispute resolution scheme for pending income tax litigation.
+Pay reduced tax and waiver of interest/penalty.
+Applicable for cases pending before CIT(Appeals), ITAT, High Court, Supreme Court.

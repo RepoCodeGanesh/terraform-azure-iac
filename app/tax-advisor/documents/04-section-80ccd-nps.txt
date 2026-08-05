@@ -1,0 +1,77 @@
+NATIONAL PENSION SCHEME (NPS) — TAX BENEFITS
+=============================================
+
+SOURCE: Income Tax Act 1961, Sections 80CCD(1), 80CCD(1B), 80CCD(2)
+
+NPS OVERVIEW:
+NPS is a government-sponsored retirement savings scheme regulated by PFRDA.
+It has Tier 1 (mandatory, tax-advantaged) and Tier 2 (voluntary, no tax benefit).
+Tax benefits apply ONLY to NPS Tier 1 contributions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80CCD(1) — EMPLOYEE/SELF CONTRIBUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Salaried: Up to 10% of salary (Basic + DA)
+- Self-employed: Up to 20% of gross income
+- This is WITHIN the overall Section 80C limit of ₹1,50,000
+- AVAILABLE UNDER: OLD REGIME ONLY
+- Example: Basic ₹60,000/month → annual basic ₹7,20,000 → max 80CCD(1) = ₹72,000
+  (counted within 80C ₹1.5L limit)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80CCD(1B) — ADDITIONAL SELF CONTRIBUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Additional ₹50,000 deduction OVER AND ABOVE the ₹1.5L 80C limit
+- Total effective 80C+80CCD(1B) limit = ₹2,00,000
+- Must be voluntary contribution to NPS Tier 1
+- AVAILABLE UNDER: OLD REGIME ONLY
+- This is the most powerful individual tax-saving option after 80C is exhausted
+
+Example:
+  80C limit used:          ₹1,50,000
+  80CCD(1B) additional:      ₹50,000
+  Total deduction:          ₹2,00,000
+  Tax saved at 30% slab:    ₹60,000 + 4% cess = ₹62,400
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80CCD(2) — EMPLOYER CONTRIBUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THIS IS THE MOST POWERFUL NPS BENEFIT — AVAILABLE IN BOTH REGIMES!
+
+- Employer's contribution to employee's NPS account
+- Limit: Up to 14% of salary (Basic + DA) for Central Government employees
+         Up to 14% of salary for private sector employees (Budget 2024 increase from 10%)
+- NOT included in 80C limit — completely separate
+- NOT included in employee's taxable salary
+- AVAILABLE UNDER: BOTH OLD AND NEW TAX REGIME ✅
+
+Why 80CCD(2) is powerful:
+  CTC ₹20L, Basic ₹10L/year
+  Employer NPS @ 14%: ₹1,40,000/year
+  This ₹1,40,000 is:
+    - Deducted from employee's taxable salary
+    - NOT counted in 80C
+    - Available even in New Regime
+  Tax saving at 30%: ₹42,000/year
+  Net cost to employer: same CTC restructuring, employee pays less tax
+
+HOW TO USE 80CCD(2):
+  Ask HR to restructure CTC:
+  - Reduce "Special Allowance" (fully taxable)
+  - Add "Employer NPS Contribution" (up to 14% of basic)
+  - Net take-home may slightly reduce but tax saving is significant
+
+NPS WITHDRAWAL RULES:
+  - At retirement (60 years): 60% lump sum tax-free, 40% mandatory annuity (taxable)
+  - Partial withdrawal (after 3 years): up to 25% for specific reasons (home, education, illness)
+  - Exit before 60: 20% lump sum, 80% mandatory annuity
+
+TAX ON NPS MATURITY:
+  - 60% lump sum at retirement: Tax-FREE (EEE for that portion)
+  - Annuity income: Taxable as per slab rate
+
+STRATEGY:
+  Priority order for NPS tax benefits:
+  1. Employer NPS (80CCD(2)) — ask HR to restructure, works in both regimes
+  2. 80CCD(1B) extra ₹50K — only if in old regime and 80C is exhausted
+  3. 80CCD(1) within 80C — use NPS Tier 1 as part of 80C allocation
