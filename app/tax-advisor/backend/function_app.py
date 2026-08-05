@@ -373,7 +373,7 @@ Return ONLY valid JSON, no markdown."""
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_tokens=1500,
+            max_completion_tokens=1500,
         )
         raw = resp.choices[0].message.content.strip()
         # Clean markdown if present
@@ -453,7 +453,7 @@ Return ONLY valid JSON, no markdown."""
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_tokens=1800,
+            max_completion_tokens=1800,
         )
         raw = resp.choices[0].message.content.strip()
         if raw.startswith("```"):
