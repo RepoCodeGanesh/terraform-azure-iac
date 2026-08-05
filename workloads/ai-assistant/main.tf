@@ -388,6 +388,15 @@ resource "azurerm_api_management_backend" "function_backend" {
   ]
 }
 
+# ─── Import pre-existing APIM API into Terraform state ────────────────────────
+# The API "dvob-ai-assistant" was created by a prior apply but is not in state.
+# This import block (Terraform ≥ 1.5) adopts it automatically during plan/apply.
+# Safe to remove after the first successful apply.
+import {
+  to = azapi_resource.apim_ai_assistant_api
+  id = "/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf/resourceGroups/rg-ht-ss-p-cin-01/providers/Microsoft.ApiManagement/service/apim-ht-ss-p-cin-01/apis/dvob-ai-assistant"
+}
+
 # ─── APIM API definition for DevOnboard AI Assistant ──────────────────────────
 # azapi_resource used — azurerm v4 triggers 400 ValidationError on Consumption APIM.
 # One name everywhere: ARM resource name = gateway path = "dvob-ai-assistant"
