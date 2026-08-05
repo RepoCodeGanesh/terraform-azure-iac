@@ -1,0 +1,226 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - app/ai-assistant/**
+      - pipelines/azure-cicd-app-ai-assistant.yml
+    exclude:
+      - '**/*.md'
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - app/ai-assistant/**
+      - pipelines/azure-cicd-app-ai-assistant.yml
+    exclude:
+      - '**/*.md'
+
+variables:
+  - name: azureServiceConnection
+    value: 'app-prod'
+  - name: keyVaultName
+    value: 'kv-ht-ss-p-cin-01'
+  - name: keyVaultSubscription
+    value: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+- stage: DeployFrontend
+  displayName: 'Build and Deploy React Frontend'
+  jobs:
+  - job: BuildAndDeployFrontend
+    displayName: 'Deploy React UI to Azure Static Web App'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Fetch SWA Deployment Token from Key Vault'
+      inputs:
+        azureSubscription: 'shared-services'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          TOKEN=$(az keyvault secret show \
+            --vault-name "$(keyVaultName)" \
+            --name "SWA-CLI-DEPLOYMENT-TOKEN" \
+            --subscription "$(keyVaultSubscription)" \
+            --query "value" -o tsv)
+          echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        cd app/ai-assistant/frontend
+        npm install
+        npm run build
+      displayName: 'Build React UI'
+
+    - task: AzureStaticWebApp@0
+      inputs:
+        app_location: 'app/ai-assistant/frontend'
+        output_location: 'dist'
+        azure_static_web_apps_api_token: '$(SWA_CLI_DEPLOYMENT_TOKEN)'
+      displayName: 'Deploy to Static Web App'
+
+- stage: DeployBackend
+  displayName: 'Deploy Python Function App'
+  jobs:
+  - job: BuildAndDeployBackend
+    displayName: 'Package and Deploy Python Code'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        cd app/ai-assistant/backend
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --target=".python_packages/lib/site-packages" -r requirements.txt
+      displayName: 'Install Python Dependencies'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: 'app/ai-assistant/backend'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+      displayName: 'Archive Function App Code'
+
+    - task: AzureFunctionApp@2
+      inputs:
+        connectedServiceNameARM: '$(azureServiceConnection)'
+        appType: 'functionAppLinux'
+        appName: 'func-ht-dvob-p-cin-01'
+        package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+      displayName: 'Deploy to Function App'
+
+- stage: ApimRegistration
+  displayName: 'Register API in Shared APIM'
+  dependsOn: DeployBackend
+  jobs:
+  - job: RegisterApim
+    displayName: 'Import and Configure API in APIM'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Import Chat API into APIM'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          set -e
+
+          APIM_NAME="apim-ht-ss-p-cin-01"
+          APIM_RG="rg-ht-ss-p-cin-01"
+          APIM_SUB="859a785c-bd38-402d-b595-1f44f40fb9bf"
+          FUNC_URL="https://func-ht-dvob-p-cin-01.azurewebsites.net/api"
+          API_ID="dvob-ai-assistant"
+          API_PATH="ai-assistant"
+
+          echo "Creating OpenAPI spec..."
+          cat > /tmp/openapi.json << 'OPENAPI'
+          {
+            "openapi": "3.0.1",
+            "info": {
+              "title": "DevOnboard AI Assistant",
+              "description": "AI Assistant chat API backed by Azure OpenAI and AI Search",
+              "version": "1.0"
+            },
+            "paths": {
+              "/chat": {
+                "post": {
+                  "operationId": "chat-post",
+                  "summary": "Send a chat message to the AI assistant",
+                  "requestBody": {
+                    "required": true,
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "message": { "type": "string" }
+                          },
+                          "required": ["message"]
+                        }
+                      }
+                    }
+                  },
+                  "responses": {
+                    "200": {
+                      "description": "Successful chat response",
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "reply": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          OPENAPI
+
+          echo "Importing API into APIM..."
+          az apim api import \
+            --subscription "$APIM_SUB" \
+            --resource-group "$APIM_RG" \
+            --service-name "$APIM_NAME" \
+            --api-id "$API_ID" \
+            --display-name "DevOnboard AI Assistant" \
+            --path "$API_PATH" \
+            --specification-format OpenApi \
+            --specification-path /tmp/openapi.json \
+            --service-url "$FUNC_URL" \
+            --protocols https
+
+          echo "Disabling APIM subscription key requirement..."
+          cat << 'EOF' > /tmp/sub_patch.json
+          {
+            "properties": {
+              "subscriptionRequired": false
+            }
+          }
+          EOF
+
+          az rest --method patch \
+            --uri "https://management.azure.com/subscriptions/$APIM_SUB/resourceGroups/$APIM_RG/providers/Microsoft.ApiManagement/service/$APIM_NAME/apis/$API_ID?api-version=2022-08-01" \
+            --body "@/tmp/sub_patch.json" \
+            --headers "Accept=application/json" \
+            --output none
+
+          echo "Applying CORS policy at API scope..."
+          cat << 'EOF' > /tmp/policy.json
+          {
+            "properties": {
+              "value": "<policies><inbound><cors allow-credentials=\"true\"><allowed-origins><origin>https://gray-water-0b170560f.7.azurestaticapps.net</origin><origin>https://stapp-ht-dvob-p-cin-01.azurestaticapps.net</origin><origin>http://localhost:5173</origin></allowed-origins><allowed-methods preflight-result-max-age=\"300\"><method>GET</method><method>POST</method><method>OPTIONS</method></allowed-methods><allowed-headers><header>Authorization</header><header>Content-Type</header><header>Accept</header></allowed-headers></cors><set-backend-service base-url=\"https://func-ht-dvob-p-cin-01.azurewebsites.net/api\" /><base /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>",
+              "format": "rawxml"
+            }
+          }
+          EOF
+
+          az rest --method put \
+            --uri "https://management.azure.com/subscriptions/$APIM_SUB/resourceGroups/$APIM_RG/providers/Microsoft.ApiManagement/service/$APIM_NAME/apis/$API_ID/policies/policy?api-version=2022-08-01" \
+            --body "@/tmp/policy.json" \
+            --headers "Accept=application/json" \
+            --output none
+
+          echo "APIM registration complete."
