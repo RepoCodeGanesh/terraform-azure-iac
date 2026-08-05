@@ -9,7 +9,7 @@ import { Bot, User, Wifi, WifiOff, AlertTriangle, CheckCircle } from 'lucide-rea
 // Priority 3: APIM gateway URL (requires APIM API + CORS policy in Terraform)
 const API_DIRECT   = import.meta.env.VITE_API_URL;        // e.g. https://func-ht-dvob-p-cin-01.azurewebsites.net/api
 const API_PROXY    = '/api';                               // SWA proxy → Function App (no CORS needed)
-const API_APIM     = 'https://apim-ht-ss-p-cin-01.azure-api.net/ai-assistant';
+const API_APIM     = 'https://apim-ht-ss-p-cin-01.azure-api.net/dvob-ai-assistant';
 
 // Use VITE_API_URL if explicitly set, otherwise use the SWA proxy (cleanest, no CORS)
 const API_BASE_URL = API_DIRECT || API_PROXY;

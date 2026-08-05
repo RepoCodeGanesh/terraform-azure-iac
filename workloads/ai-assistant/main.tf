@@ -389,15 +389,8 @@ resource "azurerm_api_management_backend" "function_backend" {
 }
 
 # ─── APIM API definition for DevOnboard AI Assistant ──────────────────────────
-# Using azapi_resource instead of azurerm_api_management_api because azurerm v4
-# transforms the payload in ways that trigger 400 ValidationError on Consumption
-# tier APIM. azapi sends a raw ARM PUT with exactly what the ARM API expects.
-#
-# Name MUST be "dvob-ai-assistant" — a pre-existing API in this APIM instance
-# already owns the path "ai-assistant". APIM enforces unique paths per instance,
-# so we PUT to the existing resource name to update it rather than create a duplicate.
-# The gateway URL (https://apim.../ai-assistant/...) is unchanged — it is determined
-# by the "path" property, not the resource "name".
+# azapi_resource used — azurerm v4 triggers 400 ValidationError on Consumption APIM.
+# One name everywhere: ARM resource name = gateway path = "dvob-ai-assistant"
 resource "azapi_resource" "apim_ai_assistant_api" {
   type      = "Microsoft.ApiManagement/service/apis@2022-08-01"
   name      = "dvob-ai-assistant"
@@ -406,7 +399,7 @@ resource "azapi_resource" "apim_ai_assistant_api" {
   body = {
     properties = {
       displayName          = "DevOnboard AI Assistant"
-      path                 = "ai-assistant"
+      path                 = "dvob-ai-assistant"
       protocols            = ["https"]
       serviceUrl           = "https://${module.function_app.default_hostname}/api"
       subscriptionRequired = false
