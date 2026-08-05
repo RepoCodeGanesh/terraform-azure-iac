@@ -405,44 +405,60 @@ resource "azurerm_api_management_api" "ai_assistant" {
   ]
 }
 
-# POST /chat operation
-resource "azurerm_api_management_operation" "chat_post" {
-  provider            = azurerm.shared
-  operation_id        = "chat-post"
-  api_name            = azurerm_api_management_api.ai_assistant.name
-  api_management_name = data.azurerm_api_management.shared.name
-  resource_group_name = data.azurerm_resource_group.shared.name
-  display_name        = "Chat"
-  method              = "POST"
-  url_template        = "/chat"
-  description         = "Send a chat message to the DevOnboard AI assistant."
+# POST /chat operation (azapi — azurerm v4 removed azurerm_api_management_operation)
+resource "azapi_resource" "chat_post" {
+  type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
+  name      = "chat-post"
+  parent_id = azurerm_api_management_api.ai_assistant.id
+
+  body = {
+    properties = {
+      displayName  = "Chat"
+      method       = "POST"
+      urlTemplate  = "/chat"
+      description  = "Send a chat message to the DevOnboard AI assistant."
+    }
+  }
+
+  depends_on = [azurerm_api_management_api.ai_assistant]
 }
 
 # GET /health operation
-resource "azurerm_api_management_operation" "health_get" {
-  provider            = azurerm.shared
-  operation_id        = "health-get"
-  api_name            = azurerm_api_management_api.ai_assistant.name
-  api_management_name = data.azurerm_api_management.shared.name
-  resource_group_name = data.azurerm_resource_group.shared.name
-  display_name        = "Health Check"
-  method              = "GET"
-  url_template        = "/health"
-  description         = "Health check endpoint for the DevOnboard AI backend."
+resource "azapi_resource" "health_get" {
+  type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
+  name      = "health-get"
+  parent_id = azurerm_api_management_api.ai_assistant.id
+
+  body = {
+    properties = {
+      displayName = "Health Check"
+      method      = "GET"
+      urlTemplate = "/health"
+      description = "Health check endpoint for the DevOnboard AI backend."
+    }
+  }
+
+  depends_on = [azurerm_api_management_api.ai_assistant]
 }
 
 # GET /diagnostics operation
-resource "azurerm_api_management_operation" "diagnostics_get" {
-  provider            = azurerm.shared
-  operation_id        = "diagnostics-get"
-  api_name            = azurerm_api_management_api.ai_assistant.name
-  api_management_name = data.azurerm_api_management.shared.name
-  resource_group_name = data.azurerm_resource_group.shared.name
-  display_name        = "Diagnostics"
-  method              = "GET"
-  url_template        = "/diagnostics"
-  description         = "Returns which required env vars are configured (no values exposed)."
+resource "azapi_resource" "diagnostics_get" {
+  type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
+  name      = "diagnostics-get"
+  parent_id = azurerm_api_management_api.ai_assistant.id
+
+  body = {
+    properties = {
+      displayName = "Diagnostics"
+      method      = "GET"
+      urlTemplate = "/diagnostics"
+      description = "Returns which required env vars are configured (no values exposed)."
+    }
+  }
+
+  depends_on = [azurerm_api_management_api.ai_assistant]
 }
+
 
 # APIM Policy: CORS + forward to Function App backend
 resource "azurerm_api_management_api_policy" "ai_assistant_cors" {
