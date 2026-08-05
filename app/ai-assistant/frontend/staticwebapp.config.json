@@ -1,10 +1,5 @@
 {
-  "routes": [
-    {
-      "route": "/api/*",
-      "rewrite": "https://func-ht-dvob-p-cin-01.azurewebsites.net/api/*"
-    }
-  ],
+  "routes": [],
   "responseOverrides": {
     "401": {
       "redirect": "/.auth/login/aad",

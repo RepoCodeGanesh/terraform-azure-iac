@@ -11,8 +11,8 @@ const API_DIRECT   = import.meta.env.VITE_API_URL;        // e.g. https://func-h
 const API_PROXY    = '/api';                               // SWA proxy → Function App (no CORS needed)
 const API_APIM     = 'https://apim-ht-ss-p-cin-01.azure-api.net/dvob-ai-assistant';
 
-// Use VITE_API_URL if explicitly set, otherwise use the SWA proxy (cleanest, no CORS)
-const API_BASE_URL = API_DIRECT || API_PROXY;
+// Default to APIM Gateway URL if VITE_API_URL is not set at build time
+const API_BASE_URL = API_DIRECT || API_APIM;
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 async function pingBackend(baseUrl) {

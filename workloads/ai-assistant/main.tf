@@ -512,9 +512,7 @@ resource "azapi_resource" "ai_assistant_cors_policy" {
   <inbound>
     <cors allow-credentials="false">
       <allowed-origins>
-        <origin>https://${azurerm_static_web_app.frontend.default_host_name}</origin>
-        <origin>http://localhost:5173</origin>
-        <origin>http://localhost:4280</origin>
+        <origin>*</origin>
       </allowed-origins>
       <allowed-methods preflight-result-max-age="300">
         <method>POST</method>
