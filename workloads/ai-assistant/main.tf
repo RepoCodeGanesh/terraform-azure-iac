@@ -398,7 +398,12 @@ resource "azurerm_api_management_api" "ai_assistant" {
   display_name          = "DevOnboard AI Assistant"
   path                  = "ai-assistant"
   protocols             = ["https"]
+  api_type              = "http"
   subscription_required = false
+
+  # Required by APIM ARM API for HTTP-type APIs without an import spec.
+  # The policy-level set-backend-service overrides this at runtime.
+  service_url = "https://${module.function_app.default_hostname}/api"
 
   depends_on = [
     azurerm_api_management_backend.function_backend
@@ -413,10 +418,10 @@ resource "azapi_resource" "chat_post" {
 
   body = {
     properties = {
-      displayName  = "Chat"
-      method       = "POST"
-      urlTemplate  = "/chat"
-      description  = "Send a chat message to the DevOnboard AI assistant."
+      displayName = "Chat"
+      method      = "POST"
+      urlTemplate = "/chat"
+      description = "Send a chat message to the DevOnboard AI assistant."
     }
   }
 
