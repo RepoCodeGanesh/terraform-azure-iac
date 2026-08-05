@@ -225,7 +225,7 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
             model=OPENAI_MODEL,
             messages=messages,
             temperature=0.2,
-            max_tokens=1024,
+            max_completion_tokens=1024,
         )
         reply = resp.choices[0].message.content
 
