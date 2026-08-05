@@ -1,8 +1,9 @@
 {
   "routes": [
     {
-      "route": "/chat*",
-      "allowedRoles": ["authenticated"]
+      "route": "/api/*",
+      "rewrite": "https://func-ht-dvob-p-cin-01.azurewebsites.net/api/*",
+      "statusCode": 200
     }
   ],
   "responseOverrides": {
@@ -14,5 +15,10 @@
   "navigationFallback": {
     "rewrite": "index.html",
     "exclude": ["/images/*.{png,jpg,gif}", "/css/*"]
+  },
+  "globalHeaders": {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization"
   }
 }

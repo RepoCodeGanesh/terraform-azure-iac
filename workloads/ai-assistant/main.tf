@@ -356,7 +356,7 @@ resource "azurerm_cosmosdb_sql_role_assignment" "func_cosmos_contributor" {
   ]
 }
 
-# Register OpenAI Backend in Shared APIM
+# Register OpenAI Backend in Shared APIM (for direct OpenAI passthrough if needed)
 resource "azurerm_api_management_backend" "openai_backend" {
   provider            = azurerm.shared
   name                = "openai-backend-${var.workload}"
@@ -369,6 +369,128 @@ resource "azurerm_api_management_backend" "openai_backend" {
 
   depends_on = [
     module.openai
+  ]
+}
+
+# Register Function App as an APIM backend (chat handler)
+resource "azurerm_api_management_backend" "function_backend" {
+  provider            = azurerm.shared
+  name                = "func-backend-${var.workload}"
+  resource_group_name = data.azurerm_resource_group.shared.name
+  api_management_name = data.azurerm_api_management.shared.name
+  protocol            = "http"
+  url                 = "https://${module.function_app.default_hostname}/api"
+
+  description = "APIM backend for DevOnboard AI Function App chat handler"
+
+  depends_on = [
+    module.function_app
+  ]
+}
+
+# ─── APIM API definition for DevOnboard AI Assistant ──────────────────────────
+resource "azurerm_api_management_api" "ai_assistant" {
+  provider              = azurerm.shared
+  name                  = "ai-assistant"
+  resource_group_name   = data.azurerm_resource_group.shared.name
+  api_management_name   = data.azurerm_api_management.shared.name
+  revision              = "1"
+  display_name          = "DevOnboard AI Assistant"
+  path                  = "ai-assistant"
+  protocols             = ["https"]
+  subscription_required = false
+
+  depends_on = [
+    azurerm_api_management_backend.function_backend
+  ]
+}
+
+# POST /chat operation
+resource "azurerm_api_management_operation" "chat_post" {
+  provider            = azurerm.shared
+  operation_id        = "chat-post"
+  api_name            = azurerm_api_management_api.ai_assistant.name
+  api_management_name = data.azurerm_api_management.shared.name
+  resource_group_name = data.azurerm_resource_group.shared.name
+  display_name        = "Chat"
+  method              = "POST"
+  url_template        = "/chat"
+  description         = "Send a chat message to the DevOnboard AI assistant."
+}
+
+# GET /health operation
+resource "azurerm_api_management_operation" "health_get" {
+  provider            = azurerm.shared
+  operation_id        = "health-get"
+  api_name            = azurerm_api_management_api.ai_assistant.name
+  api_management_name = data.azurerm_api_management.shared.name
+  resource_group_name = data.azurerm_resource_group.shared.name
+  display_name        = "Health Check"
+  method              = "GET"
+  url_template        = "/health"
+  description         = "Health check endpoint for the DevOnboard AI backend."
+}
+
+# GET /diagnostics operation
+resource "azurerm_api_management_operation" "diagnostics_get" {
+  provider            = azurerm.shared
+  operation_id        = "diagnostics-get"
+  api_name            = azurerm_api_management_api.ai_assistant.name
+  api_management_name = data.azurerm_api_management.shared.name
+  resource_group_name = data.azurerm_resource_group.shared.name
+  display_name        = "Diagnostics"
+  method              = "GET"
+  url_template        = "/diagnostics"
+  description         = "Returns which required env vars are configured (no values exposed)."
+}
+
+# APIM Policy: CORS + forward to Function App backend
+resource "azurerm_api_management_api_policy" "ai_assistant_cors" {
+  provider            = azurerm.shared
+  api_name            = azurerm_api_management_api.ai_assistant.name
+  api_management_name = data.azurerm_api_management.shared.name
+  resource_group_name = data.azurerm_resource_group.shared.name
+
+  xml_content = <<XML
+<policies>
+  <inbound>
+    <cors allow-credentials="false">
+      <allowed-origins>
+        <origin>https://${azurerm_static_web_app.frontend.default_host_name}</origin>
+        <origin>http://localhost:5173</origin>
+        <origin>http://localhost:4280</origin>
+      </allowed-origins>
+      <allowed-methods preflight-result-max-age="300">
+        <method>POST</method>
+        <method>GET</method>
+        <method>OPTIONS</method>
+      </allowed-methods>
+      <allowed-headers>
+        <header>Content-Type</header>
+        <header>Authorization</header>
+        <header>x-session-id</header>
+      </allowed-headers>
+      <expose-headers>
+        <header>x-session-id</header>
+      </expose-headers>
+    </cors>
+    <set-backend-service backend-id="func-backend-${var.workload}" />
+  </inbound>
+  <backend>
+    <forward-request timeout="30" />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
+XML
+
+  depends_on = [
+    azurerm_api_management_api.ai_assistant,
+    azurerm_api_management_backend.function_backend,
   ]
 }
 

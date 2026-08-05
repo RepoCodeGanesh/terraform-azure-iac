@@ -10,7 +10,7 @@ export default function ChatWindow({ messages, isLoading }) {
   return (
     <div className="chat-area">
       {messages.map((msg, index) => (
-        <div key={index} className={`message-bubble ${msg.role === 'user' ? 'user' : 'bot'}`}>
+      <div key={index} className={`message-bubble ${msg.role === 'user' ? 'user' : 'bot'}${msg.isError ? ' error-bubble' : ''}`}>
           {msg.content}
         </div>
       ))}

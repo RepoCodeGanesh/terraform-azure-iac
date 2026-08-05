@@ -31,6 +31,33 @@ Guidelines:
 - Always use proper Azure resource naming conventions and Terraform HCL syntax when giving examples.
 """
 
+# ─── CORS origins allowed ────────────────────────────────────────────────────
+# Safety net: add CORS headers directly on every Function App response so it
+# works whether traffic arrives via APIM or directly from the SWA.
+ALLOWED_ORIGINS = [
+    "https://apim-ht-ss-p-cin-01.azure-api.net",
+]
+
+
+def _cors_headers(origin: str | None = None) -> dict:
+    """Return CORS headers. Allows any azurestaticapps.net or localhost origin."""
+    allowed = origin if (
+        origin and (
+            origin.endswith(".azurestaticapps.net")
+            or origin.startswith("http://localhost")
+            or origin in ALLOWED_ORIGINS
+        )
+    ) else "https://apim-ht-ss-p-cin-01.azure-api.net"
+
+    return {
+        "Access-Control-Allow-Origin":  allowed,
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, x-session-id",
+        "Access-Control-Expose-Headers": "x-session-id",
+        "Vary": "Origin",
+    }
+
+
 # ─── Azure Clients ───────────────────────────────────────────────────────────
 _credential = DefaultAzureCredential()
 
@@ -151,21 +178,27 @@ def save_messages(container, session_id: str, user_msg: str, assistant_reply: st
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 
-@app.route(route="chat", methods=["POST"])
+@app.route(route="chat", methods=["POST", "OPTIONS"])
 def chat(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("DevOnboard AI /chat invoked.")
+    origin = req.headers.get("Origin")
+    cors   = _cors_headers(origin)
+
+    # ── Handle CORS preflight ──────────────────────────────────────────────
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=cors)
 
     # ── Parse request ──────────────────────────────────────────────────────
     try:
         body = req.get_json()
     except ValueError:
-        return _error_response("Invalid JSON body.", 400)
+        return _error_response("Invalid JSON body.", 400, cors)
 
     message    = (body.get("message") or "").strip()
     session_id = (body.get("session_id") or str(uuid.uuid4())).strip()
 
     if not message:
-        return _error_response("'message' field is required.", 400)
+        return _error_response("'message' field is required.", 400, cors)
 
     try:
         # ── Step 1: RAG — retrieve relevant docs from AI Search ────────────
@@ -203,31 +236,88 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
             f"Tokens={completion.usage.total_tokens if completion.usage else 'N/A'}"
         )
 
+        response_headers = {**cors, "x-session-id": session_id}
         return func.HttpResponse(
             json.dumps({"reply": reply, "session_id": session_id}),
             status_code=200,
             mimetype="application/json",
+            headers=response_headers,
         )
 
     except Exception as exc:
         logging.error(f"Unhandled error in /chat: {exc}", exc_info=True)
-        return _error_response(f"Internal error ({type(exc).__name__}): {str(exc)}", 500)
+        return _error_response(
+            f"Internal error ({type(exc).__name__}): {str(exc)}", 500, cors
+        )
 
 
 # ─── Health check ─────────────────────────────────────────────────────────────
-@app.route(route="health", methods=["GET"])
+@app.route(route="health", methods=["GET", "OPTIONS"])
 def health(req: func.HttpRequest) -> func.HttpResponse:
+    origin = req.headers.get("Origin")
+    cors   = _cors_headers(origin)
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=cors)
     return func.HttpResponse(
         json.dumps({"status": "healthy", "model": OPENAI_MODEL}),
         status_code=200,
         mimetype="application/json",
+        headers=cors,
+    )
+
+
+# ─── Diagnostics endpoint ─────────────────────────────────────────────────────
+@app.route(route="diagnostics", methods=["GET", "OPTIONS"])
+def diagnostics(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Returns which required env vars are present (never exposes values).
+    Useful for verifying Terraform app_settings were applied correctly.
+    """
+    origin = req.headers.get("Origin")
+    cors   = _cors_headers(origin)
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=cors)
+
+    required_vars = [
+        "AZURE_OPENAI_ENDPOINT",
+        "AZURE_OPENAI_MODEL",
+        "AZURE_SEARCH_ENDPOINT",
+        "AZURE_SEARCH_INDEX",
+        "COSMOS_DB_ENDPOINT",
+        "COSMOS_DB_DATABASE",
+        "COSMOS_DB_CONTAINER",
+    ]
+
+    status = {
+        var: ("✅ set" if os.environ.get(var) else "❌ MISSING")
+        for var in required_vars
+    }
+
+    all_ok = all("✅" in v for v in status.values())
+
+    payload = {
+        "status":       "ok" if all_ok else "degraded",
+        "model":        OPENAI_MODEL,
+        "env_vars":     status,
+        "missing_count": sum(1 for v in status.values() if "MISSING" in v),
+    }
+
+    logging.info(f"Diagnostics check: {payload['status']} — {payload['missing_count']} vars missing")
+
+    return func.HttpResponse(
+        json.dumps(payload, indent=2),
+        status_code=200 if all_ok else 503,
+        mimetype="application/json",
+        headers=cors,
     )
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
-def _error_response(message: str, status: int) -> func.HttpResponse:
+def _error_response(message: str, status: int, cors: dict = None) -> func.HttpResponse:
+    headers = cors or {}
     return func.HttpResponse(
         json.dumps({"error": message}),
         status_code=status,
         mimetype="application/json",
+        headers=headers,
     )
