@@ -57,12 +57,12 @@ output "cosmos_db_endpoint" {
 
 output "search_service_name" {
   description = "Name of the Azure AI Search service."
-  value       = module.search_service.name
+  value       = data.azurerm_search_service.shared.name
 }
 
 output "search_service_endpoint" {
   description = "Endpoint URL of the Azure AI Search service."
-  value       = module.search_service.endpoint
+  value       = "https://${data.azurerm_search_service.shared.name}.search.windows.net"
 }
 
 output "static_web_app_name" {
