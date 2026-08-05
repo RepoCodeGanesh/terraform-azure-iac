@@ -47,7 +47,7 @@ def _cors_headers(origin: str | None = None) -> dict:
             or origin.startswith("http://localhost")
             or origin in ALLOWED_ORIGINS
         )
-    ) else "https://apim-ht-ss-p-cin-01.azure-api.net"
+    ) else (origin or "*")
 
     return {
         "Access-Control-Allow-Origin":  allowed,

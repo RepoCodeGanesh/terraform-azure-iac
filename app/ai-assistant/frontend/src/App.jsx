@@ -7,11 +7,10 @@ import { Bot, User, Wifi, WifiOff, AlertTriangle, CheckCircle } from 'lucide-rea
 // Priority 1: VITE_API_URL set at build time (direct Function App URL — no APIM needed)
 // Priority 2: SWA proxy route /api/* (avoids CORS entirely when both apps share origin)
 // Priority 3: APIM gateway URL (requires APIM API + CORS policy in Terraform)
-const API_DIRECT   = import.meta.env.VITE_API_URL;        // e.g. https://func-ht-dvob-p-cin-01.azurewebsites.net/api
-const API_PROXY    = '/api';                               // SWA proxy → Function App (no CORS needed)
+const API_DIRECT   = import.meta.env.VITE_API_URL;
 const API_APIM     = 'https://apim-ht-ss-p-cin-01.azure-api.net/dvob-ai-assistant';
 
-// Default to APIM Gateway URL if VITE_API_URL is not set at build time
+// Option 2: Enterprise CAF Pattern — routes via APIM Gateway
 const API_BASE_URL = API_DIRECT || API_APIM;
 
 // ─── Health check ─────────────────────────────────────────────────────────────
