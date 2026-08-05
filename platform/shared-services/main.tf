@@ -110,14 +110,6 @@ module "shared_key_vault" {
   tags                          = local.tags
 }
 
-module "shared_private_dns_zone" {
-  source = "../../modules/private_dns_zone"
-
-  name                = var.private_dns_zone_name
-  resource_group_name = azurerm_resource_group.shared_services.name
-  tags                = local.tags
-}
-
 module "shared_log_analytics" {
   source = "../../modules/log_analytics"
 
