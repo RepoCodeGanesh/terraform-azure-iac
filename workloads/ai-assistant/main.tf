@@ -389,12 +389,33 @@ resource "azurerm_api_management_backend" "function_backend" {
 }
 
 # ─── Import pre-existing APIM API into Terraform state ────────────────────────
-# The API "dvob-ai-assistant" was created by a prior apply but is not in state.
-# This import block (Terraform ≥ 1.5) adopts it automatically during plan/apply.
-# Safe to remove after the first successful apply.
+# The API "dvob-ai-assistant" and its child resources were created by a prior
+# apply but are not in state. These import blocks (Terraform ≥ 1.5) adopt them
+# automatically during plan/apply. All blocks are idempotent — silently skipped
+# once resources are in state. Safe to remove after first successful apply.
 import {
   to = azapi_resource.apim_ai_assistant_api
   id = "/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf/resourceGroups/rg-ht-ss-p-cin-01/providers/Microsoft.ApiManagement/service/apim-ht-ss-p-cin-01/apis/dvob-ai-assistant"
+}
+
+import {
+  to = azapi_resource.chat_post
+  id = "/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf/resourceGroups/rg-ht-ss-p-cin-01/providers/Microsoft.ApiManagement/service/apim-ht-ss-p-cin-01/apis/dvob-ai-assistant/operations/chat-post"
+}
+
+import {
+  to = azapi_resource.health_get
+  id = "/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf/resourceGroups/rg-ht-ss-p-cin-01/providers/Microsoft.ApiManagement/service/apim-ht-ss-p-cin-01/apis/dvob-ai-assistant/operations/health-get"
+}
+
+import {
+  to = azapi_resource.diagnostics_get
+  id = "/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf/resourceGroups/rg-ht-ss-p-cin-01/providers/Microsoft.ApiManagement/service/apim-ht-ss-p-cin-01/apis/dvob-ai-assistant/operations/diagnostics-get"
+}
+
+import {
+  to = azapi_resource.ai_assistant_cors_policy
+  id = "/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf/resourceGroups/rg-ht-ss-p-cin-01/providers/Microsoft.ApiManagement/service/apim-ht-ss-p-cin-01/apis/dvob-ai-assistant/policies/policy"
 }
 
 # ─── APIM API definition for DevOnboard AI Assistant ──────────────────────────
