@@ -218,10 +218,16 @@ module "cosmos_db" {
   tags = local.tags
 }
 
-# Data lookup for shared Free AI Search service (1 free search service allowed per subscription)
-data "azurerm_search_service" "shared" {
-  name                = "srch-ht-dvob-p-cin-01"
-  resource_group_name = "rg-ht-dvob-p-cin-01"
+# ─── Azure AI Search (Free tier — tax document RAG index) ─────────────────────
+module "search_service" {
+  source = "../../modules/search_service"
+
+  name                = module.taxb_srch_name.name
+  location            = azurerm_resource_group.tax_advisor.location
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  sku                 = "free"
+
+  tags = local.tags
 }
 
 # ─── App Service Plan (Y1 Consumption — $0 idle) ──────────────────────────────
@@ -257,7 +263,7 @@ module "function_app" {
     "COSMOS_DB_ENDPOINT"      = module.cosmos_db.endpoint
     "COSMOS_DB_DATABASE"      = module.cosmos_db.database_name
     "COSMOS_DB_CONTAINER"     = module.cosmos_db.container_name
-    "AZURE_SEARCH_ENDPOINT"   = "https://${data.azurerm_search_service.shared.name}.search.windows.net"
+    "AZURE_SEARCH_ENDPOINT"   = module.search_service.endpoint
     "AZURE_SEARCH_INDEX"      = "tax-docs"
     "RAG_DOCUMENTS_CONTAINER" = "documents"
     "APP_NAME"                = "TaxBot India"
@@ -301,10 +307,10 @@ resource "azurerm_role_assignment" "func_openai_user" {
 
 resource "azurerm_role_assignment" "func_search_reader" {
   count                = var.enable_role_assignments ? 1 : 0
-  scope                = data.azurerm_search_service.shared.id
+  scope                = module.search_service.id
   role_definition_name = "Search Index Data Reader"
   principal_id         = module.function_app.principal_id
-  depends_on           = [time_sleep.wait_for_func_identity]
+  depends_on           = [time_sleep.wait_for_func_identity, module.search_service]
 }
 
 resource "azurerm_cosmosdb_sql_role_assignment" "func_cosmos_contributor" {
