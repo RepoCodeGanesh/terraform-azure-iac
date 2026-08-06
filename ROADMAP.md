@@ -11,8 +11,8 @@ This document tracks the progress, status, and upcoming phases of building the e
 | **Phase 1** | Remote Backend Storage & State Locking | `platform/bootstrap` | ✅ Completed |
 | **Phase 2** | Central Hub Network & Subnet Topology | `platform/hub` | ✅ Completed |
 | **Phase 3** | Shared Platform Services (APIM, LAW, DNS) | `platform/shared-services` | ✅ Completed |
-| **Phase 4** | AI Assistant Workload (OpenAI, AI Search, Function App) | `workloads/ai-assistant` | 🟡 In Progress |
-| **Phase 5** | Azure DevOps CI/CD & OIDC Workload Identity Federation | `pipelines/` | 🟡 Active Testing |
+| **Phase 4** | TaxBot India Workload (OpenAI, AI Search, Cosmos DB, Function App) | `workloads/tax-advisor` | ✅ Completed |
+| **Phase 5** | Azure DevOps CI/CD & OIDC Workload Identity Federation | `pipelines/` | ✅ Completed |
 
 ---
 
@@ -28,22 +28,20 @@ This document tracks the progress, status, and upcoming phases of building the e
 
 ## 🛠️ Phase 3: Shared Platform Services (`platform/shared-services`)
 * [x] Deploy Log Analytics Workspace (`law-ht-ss-p-cin-01`) for central monitoring & AI telemetry.
-* [x] Deploy API Management Gateway (`apim-ht-ss-p-cin-01`, SKU: `Consumption_0`) for prompt caching & rate limiting.
+* [x] Deploy API Management Gateway (`apim-ht-ss-p-cin-01`, SKU: `Consumption`) for prompt rate-limiting & CORS protection.
 * [x] Deploy Private DNS Zones for internal service resolution.
 * [x] Set Azure DevOps Service Connection `shared-services` (Subscription: `859a785c-bd38-402d-b595-1f44f40fb9bf`).
 
-## 🤖 Phase 4: AI Workload Spoke (`workloads/ai-assistant`)
-* [x] Deploy Spoke VNet (`10.40.0.0/16`) and peer with Hub VNet (`vnet-ht-hub-p-cin-01`).
-* [x] Deploy Azure Cognitive Services / Azure OpenAI account (`cog-ht-aiast-p-cin-01`).
-* [x] Deploy Linux Function App (`func-ht-aiast-p-cin-01`) using AVM module (`Azure/avm-res-web-site/azurerm`).
-* [x] Wire System & User Assigned Managed Identities.
-* [ ] Provision Private Endpoints for Cognitive Account and Storage Account.
+## 🤖 Phase 4: AI Workload Spoke (`workloads/tax-advisor`)
+* [x] Deploy Spoke VNet (`10.41.0.0/16`) and peer with Hub VNet (`vnet-ht-hub-p-cin-01`).
+* [x] Deploy Azure Cognitive Services / Azure OpenAI account (`oai-ht-taxb-p-eus-01` with `gpt-5.4-nano`).
+* [x] Deploy Azure AI Search (`srch-ht-taxb-p-cin-01`) & Cosmos DB (`cosmos-ht-taxb-p-cin-01`).
+* [x] Deploy Linux Function App (`func-ht-taxb-p-cin-01`) & Static Web App (`stapp-ht-taxb-p-cin-01` on `www.mytaxbot.site`).
+* [x] Wire System Managed Identities & RBAC.
 * [x] Set Azure DevOps Service Connection `app-prod` (Subscription: `f4ffefe1-d689-4059-969c-ccc73e2a11d4`, Workload Identity federation).
 
 ## 🔄 Phase 5: Automated CI/CD Pipelines (`pipelines/`)
 * [x] Create multi-stage validation (`validate.yml`, `plan.yml`, `apply.yml`).
-* [x] Configure pipeline triggers for `platform/bootstrap`, `platform/hub`, `platform/shared-services`, `workloads/ai-assistant`.
-* [x] Wire `azure-cicd-ai-assistant.yml` with `app-prod` service connection.
-* [ ] Grant pipeline federated identities **Storage Blob Data** access on bootstrap state account (`sthtbootpcin01`) for all four pipelines.
-* [ ] Grant **app-prod** federated identity cross-subscription RBAC (Hub-prod / Shared-services reads; APIM backend write in Shared-services).
-* [ ] Execute end-to-end automated deployment test via Azure DevOps.
+* [x] Configure pipeline triggers for `platform/bootstrap`, `platform/hub`, `platform/shared-services`, `workloads/tax-advisor`.
+* [x] Wire `azure-cicd-tax-advisor.yml` & `azure-cicd-app-tax-advisor.yml` with `app-prod` service connection.
+* [x] Execute end-to-end automated deployment test via Azure DevOps.

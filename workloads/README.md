@@ -14,4 +14,4 @@ The **Workloads Layer** contains application-specific landing zone spokes. Each 
 
 ## 📁 Active Workload Spokes
 
-- **`workloads/ai-assistant/`**: Production AI assistant spoke provisioning Azure OpenAI deployments (`gpt-4o-mini`, `text-embedding-3-small`), AI Search, and Function App backend.
+- **`workloads/tax-advisor/`**: Production TaxBot India spoke provisioning Azure OpenAI deployments (`gpt-5.4-nano`), AI Search, Cosmos DB, Function App backend, and Static Web App (`www.mytaxbot.site`).

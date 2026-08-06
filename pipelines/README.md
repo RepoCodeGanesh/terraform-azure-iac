@@ -8,15 +8,16 @@ This directory contains the Azure DevOps YAML pipeline workflows and reusable st
 
 ```
 pipelines/
-├── README.md                    # This documentation file
-├── azure-cicd-bootstrap.yml     # Pipeline for platform/bootstrap
-├── azure-cicd-hub.yml           # Pipeline for platform/hub
-├── azure-cicd-shared-ser.yml    # Pipeline for platform/shared-services
-├── azure-cicd-ai-assistant.yml  # Pipeline for workloads/ai-assistant
-└── templates/                   # Reusable pipeline stage templates
-    ├── validate.yml             # Optional standalone validate stage
-    ├── plan.yml                 # Format check, validation & speculative terraform plan
-    └── apply.yml                # Terraform apply with environment approvals
+├── README.md                      # This documentation file
+├── azure-cicd-bootstrap.yml       # Pipeline for platform/bootstrap
+├── azure-cicd-hub.yml             # Pipeline for platform/hub
+├── azure-cicd-shared-ser.yml      # Pipeline for platform/shared-services
+├── azure-cicd-tax-advisor.yml     # Pipeline for workloads/tax-advisor
+├── azure-cicd-app-tax-advisor.yml # Pipeline for app/tax-advisor
+└── templates/                     # Reusable pipeline stage templates
+    ├── validate.yml               # Optional standalone validate stage
+    ├── plan.yml                   # Format check, validation & speculative terraform plan
+    └── apply.yml                  # Terraform apply with environment approvals
 ```
 
 ---
@@ -28,7 +29,8 @@ Pipelines are configured with **Path Filtering** (`paths: include/exclude`) to e
 * **Bootstrap Changes** (`platform/bootstrap/**`) ➔ Triggers `azure-cicd-bootstrap.yml`
 * **Hub Changes** (`platform/hub/**`) ➔ Triggers `azure-cicd-hub.yml`
 * **Shared Services Changes** (`platform/shared-services/**`) ➔ Triggers `azure-cicd-shared-ser.yml`
-* **AI Assistant Changes** (`workloads/ai-assistant/**`) ➔ Triggers `azure-cicd-ai-assistant.yml`
+* **TaxBot Workload Changes** (`workloads/tax-advisor/**`) ➔ Triggers `azure-cicd-tax-advisor.yml`
+* **TaxBot Application Changes** (`app/tax-advisor/**`) ➔ Triggers `azure-cicd-app-tax-advisor.yml`
 * **Documentation Edits** (`**/*.md`) ➔ **Excluded** from triggering builds to preserve agent minutes.
 
 ---
@@ -42,7 +44,7 @@ Each pipeline uses **Azure Resource Manager** authentication via **Workload Iden
 | `bootstrap` | `azure-cicd-bootstrap.yml` | `platform/bootstrap` | `bootstrap` (`7689ad81-71ba-481b-a17c-e1b6be61bab1`) |
 | `hub-prod` | `azure-cicd-hub.yml` | `platform/hub` | `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`) |
 | `shared-services` | `azure-cicd-shared-ser.yml` | `platform/shared-services` | `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`) |
-| `app-prod` | `azure-cicd-ai-assistant.yml` | `workloads/ai-assistant` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
+| `app-prod` | `azure-cicd-tax-advisor.yml` | `workloads/tax-advisor` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
 
 **Remote state backend:** All roots store state in the bootstrap storage account `sthtbootpcin01`. Every pipeline identity needs **Storage Blob Data** access on that account (or container) for `terraform init` / plan / apply, even when deploying into another subscription.
 
@@ -69,7 +71,7 @@ Deployment jobs in `apply.yml` bind to specific Azure DevOps Environments:
 * `bootstrap-prod`
 * `hub-prod`
 * `shared-services-prod`
-* `ai-assistant-prod`
+* `tax-advisor-prod`
 
 To enable **Manual Approval Gates**, navigate to **Azure DevOps ➔ Pipelines ➔ Environments**, select the environment, and configure **Approvals and checks**.
 
