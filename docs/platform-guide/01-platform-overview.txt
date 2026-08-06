@@ -20,7 +20,7 @@ The platform uses four Azure subscriptions, each with a dedicated purpose and Az
 
 3. Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
    - Service connection: shared-services
-   - Purpose: Log Analytics (law-ht-ss-p-cin-01), APIM Gateway (apim-ht-ss-p-cin-01), Private DNS Zones, Key Vault (kv-ht-ss-p-cin-01)
+   - Purpose: Log Analytics (law-ht-ss-p-cin-01), APIM Gateway (apim-ht-ss-p-cin-01), Key Vault (kv-ht-ss-p-cin-01)
 
 4. Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
    - Service connection: app-prod
@@ -54,6 +54,6 @@ DEPLOYMENT SEQUENCE
 Deploy roots in this strict order to satisfy cross-root dependencies:
 1. platform/bootstrap         — state backend and Key Vault
 2. platform/hub               — hub VNet
-3. platform/shared-services   — APIM, Log Analytics, DNS
+3. platform/shared-services   — APIM, Log Analytics
 4. workloads/tax-advisor      — spoke VNet, OpenAI, AI Search, Cosmos DB, Function App (Terraform IaC)
 5. app/tax-advisor            — React UI + Python backend (CI/CD pipeline)
