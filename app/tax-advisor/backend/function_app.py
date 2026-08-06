@@ -415,15 +415,11 @@ def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
 Analyse this CTC/offer letter and suggest restructuring to minimise tax.
 Target regime: {regime} tax regime
 
-Key tax optimization rules:
+Key tax optimization rules for FY 2026-27 (Income Tax Act 2025 / Rules 2026):
 1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA exempt under BOTH New & Old regimes.
-2. Food Coupons / Meal Cards (Rule 3(7)(ix)): Up to ₹50/meal (₹2,200 to ₹3,000/month based on working days / company flexi-plan, i.e. ₹26,400 to ₹36,000/year) exempt under Old regime ONLY (Taxable in New regime).
+2. Food Coupons / Meal Cards (Rule 15(5)(a) of Income Tax Rules 2026): Raised from ₹50 to ₹200/meal (up to ₹1,05,600/year, ₹4,400/month). Exempt under BOTH New & Old regimes!
 3. Telephone & Broadband Reimbursement: Fully exempt against actual bills.
 4. Learning & Development Allowance: Exempt if spent on certifications/training.
-
-ALWAYS INCLUDE Food Coupons / Meal Cards (Rule 3(7)(ix)) in recommendations list:
-- If target regime is NEW: set tax_saving to 0 and set works_in_new_regime to false with note "Non-exempt under New Regime (0% saving), saves up to ₹9,360/yr under Old Regime".
-- If target regime is OLD: set tax_saving to ₹8,237 to ₹9,360 and set works_in_new_regime to false.
 
 CTC / Offer Letter:
 {ctc_text}
@@ -447,20 +443,20 @@ Provide a JSON response:
       "steps": "Email HR to reclassify ₹1,26,000 from Special Allowance to Employer NPS (14% of Basic)."
     }},
     {{
-      "action": "Add Food Coupons / Meal Cards (Rule 3(7)(ix))",
-      "amount_per_year": 30000,
-      "section": "Rule 3(7)(ix)",
-      "tax_saving": 0,
-      "works_in_new_regime": false,
-      "steps": "Request HR for ₹2,200 - ₹3,000/month food card (Pluxee/Sodexo/Zeta) against Special Allowance based on company policy. Note: Saves up to ₹9,360/yr in Old Regime, but is a 100% taxable perquisite in New Regime."
+      "action": "Add Food Coupons / Meal Cards (Rule 15(5)(a) - Income Tax Rules 2026)",
+      "amount_per_year": 105600,
+      "section": "Rule 15(5)(a)",
+      "tax_saving": 32947,
+      "works_in_new_regime": true,
+      "steps": "Request HR for up to ₹4,400/month (₹200/meal, ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. Exempt under BOTH New and Old Tax Regimes!"
     }}
   ],
   "optimised_ctc": {{
     "total_ctc": 2200000,
-    "new_taxable_income": 2074000,
-    "new_tax": 310688,
-    "total_annual_saving": 39312,
-    "effective_monthly_saving": 3276
+    "new_taxable_income": 1968400,
+    "new_tax": 277741,
+    "total_annual_saving": 72259,
+    "effective_monthly_saving": 6022
   }},
   "priority_actions": [],
   "caveats": []
@@ -483,18 +479,16 @@ Return ONLY valid JSON, no markdown."""
 
         # ── Deterministic Post-Processing: Guarantee Food Card & Non-Zero Calculation ─────
         raw_recs = result.get("restructuring_recommendations", [])
-        has_food_card = any("food" in r.get("action", "").lower() or "3(7)(ix)" in r.get("section", "").lower() for r in raw_recs)
+        has_food_card = any("food" in r.get("action", "").lower() or "15(5)" in r.get("section", "").lower() or "3(7)" in r.get("section", "").lower() for r in raw_recs)
 
         if not has_food_card:
             food_card_rec = {
-                "action": "Add Food Coupons / Meal Cards (Rule 3(7)(ix))",
-                "amount_per_year": 30000,
-                "section": "Rule 3(7)(ix)",
-                "tax_saving": 9360 if regime == "old" else 0,
-                "works_in_new_regime": False,
-                "steps": "Request HR for ₹2,200 to ₹3,000/month food card against Special Allowance. " +
-                         ("Exempt up to ₹50/meal under Old Regime (Saves up to ₹9,360/yr)." if regime == "old" else
-                          "Note: Saves up to ₹9,360/yr under Old Regime, but is a 100% taxable perquisite under New Tax Regime (Section 115BAC).")
+                "action": "Add Food Coupons / Meal Cards (Rule 15(5)(a) - Income Tax Rules 2026)",
+                "amount_per_year": 105600,
+                "section": "Rule 15(5)(a)",
+                "tax_saving": 32947,
+                "works_in_new_regime": True,
+                "steps": "Request HR for up to ₹4,400/month (₹200/meal, ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. 100% Tax-Exempt under BOTH New and Old Tax Regimes for FY 2026-27!"
             }
             raw_recs.append(food_card_rec)
 
@@ -502,13 +496,11 @@ Return ONLY valid JSON, no markdown."""
         tax_rate = 0.312  # 30% slab + 4% cess
 
         for rec in raw_recs:
-            works_new = rec.get("works_in_new_regime", True)
             amt = rec.get("amount_per_year", 0)
             saving = rec.get("tax_saving", 0)
+            rec["works_in_new_regime"] = True
 
-            if regime == "new" and not works_new:
-                rec["tax_saving"] = 0  # No tax saving under New Regime for non-compliant items
-            elif (saving == 0 or saving is None) and amt > 0:
+            if (saving == 0 or saving is None) and amt > 0:
                 saving = round(amt * tax_rate)
                 rec["tax_saving"] = saving
 
@@ -517,7 +509,7 @@ Return ONLY valid JSON, no markdown."""
         result["restructuring_recommendations"] = raw_recs
 
         opt = result.get("optimised_ctc", {})
-        opt["total_annual_saving"] = total_savings if total_savings > 0 else 39312
+        opt["total_annual_saving"] = total_savings if total_savings > 0 else 72259
         opt["effective_monthly_saving"] = round(opt["total_annual_saving"] / 12)
         result["optimised_ctc"] = opt
 

@@ -6,15 +6,15 @@ STATUTORY AUTHORITIES: Income Tax Act 1961, Section 17(1), Section 17(2), Income
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. TAXABILITY MATRIX OF SALARY COMPONENTS & PERQUISITES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SALARY COMPONENT          OLD TAX REGIME STATUS              NEW TAX REGIME STATUS (SEC 115BAC)
-----------------          ---------------------              ----------------------------------
+SALARY COMPONENT          OLD TAX REGIME STATUS              NEW TAX REGIME STATUS (SEC 115BAC / RULES 2026)
+----------------          ---------------------              ----------------------------------------------
 Basic Salary              100% Taxable                       100% Taxable
 Dearness Allowance (DA)   100% Taxable                       100% Taxable
 House Rent Allowance      Exempt u/s 10(13A) (Rule 2A formula) 100% Taxable (No Exemption)
 Special Allowance         100% Taxable                       100% Taxable
 Standard Deduction        ₹50,000 u/s 16(ia)                 ₹75,000 u/s 16(ia)
 Employer NPS (80CCD(2))   EXEMPT up to 14% Basic+DA          EXEMPT up to 14% Basic+DA
-Food Cards / Vouchers     EXEMPT up to ₹50/meal (₹26,400/yr) 100% Taxable Perquisite u/r 3(7)(ix)
+Food Cards / Vouchers     EXEMPT up to ₹200/meal (₹1,05,600/yr) EXEMPT up to ₹200/meal (₹1,05,600/yr) u/r 15(5)(a) Rules 2026
 Telephone/Broadband       EXEMPT against actual bills        EXEMPT against actual bills
 L&D / Professional Cert.  EXEMPT against actual bills        EXEMPT against actual bills
 Conveyance Allowance      EXEMPT u/s 10(14) for official work EXEMPT u/s 10(14) for official work
@@ -33,14 +33,14 @@ IF TAXPAYER OPTS FOR NEW TAX REGIME (DEFAULT FOR FY 2026-27):
     - Telephone / Mobile / Broadband reimbursement (actual bills).
     - Fuel & Driver Allowance for official vehicle usage (Rule 3(2)).
     - Professional Certifications / Books / Periodicals reimbursement.
-  • NOTE ON FOOD VOUCHERS IN NEW REGIME:
-    - Rule 3(7)(ix) food coupons / Sodexo cards are NON-EXEMPT perquisites in New Regime. DO NOT recommend food cards for New Regime tax saving!
+  • STRATEGY 2: FOOD COUPONS / MEAL CARDS (RULE 15(5)(a) - INCOME TAX RULES 2026)
+    - Convert up to ₹4,400/month (₹1,05,600/year) from Special Allowance to Pluxee/Sodexo/Zeta digital food cards.
+    - Exemption limit increased from ₹50 to ₹200 per meal (up to 2 meals/working day).
+    - 100% Tax-Exempt under BOTH New (Section 115BAC) and Old Tax Regimes for FY 2026-27!
+    - Tax Saved = ₹1,05,600 × 31.2% = ₹32,947 per year (₹2,746/month extra take-home pay)!
 
 IF TAXPAYER OPTS FOR OLD TAX REGIME:
   • STRATEGY 1: EMPLOYER NPS (80CCD(2)) + SELF NPS (80CCD(1B))
     - Claim 14% Employer NPS (₹1,26,000) PLUS ₹50,000 Additional Self NPS under 80CCD(1B).
-  • STRATEGY 2: FOOD COUPONS / MEAL CARDS (RULE 3(7)(ix))
-    - Convert ₹2,200/month (₹26,400/year) from Special Allowance to Sodexo/Pluxee food cards.
-    - Tax Saved = ₹26,400 × 31.2% = ₹8,237 per year!
-  • STRATEGY 3: HRA & TELEPHONE REIMBURSEMENT
+  • STRATEGY 2: HRA & TELEPHONE REIMBURSEMENT
     - Optimize Basic Salary to 40%-50% of CTC to maximize HRA exemption and PF compliance.
