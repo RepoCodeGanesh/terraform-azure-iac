@@ -416,8 +416,10 @@ Analyse this CTC/offer letter and suggest restructuring to minimise tax.
 Target regime: {regime} tax regime
 
 Key tax optimization rules for FY 2026-27 (Income Tax Act 2025 / Rules 2026):
-1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA exempt under BOTH New & Old regimes.
-2. Food Coupons / Meal Cards (Rule 15(5)(a) of Income Tax Rules 2026): Raised from ₹50 to ₹200/meal (up to ₹1,05,600/year, ₹4,400/month). Exempt under BOTH New & Old regimes!
+1. Employer NPS (Section 80CCD(2)):
+   - New Tax Regime (Sec 115BAC): Up to 14% of Basic + DA exempt for BOTH Private & Govt employees (e.g. ₹1,26,000 on ₹9L Basic, saves ₹39,312/yr).
+   - Old Tax Regime: Up to 10% of Basic + DA exempt for Private sector employees (e.g. ₹90,000 on ₹9L Basic, saves ₹28,080/yr) and 14% for Govt employees.
+2. Food Coupons / Meal Cards (Rule 15(5)(a) of Income Tax Rules 2026): Raised to ₹200/meal (up to ₹8,800/month, ₹1,05,600/year). Exempt under BOTH New & Old regimes!
 3. Telephone & Broadband Reimbursement: Fully exempt against actual bills.
 4. Learning & Development Allowance: Exempt if spent on certifications/training.
 
@@ -440,7 +442,7 @@ Provide a JSON response:
       "section": "80CCD(2)",
       "tax_saving": 39312,
       "works_in_new_regime": true,
-      "steps": "Email HR to reclassify ₹1,26,000 from Special Allowance to Employer NPS (14% of Basic)."
+      "steps": "Email HR to reclassify Special Allowance to Employer NPS (14% of Basic for New Regime / 10% for Old Regime Private employees)."
     }},
     {{
       "action": "Add Food Coupons / Meal Cards (Rule 15(5)(a) - Income Tax Rules 2026)",
