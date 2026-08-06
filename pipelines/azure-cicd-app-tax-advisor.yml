@@ -48,20 +48,8 @@ variables:
   - name: storageAccount
     value: 'sthttaxbpcin01'
 
-parameters:
-  - name: agentPool
-    displayName: 'Select Agent Pool'
-    type: string
-    default: 'local'
-    values:
-      - 'local'
-      - 'Azure Pipelines'
-
 pool:
-  ${{ if eq(parameters.agentPool, 'Azure Pipelines') }}:
-    vmImage: 'ubuntu-latest'
-  ${{ if ne(parameters.agentPool, 'Azure Pipelines') }}:
-    name: ${{ parameters.agentPool }}
+  name: 'local'
 
 stages:
 
