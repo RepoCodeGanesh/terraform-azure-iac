@@ -415,6 +415,12 @@ def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
 Analyse this CTC/offer letter and suggest restructuring to minimise tax.
 Target regime: {regime} tax regime
 
+Key tax optimization rules to evaluate:
+1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA exempt under BOTH New & Old regimes.
+2. Food Coupons / Meal Cards (Rule 3(7)(ix)): Up to ₹50/meal (₹26,400/year) exempt under Old regime.
+3. Telephone & Broadband Reimbursement: Fully exempt against actual bills under Old regime.
+4. Learning & Development Allowance: Exempt if spent on certifications/training.
+
 CTC / Offer Letter:
 {ctc_text}
 
