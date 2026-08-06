@@ -8,12 +8,15 @@ STATUTORY AUTHORITIES: Income Tax Act 1961, Section 10(13A), Rule 2A, Section 24
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 APPLICABILITY: Salaried employees receiving HRA who reside in rented residential accommodation (OLD REGIME ONLY).
 
-STATUTORY 3-PART MINIMUM EXEMPTION FORMULA:
+STATUTORY 3-PART MINIMUMHRA EXEMPTION FORMULA & METRO VS NON-METRO CITY DEFINITIONS:
 The exempt HRA amount is the MINIMUM of the following three calculations:
   1. Actual HRA received from employer during the financial year.
   2. Rent paid MINUS 10% of (Basic Salary + Dearness Allowance).
-  3. 50% of (Basic Salary + DA) if rented accommodation is located in METRO CITIES (Delhi, Mumbai, Kolkata, Chennai) OR
-     40% of (Basic Salary + DA) if located in NON-METRO CITIES.
+  3. City Type Percentage:
+     • 50% of (Basic Salary + DA) for METRO CITIES:
+       Statutory Metro Cities: Delhi (including NCR regions like Gurgaon, Noida, Ghaziabad when employed in Delhi Metro), Mumbai, Kolkata, Chennai.
+     • 40% of (Basic Salary + DA) for NON-METRO CITIES:
+       All other Indian cities (Bengaluru, Hyderabad, Pune, Ahmedabad, Jaipur, Chandigarh, Kochi, Lucknow, etc.).
 
 MANDATORY COMPLIANCE & PROOF REQUIREMENTS (RULE 26C):
   • Rent Receipts: Form 12BB declaration to employer along with rent receipts.

@@ -145,15 +145,20 @@ export default function RegimeComparator() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">HRA Exemption (₹)</label>
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>HRA Exemption (₹)</span>
+            </label>
             <input
               type="number"
               name="hra_exempt"
               className="form-input"
               value={form.hra_exempt}
               onChange={handleChange}
-              placeholder="Exempt portion of rent (Old Regime)"
+              placeholder="Exempt HRA (Old Regime)"
             />
+            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px' }}>
+              💡 Rule 2A: <strong>Metro (Delhi, Mumbai, Kolkata, Chennai) = 50% Basic</strong> | <strong>Non-Metro (All other cities) = 40% Basic</strong>
+            </div>
           </div>
 
           <div className="form-group">
