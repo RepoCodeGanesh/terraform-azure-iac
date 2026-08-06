@@ -18,8 +18,8 @@ const FAQS = [
   },
   {
     q: "What are the capital gains tax rates after Budget 2024?",
-    a: `• LTCG on Equity / Mutual Funds: 12.5% on gains exceeding ₹1.25 Lakh per year (increased from ₹1L).
-• STCG on Equity / Mutual Funds: 20% flat.
+    a: `• LTCG on Equity / Mutual Funds: 12.5% on gains exceeding ₹1.25 Lakh per year (Effective rate: 13.0% including 4% Health & Education Cess). First ₹1.25L is 100% tax-free!
+• STCG on Equity / Mutual Funds: 20% flat (Effective rate: 20.8% including 4% Cess).
 • Property LTCG: 12.5% without indexation (or 20% with indexation for properties acquired before July 23, 2024).`,
   },
   {
