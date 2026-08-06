@@ -556,7 +556,7 @@ resource "azurerm_portal_dashboard" "taxb_dashboard" {
               y       = 0
             }
             metadata = {
-              title = "TaxBot India — Function App Requests & Latency"
+              title = "1. Availability SLA & Response Time (P95)"
               inputs = [
                 {
                   name  = "ComponentId"
@@ -573,11 +573,45 @@ resource "azurerm_portal_dashboard" "taxb_dashboard" {
               y       = 0
             }
             metadata = {
-              title = "Azure OpenAI & APIM Telemetry Overview"
+              title = "2. Azure OpenAI Calls & Token Usage Metrics"
               inputs = [
                 {
                   name  = "ComponentId"
                   value = module.openai.id
+                }
+              ]
+            }
+          }
+          "2" = {
+            position = {
+              colSpan = 6
+              rowSpan = 4
+              x       = 0
+              y       = 4
+            }
+            metadata = {
+              title = "3. Azure AI Search Statutory Queries & Latency"
+              inputs = [
+                {
+                  name  = "ComponentId"
+                  value = module.search_service.id
+                }
+              ]
+            }
+          }
+          "3" = {
+            position = {
+              colSpan = 6
+              rowSpan = 4
+              x       = 6
+              y       = 4
+            }
+            metadata = {
+              title = "4. APIM Gateway Rate Limiting & Failed Requests (HTTP 5xx / 429)"
+              inputs = [
+                {
+                  name  = "ComponentId"
+                  value = data.azurerm_api_management.shared.id
                 }
               ]
             }
