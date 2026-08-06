@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import ChatAdvisor from './tabs/ChatAdvisor'
 import RegimeComparator from './tabs/RegimeComparator'
-import SalaryAnalyser from './tabs/SalaryAnalyser'
-import CTCOptimiser from './tabs/CTCOptimiser'
+import SalaryCtcOptimiser from './tabs/SalaryCtcOptimiser'
 import FilingGuide from './tabs/FilingGuide'
 
 export default function App() {
@@ -45,17 +44,10 @@ export default function App() {
           </button>
 
           <button
-            className={`tab-btn ${activeTab === 'salary' ? 'active' : ''}`}
-            onClick={() => setActiveTab('salary')}
+            className={`tab-btn ${activeTab === 'optimiser' ? 'active' : ''}`}
+            onClick={() => setActiveTab('optimiser')}
           >
-            <span className="tab-icon">📄</span> Salary Analyser
-          </button>
-
-          <button
-            className={`tab-btn ${activeTab === 'ctc' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ctc')}
-          >
-            <span className="tab-icon">💼</span> CTC Optimiser
+            <span className="tab-icon">💼</span> Salary & CTC Optimiser
           </button>
 
           <button
@@ -71,8 +63,7 @@ export default function App() {
       <main className="main-content">
         {activeTab === 'chat' && <ChatAdvisor />}
         {activeTab === 'comparator' && <RegimeComparator />}
-        {activeTab === 'salary' && <SalaryAnalyser />}
-        {activeTab === 'ctc' && <CTCOptimiser />}
+        {activeTab === 'optimiser' && <SalaryCtcOptimiser />}
         {activeTab === 'filing' && <FilingGuide />}
       </main>
     </div>
