@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
+const API_BASE = 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
 
 export default function RegimeComparator() {
   const [form, setForm] = useState({

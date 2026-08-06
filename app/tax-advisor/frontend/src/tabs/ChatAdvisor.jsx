@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
+const API_BASE = 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
 
 const QUICK_PROMPTS = [
   "I earn ₹18L per year. Which tax regime is better for me?",
