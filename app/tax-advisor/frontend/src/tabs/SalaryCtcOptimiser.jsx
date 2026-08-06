@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const API_BASE = 'https://func-ht-taxb-p-cin-01.azurewebsites.net/api'
+const API_BASE = 'https://apim-ht-ss-p-cin-01.azure-api.net/tax-advisor'
 
 const SAMPLE_SLIP = `Basic Salary: ₹85,000 / month
 House Rent Allowance (HRA): ₹34,000 / month
