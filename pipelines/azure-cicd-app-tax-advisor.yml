@@ -50,7 +50,7 @@ variables:
 
 parameters:
   - name: agentPool
-    displayName: 'Select Agent Pool (Default: Self-Hosted local, Fallback: Azure Pipelines)'
+    displayName: 'Select Agent Pool'
     type: string
     default: 'local'
     values:
