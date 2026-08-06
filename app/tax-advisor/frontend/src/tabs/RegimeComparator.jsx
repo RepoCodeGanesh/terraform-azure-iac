@@ -157,7 +157,7 @@ export default function RegimeComparator() {
               placeholder="Exempt HRA (Old Regime)"
             />
             <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px' }}>
-              💡 Rule 2A: <strong>Metro (Delhi, Mumbai, Kolkata, Chennai) = 50% Basic</strong> | <strong>Non-Metro (All other cities) = 40% Basic</strong>
+              💡 Rule 2A (Old Regime Only): <strong>Statutory Metros (Delhi, Mumbai, Kolkata, Chennai) = 50% Basic</strong> | <strong>Non-Metros (Bengaluru, Hyd, Pune, etc.) = 40% Basic</strong>. <em>(HRA Exemption is ₹0 in New Regime)</em>
             </div>
           </div>
 
