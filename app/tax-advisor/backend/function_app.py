@@ -448,7 +448,7 @@ Provide a JSON response:
       "section": "Rule 15(5)(a)",
       "tax_saving": 32947,
       "works_in_new_regime": true,
-      "steps": "Request HR for up to ₹4,400/month (₹200/meal, ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. Exempt under BOTH New and Old Tax Regimes!"
+      "steps": "Request HR for maximum benefit of ₹8,800/month (₹200/meal × 2 meals × 22 days = ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. 100% Tax-Exempt under BOTH New and Old Tax Regimes!"
     }}
   ],
   "optimised_ctc": {{
