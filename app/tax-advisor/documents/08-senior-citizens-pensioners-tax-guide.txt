@@ -1,25 +1,49 @@
-SENIOR CITIZENS & PENSIONERS TAXATION GUIDE
-============================================
+SENIOR CITIZENS & PENSIONERS STATUTORY TAX GUIDE
+===================================================
 
-SOURCE: Income Tax Act 1961, Section 80TTB, Section 194P | FY 2026-27
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. CLASSIFICATION & BASIC EXEMPTION LIMITS (OLD REGIME)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Senior Citizen (Age 60 to 79 yrs): Basic Exemption Limit = ₹3,00,000.
-• Super Senior Citizen (Age 80+ yrs): Basic Exemption Limit = ₹5,00,000.
-• New Tax Regime: Slabs are UNIFORM for all age groups (Basic Exemption ₹4,00,000 + ₹60,000 rebate up to ₹12L net income).
+STATUTORY AUTHORITIES: Income Tax Act 1961, Section 80TTB, Section 194P, Section 194A, Section 57(iia) | FY 2026-27
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-2. SPECIAL DEDUCTIONS FOR SENIOR CITIZENS (OLD REGIME)
+1. AGE CLASSIFICATION & BASIC EXEMPTION LIMITS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Section 80TTB: Deduction up to ₹50,000 on interest income from Savings Accounts, Fixed Deposits (FD), and Post Office Schemes. (No TDS deducted if FD interest <= ₹50,000 under 194A).
-• Section 80D: Health insurance premium / medical expenditure deduction up to ₹50,000 per year.
-• Section 80DDB: Medical treatment deduction for specified critical illnesses up to ₹1,00,000.
+OLD TAX REGIME EXEMPTION LIMITS:
+  • Senior Citizen (Individual Resident aged 60 to 79 years): Basic Exemption Limit = ₹3,00,000.
+  • Super Senior Citizen (Individual Resident aged 80 years or above): Basic Exemption Limit = ₹5,00,000.
+
+NEW TAX REGIME (SECTION 115BAC):
+  • Basic Exemption Limit = ₹4,00,000 for ALL age groups.
+  • Combined with Section 87A rebate (₹60,000 limit), zero tax payable up to ₹12,00,000 net income.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. SPECIAL STATUTORY DEDUCTIONS FOR SENIOR CITIZENS (OLD REGIME)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80TTB — INTEREST INCOME DEDUCTION (UP TO ₹50,000):
+  • Deduction up to ₹50,000 per financial year for interest income from Savings Accounts, Fixed Deposits (FD), Recurring Deposits (RD), and Post Office schemes.
+  • TDS Threshold (Section 194A): Banks/Post offices CANNOT deduct TDS on FD interest for senior citizens unless total interest exceeds ₹50,000/yr (Submit Form 15H).
+
+SECTION 80D — HEALTH INSURANCE & MEDICAL EXPENDITURE (UP TO ₹50,000):
+  • Health insurance premium deduction up to ₹50,000/yr.
+  • If health insurance is not available, medical expenditure incurred for senior citizen is deductible up to ₹50,000/yr.
+
+SECTION 80DDB — CRITICAL ILLNESS TREATMENT (UP TO ₹1,00,000):
+  • Deduction up to ₹1,00,000 for medical treatment of specified critical ailments (Parkinson's, Cancer, Renal failure).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 3. SECTION 194P — EXEMPTION FROM FILING ITR FOR SENIOR CITIZENS 75+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Senior citizens aged 75 years or above are EXEMPT from filing ITR if:
-  1. They have only pension income and interest income from the same specified bank.
-  2. They submit Form 12BBA to the bank, and the bank deducts full tax at source.
+Senior citizens aged 75 years or above are STATUTORILY EXEMPT from filing ITR if they satisfy all conditions:
+  1. Resident individual aged 75 years or above.
+  2. Total income consists ONLY of pension income and interest income from the same specified bank.
+  3. Declaration in Form 12BBA submitted to specified bank.
+  4. Bank calculates total income and deducts full TDS under Section 194P.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. PENSION TAXABILITY & FAMILY PENSION DEDUCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Uncommuted (Monthly) Pension: 100% Taxable under "Income from Salaries" for both private and govt employees.
+• Commuted (Lump sum) Pension:
+  - Govt Employees: 100% EXEMPT under Section 10(10A)(i).
+  - Private Employees: Exempt up to 1/3rd (if receiving gratuity) or 1/2 (if not receiving gratuity).
+• Family Pension (Section 57(iia)): Received by legal heirs of deceased employee.
+  - New Regime: Deduction allowed up to ₹25,000 or 1/3rd of pension (whichever is lower).
+  - Old Regime: Deduction allowed up to ₹15,000 or 1/3rd of pension (whichever is lower).

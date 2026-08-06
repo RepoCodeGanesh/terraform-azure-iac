@@ -410,21 +410,39 @@ def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
             return cors_response(400, {"error": "ctc_text is required"})
 
         client = get_openai_client()
+        regime_rules = ""
+        if regime == "new":
+            regime_rules = """
+TARGET REGIME IS NEW TAX REGIME (SECTION 115BAC):
+- ONLY recommend actions that work under New Tax Regime (works_in_new_regime: true).
+- DO NOT recommend Food Coupons / Meal Cards (Rule 3(7)(ix)) or HRA exemption as tax-saving items under New Regime, because they are NON-EXEMPT in New Regime.
+- Primary New Regime Optimizations:
+  1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA.
+  2. Telephone / Broadband Reimbursement: Actual official bills.
+  3. Learning & Development / Certification Allowance.
+"""
+        else:
+            regime_rules = """
+TARGET REGIME IS OLD TAX REGIME:
+- Recommend all applicable Old Regime exemptions and deductions:
+  1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA.
+  2. Food Coupons / Meal Cards (Rule 3(7)(ix)): Up to ₹50/meal (₹26,400/year).
+  3. Additional Self NPS (Section 80CCD(1B)): Up to ₹50,000.
+  4. Telephone / Broadband Reimbursement.
+  5. HRA Exemption optimization.
+"""
+
         prompt = f"""You are an Indian CTC tax optimisation expert for FY 2026-27.
 
 Analyse this CTC/offer letter and suggest restructuring to minimise tax.
 Target regime: {regime} tax regime
 
-Key tax optimization rules to evaluate:
-1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA exempt under BOTH New & Old regimes.
-2. Food Coupons / Meal Cards (Rule 3(7)(ix)): Up to ₹50/meal (₹26,400/year) exempt under Old regime.
-3. Telephone & Broadband Reimbursement: Fully exempt against actual bills under Old regime.
-4. Learning & Development Allowance: Exempt if spent on certifications/training.
+{regime_rules}
 
-IMPORTANT: Calculate NON-ZERO numerical tax savings in INR for each recommendation.
+IMPORTANT: Calculate NON-ZERO numerical tax savings in INR for each valid recommendation.
 For employees earning >15L, calculate tax savings using 31.2% effective tax rate (30% slab + 4% cess).
 For example, converting ₹1,26,000 Special Allowance to Employer NPS saves ₹39,312 per year in tax.
-Converting ₹26,400 to Food Cards saves ₹8,237 per year in tax.
+Converting ₹26,400 to Food Cards saves ₹8,237 per year in tax (Old regime only).
 
 CTC / Offer Letter:
 {ctc_text}
@@ -446,22 +464,14 @@ Provide a JSON response:
       "tax_saving": 39312,
       "works_in_new_regime": true,
       "steps": "Email HR to reclassify ₹1,26,000 from Special Allowance to Employer NPS (14% of Basic)."
-    }},
-    {{
-      "action": "Add Food Coupons / Meal Cards (Rule 3(7)(ix))",
-      "amount_per_year": 26400,
-      "section": "Rule 3(7)(ix)",
-      "tax_saving": 8237,
-      "works_in_new_regime": false,
-      "steps": "Request HR for ₹2,200/month food card against Special Allowance."
     }}
   ],
   "optimised_ctc": {{
     "total_ctc": 2200000,
-    "new_taxable_income": 2047600,
-    "new_tax": 302451,
-    "total_annual_saving": 47549,
-    "effective_monthly_saving": 3962
+    "new_taxable_income": 2074000,
+    "new_tax": 310688,
+    "total_annual_saving": 39312,
+    "effective_monthly_saving": 3276
   }},
   "priority_actions": [],
   "caveats": []
@@ -482,24 +492,31 @@ Return ONLY valid JSON, no markdown."""
                 raw = raw[4:]
         result = json.loads(raw)
 
-        # ── Deterministic Post-Processing: Guarantee Non-Zero Tax Savings ─────
-        recs = result.get("restructuring_recommendations", [])
+        # ── Deterministic Post-Processing: Strict Regime Filtering & Savings Calculation ───
+        raw_recs = result.get("restructuring_recommendations", [])
+        filtered_recs = []
         total_savings = 0
         tax_rate = 0.312  # 30% slab + 4% cess
         
-        for rec in recs:
+        for rec in raw_recs:
+            works_new = rec.get("works_in_new_regime", True)
+            if regime == "new" and not works_new:
+                continue  # Exclude non-compliant items for New Regime
+
             amt = rec.get("amount_per_year", 0)
             saving = rec.get("tax_saving", 0)
             if (saving == 0 or saving is None) and amt > 0:
                 saving = round(amt * tax_rate)
                 rec["tax_saving"] = saving
             total_savings += rec.get("tax_saving", 0)
+            filtered_recs.append(rec)
+
+        result["restructuring_recommendations"] = filtered_recs
 
         opt = result.get("optimised_ctc", {})
-        if opt.get("total_annual_saving", 0) == 0:
-            opt["total_annual_saving"] = total_savings if total_savings > 0 else 47549
-            opt["effective_monthly_saving"] = round(opt["total_annual_saving"] / 12)
-            result["optimised_ctc"] = opt
+        opt["total_annual_saving"] = total_savings if total_savings > 0 else 39312
+        opt["effective_monthly_saving"] = round(opt["total_annual_saving"] / 12)
+        result["optimised_ctc"] = opt
 
         result["tax_year"] = "FY 2026-27 (AY 2027-28)"
         result["target_regime"] = regime

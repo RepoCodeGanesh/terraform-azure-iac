@@ -1,36 +1,56 @@
-ITR FORM SELECTION, TDS, ADVANCE TAX, AND FORM 26AS / AIS GUIDE
-================================================================
+ITR FORM SELECTION, TDS RATES, ADVANCE TAX, AND AIS/26AS RECONCILIATION
+========================================================================
 
-SOURCE: Income Tax Department India | FY 2026-27 (AY 2027-28)
+STATUTORY AUTHORITIES: Income Tax Act 1961, Section 139, Sections 192 to 195, Sections 207 to 219 | FY 2026-27
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. WHICH ITR FORM TO FILE?
+1. STATUTORY ITR FORM SELECTION & DISQUALIFICATIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ITR-1 (SAHAJ):
-  ✅ Resident Individuals | Income up to ₹50 Lakh | Salary/Pension + One House Property + Other Sources (Interest/Dividend).
-  ❌ Disqualified if: Capital Gains exist, >1 House Property, Business Income, Unlisted Shares, Foreign Assets/Income, Director in company.
+  ✅ WHO CAN FILE: Resident Individuals having total income up to ₹50,000,000 (₹50 Lakhs) from Salary/Pension, ONE House Property, and Other Sources (Interest/Dividend). Agricultural income <= ₹5,000.
+  ❌ DISQUALIFIED IF:
+     • Capital Gains exist (LTCG / STCG) — even tax-exempt LTCG disqualifies ITR-1!
+     • More than one house property.
+     • Business or Professional income.
+     • Director in a company or holds unlisted equity shares.
+     • Foreign assets or foreign income / accounts.
+     • Deferred ESOP tax.
+     • TDS under Section 194N (cash withdrawals).
 
 ITR-2:
-  ✅ Salaried with Capital Gains (LTCG/STCG), Multiple Properties, Income > ₹50L, Foreign Assets, Foreign Income, NRIs, ESOPs, Directors.
+  ✅ WHO MUST FILE: Salaried individuals with Capital Gains (equity, property, crypto), >1 House Property, Income > ₹50 Lakhs, Foreign Assets/Income, NRIs, ESOPs, Company Directors, Unlisted shares.
 
 ITR-3:
-  ✅ Business / Professional Income (Not opting 44ADA), F&O Trading, Intraday Stock Trading, Partnership Firm Income + Capital Gains.
+  ✅ WHO MUST FILE: Individuals having Business/Professional Income (Proprietary business, F&O trading, Intraday equity trading, Partnership firm partner income) along with Capital Gains or Salary.
 
 ITR-4 (SUGAM):
-  ✅ Small Businesses opting Section 44AD or Professionals opting Section 44ADA (Presumptive Income).
+  ✅ WHO CAN FILE: Small business opting Section 44AD or Professionals opting Section 44ADA (Presumptive income) up to turnover caps.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-2. ADVANCE TAX DUE DATES & INTEREST (SECTION 207-219)
+2. ADVANCE TAX SCHEDULE & INTEREST PENALTIES (SECTION 207-219)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Required if net annual tax liability (after TDS) exceeds ₹10,000.
-  • 15 June:      15% of estimated tax
-  • 15 September: 45% of estimated tax
-  • 15 December:  75% of estimated tax
-  • 15 March:     100% of estimated tax
-  Interest under 234B & 234C: 1% per month for delay/deferment.
+Mandatory if estimated net tax liability (after TDS) exceeds ₹10,000 in a financial year.
+
+PAYMENT SCHEDULE:
+  Due Date                 Minimum Cumulative Advance Tax Payable
+  ----------------        --------------------------------------
+  On or before 15 June    15% of estimated net tax
+  On or before 15 Sept    45% of estimated net tax
+  On or before 15 Dec     75% of estimated net tax
+  On or before 15 March   100% of estimated net tax
+  (Presumptive Sec 44AD/44ADA taxpayers pay 100% on or before 15 March in 1 installment).
+
+INTEREST PENALTIES:
+  • Section 234B: 1% per month for default in payment of advance tax (if paid tax < 90% of assessed tax).
+  • Section 234C: 1% per month for deferment of advance tax installments.
+  • Section 234A: 1% per month for late filing of ITR beyond 31 July.
+  • Section 234F: Penalty of ₹5,000 (₹1,000 if income < ₹5L) for belated return filed after 31 July up to 31 Dec.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-3. FORM 26AS, AIS, AND TIS VERIFICATION
+3. AIS, TIS, AND FORM 26AS MANDATORY RECONCILIATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Before filing ITR, verify Annual Information Statement (AIS) & Form 26AS on Income Tax e-filing portal.
-All reported incomes (FD interest, dividends, stock sales, property purchases) must match ITR!
+Before submitting ITR, taxpayers MUST reconcile data across 3 official statements:
+  1. Form 26AS: Tax Deducted at Source (TDS), Tax Collected at Source (TCS), Advance Tax paid.
+  2. Annual Information Statement (AIS): Comprehensive record of stock transactions, mutual fund buy/sell, dividend income, FD interest, savings bank interest, property transactions, foreign outward remittances.
+  3. Taxpayer Information Summary (TIS): Aggregated summary derived from AIS.
+  • Discrepancy Rule: Any mismatch between AIS and ITR will trigger an automated e-Verification notice under Section 133(6) or Section 143(1) from CBDT!

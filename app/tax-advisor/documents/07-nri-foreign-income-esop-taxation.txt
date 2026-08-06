@@ -1,35 +1,41 @@
-NRI TAXATION, FOREIGN ASSETS, DTAA, AND ESOP TAX GUIDE
-======================================================
+NRI TAX LAWS, DTAA TAX CREDIT, FOREIGN ASSETS, AND ESOP/RSU TAXATION
+=====================================================================
 
-SOURCE: Income Tax Act 1961, Section 6, Section 90/91 (DTAA), Section 195 | FY 2026-27
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. RESIDENTIAL STATUS RULES (SECTION 6)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-You are an INDIAN RESIDENT if:
-  1. You are in India for 182 days or more in the financial year, OR
-  2. You are in India for 60 days or more in the FY AND 365 days or more in the preceding 4 years.
-  • Exception for Indian citizens leaving India for employment abroad: 60-day rule replaced with 182 days.
-  • Deemed Resident (Section 6(1A)): Indian citizen with total Indian income > ₹15L and not liable to tax in any other country.
+STATUTORY AUTHORITIES: Income Tax Act 1961, Section 6, Section 90/91 (DTAA), Section 195, Schedule FA | FY 2026-27
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-2. NRI TAXABILITY & DOUBLE TAXATION RELIEF (DTAA)
+1. STATUTORY RESIDENTIAL STATUS TESTS (SECTION 6)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Taxable Income for NRI: Only income accruing, arising, or received in India (NRO interest, Indian rental income, capital gains in India).
-• Foreign Income: 100% EXEMPT from Indian tax for NRIs.
-• DTAA Relief (Section 90/91): If tax is paid in foreign country (e.g. US, UK, UAE, Singapore), claim tax credit in India by filing FORM 67 before filing ITR.
+An individual is an INDIAN RESIDENT in FY 2026-27 if they satisfy ANY ONE of the following basic conditions:
+  Condition A: Physical presence in India for 182 days or more during the financial year.
+  Condition B: Physical presence in India for 60 days or more during the FY AND 365 days or more during the preceding 4 financial years.
+  • Statutory Exception for Employment Abroad: For Indian citizens or Person of Indian Origin (PIO) leaving India for employment abroad, the 60-day threshold in Condition B is replaced with 182 days.
+  • Deemed Resident (Section 6(1A)): An Indian citizen having total Indian-sourced income > ₹15 Lakhs is deemed resident in India if they are not liable to tax in any other country by reason of domicile/residence.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-3. EMPLOYEE STOCK OPTIONS (ESOPs / RSUs) TAXATION
+2. NRI TAXABILITY & DOUBLE TAXATION RELIEF (DTAA & FORM 67)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ESOPs are taxed at TWO STAGES:
+SCOPE OF TAXABLE INCOME FOR NRI:
+  • Taxable in India: Income accruing, arising, or received in India (NRO interest, Indian rental income, capital gains from Indian shares/property).
+  • EXEMPT from Indian Tax: Foreign salary, foreign business income, and foreign investment returns.
 
-STAGE 1: AT THE TIME OF EXERCISE (Perquisite Tax)
-  • Taxable Amount = (Fair Market Value on exercise date - Exercise Price) * Number of Shares.
-  • Taxed as Perquisite under "Income from Salary" at applicable slab rate.
-  • Employer deducts TDS on perquisite value.
+DOUBLE TAXATION AVOIDANCE AGREEMENT (DTAA - SECTION 90/91):
+  • If tax has been withheld or paid in a foreign country (US, UK, UAE, Singapore, Germany, Canada), the taxpayer can claim Foreign Tax Credit (FTC) in India.
+  • MANDATORY COMPLIANCE: Form 67 MUST be electronically filed on the Income Tax e-filing portal on or before the due date of filing ITR under Section 139(1) along with foreign tax payment proof.
 
-STAGE 2: AT THE TIME OF SALE (Capital Gains Tax)
-  • Taxable Amount = Sale Price - Fair Market Value on exercise date.
-  • Taxed as STCG or LTCG depending on holding period from exercise date.
-  • Foreign RSUs / US Shares: Holding period > 24 months = LTCG (12.5% without indexation).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. ESOP AND RSU TAXATION LAWS FOR SALARIED EMPLOYEES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Employee Stock Options (ESOPs) and Restricted Stock Units (RSUs) are taxed at TWO DISTINCT STAGES:
+
+STAGE 1: AT THE TIME OF EXERCISE / VESTING (TAXED AS SALARY PERQUISITE)
+  • Perquisite Value = (Fair Market Value on Exercise Date - Exercise Price) × Number of Shares.
+  • Tax Rate: Added to gross salary and taxed at applicable slab rate (Old or New regime).
+  • Employer TDS: Employer deducts TDS under Section 192 on perquisite value.
+
+STAGE 2: AT THE TIME OF SALE / TRANSFER (TAXED AS CAPITAL GAINS)
+  • Capital Gain = Sale Price MINUS Fair Market Value on Exercise Date.
+  • Foreign RSUs / US Stocks (e.g. Alphabet, Microsoft, Amazon shares):
+    - Holding Period > 24 months = Long-Term Capital Gain (LTCG) taxed at 12.5% without indexation.
+    - Holding Period <= 24 months = Short-Term Capital Gain (STCG) taxed at slab rates.
+  • MANDATORY SCHEDULE FA REPORTING: Resident taxpayers holding US stocks/RSUs MUST report foreign accounts, shares, and custodial assets in SCHEDULE FA of ITR-2 / ITR-3! Failure attracts ₹10 Lakh penalty under Black Money Act.

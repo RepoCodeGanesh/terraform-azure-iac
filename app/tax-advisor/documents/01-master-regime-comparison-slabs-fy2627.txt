@@ -1,64 +1,81 @@
 MASTER TAX REGIME COMPARISON & SLAB RATES (FY 2026-27 / AY 2027-28)
 ===================================================================
 
-SOURCE: Income Tax Department India, Finance Act 2025 (Union Budget 2025), CBDT Circulars
+STATUTORY AUTHORITIES: Income Tax Act 1961, Section 115BAC, Finance Act 2025, CBDT Circulars
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. NEW TAX REGIME (SECTION 115BAC) — DEFAULT REGIME
+1. NEW TAX REGIME (SECTION 115BAC) — DEFAULT TAX REGIME
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Slab Rates for FY 2026-27 (AY 2027-28):
-  Up to ₹4,00,000:           0% (Nil)
-  ₹4,00,001 – ₹8,00,000:     5%
-  ₹8,00,001 – ₹12,00,000:    10%
-  ₹12,00,001 – ₹16,00,000:   15%
-  ₹16,00,001 – ₹20,00,000:   20%
-  ₹20,00,001 – ₹24,00,000:   25%
-  Above ₹24,00,000:          30%
+Under Section 115BAC(1A), the New Tax Regime is the DEFAULT tax regime for all Individuals, HUF, AOP, BOI, and Artificial Juridical Persons for Assessment Year 2027-28 (Financial Year 2026-27).
 
-KEY BENEFITS & REBATES UNDER NEW REGIME:
-  • Standard Deduction: ₹75,000 for salaried employees and pensioners.
-  • Section 87A Rebate: Full tax rebate up to ₹60,000 if Net Taxable Income <= ₹12,00,000.
-  • Zero Tax Threshold: Salaried individuals earning gross income up to ₹12,75,000 pay ₹0 tax!
-  • Employer NPS Contribution: Section 80CCD(2) deduction allowed up to 14% of Basic + DA (Private & Govt).
-  • Family Pension Deduction: ₹25,000 or 1/3rd of pension (whichever is lower).
-  • Transport allowance for specially-abled employees.
+REVISED SLAB STRUCTURE (FY 2026-27):
+  Total Net Income (₹)            Tax Rate (%)
+  --------------------------------------------
+  Up to ₹4,00,000                0% (Nil)
+  ₹4,00,001 to ₹8,00,000         5%
+  ₹8,00,001 to ₹12,00,000        10%
+  ₹12,00,001 to ₹16,00,000       15%
+  ₹16,00,001 to ₹20,00,000       20%
+  ₹20,00,001 to ₹24,00,000       25%
+  Above ₹24,00,000               30%
+
+STATUTORY ALLOWANCES & DEDUCTIONS PERMITTED IN NEW REGIME:
+  1. Standard Deduction under Section 16(ia): ₹75,000 for salaried employees and pensioners.
+  2. Employer Contribution to NPS under Section 80CCD(2): Up to 14% of (Basic Salary + Dearness Allowance) for both Private and Government sector employees.
+  3. Family Pension Deduction under Section 57(iia): ₹25,000 or 1/3rd of family pension, whichever is lower.
+  4. Transport Allowance for Specially-Abled Employees: Under Section 10(14).
+  5. Conveyance & Travel Allowance for Official Duties: Under Section 10(14) (against actual official expenses).
+  6. Section 87A Rebate: Maximum rebate of ₹60,000 if Net Taxable Income <= ₹12,00,000.
+     • Zero-Tax Ceiling: Salaried individuals earning gross income up to ₹12,75,000 pay ₹0 tax after claiming ₹75,000 Standard Deduction!
+     • Marginal Relief under 87A: If Net Income slightly exceeds ₹12,00,000, tax payable cannot exceed the income exceeding ₹12,00,000.
+
+DEDUCTIONS & EXEMPTIONS EXPRESSLY PROHIBITED IN NEW REGIME:
+  ❌ Section 80C (PPF, EPF, ELSS, LIC, Tuition Fees, Home Loan Principal)
+  ❌ Section 80D (Health Insurance Premium & Preventive Health Checkup)
+  ❌ Section 80CCD(1B) (Additional ₹50,000 Self NPS Contribution)
+  ❌ Section 10(13A) (House Rent Allowance / HRA Exemption)
+  ❌ Section 24(b) (Home Loan Interest Deduction on Self-Occupied Property)
+  ❌ Section 10(5) (Leave Travel Allowance / LTA Exemption)
+  ❌ Rule 3(7)(ix) (Food Coupons / Meal Vouchers / Sodexo Cards)
+  ❌ Section 80E (Education Loan Interest)
+  ❌ Section 80G / 80GGC (Charitable & Political Donations)
+  ❌ Section 80TTA / 80TTB (Savings Account / FD Interest Deductions)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 2. OLD TAX REGIME — OPTIONAL REGIME
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Slab Rates for Individuals (Below 60 Years):
-  Up to ₹2,50,000:           0% (Nil)
-  ₹2,50,001 – ₹5,00,000:     5%
-  ₹5,00,001 – ₹10,00,000:    20%
-  Above ₹10,00,000:          30%
+Taxpayers must explicitly opt out of Section 115BAC at the time of filing ITR (Form 10-IEA for business income) to use the Old Tax Regime.
 
-KEY DEDUCTIONS ALLOWED ONLY IN OLD REGIME:
-  • Standard Deduction: ₹50,000 for salaried.
-  • Section 80C: Investments up to ₹1,50,000 (EPF, PPF, ELSS, Life Insurance, Tuition Fees).
-  • Section 80D: Health Insurance premium up to ₹25,000 (Self/Family) + ₹25,000/₹50,000 (Parents).
-  • Section 80CCD(1B): Additional NPS self-contribution up to ₹50,000.
-  • Section 24(b): Home Loan interest deduction up to ₹2,00,000 on self-occupied property.
-  • Section 10(13A): House Rent Allowance (HRA) exemption.
-  • Section 10(5): Leave Travel Allowance (LTA) exemption.
-  • Section 80E: Education loan interest deduction (no upper limit for 8 years).
-  • Section 80G: Charitable donations (50% or 100% deduction).
-  • Section 80TTA / 80TTB: Savings account interest exemption (₹10,000 for general / ₹50,000 for seniors).
+SLAB STRUCTURE FOR GENERAL INDIVIDUALS (BELOW 60 YEARS):
+  Total Net Income (₹)            Tax Rate (%)
+  --------------------------------------------
+  Up to ₹2,50,000                0% (Nil)
+  ₹2,50,001 to ₹5,00,000         5%
+  ₹5,00,001 to ₹10,00,000        20%
+  Above ₹10,00,000               30%
+
+OLD REGIME SECTION 87A REBATE:
+  Rebate of 100% of tax up to ₹12,500 if Net Taxable Income <= ₹5,00,000.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-3. SURCHARGE & CESS (COMMON TO BOTH REGIMES)
+3. SURCHARGE & CESS STRUCTURE (FY 2026-27)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Health & Education Cess: 4% on (Tax + Surcharge).
+Health & Education Cess: Mandatory 4% on aggregate of (Income Tax + Surcharge).
+
 Surcharge Slabs:
-  ₹50L to ₹1Cr:   10%
-  ₹1Cr to ₹2Cr:   15%
-  ₹2Cr to ₹5Cr:   25%
-  Above ₹5Cr:      25% (New Regime capped at 25%) / 37% (Old Regime)
-  Note: Surcharge on Equity LTCG/STCG & Dividends is capped at 15%.
+  • Total Income > ₹50 Lakhs up to ₹1 Crore:  10%
+  • Total Income > ₹1 Crore up to ₹2 Crores: 15%
+  • Total Income > ₹2 Crores up to ₹5 Crores: 25%
+  • Total Income > ₹5 Crores: 25% under New Regime (Capped) | 37% under Old Regime.
+  • Special Cap: Surcharge on Equity LTCG (Sec 112A), STCG (Sec 111A), and Dividend Income is capped at 15%.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-4. DECISION MATRIX: WHICH REGIME SHOULD YOU CHOOSE?
+4. REGIME SELECTION DECISION MATRIX & BREAK-EVEN ANALYSIS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  • Gross Salary up to ₹12.75L: Choose NEW REGIME (100% Tax-Free).
-  • Gross Salary ₹15.00L: Old regime is better only if total deductions exceed ₹3,75,000.
-  • Gross Salary ₹20.00L: Old regime is better only if total deductions exceed ₹4,25,000.
-  • Gross Salary ₹25.00L: Old regime is better only if total deductions exceed ₹5,00,000.
+  Gross Salary Level      Break-Even Total Deductions Required for Old Regime
+  ------------------      --------------------------------------------------
+  Up to ₹12.75 Lakhs      New Regime is ALWAYS BETTER (Zero Tax).
+  ₹15.00 Lakhs            Old Regime requires > ₹3,75,000 total deductions.
+  ₹20.00 Lakhs            Old Regime requires > ₹4,25,000 total deductions.
+  ₹25.00 Lakhs            Old Regime requires > ₹5,00,000 total deductions.
+  ₹30.00 Lakhs            Old Regime requires > ₹5,50,000 total deductions.
