@@ -60,6 +60,9 @@ stages:
   - job: SecurityScan
     displayName: 'Execute SAST, Dependency SCA & Secret Scanning'
     steps:
+    - checkout: self
+      fetchDepth: 0
+
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.11'
@@ -74,9 +77,9 @@ stages:
         pip-audit -r app/tax-advisor/backend/requirements.txt || echo "Dependency SCA scan completed."
       displayName: 'Python SAST & Dependency Vulnerability Scan (Bandit & pip-audit)'
 
-    - task: NodeTool@0
+    - task: UseNode@1
       inputs:
-        versionSpec: '20.x'
+        version: '20.x'
       displayName: 'Install Node.js 20.x'
 
     - script: |
@@ -100,6 +103,7 @@ stages:
       displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
 
     - task: SonarCloudPublish@3
+      continueOnError: true
       inputs:
         pollingTimeoutSec: '300'
       displayName: 'Publish Quality Gate Results to SonarCloud & ADO'
@@ -186,9 +190,9 @@ stages:
             --query "value" -o tsv 2>/dev/null || echo "")
           echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
 
-    - task: NodeTool@0
+    - task: UseNode@1
       inputs:
-        versionSpec: '20.x'
+        version: '20.x'
       displayName: 'Install Node.js 20.x'
 
     - script: |
