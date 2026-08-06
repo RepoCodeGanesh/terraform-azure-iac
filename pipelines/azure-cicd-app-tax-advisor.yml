@@ -3,6 +3,7 @@ trigger:
     include:
       - main
       - develop
+      - feature/*
   paths:
     include:
       - app/tax-advisor/**
@@ -31,59 +32,24 @@ variables:
     value: '859a785c-bd38-402d-b595-1f44f40fb9bf'
   - name: functionAppName
     value: 'func-ht-taxb-p-cin-01'
+  - name: staticWebAppName
+    value: 'stapp-ht-taxb-p-cin-01'
   - name: resourceGroup
     value: 'rg-ht-taxb-p-cin-01'
   - name: storageAccount
-    value: 'sthtaxbpcin01'
+    value: 'sthttaxbpcin01'
 
 pool:
   vmImage: ubuntu-latest
 
 stages:
 
-- stage: DeployFrontend
-  displayName: 'Build and Deploy React Frontend'
-  jobs:
-  - job: BuildAndDeployFrontend
-    displayName: 'Deploy React UI to Azure Static Web App'
-    steps:
-    - task: AzureCLI@2
-      displayName: 'Fetch SWA Deployment Token from Key Vault'
-      inputs:
-        azureSubscription: 'shared-services'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          TOKEN=$(az keyvault secret show \
-            --vault-name "$(keyVaultName)" \
-            --name "SWA-TAXB-DEPLOYMENT-TOKEN" \
-            --subscription "$(keyVaultSubscription)" \
-            --query "value" -o tsv 2>/dev/null || echo "")
-          echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
-
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '18.x'
-      displayName: 'Install Node.js'
-
-    - script: |
-        cd app/tax-advisor/frontend
-        npm install
-        npm run build
-      displayName: 'Build React UI'
-
-    - task: AzureStaticWebApp@0
-      inputs:
-        app_location: 'app/tax-advisor/frontend'
-        output_location: 'dist'
-        azure_static_web_apps_api_token: '$(SWA_CLI_DEPLOYMENT_TOKEN)'
-      displayName: 'Deploy to Static Web App'
-
+# ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
 - stage: DeployBackend
-  displayName: 'Deploy Python Function App'
+  displayName: '1. Package and Deploy Python Function App'
   jobs:
   - job: BuildAndDeployBackend
-    displayName: 'Package and Deploy Python Code'
+    displayName: 'Deploy Backend to Azure Function App'
     steps:
     - task: UsePythonVersion@0
       inputs:
@@ -95,7 +61,7 @@ stages:
         python -m venv .venv
         source .venv/bin/activate
         pip install --target=".python_packages/lib/site-packages" -r requirements.txt
-      displayName: 'Install Python Dependencies'
+      displayName: 'Install Dependencies into .python_packages'
 
     - task: ArchiveFiles@2
       inputs:
@@ -114,19 +80,22 @@ stages:
         deploymentMethod: 'zipDeploy'
       displayName: 'Deploy to Azure Function App'
 
+# ── TASK 2: Upload 15 RAG Text Documents to Blob Storage ─────────────────────
 - stage: UploadDocuments
-  displayName: 'Upload RAG Tax Documents'
+  displayName: '2. Upload 15 RAG Documents to Blob Storage'
+  dependsOn: DeployBackend
   jobs:
   - job: UploadTaxDocs
-    displayName: 'Upload Documents to Azure Blob Storage'
+    displayName: 'Upload Text Documents to Storage Container'
     steps:
     - task: AzureCLI@2
-      displayName: 'Upload text files to storage container'
+      displayName: 'Upload 15 RAG text files to blob container'
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
+          echo "Uploading updated FY 2026-27 RAG documents..."
           az storage blob upload-batch \
             --account-name "$(storageAccount)" \
             --destination "documents" \
@@ -135,19 +104,67 @@ stages:
             --auth-mode login \
             --overwrite true
 
-- stage: ApimRegistration
-  displayName: 'APIM Registration & Policy Sync'
+# ── TASK 3: Build & Deploy React Frontend to Static Web App ──────────────────
+- stage: DeployFrontend
+  displayName: '3. Build and Deploy React Frontend SPA'
+  dependsOn: UploadDocuments
   jobs:
-  - job: RegisterWithApim
-    displayName: 'Register TaxBot API with Shared APIM'
+  - job: BuildAndDeployFrontend
+    displayName: 'Deploy React UI to Azure Static Web App'
     steps:
     - task: AzureCLI@2
-      displayName: 'Ensure APIM Policy & Health Endpoints'
+      displayName: 'Fetch SWA Token from Key Vault'
       inputs:
         azureSubscription: 'shared-services'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "Syncing TaxBot API endpoints in APIM..."
-          SWA_URL=$(az staticwebapp show --name stapp-ht-taxb-p-cin-01 --resource-group $(resourceGroup) --query "defaultHostName" -o tsv 2>/dev/null || echo "")
-          echo "SWA URL is https://${SWA_URL}"
+          TOKEN=$(az keyvault secret show \
+            --vault-name "$(keyVaultName)" \
+            --name "SWA-TAXB-DEPLOYMENT-TOKEN" \
+            --subscription "$(keyVaultSubscription)" \
+            --query "value" -o tsv 2>/dev/null || echo "")
+          echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Install Node.js 20.x'
+
+    - script: |
+        cd app/tax-advisor/frontend
+        npm install
+        npm run build
+      displayName: 'Build Production React Bundle'
+
+    - task: AzureStaticWebApp@0
+      inputs:
+        app_location: 'app/tax-advisor/frontend'
+        output_location: 'dist'
+        azure_static_web_apps_api_token: '$(SWA_CLI_DEPLOYMENT_TOKEN)'
+      displayName: 'Deploy Bundle to Static Web App'
+
+# ── TASK 4: Configure CORS & APIM Policy ─────────────────────────────────────
+- stage: ConfigureCorsAndApim
+  displayName: '4. Configure Function App CORS & APIM Policy'
+  dependsOn: DeployFrontend
+  jobs:
+  - job: ConfigureCorsAndPolicy
+    displayName: 'Configure Function App CORS for SWA Domain'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Set CORS Allowed Origins on Function App'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          SWA_HOST=$(az staticwebapp show --name "$(staticWebAppName)" --resource-group "$(resourceGroup)" --query "defaultHostname" -o tsv 2>/dev/null || echo "")
+          echo "SWA Hostname is: https://${SWA_HOST}"
+          if [ -n "$SWA_HOST" ]; then
+            echo "Adding CORS allowed origins to Function App..."
+            az functionapp cors add \
+              --name "$(functionAppName)" \
+              --resource-group "$(resourceGroup)" \
+              --allowed-origins "https://${SWA_HOST}" "*"
+          fi
