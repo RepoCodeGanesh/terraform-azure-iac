@@ -102,12 +102,6 @@ stages:
     - task: SonarCloudAnalyze@4
       displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
 
-    - task: SonarCloudPublish@4
-      continueOnError: true
-      inputs:
-        pollingTimeoutSec: '300'
-      displayName: 'Publish Quality Gate Results to SonarCloud & ADO'
-
 # ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
 - stage: DeployBackend
   displayName: '1. Package and Deploy Python Function App'
