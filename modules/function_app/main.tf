@@ -51,7 +51,8 @@ module "function_app" {
 
   # Python runtime stack
   site_config = {
-    always_on = false
+    always_on           = false
+    minimum_tls_version = "1.2"
 
     application_stack = {
       python = {
