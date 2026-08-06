@@ -78,7 +78,7 @@ export default function ChatAdvisor() {
         <div className="card-icon">💬</div>
         <div>
           <h2 className="card-title">AI Tax Advisor Chat</h2>
-          <p className="card-subtitle">Conversational RAG tax guidance updated for FY 2025-26 & Budget 2025</p>
+          <p className="card-subtitle">Conversational RAG tax guidance updated for FY 2026-27 & Budget 2025</p>
         </div>
       </div>
 

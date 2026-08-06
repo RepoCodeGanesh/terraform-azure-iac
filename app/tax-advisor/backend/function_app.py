@@ -107,26 +107,6 @@ def calculate_new_regime_tax(income: float) -> float:
     remaining = income
     for slab_size, rate in slabs:
         if remaining <= 0:
-            break
-        taxable = min(remaining, slab_size)
-        tax += taxable * rate
-        remaining -= taxable
-    return tax
-
-def calculate_old_regime_tax(income: float, is_senior: bool = False) -> float:
-    """Calculate tax under Old Tax Regime FY 2025-26."""
-    basic_exemption = 300000 if is_senior else 250000
-    if income <= basic_exemption:
-        return 0.0
-    slabs = []
-    if is_senior:
-        slabs = [
-            (200000, 0.05),   # 3L-5L
-            (500000, 0.20),   # 5L-10L
-            (float("inf"), 0.30),
-        ]
-        remaining = income - 300000
-    else:
         slabs = [
             (250000, 0.05),   # 2.5L-5L
             (500000, 0.20),   # 5L-10L
@@ -383,14 +363,14 @@ Return ONLY valid JSON, no markdown."""
             if raw.startswith("json"):
                 raw = raw[4:]
         result = json.loads(raw)
-        result["tax_year"] = "FY 2025-26 (AY 2026-27)"
+        result["tax_year"] = "FY 2026-27 (AY 2027-28)"
         return cors_response(200, result)
     except json.JSONDecodeError as e:
         logging.error(f"JSON parse error in analyse-salary: {e}")
         return cors_response(200, {
             "raw_analysis": resp.choices[0].message.content if "resp" in dir() else "Analysis failed",
             "error": "Could not parse structured response",
-            "tax_year": "FY 2025-26",
+            "tax_year": "FY 2026-27 (AY 2027-28)",
         })
     except Exception as e:
         logging.error(f"Analyse salary error: {e}")
@@ -410,7 +390,7 @@ def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
             return cors_response(400, {"error": "ctc_text is required"})
 
         client = get_openai_client()
-        prompt = f"""You are an Indian CTC tax optimisation expert for FY 2025-26.
+        prompt = f"""You are an Indian CTC tax optimisation expert for FY 2026-27.
 
 Analyse this CTC/offer letter and suggest restructuring to minimise tax.
 Target regime: {regime} tax regime
@@ -462,13 +442,13 @@ Return ONLY valid JSON, no markdown."""
             if raw.startswith("json"):
                 raw = raw[4:]
         result = json.loads(raw)
-        result["tax_year"] = "FY 2025-26 (AY 2026-27)"
+        result["tax_year"] = "FY 2026-27 (AY 2027-28)"
         result["target_regime"] = regime
         return cors_response(200, result)
     except json.JSONDecodeError:
         return cors_response(200, {
             "raw_analysis": resp.choices[0].message.content if "resp" in dir() else "Analysis failed",
-            "tax_year": "FY 2025-26",
+            "tax_year": "FY 2026-27 (AY 2027-28)",
         })
     except Exception as e:
         logging.error(f"Analyse CTC error: {e}")
