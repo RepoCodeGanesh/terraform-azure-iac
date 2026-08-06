@@ -536,3 +536,70 @@ resource "azurerm_static_web_app" "frontend" {
 
   tags = local.tags
 }
+
+# ─── Azure Portal Dashboard for TaxBot India Telemetry ────────────────────────
+resource "azurerm_portal_dashboard" "taxb_dashboard" {
+  name                = "dash-ht-taxb-p-cin-01"
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  location            = azurerm_resource_group.tax_advisor.location
+
+  dashboard_properties = jsonencode({
+    lenses = {
+      "0" = {
+        order = 0
+        parts = {
+          "0" = {
+            position = {
+              colSpan = 6
+              rowSpan = 4
+              x       = 0
+              y       = 0
+            }
+            metadata = {
+              title = "TaxBot India — Function App Requests & Latency"
+              inputs = [
+                {
+                  name  = "ComponentId"
+                  value = module.function_app.id
+                }
+              ]
+            }
+          }
+          "1" = {
+            position = {
+              colSpan = 6
+              rowSpan = 4
+              x       = 6
+              y       = 0
+            }
+            metadata = {
+              title = "Azure OpenAI & APIM Telemetry Overview"
+              inputs = [
+                {
+                  name  = "ComponentId"
+                  value = module.openai.id
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+    metadata = {
+      model = {
+        timeRange = {
+          type = "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+          value = {
+            relative = {
+              duration = 24
+              timeUnit = 1
+            }
+          }
+        }
+      }
+    }
+  })
+
+  tags = local.tags
+}
+
