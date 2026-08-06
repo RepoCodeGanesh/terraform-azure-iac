@@ -105,12 +105,13 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           echo "Uploading updated FY 2026-27 RAG documents..."
+          ACCOUNT_KEY=$(az storage account keys list --account-name "$(storageAccount)" --resource-group "$(resourceGroup)" --subscription "$(azureServiceConnection)" --query "[0].value" -o tsv)
           az storage blob upload-batch \
             --account-name "$(storageAccount)" \
+            --account-key "$ACCOUNT_KEY" \
             --destination "documents" \
             --source "app/tax-advisor/documents" \
             --pattern "*.txt" \
-            --auth-mode login \
             --overwrite true
 
 # ── TASK 3: Build & Deploy React Frontend to Static Web App ──────────────────
