@@ -1,0 +1,54 @@
+STATUTORY HOUSING TAX LAWS: HRA EXEMPTION & HOME LOAN DEDUCTIONS
+===================================================================
+
+STATUTORY AUTHORITIES: Income Tax Act 1961, Section 10(13A), Rule 2A, Section 24(b), Section 80C, Section 80EEA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. HOUSE RENT ALLOWANCE (HRA) EXEMPTION — SECTION 10(13A) & RULE 2A
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APPLICABILITY: Salaried employees receiving HRA who reside in rented residential accommodation (OLD REGIME ONLY).
+
+STATUTORY 3-PART MINIMUMHRA EXEMPTION FORMULA & METRO VS NON-METRO CITY DEFINITIONS:
+The exempt HRA amount is the MINIMUM of the following three calculations:
+  1. Actual HRA received from employer during the financial year.
+  2. Rent paid MINUS 10% of (Basic Salary + Dearness Allowance).
+  3. City Type Percentage:
+     • 50% of (Basic Salary + DA) for METRO CITIES:
+       Statutory Metro Cities: Delhi (including NCR regions like Gurgaon, Noida, Ghaziabad when employed in Delhi Metro), Mumbai, Kolkata, Chennai.
+     • 40% of (Basic Salary + DA) for NON-METRO CITIES:
+       All other Indian cities (Bengaluru, Hyderabad, Pune, Ahmedabad, Jaipur, Chandigarh, Kochi, Lucknow, etc.).
+
+MANDATORY COMPLIANCE & PROOF REQUIREMENTS (RULE 26C):
+  • Rent Receipts: Form 12BB declaration to employer along with rent receipts.
+  • Landlord PAN Mandatory: If total rent paid exceeds ₹1,00,000 per financial year (₹8,333/month), landlord's PAN must be reported to employer and in ITR.
+  • Rent Agreement: Required for audit trail verification.
+  • Rent Paid to Parents: Legally permitted if parents own the property, rent is transferred via bank transfer/cheque, parents report rental income in their ITR, and employee does not co-own the property.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. HOME LOAN INTEREST DEDUCTION — SECTION 24(b)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEDUCTION ON SELF-OCCUPIED PROPERTY (OLD REGIME ONLY):
+  • Maximum Interest Deduction: Up to ₹2,00,000 per financial year.
+  • Statutory Condition: Acquisition or construction of house property must be completed within 5 years from the end of the financial year in which capital was borrowed.
+  • Pre-Construction Period Interest: Interest paid prior to the financial year of construction completion is deductible in 5 equal annual installments starting from the year of completion (subject to overall ₹2L cap).
+
+DEDUCTION ON LET-OUT / DEEMED LET-OUT PROPERTY:
+  • Gross Annual Value minus Municipal Taxes = Net Annual Value (NAV).
+  • Standard Deduction under Section 24(a): 30% flat deduction on NAV.
+  • Interest Deduction under Section 24(b): NO UPPER CAP on interest paid for let-out property against rental income!
+  • Loss Set-Off Cap: Net loss from house property that can be set off against other income heads (Salary, Capital Gains) is strictly capped at ₹2,00,000 per financial year under Section 71(3A). Unabsorbed loss can be carried forward for 8 assessment years.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. HOME LOAN PRINCIPAL REPAYMENT & STAMP DUTY — SECTION 80C
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Principal Repayment: Deductible up to ₹1,50,000 under Section 80C (Old Regime). Property cannot be sold within 5 years of possession.
+• Stamp Duty & Registration Fees: Deductible under Section 80C up to ₹1.5L in the year of purchase.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. DUAL CLAIM: CAN YOU CLAIM HRA AND HOME LOAN INTEREST TOGETHER?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YES, legally permitted under CBDT guidelines under the following verified scenarios:
+  1. Own home is in a different city due to employment/business location (Claim 10(13A) HRA for rented home in work city + Sec 24(b) interest for owned home in home city).
+  2. Own home is under construction or not ready for possession (Claim HRA for rented home + pre-construction interest 1/5th).
+  3. Own home is let out (Report rental income + full Sec 24(b) interest + claim HRA for rented accommodation).
+  4. Own home is in the same city but workplace distance is unmanageable (supported by genuine commercial commute justification).

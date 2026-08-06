@@ -1,0 +1,122 @@
+Title: Azure DevOps CI/CD Pipelines Guide
+Source: pipelines/
+
+PIPELINE OVERVIEW
+
+The repository has five Azure DevOps pipelines under pipelines/. Each pipeline maps to one Terraform root or application layer:
+
+Pipeline File                          | Service Connection | Working Directory        | Purpose
+---------------------------------------|-------------------|--------------------------|---------------------------
+azure-cicd-bootstrap.yml               | bootstrap         | platform/bootstrap       | Terraform state backend
+azure-cicd-hub.yml                     | hub-prod          | platform/hub             | Hub VNet
+azure-cicd-shared-ser.yml             | shared-services   | platform/shared-services | APIM, Log Analytics, DNS
+azure-cicd-ai-assistant.yml            | app-prod          | workloads/ai-assistant   | AI workload IaC
+azure-cicd-app-ai-assistant.yml        | app-prod          | app/ai-assistant         | React UI + Python backend
+
+WORKLOAD IDENTITY FEDERATION (WIF)
+
+All pipelines use Workload Identity Federation (OIDC) — no stored client secrets. The Azure DevOps service connection acts as a federated identity credential for the service principal.
+
+Service connection setup:
+- Go to Azure DevOps → Project Settings → Service connections
+- Select "Azure Resource Manager" → "Workload Identity Federation (automatic)"
+- Select the target subscription
+
+TERRAFORM PIPELINE STAGES
+
+Each Terraform pipeline (bootstrap, hub, shared-services, ai-assistant) has three stages:
+
+  Stage 1: Validate
+    - terraform init -backend-config=backend.hcl
+    - terraform fmt -check -recursive
+    - terraform validate
+
+  Stage 2: Plan
+    - terraform init -backend-config=backend.hcl
+    - terraform plan -var-file=prod.tfvars -out=tfplan.bin
+    - Publish tfplan.bin as pipeline artifact
+
+  Stage 3: Apply (only on main/develop branch merge)
+    - Download tfplan.bin artifact
+    - terraform init -backend-config=backend.hcl
+    - terraform apply tfplan.bin
+
+TRIGGER RULES
+
+All Terraform pipelines trigger on:
+  Branches: main, develop
+  Paths:    the corresponding root directory + pipeline YAML file
+  Excludes: **/*.md  (documentation-only changes do not trigger pipelines)
+
+PR builds run Validate + Plan only (no Apply).
+
+APPLICATION PIPELINE (azure-cicd-app-ai-assistant.yml)
+
+Trigger path: app/ai-assistant/** and pipelines/azure-cicd-app-ai-assistant.yml
+
+Stage 1: DeployFrontend
+  1. AzureCLI@2 — fetches SWA_CLI_DEPLOYMENT_TOKEN from kv-ht-ss-p-cin-01
+     using shared-services service connection
+     (az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name SWA-CLI-DEPLOYMENT-TOKEN)
+     Injects token as masked pipeline variable via ##vso[task.setvariable;issecret=true]
+  2. NodeTool@0 — installs Node.js 18.x
+  3. npm install && npm run build — builds React Vite app
+  4. AzureStaticWebApp@0 — deploys dist/ to stapp-ht-dvob-p-cin-01
+
+Stage 2: DeployBackend
+  1. UsePythonVersion@0 — Python 3.11
+  2. pip install to .python_packages/lib/site-packages
+  3. ArchiveFiles@2 — zips app/ai-assistant/backend/ to functionapp.zip
+  4. AzureFunctionApp@2 — deploys zip to func-ht-dvob-p-cin-01
+
+Stage 3: ApimRegistration (depends on DeployBackend)
+  1. AzureCLI@2 — generates OpenAPI 3.0 spec for /chat endpoint
+  2. az apim api import — imports spec into apim-ht-ss-p-cin-01 (Shared-services subscription)
+  3. az apim api policy create — applies CORS policy allowing stapp-ht-dvob-p-cin-01 origin
+
+STATIC WEB APP DEPLOYMENT TOKEN
+
+The SWA deployment token is stored in:
+  Key Vault: kv-ht-ss-p-cin-01 (Shared-services subscription)
+  Secret name: SWA-CLI-DEPLOYMENT-TOKEN
+
+It is fetched at pipeline runtime — not stored as a plain pipeline variable.
+
+IMPORTANT: The token changes every time Terraform destroys and recreates the Static Web App.
+To refresh it:
+  az staticwebapp secrets list \
+    --name stapp-ht-dvob-p-cin-01 \
+    --resource-group rg-ht-dvob-p-cin-01 \
+    --subscription f4ffefe1-d689-4059-969c-ccc73e2a11d4 \
+    --query "properties.apiKey" -o tsv
+
+  az keyvault secret set \
+    --vault-name kv-ht-ss-p-cin-01 \
+    --name SWA-CLI-DEPLOYMENT-TOKEN \
+    --value "<token>" \
+    --subscription 859a785c-bd38-402d-b595-1f44f40fb9bf
+
+RBAC REQUIREMENTS PER PIPELINE IDENTITY
+
+Pipeline identity (service principal) — required RBAC:
+
+  bootstrap SP:
+    - Storage Blob Data Contributor on sthtbootpcin01
+
+  hub-prod SP:
+    - Storage Blob Data Contributor on sthtbootpcin01 (state access)
+    - Contributor on rg-ht-hub-p-cin-01
+
+  shared-services SP:
+    - Storage Blob Data Contributor on sthtbootpcin01
+    - Contributor on rg-ht-ss-p-cin-01
+    - Key Vault Secrets Officer on kv-ht-ss-p-cin-01
+
+  app-prod SP:
+    - Storage Blob Data Contributor on sthtbootpcin01
+    - Contributor on rg-ht-dvob-p-cin-01
+    - Network Contributor on rg-ht-hub-p-cin-01 (VNet peering)
+    - Contributor on rg-ht-ss-p-cin-01 (APIM backend registration)
+
+  shared-services SP (for pipeline SWA token fetch):
+    - Key Vault Secrets User on kv-ht-ss-p-cin-01

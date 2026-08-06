@@ -1,62 +1,42 @@
-# Dev Terraform Azure IaC
+# Azure AI Landing Zone
 
-This is a simplified development-only Terraform repository for a hub-and-spoke learning environment. It connects a single spoke to the existing dev hub, stores state in the existing hub storage account, references the existing hub Key Vault, and deploys optional app modules through Azure DevOps.
+Terraform and Azure DevOps infrastructure for a low-cost Azure AI landing zone.
 
-## Dev Hub Values
+This repo builds a CAF-style multi-subscription platform for Azure AI workloads, with separate Terraform state per layer, Workload Identity Federation in Azure DevOps, hub-spoke networking, shared telemetry/APIM services, and an active `workloads/ai-assistant` deployment.
 
-| Setting | Value |
-| --- | --- |
-| Subscription ID | `859a785c-bd38-402d-b595-1f444f0fb9bf` |
-| Tenant ID | `4cef0d84-84d6-4ed0-8abe-773b015bcf99` |
-| Hub resource group | `ht-cind-dev-rg-hub-01` |
-| Hub Key Vault | `ht-cind-dev-kv-hub-02` |
-| Hub storage account | `htcinddevsahub02` |
-| Backend container | `tfstate` |
-| Naming prefix | `ht-cind` |
-| Environment | `dev` |
+Start here:
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) - canonical project context, architecture, deployment order, current goal, and troubleshooting notes.
+- [AGENTS.md](AGENTS.md) - concise rules for Codex/AI agents working in this repo.
 
-## Layout
+## Terraform Roots
 
-```text
-.
-├── ci/
-├── docs/
-├── examples/dev/
-├── hub/
-├── modules/
-│   ├── securems/
-│   ├── serverless/
-│   └── staticwebapi/
-└── scripts/
-```
+Deploy roots independently and in this order:
 
-## Local Usage
+1. `platform/bootstrap`
+2. `platform/hub`
+3. `platform/shared-services`
+4. `workloads/ai-assistant`
+
+Do not merge these roots into one Terraform state.
+
+## Current Work
+
+The active goal is stabilizing and deploying `workloads/ai-assistant` through the `app-prod` Azure DevOps service connection.
+
+Key workload notes:
+- Main workload region: `centralindia` / `cin`
+- Azure OpenAI region: `southindia` / `sin`
+- Function App plan: workload-local `Y1` consumption plan
+- Model deployment: `gpt-4o-mini` version `2024-07-18`
+
+## Validate Locally
+
+From a Terraform root:
 
 ```bash
-./scripts/preflight-hub-check.sh \
-  --subscription 859a785c-bd38-402d-b595-1f444f0fb9bf \
-  --hub-rg ht-cind-dev-rg-hub-01 \
-  --storage htcinddevsahub02 \
-  --container tfstate \
-  --keyvault ht-cind-dev-kv-hub-02
-
-terraform init \
-  -backend-config="resource_group_name=ht-cind-dev-rg-hub-01" \
-  -backend-config="storage_account_name=htcinddevsahub02" \
-  -backend-config="container_name=tfstate" \
-  -backend-config="key=cindia-dev-root.tfstate" \
-  -backend-config="use_azuread_auth=true"
-
-terraform plan -var-file=examples/dev/terraform.tfvars
+terraform init -backend=false
+terraform fmt -check -recursive
+terraform validate
 ```
 
-## Module Selection
-
-Azure DevOps cannot dynamically populate a YAML parameter dropdown from repository folders during the same run. The CD pipeline therefore uses a queue-time variable:
-
-```text
-SELECTED_MODULES=all
-SELECTED_MODULES=staticwebapi,serverless
-```
-
-The pipeline discovers `modules/*`, validates the requested module names, and then runs `scripts/run-module.sh` for each selected module.
+Use the pipeline for backend-enabled plan/apply.

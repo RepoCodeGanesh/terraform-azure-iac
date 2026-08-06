@@ -1,0 +1,41 @@
+FREELANCERS, PROFESSIONALS & SMALL BUSINESS TAXATION (SEC 44AD & 44ADA)
+========================================================================
+
+STATUTORY AUTHORITIES: Income Tax Act 1961, Section 44AD, Section 44ADA, Section 44AB, Section 40(b) | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SECTION 44ADA — PRESUMPTIVE TAXATION FOR PROFESSIONALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELIGIBLE SPECIFIED PROFESSIONS (SECTION 44AA(1)):
+  Software Engineers, IT Consultants, Medical Practitioners, Lawyers, Chartered Accountants, Architects, Technical Consultants, Interior Decorators, Film Artists, Freelance Designers, Content Creators, Independent Consultants.
+
+STATUTORY ELIGIBILITY & REVENUE THRESHOLDS:
+  • Gross Professional Receipts Ceiling: Up to ₹75,000,000 (₹75 Lakhs) per financial year, provided aggregate cash receipts do not exceed 5% of total gross receipts.
+  • Standard Limit: ₹50,000,000 (₹50 Lakhs) if cash receipts exceed 5%.
+
+PRESUMPTIVE PROFIT RATE & MECHANICS:
+  • Presumed Taxable Income: Minimum 50% of Gross Receipts is deemed as Net Taxable Business Income.
+  • Expense Deduction: The remaining 50% is treated as full expenditure (salaries, software, equipment, rent, internet) without maintaining books of accounts, bills, or vouchers!
+  • Example: Software Architect earning ₹60 Lakhs in freelance receipts via bank transfer.
+    Presumed Net Taxable Income = ₹30 Lakhs (50% of ₹60L).
+    Tax is computed on ₹30 Lakhs under New (Sec 115BAC) or Old Regime!
+  • Exemption from Tax Audit (Section 44AB): Tax audit is NOT REQUIRED as long as declared profit >= 50% of receipts.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. SECTION 44AD — PRESUMPTIVE TAXATION FOR SMALL BUSINESSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELIGIBLE BUSINESSES:
+  Retail trade, wholesale trade, manufacturing, logistics, service businesses (excluding agency, commission, and specified professionals).
+
+TURNOVER CEILINGS:
+  • Enhanced Limit: Up to ₹30,000,000 (₹3 Crores) per FY if aggregate cash receipts <= 5%.
+  • Standard Limit: ₹20,000,000 (₹2 Crores) if cash receipts > 5%.
+
+PRESUMPTIVE PROFIT RATES:
+  • 6% of Turnover for receipts received through digital/bank channels (UPI, NEFT, RTGS, Cards, Cheques).
+  • 8% of Turnover for receipts received in cash.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. MANDATORY ADVANCE TAX COMPLIANCE FOR PRESUMPTIVE TAXPAYERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Single Installment Rule (Section 211(1)(b)): Taxpayers opting for Section 44AD or 44ADA are NOT required to pay quarterly advance tax. They must pay 100% of their estimated advance tax in a SINGLE INSTALLMENT on or before 15 MARCH of the financial year.

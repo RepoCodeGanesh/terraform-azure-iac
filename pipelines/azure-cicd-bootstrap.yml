@@ -1,0 +1,59 @@
+# ==============================================================================
+# Pipeline Name: Azure Platform - Bootstrap IaC CI/CD Pipeline
+# Description: Provisions central Terraform remote state storage (sthtbootpcin01)
+# Target Subscription: Bootstrap (7689ad81-71ba-481b-a17c-e1b6be61bab1)
+# ==============================================================================
+
+name: Platform-Bootstrap-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - platform/bootstrap/**
+      - pipelines/azure-cicd-bootstrap.yml
+    exclude:
+      - '**/*.md'
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - platform/bootstrap/**
+      - pipelines/azure-cicd-bootstrap.yml
+    exclude:
+      - '**/*.md'
+
+variables:
+  - name: terraformVersion
+    value: '1.15.8'
+
+  - name: azureServiceConnection
+    value: 'bootstrap'
+
+  - name: workingDirectory
+    value: 'platform/bootstrap'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+- template: templates/plan.yml
+  parameters:
+    terraformVersion: $(terraformVersion)
+    azureServiceConnection: $(azureServiceConnection)
+    workingDirectory: $(workingDirectory)
+
+- template: templates/apply.yml
+  parameters:
+    terraformVersion: $(terraformVersion)
+    azureServiceConnection: $(azureServiceConnection)
+    workingDirectory: $(workingDirectory)
+    environmentName: 'bootstrap-prod'

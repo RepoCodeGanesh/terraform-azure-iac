@@ -1,0 +1,179 @@
+# ==============================================================================
+# Pipeline Name: TaxBot India - Application CI/CD Pipeline
+# Description: Packages Python backend, uploads RAG docs, builds React SPA UI, and configures CORS
+# Trigger: Changes to app/tax-advisor/**
+# Stages: 1. DeployBackend | 2. UploadDocuments | 3. DeployFrontend | 4. ConfigureCorsAndApim
+# ==============================================================================
+
+name: TaxBot-India-App-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+  paths:
+    include:
+      - app/tax-advisor/**
+      - pipelines/azure-cicd-app-tax-advisor.yml
+    exclude:
+      - '**/*.md'
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - app/tax-advisor/**
+      - pipelines/azure-cicd-app-tax-advisor.yml
+    exclude:
+      - '**/*.md'
+
+variables:
+  - name: azureServiceConnection
+    value: 'app-prod'
+  - name: keyVaultName
+    value: 'kv-ht-ss-p-cin-01'
+  - name: keyVaultSubscription
+    value: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+  - name: functionAppName
+    value: 'func-ht-taxb-p-cin-01'
+  - name: staticWebAppName
+    value: 'stapp-ht-taxb-p-cin-01'
+  - name: resourceGroup
+    value: 'rg-ht-taxb-p-cin-01'
+  - name: storageAccount
+    value: 'sthttaxbpcin01'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+# ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
+- stage: DeployBackend
+  displayName: '1. Package and Deploy Python Function App'
+  jobs:
+  - job: BuildAndDeployBackend
+    displayName: 'Deploy Backend to Azure Function App'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        cd app/tax-advisor/backend
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --target=".python_packages/lib/site-packages" -r requirements.txt
+      displayName: 'Install Dependencies into .python_packages'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: 'app/tax-advisor/backend'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+      displayName: 'Archive Function App Code'
+
+    - task: AzureFunctionApp@2
+      inputs:
+        connectedServiceNameARM: '$(azureServiceConnection)'
+        appType: 'functionAppLinux'
+        appName: '$(functionAppName)'
+        package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+        deploymentMethod: 'zipDeploy'
+      displayName: 'Deploy to Azure Function App'
+
+# ── TASK 2: Upload 15 RAG Text Documents to Blob Storage ─────────────────────
+- stage: UploadDocuments
+  displayName: '2. Upload 15 RAG Documents to Blob Storage'
+  dependsOn: DeployBackend
+  jobs:
+  - job: UploadTaxDocs
+    displayName: 'Upload Text Documents to Storage Container'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Upload 15 RAG text files to blob container'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Uploading updated FY 2026-27 RAG documents..."
+          az storage blob upload-batch \
+            --account-name "$(storageAccount)" \
+            --destination "documents" \
+            --source "app/tax-advisor/documents" \
+            --pattern "*.txt" \
+            --auth-mode login \
+            --overwrite true
+
+# ── TASK 3: Build & Deploy React Frontend to Static Web App ──────────────────
+- stage: DeployFrontend
+  displayName: '3. Build and Deploy React Frontend SPA'
+  dependsOn: UploadDocuments
+  jobs:
+  - job: BuildAndDeployFrontend
+    displayName: 'Deploy React UI to Azure Static Web App'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Fetch SWA Token from Key Vault'
+      inputs:
+        azureSubscription: 'shared-services'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          TOKEN=$(az keyvault secret show \
+            --vault-name "$(keyVaultName)" \
+            --name "SWA-TAXB-DEPLOYMENT-TOKEN" \
+            --subscription "$(keyVaultSubscription)" \
+            --query "value" -o tsv 2>/dev/null || echo "")
+          echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Install Node.js 20.x'
+
+    - script: |
+        cd app/tax-advisor/frontend
+        npm install
+        npm run build
+      displayName: 'Build Production React Bundle'
+
+    - task: AzureStaticWebApp@0
+      inputs:
+        app_location: 'app/tax-advisor/frontend'
+        output_location: 'dist'
+        azure_static_web_apps_api_token: '$(SWA_CLI_DEPLOYMENT_TOKEN)'
+      displayName: 'Deploy Bundle to Static Web App'
+
+# ── TASK 4: Configure CORS & APIM Policy ─────────────────────────────────────
+- stage: ConfigureCorsAndApim
+  displayName: '4. Configure Function App CORS & APIM Policy'
+  dependsOn: DeployFrontend
+  jobs:
+  - job: ConfigureCorsAndPolicy
+    displayName: 'Configure Function App CORS for SWA Domain'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Set CORS Allowed Origins on Function App'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          SWA_HOST=$(az staticwebapp show --name "$(staticWebAppName)" --resource-group "$(resourceGroup)" --query "defaultHostname" -o tsv 2>/dev/null || echo "")
+          echo "SWA Hostname is: https://${SWA_HOST}"
+          if [ -n "$SWA_HOST" ]; then
+            echo "Adding CORS allowed origins to Function App..."
+            az functionapp cors add \
+              --name "$(functionAppName)" \
+              --resource-group "$(resourceGroup)" \
+              --allowed-origins "https://${SWA_HOST}" "*"
+          fi

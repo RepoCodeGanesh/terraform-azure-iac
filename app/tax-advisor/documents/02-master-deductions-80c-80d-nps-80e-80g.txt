@@ -1,0 +1,87 @@
+MASTER STATUTORY GUIDE TO CHAPTER VI-A DEDUCTIONS (FY 2026-27 / AY 2027-28)
+===================================================================
+
+STATUTORY AUTHORITIES: Income Tax Act 1961, Sections 80C to 80U, CBDT Rules
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SECTION 80C — AGGREGATE CEILING: ₹1,50,000 (OLD REGIME ONLY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Section 80C allows deductions up to an overall limit of ₹1,50,000 per financial year for Individuals and HUF.
+
+ELIGIBLE INSTRUMENTS & CONDITIONS:
+  1. Employee Provident Fund (EPF) & VPF: Mandatory employee 12% basic deduction.
+  2. Public Provident Fund (PPF): 15-year tenure. EEE status (Exempt contribution, Exempt interest, Exempt maturity). Minimum ₹500, Max ₹1,50,000/yr.
+  3. Equity Linked Savings Scheme (ELSS): 3-year mandatory lock-in period. Highest historical inflation-adjusted returns.
+  4. Life Insurance Premium: Premium paid for self, spouse, children. Policy issued after 1 April 2012 must have sum assured at least 10x annual premium.
+  5. Sukanya Samriddhi Yojana (SSY): Opened for girl child below 10 yrs. EEE status. Max ₹1,50,000/yr.
+  6. Senior Citizens Savings Scheme (SCSS): 5-year deposit scheme for individuals aged 60+.
+  7. National Savings Certificate (NSC): 5-year lock-in. Interest accrued annually is deemed re-invested under 80C.
+  8. Tax-Saving Fixed Deposits: 5-year lock-in with scheduled banks/post office. Interest is taxable.
+  9. Home Loan Principal Repayment: Under Section 80C (property must not be transferred within 5 years).
+  10. Stamp Duty & Registration Fee: Paid for purchase of residential house property (claimable in the year paid).
+  11. Children's Tuition Fees: Paid to university, college, school in India for full-time education (Max 2 children).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. SECTION 80D — HEALTH INSURANCE & MEDICAL EXPENDITURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Deduction limits for health insurance premium, preventive health checkup, and medical treatment (Old Regime Only):
+
+CATEGORY A: SELF, SPOUSE & DEPENDENT CHILDREN
+  • Non-Senior Citizen (Below 60 years): Maximum ₹25,000 per year.
+  • Senior Citizen (60 years or above): Maximum ₹50,000 per year.
+
+CATEGORY B: PARENTS (ADDITIONAL DEDUCTION)
+  • Parents Below 60 years: Additional ₹25,000 per year.
+  • Parents Senior Citizens (60 years or above): Additional ₹50,000 per year.
+
+PREVENTIVE HEALTH CHECKUP SUB-LIMIT:
+  • Up to ₹5,000 payment for preventive health checkup for self/family/parents (paid in cash or digital).
+  • Included within the overall Category A / Category B limits.
+
+MEDICAL EXPENDITURE FOR SENIOR CITIZENS WITHOUT INSURANCE:
+  • Up to ₹50,000 per year for medical expenditure incurred on senior citizen self/parents who do not have health insurance coverage.
+
+MAXIMUM POSSIBLE COMBINED 80D DEDUCTION: ₹1,00,000 (if self/family is 60+ AND parents are 60+).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. SECTION 80CCD — NATIONAL PENSION SYSTEM (NPS) TAX LAWS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80CCD(1):
+  • Employee self-contribution to Tier-1 NPS account.
+  • Capped at 10% of (Basic + DA) for salaried, or 20% of gross income for self-employed.
+  • Included within the overall Section 80C ₹1,50,000 limit.
+
+SECTION 80CCD(1B) — EXCLUSIVE EXTRA DEDUCTION:
+  • Additional self-contribution up to ₹50,000 in Tier-1 NPS account.
+  • Over and above the Section 80C ₹1,50,000 limit (Total self-claim = ₹2,00,000).
+  • Old Tax Regime ONLY.
+
+SECTION 80CCD(2) — EMPLOYER NPS CONTRIBUTION (WORKS IN NEW & OLD REGIME!):
+  • Contribution made by employer directly into employee's NPS Tier-1 account.
+  • Private Sector Employees: Deduction allowed up to 14% of (Basic Salary + DA).
+  • Central / State Govt Employees: Deduction allowed up to 14% of (Basic Salary + DA).
+  • Works in BOTH New (Sec 115BAC) and Old tax regimes!
+  • Statutory Cap: Combined annual employer contribution to (EPF + NPS + Superannuation) exceeding ₹7,50,000 is taxable perquisite under Section 17(2)(vii).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. OTHER KEY CHAPTER VI-A DEDUCTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 80E (EDUCATION LOAN INTEREST):
+  • Interest paid on loan taken for higher education (Self, Spouse, Children).
+  • 100% of interest amount is deductible without any upper monetary cap for up to 8 consecutive years.
+
+SECTION 80DD / 80U (DISABILITY DEDUCTIONS):
+  • 80DD: Dependent with disability (₹75,000 flat) or severe disability 80%+ (₹1,25,000 flat).
+  • 80U: Taxpayer with disability (₹75,000 flat) or severe disability (₹1,25,000 flat).
+
+SECTION 80DDB (SPECIFIED CRITICAL ILLNESSES):
+  • Medical treatment for specified diseases (Cancer, Neurological, Renal failure).
+  • Up to ₹40,000 (General) or ₹1,00,000 (Senior Citizens aged 60+).
+
+SECTION 80G / 80GGC (DONATIONS):
+  • 80G: 50% or 100% deduction for donations to notified funds (PMNRF, NDRF, Govt funds). Cash donations > ₹2,000 disallowed.
+  • 80GGC: 100% deduction for non-cash contributions to registered political parties.
+
+SECTION 80TTA / 80TTB (SAVINGS & FD INTEREST):
+  • 80TTA: Savings bank interest deduction up to ₹10,000 (General individuals below 60).
+  • 80TTB: Interest from Savings, FDs, and Post Office up to ₹50,000 (Senior Citizens aged 60+).
