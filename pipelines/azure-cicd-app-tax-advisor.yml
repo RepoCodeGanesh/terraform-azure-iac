@@ -49,7 +49,7 @@ variables:
     value: 'sthttaxbpcin01'
 
 pool:
-  vmImage: ubuntu-latest
+  name: 'local'
 
 stages:
 
