@@ -67,10 +67,9 @@ stages:
 
     - script: |
         cd app/tax-advisor/backend
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install --target=".python_packages/lib/site-packages" -r requirements.txt
-      displayName: 'Install Dependencies into .python_packages'
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt --target=".python_packages/lib/site-packages" --platform manylinux2014_x86_64 --only-binary=:all: --python-version 311 --implementation cp --upgrade
+      displayName: 'Install Compatible manylinux2014 Wheels into .python_packages'
 
     - task: ArchiveFiles@2
       inputs:
