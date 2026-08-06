@@ -29,10 +29,11 @@ IF TAXPAYER OPTS FOR NEW TAX REGIME (DEFAULT FOR FY 2026-27):
     - Example: Salary ₹22 Lakhs, Basic ₹9 Lakhs.
       14% of ₹9L = ₹1,26,000 Employer NPS contribution.
       Tax Saved = ₹1,26,000 × 31.2% = ₹39,312 per year (₹3,276/month extra take-home pay)!
-  • STRATEGY 2: OFFICIAL EXPENSE REIMBURSEMENTS (SECTION 10(14))
-    - Telephone / Mobile / Broadband reimbursement (actual bills).
-    - Fuel & Driver Allowance for official vehicle usage (Rule 3(2)).
-    - Professional Certifications / Books / Periodicals reimbursement.
+  • STRATEGY 2: OFFICIAL EXPENSE REIMBURSEMENTS (PERMITTED IN NEW REGIME)
+    - Telephone / Mobile / Broadband Reimbursement: 100% EXEMPT against actual bills (Non-taxable perquisite u/r 3(7)(ix) / Sec 17(2)).
+    - Official Conveyance & Travel on Tour (Sec 10(14)(i)): 100% EXEMPT against actual official duties supported by bills/logbook.
+    - Professional Certifications / Books Reimbursement: 100% EXEMPT against actual invoices for job skills.
+    - NOTE: Fixed cash allowances without bill proof are 100% TAXABLE in New Regime. Only actual bill reimbursements qualify!
   • STRATEGY 2: FOOD COUPONS / MEAL CARDS (RULE 15(5)(a) - INCOME TAX RULES 2026)
     - Convert up to ₹4,400/month (₹1,05,600/year) from Special Allowance to Pluxee/Sodexo/Zeta digital food cards.
     - Exemption limit increased from ₹50 to ₹200 per meal (up to 2 meals/working day).
