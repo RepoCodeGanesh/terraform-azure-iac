@@ -417,13 +417,13 @@ Target regime: {regime} tax regime
 
 Key tax optimization rules:
 1. Employer NPS (Section 80CCD(2)): 14% of Basic + DA exempt under BOTH New & Old regimes.
-2. Food Coupons / Meal Cards (Rule 3(7)(ix)): Up to ₹50/meal (₹26,400/year) exempt under Old regime ONLY (Taxable in New regime).
+2. Food Coupons / Meal Cards (Rule 3(7)(ix)): Up to ₹50/meal (₹2,200 to ₹3,000/month based on working days / company flexi-plan, i.e. ₹26,400 to ₹36,000/year) exempt under Old regime ONLY (Taxable in New regime).
 3. Telephone & Broadband Reimbursement: Fully exempt against actual bills.
 4. Learning & Development Allowance: Exempt if spent on certifications/training.
 
 ALWAYS INCLUDE Food Coupons / Meal Cards (Rule 3(7)(ix)) in recommendations list:
-- If target regime is NEW: set tax_saving to 0 and set works_in_new_regime to false with note "Non-exempt under New Regime (0% saving), saves ₹8,237 under Old Regime".
-- If target regime is OLD: set tax_saving to ₹8,237 and set works_in_new_regime to false.
+- If target regime is NEW: set tax_saving to 0 and set works_in_new_regime to false with note "Non-exempt under New Regime (0% saving), saves up to ₹9,360/yr under Old Regime".
+- If target regime is OLD: set tax_saving to ₹8,237 to ₹9,360 and set works_in_new_regime to false.
 
 CTC / Offer Letter:
 {ctc_text}
@@ -448,11 +448,11 @@ Provide a JSON response:
     }},
     {{
       "action": "Add Food Coupons / Meal Cards (Rule 3(7)(ix))",
-      "amount_per_year": 26400,
+      "amount_per_year": 30000,
       "section": "Rule 3(7)(ix)",
       "tax_saving": 0,
       "works_in_new_regime": false,
-      "steps": "Request HR for ₹2,200/month food card against Special Allowance. Note: Saves ₹8,237/yr in Old Regime, but is a 100% taxable perquisite in New Regime."
+      "steps": "Request HR for ₹2,200 - ₹3,000/month food card (Pluxee/Sodexo/Zeta) against Special Allowance based on company policy. Note: Saves up to ₹9,360/yr in Old Regime, but is a 100% taxable perquisite in New Regime."
     }}
   ],
   "optimised_ctc": {{
@@ -488,13 +488,13 @@ Return ONLY valid JSON, no markdown."""
         if not has_food_card:
             food_card_rec = {
                 "action": "Add Food Coupons / Meal Cards (Rule 3(7)(ix))",
-                "amount_per_year": 26400,
+                "amount_per_year": 30000,
                 "section": "Rule 3(7)(ix)",
-                "tax_saving": 8237 if regime == "old" else 0,
+                "tax_saving": 9360 if regime == "old" else 0,
                 "works_in_new_regime": False,
-                "steps": "Request HR for ₹2,200/month food card against Special Allowance. " +
-                         ("Exempt up to ₹50/meal under Old Regime (Saves ₹8,237/yr)." if regime == "old" else
-                          "Note: Saves ₹8,237/yr under Old Regime, but is a 100% taxable perquisite under New Tax Regime (Section 115BAC).")
+                "steps": "Request HR for ₹2,200 to ₹3,000/month food card against Special Allowance. " +
+                         ("Exempt up to ₹50/meal under Old Regime (Saves up to ₹9,360/yr)." if regime == "old" else
+                          "Note: Saves up to ₹9,360/yr under Old Regime, but is a 100% taxable perquisite under New Tax Regime (Section 115BAC).")
             }
             raw_recs.append(food_card_rec)
 
