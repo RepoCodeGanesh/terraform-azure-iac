@@ -85,32 +85,24 @@ stages:
         npm audit --audit-level=high || echo "Frontend npm audit completed with advisory notes."
       displayName: 'Frontend Dependency Vulnerability Scan (npm audit)'
 
-    - task: AzureCLI@2
-      displayName: 'Fetch SonarCloud Token from Key Vault'
+    - task: SonarCloudPrepare@3
       inputs:
-        azureSubscription: 'shared-services'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          TOKEN=$(az keyvault secret show \
-            --vault-name "$(keyVaultName)" \
-            --name "SONARCLOUD-TOKEN" \
-            --subscription "$(keyVaultSubscription)" \
-            --query "value" -o tsv 2>/dev/null || echo "")
-          echo "##vso[task.setvariable variable=SONARCLOUD_TOKEN;issecret=true]$TOKEN"
+        SonarCloud: 'SonarCloud'
+        organization: 'ganesan-kasi'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'Ganesan-kasi_terraform-azure-iac'
+        cliProjectName: 'terraform-azure-iac'
+        cliSources: 'app/tax-advisor'
+      displayName: 'Prepare Enterprise SonarCloud Analysis'
 
-    - script: |
-        echo "Installing SonarCloud CLI scanner..."
-        npm install -g sonarqube-scanner
-        echo "Executing SonarCloud SAST Security & Code Analysis..."
-        npx sonar-scanner \
-          -Dsonar.projectKey=Ganesan-kasi_terraform-azure-iac \
-          -Dsonar.organization=ganesan-kasi \
-          -Dsonar.projectName=terraform-azure-iac \
-          -Dsonar.sources=app/tax-advisor \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.login=$(SONARCLOUD_TOKEN) || echo "SonarCloud analysis completed."
-      displayName: 'SonarCloud Code Security & Quality Gate Analysis'
+    - task: SonarCloudAnalyze@3
+      displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
+
+    - task: SonarCloudPublish@3
+      inputs:
+        pollingTimeoutSec: '300'
+      displayName: 'Publish Quality Gate Results to SonarCloud & ADO'
 
 # ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
 - stage: DeployBackend
