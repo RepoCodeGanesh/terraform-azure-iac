@@ -88,7 +88,7 @@ stages:
         npm audit --audit-level=high || echo "Frontend npm audit completed with advisory notes."
       displayName: 'Frontend Dependency Vulnerability Scan (npm audit)'
 
-    - task: SonarCloudPrepare@3
+    - task: SonarCloudPrepare@4
       inputs:
         SonarCloud: 'SonarCloud'
         organization: 'repocodeganesh'
@@ -99,10 +99,10 @@ stages:
         cliSources: 'app/tax-advisor'
       displayName: 'Prepare Enterprise SonarCloud Analysis'
 
-    - task: SonarCloudAnalyze@3
+    - task: SonarCloudAnalyze@4
       displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
 
-    - task: SonarCloudPublish@3
+    - task: SonarCloudPublish@4
       continueOnError: true
       inputs:
         pollingTimeoutSec: '300'
