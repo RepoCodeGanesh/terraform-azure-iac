@@ -88,10 +88,10 @@ stages:
     - task: SonarCloudPrepare@3
       inputs:
         SonarCloud: 'SonarCloud'
-        organization: 'ganesan-kasi'
+        organization: 'repocodeganesh'
         scannerMode: 'CLI'
         configMode: 'manual'
-        cliProjectKey: 'Ganesan-kasi_terraform-azure-iac'
+        cliProjectKey: 'RepoCodeGanesh_terraform-azure-iac'
         cliProjectName: 'terraform-azure-iac'
         cliSources: 'app/tax-advisor'
       displayName: 'Prepare Enterprise SonarCloud Analysis'
