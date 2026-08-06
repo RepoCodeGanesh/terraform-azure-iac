@@ -85,6 +85,20 @@ stages:
         npm audit --audit-level=high || echo "Frontend npm audit completed with advisory notes."
       displayName: 'Frontend Dependency Vulnerability Scan (npm audit)'
 
+    - task: AzureCLI@2
+      displayName: 'Fetch SonarCloud Token from Key Vault'
+      inputs:
+        azureSubscription: 'shared-services'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          TOKEN=$(az keyvault secret show \
+            --vault-name "$(keyVaultName)" \
+            --name "SONARCLOUD-TOKEN" \
+            --subscription "$(keyVaultSubscription)" \
+            --query "value" -o tsv 2>/dev/null || echo "")
+          echo "##vso[task.setvariable variable=SONARCLOUD_TOKEN;issecret=true]$TOKEN"
+
     - script: |
         echo "Installing SonarCloud CLI scanner..."
         npm install -g sonarqube-scanner
@@ -94,7 +108,8 @@ stages:
           -Dsonar.organization=ganesan-kasi \
           -Dsonar.projectName=terraform-azure-iac \
           -Dsonar.sources=app/tax-advisor \
-          -Dsonar.host.url=https://sonarcloud.io || echo "SonarCloud analysis completed."
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=$(SONARCLOUD_TOKEN) || echo "SonarCloud analysis completed."
       displayName: 'SonarCloud Code Security & Quality Gate Analysis'
 
 # ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
