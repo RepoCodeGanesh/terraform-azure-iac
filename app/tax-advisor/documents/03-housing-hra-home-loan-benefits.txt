@@ -1,0 +1,42 @@
+HOUSING TAX BENEFITS: HRA EXEMPTION & HOME LOAN TAX DEDUCTIONS
+================================================================
+
+SOURCE: Income Tax Act 1961, Section 10(13A), Rule 2A, Section 24(b) | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. HOUSE RENT ALLOWANCE (HRA) EXEMPTION — SECTION 10(13A)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Applicability: Salaried employees receiving HRA who live in rented accommodation (Old Regime Only).
+
+HRA EXEMPTION COMPUTATION FORMULA:
+The exempt HRA amount is the MINIMUM of the following three:
+  1. Actual HRA received from employer
+  2. Rent paid minus 10% of Basic Salary (+ DA)
+  3. 50% of Basic Salary (if living in Metro: Delhi, Mumbai, Kolkata, Chennai) OR
+     40% of Basic Salary (if living in Non-Metro)
+
+DOCUMENTATION REQUIREMENTS:
+  • Rent receipts for the financial year.
+  • Landlord PAN mandatory if annual rent exceeds ₹1,00,000.
+  • Rental agreement.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. HOME LOAN INTEREST & PRINCIPAL DEDUCTION — SECTION 24(b) & 80C
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTEREST DEDUCTION (SECTION 24b):
+  • Self-Occupied Property: Interest deduction up to ₹2,00,000 per financial year (Old Regime).
+  • Let-Out Property: Full interest paid is deductible against rental income. Loss from house property capped at ₹2,00,000 setoff against other income.
+  • Construction condition: Construction must be completed within 5 years of loan sanction.
+
+PRINCIPAL DEDUCTION (SECTION 80C):
+  • Principal repayment deductible up to ₹1,50,000 under Section 80C.
+  • Stamp duty and registration charges are also deductible under Section 80C in the year of purchase.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. CAN YOU CLAIM BOTH HRA AND HOME LOAN INTEREST?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YES, under the following scenarios:
+  1. Own home is in a different city due to employment/business in another city.
+  2. Own home is under construction or let out, and you reside in rented premises.
+  3. Own home is in the same city but far from workplace (justified under genuine commercial reasons).
+  Result: Claim HRA exemption under 10(13A) AND Home Loan interest under 24(b) simultaneously!

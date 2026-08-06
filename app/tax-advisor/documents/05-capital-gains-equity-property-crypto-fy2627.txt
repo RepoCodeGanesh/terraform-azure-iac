@@ -1,0 +1,41 @@
+CAPITAL GAINS TAX GUIDE — EQUITY, PROPERTY, GOLD, AND VDA/CRYPTO
+===================================================================
+
+SOURCE: Income Tax Act 1961, Section 111A, 112A, 112, 115BBH | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. LISTED EQUITY & EQUITY MUTUAL FUNDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOLDING PERIOD: Short Term <= 12 months | Long Term > 12 months.
+
+TAX RATES (FY 2026-27):
+  • Short Term Capital Gains (STCG - Section 111A): 20%
+  • Long Term Capital Gains (LTCG - Section 112A): 12.5%
+  • Annual LTCG Exemption: First ₹1,25,000 of LTCG per financial year is 100% EXEMPT from tax!
+  • Indexation Benefit: Removed for equity and equity mutual funds.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. REAL ESTATE / IMMOVABLE PROPERTY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOLDING PERIOD: Short Term <= 24 months | Long Term > 24 months.
+
+TAX RATES:
+  • STCG: Taxed at slab rates (Old or New regime).
+  • LTCG (Section 112): 12.5% without indexation OR 20% with indexation for properties acquired before 23 July 2024 (Taxpayers can choose the lower tax option!).
+  • Reinvestment Exemptions:
+    - Section 54: Invest LTCG in new residential house within 2 yrs (or construct within 3 yrs). Capped at ₹10 Crore.
+    - Section 54EC: Invest LTCG in 5-year NHAI / REC capital gains bonds within 6 months (Max ₹50 Lakh).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. GOLD & DEBT MUTUAL FUNDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Physical Gold & Gold ETFs: STCG <= 24 months (slab rates), LTCG > 24 months (12.5% without indexation).
+• Debt Mutual Funds (with >65% debt): 100% Taxed at applicable slab rates as STCG regardless of holding period (Section 50AA).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. VIRTUAL DIGITAL ASSETS (VDA / CRYPTO / NFTS) — SECTION 115BBH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Tax Rate: Flat 30% tax on gains from transfer of VDAs + 4% cess.
+• TDS under Section 194S: 1% TDS on transfer of VDA if transaction > ₹50,000/yr.
+• NO Loss Set-Off: Loss from one crypto asset CANNOT be set off against gain from another crypto asset or any other income!
+• NO Expenses Allowed: No deduction except cost of acquisition. Mining costs & electricity cannot be deducted.

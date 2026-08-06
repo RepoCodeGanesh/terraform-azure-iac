@@ -1,0 +1,35 @@
+NRI TAXATION, FOREIGN ASSETS, DTAA, AND ESOP TAX GUIDE
+======================================================
+
+SOURCE: Income Tax Act 1961, Section 6, Section 90/91 (DTAA), Section 195 | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. RESIDENTIAL STATUS RULES (SECTION 6)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You are an INDIAN RESIDENT if:
+  1. You are in India for 182 days or more in the financial year, OR
+  2. You are in India for 60 days or more in the FY AND 365 days or more in the preceding 4 years.
+  • Exception for Indian citizens leaving India for employment abroad: 60-day rule replaced with 182 days.
+  • Deemed Resident (Section 6(1A)): Indian citizen with total Indian income > ₹15L and not liable to tax in any other country.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. NRI TAXABILITY & DOUBLE TAXATION RELIEF (DTAA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Taxable Income for NRI: Only income accruing, arising, or received in India (NRO interest, Indian rental income, capital gains in India).
+• Foreign Income: 100% EXEMPT from Indian tax for NRIs.
+• DTAA Relief (Section 90/91): If tax is paid in foreign country (e.g. US, UK, UAE, Singapore), claim tax credit in India by filing FORM 67 before filing ITR.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. EMPLOYEE STOCK OPTIONS (ESOPs / RSUs) TAXATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ESOPs are taxed at TWO STAGES:
+
+STAGE 1: AT THE TIME OF EXERCISE (Perquisite Tax)
+  • Taxable Amount = (Fair Market Value on exercise date - Exercise Price) * Number of Shares.
+  • Taxed as Perquisite under "Income from Salary" at applicable slab rate.
+  • Employer deducts TDS on perquisite value.
+
+STAGE 2: AT THE TIME OF SALE (Capital Gains Tax)
+  • Taxable Amount = Sale Price - Fair Market Value on exercise date.
+  • Taxed as STCG or LTCG depending on holding period from exercise date.
+  • Foreign RSUs / US Shares: Holding period > 24 months = LTCG (12.5% without indexation).

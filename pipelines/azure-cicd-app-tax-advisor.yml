@@ -1,3 +1,12 @@
+# ==============================================================================
+# Pipeline Name: TaxBot India - Application CI/CD Pipeline
+# Description: Packages Python backend, uploads RAG docs, builds React SPA UI, and configures CORS
+# Trigger: Changes to app/tax-advisor/**
+# Stages: 1. DeployBackend | 2. UploadDocuments | 3. DeployFrontend | 4. ConfigureCorsAndApim
+# ==============================================================================
+
+name: TaxBot-India-App-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
 trigger:
   branches:
     include:

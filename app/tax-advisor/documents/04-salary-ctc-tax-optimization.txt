@@ -1,0 +1,35 @@
+SALARY STRUCTURE & CTC TAX OPTIMISATION GUIDE
+===================================================
+
+SOURCE: CBDT Rules, Finance Act 2025 | FY 2026-27 (AY 2027-28)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. TAXABILITY OF COMMON SALARY COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Basic Salary: 100% Taxable under both regimes. Forms base for EPF, Gratuity, and NPS.
+• House Rent Allowance (HRA): Exempt up to Section 10(13A) limits in Old Regime. 100% Taxable in New Regime.
+• Special Allowance: 100% Taxable under both regimes. Usually the largest inefficiency in CTC!
+• Employer NPS Contribution (80CCD(2)): TAX-FREE up to 14% of Basic under BOTH regimes.
+• Food Coupons / Meal Vouchers: Exempt up to ₹50/meal (₹26,400/yr) in Old Regime.
+• Telephone / Broadband Reimbursement: Exempt up to actual bills (Old Regime).
+• Fuel / Conveyance Reimbursement: Exempt up to official usage (Old Regime).
+• Learning & Development Allowance: Exempt if spent on professional certifications/books against bills.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. STRATEGIC CTC RESTRUCTURING FOR MAXIMUM TAX SAVINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: MAXIMISE EMPLOYER NPS (80CCD(2)) — WORKS IN NEW & OLD REGIME!
+  Convert 14% of Basic from Special Allowance into Employer NPS contribution.
+  Example: Salary ₹20 Lakhs, Basic ₹8 Lakhs.
+  14% of ₹8L = ₹1,12,000 transferred to Employer NPS.
+  Direct Annual Tax Saving = ₹34,944 (at 30% tax bracket + 4% cess)!
+
+STEP 2: OPTIMISE BASIC SALARY RATIO
+  Keep Basic Salary between 40% and 50% of Total CTC.
+  If Basic is too high -> EPF and Gratuity obligations increase, taxable basic rises.
+  If Basic is too low -> HRA exemption limit and 80CCD(2) NPS caps decrease.
+
+STEP 3: SWAP UNSTRUCTURED ALLOWANCES FOR PERQUISITES (OLD REGIME)
+  • Replace Special Allowance with Food Cards (₹26,400 tax saving).
+  • Replace with Phone/Internet reimbursement (₹36,000 tax saving).
+  • Replace with Car Lease / Fuel Allowance (up to ₹39,600 tax saving).

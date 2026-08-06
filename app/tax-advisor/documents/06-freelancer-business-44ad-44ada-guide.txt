@@ -1,0 +1,41 @@
+FREELANCERS, PROFESSIONALS & SMALL BUSINESS TAXATION (44AD & 44ADA)
+====================================================================
+
+SOURCE: Income Tax Act 1961, Section 44AD, Section 44ADA | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SECTION 44ADA — PRESUMPTIVE TAXATION FOR PROFESSIONALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELIGIBLE PROFESSIONALS:
+  Software Developers, IT Consultants, Doctors, Lawyers, Engineers, Architects, CAs, Interior Decorators, Film Artists, Consultants, Freelancers.
+
+ELIGIBILITY CRITERIA:
+  • Gross professional receipts up to ₹75,000,000 (₹75 Lakh) per financial year (if digital receipts >= 95%).
+  • Standard limit: ₹50 Lakh if cash receipts > 5%.
+
+HOW IT WORKS:
+  • 50% of Total Gross Receipts is presumed as Net Taxable Income.
+  • Remaining 50% is treated as business expenses without keeping any books of accounts, bills, or receipts!
+  • Example: Freelance software developer earning ₹40 Lakhs/yr.
+    Presumed Taxable Income = ₹20 Lakhs (50% of ₹40L).
+    Tax is calculated on ₹20 Lakhs under New or Old Regime!
+  • No Tax Audit under Section 44AB required if declaring >= 50% profits.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. SECTION 44AD — PRESUMPTIVE TAXATION FOR SMALL BUSINESSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELIGIBLE BUSINESSES:
+  Retail traders, wholesalers, manufacturers, service providers (except professionals, agency business, or commission agents).
+
+TURNOVER CEILING:
+  • Up to ₹3,00,000,000 (₹3 Crore) if digital receipts >= 95%.
+  • Standard limit: ₹2 Crore.
+
+PRESUMED PROFIT RATE:
+  • 6% of total turnover received through digital/bank channels (UPI, NEFT, RTGS, Cards).
+  • 8% of total turnover received in cash.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. ADVANCE TAX RESPONSIBILITY FOR PRESUMPTIVE TAXPAYERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Taxpayers opting for Section 44AD / 44ADA must pay 100% of their estimated advance tax in a SINGLE installment on or before 15 MARCH of the financial year.

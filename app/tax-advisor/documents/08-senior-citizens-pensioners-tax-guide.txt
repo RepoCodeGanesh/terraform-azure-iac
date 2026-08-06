@@ -1,0 +1,25 @@
+SENIOR CITIZENS & PENSIONERS TAXATION GUIDE
+============================================
+
+SOURCE: Income Tax Act 1961, Section 80TTB, Section 194P | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. CLASSIFICATION & BASIC EXEMPTION LIMITS (OLD REGIME)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Senior Citizen (Age 60 to 79 yrs): Basic Exemption Limit = ₹3,00,000.
+• Super Senior Citizen (Age 80+ yrs): Basic Exemption Limit = ₹5,00,000.
+• New Tax Regime: Slabs are UNIFORM for all age groups (Basic Exemption ₹4,00,000 + ₹60,000 rebate up to ₹12L net income).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. SPECIAL DEDUCTIONS FOR SENIOR CITIZENS (OLD REGIME)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Section 80TTB: Deduction up to ₹50,000 on interest income from Savings Accounts, Fixed Deposits (FD), and Post Office Schemes. (No TDS deducted if FD interest <= ₹50,000 under 194A).
+• Section 80D: Health insurance premium / medical expenditure deduction up to ₹50,000 per year.
+• Section 80DDB: Medical treatment deduction for specified critical illnesses up to ₹1,00,000.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. SECTION 194P — EXEMPTION FROM FILING ITR FOR SENIOR CITIZENS 75+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Senior citizens aged 75 years or above are EXEMPT from filing ITR if:
+  1. They have only pension income and interest income from the same specified bank.
+  2. They submit Form 12BBA to the bank, and the bank deducts full tax at source.

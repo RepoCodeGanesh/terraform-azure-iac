@@ -1,3 +1,11 @@
+# ==============================================================================
+# Pipeline Name: Azure Platform - Shared Services IaC CI/CD Pipeline
+# Description: Provisions APIM Gateway, Log Analytics, Key Vault & Private DNS Zones
+# Target Subscription: Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
+# ==============================================================================
+
+name: Platform-SharedServices-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
 trigger:
   branches:
     include:

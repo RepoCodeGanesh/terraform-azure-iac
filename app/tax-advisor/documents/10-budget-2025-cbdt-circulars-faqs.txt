@@ -1,0 +1,32 @@
+UNION BUDGET 2025 HIGHLIGHTS, CBDT CIRCULARS & TAX ADV-FAQ
+===========================================================
+
+SOURCE: Finance Act 2025, CBDT Circulars & Official FAQs | FY 2026-27
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. UNION BUDGET 2025 TOP TAX REFORMS SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ₹12 LAKH ZERO TAX REBATE UNDER NEW REGIME:
+   Section 87A rebate limit increased to ₹60,000. Anyone with Net Taxable Income <= ₹12,00,000 under New Regime pays ₹0 tax!
+   With ₹75,000 Standard Deduction, gross salary up to ₹12,75,000 is 100% TAX-FREE!
+
+2. REVISED NEW REGIME SLABS:
+   Slabs expanded to 7 tiers: Up to 4L (0%), 4-8L (5%), 8-12L (10%), 12-16L (15%), 16-20L (20%), 20-24L (25%), >24L (30%).
+
+3. UNIFORM 14% EMPLOYER NPS DEDUCTION:
+   Section 80CCD(2) employer NPS limit increased to 14% for all private sector employees (previously 10%).
+
+4. CAPITAL GAINS RESTRUCTURE:
+   LTCG on equity increased to 12.5% with ₹1.25L annual exemption limit. STCG on equity increased to 20%.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. FREQUENTLY ASKED TAX ADVISOR QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Q: Switched jobs mid-year, how to handle Form 16 and tax?
+A: Collect Form 16 from both employers. Submit Form 12B to new employer to combine salaries and avoid double standard deduction / lower slab calculation. If both deducted lower tax, pay self-assessment tax before filing ITR to avoid 234B interest.
+
+Q: Can I claim both HRA and Home Loan interest?
+A: Yes, if your rented property and owned property are in different cities due to work, or if owned property is under construction. Both Section 10(13A) and Section 24(b) can be claimed.
+
+Q: What happens if I file ITR late?
+A: Belated return can be filed till 31 December with ₹5,000 penalty (₹1,000 if income < ₹5L) under Section 234F plus 1%/month interest under Section 234A.

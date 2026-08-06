@@ -1,0 +1,53 @@
+MASTER GUIDE TO CHAPTER VI-A DEDUCTIONS (80C, 80D, 80CCD, 80E, 80G)
+===================================================================
+
+SOURCE: Income Tax Act 1961, CBDT Guidelines | FY 2026-27 (AY 2027-28)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SECTION 80C — OVERALL CEILING: ₹1,50,000 (OLD REGIME ONLY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Allowed Investment Instruments:
+  • Employee Provident Fund (EPF) & Voluntary Provident Fund (VPF)
+  • Public Provident Fund (PPF): 15-year lock-in, tax-free interest & maturity (EEE)
+  • Equity Linked Savings Scheme (ELSS Mutual Funds): 3-year lock-in, highest return potential
+  • National Savings Certificate (NSC) & Senior Citizens Savings Scheme (SCSS)
+  • Tax-Saving Fixed Deposit (5-year bank FD)
+  • Sukanya Samriddhi Yojana (SSY) for girl child
+  • Life Insurance Premium (LIC / Term Insurance)
+  • Children's School / College Tuition Fees (max 2 children)
+  • Principal repayment of Home Loan
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. SECTION 80D — HEALTH INSURANCE & PREVENTIVE CHECKUPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Deduction Limits (Old Regime Only):
+  • Self, Spouse & Dependent Children (Below 60 yrs): Up to ₹25,000
+  • Self & Family (Senior Citizens 60+ yrs): Up to ₹50,000
+  • Parents (Below 60 yrs): Additional ₹25,000
+  • Parents (Senior Citizens 60+ yrs): Additional ₹50,000
+  • Preventive Health Checkup: ₹5,000 sub-limit included within the above caps.
+  • Medical Expenditure for Senior Citizen Parents without health insurance: Up to ₹50,000.
+MAXIMUM COMBINED DEDUCTION: ₹1,00,000 (if self and parents are both 60+).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. SECTION 80CCD — NATIONAL PENSION SYSTEM (NPS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Section 80CCD(1): Self-contribution included within Section 80C ₹1.5L cap.
+• Section 80CCD(1B): Additional self-contribution up to ₹50,000 (Exclusive to Old Regime).
+• Section 80CCD(2): EMPLOYER NPS CONTRIBUTION — WORKS IN BOTH NEW & OLD REGIMES!
+    - Private Sector Employees: Deduction up to 14% of Basic + DA.
+    - Central / State Govt Employees: Deduction up to 14% of Basic + DA.
+    - No upper monetary limit (subject to annual ₹7.5L combined cap on PF + NPS + Superannuation).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. SECTION 80E — HIGHER EDUCATION LOAN INTEREST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Interest paid on loan taken for higher education (Self, Spouse, Children).
+• No monetary limit on deduction amount.
+• Available for a maximum of 8 consecutive years starting from the year repayment begins.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. SECTION 80G & 80GGC — DONATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 80G: Charitable donations to notified funds (100% or 50% deduction). Must be paid electronically if > ₹2,000.
+• 80GGC: 100% deduction for contributions to registered political parties (Non-cash only).

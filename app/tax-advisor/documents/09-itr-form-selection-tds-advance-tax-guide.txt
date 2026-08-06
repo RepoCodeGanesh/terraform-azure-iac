@@ -1,0 +1,36 @@
+ITR FORM SELECTION, TDS, ADVANCE TAX, AND FORM 26AS / AIS GUIDE
+================================================================
+
+SOURCE: Income Tax Department India | FY 2026-27 (AY 2027-28)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. WHICH ITR FORM TO FILE?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ITR-1 (SAHAJ):
+  ✅ Resident Individuals | Income up to ₹50 Lakh | Salary/Pension + One House Property + Other Sources (Interest/Dividend).
+  ❌ Disqualified if: Capital Gains exist, >1 House Property, Business Income, Unlisted Shares, Foreign Assets/Income, Director in company.
+
+ITR-2:
+  ✅ Salaried with Capital Gains (LTCG/STCG), Multiple Properties, Income > ₹50L, Foreign Assets, Foreign Income, NRIs, ESOPs, Directors.
+
+ITR-3:
+  ✅ Business / Professional Income (Not opting 44ADA), F&O Trading, Intraday Stock Trading, Partnership Firm Income + Capital Gains.
+
+ITR-4 (SUGAM):
+  ✅ Small Businesses opting Section 44AD or Professionals opting Section 44ADA (Presumptive Income).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. ADVANCE TAX DUE DATES & INTEREST (SECTION 207-219)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Required if net annual tax liability (after TDS) exceeds ₹10,000.
+  • 15 June:      15% of estimated tax
+  • 15 September: 45% of estimated tax
+  • 15 December:  75% of estimated tax
+  • 15 March:     100% of estimated tax
+  Interest under 234B & 234C: 1% per month for delay/deferment.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. FORM 26AS, AIS, AND TIS VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Before filing ITR, verify Annual Information Statement (AIS) & Form 26AS on Income Tax e-filing portal.
+All reported incomes (FD interest, dividends, stock sales, property purchases) must match ITR!

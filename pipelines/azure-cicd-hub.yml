@@ -1,3 +1,11 @@
+# ==============================================================================
+# Pipeline Name: Azure Platform - Hub Network IaC CI/CD Pipeline
+# Description: Provisions Hub VNet (vnet-ht-hub-p-cin-01) & Central Firewall/Routing
+# Target Subscription: Hub-prod (3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b)
+# ==============================================================================
+
+name: Platform-HubNetwork-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
 trigger:
   branches:
     include:
