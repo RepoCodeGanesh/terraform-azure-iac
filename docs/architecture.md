@@ -70,3 +70,10 @@ To maintain near zero idle running costs in learning and developer environments,
 2. **`platform/hub`**: Provisions central Hub VNet and routing subnets.
 3. **`platform/shared-services`**: Provisions Log Analytics, APIM Gateway, and DNS zones.
 4. **`workloads/tax-advisor`**: Provisions spoke VNet, peers to Hub VNet, deploys OpenAI, AI Search, Cosmos DB, and Function App host.
+
+---
+
+## 📊 Application CI/CD & Traffic Diagrams
+
+For the complete visual breakdown of the application CI/CD pipeline stages and live runtime sequence flow, see:
+* **[Tax Advisor CI/CD Pipeline & Sequence Diagrams](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/tax_advisor_pipeline_diagram.md)**

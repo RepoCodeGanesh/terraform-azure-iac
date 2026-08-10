@@ -30,7 +30,7 @@ module "function_app" {
   name                     = var.name
   location                 = var.location
   parent_id                = var.resource_group_id
-  service_plan_resource_id = var.service_plan_id
+  service_plan_resource_id = replace(var.service_plan_id, "serverFarms", "serverfarms")
   kind                     = "functionapp"
   public_network_access_enabled = var.public_network_access_enabled
 
@@ -52,7 +52,7 @@ module "function_app" {
   # Python runtime stack
   site_config = {
     always_on           = false
-    minimum_tls_version = "1.2"
+    minimum_tls_version = "1.3"
 
     application_stack = {
       python = {

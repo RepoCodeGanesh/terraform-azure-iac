@@ -282,6 +282,13 @@ resource "azurerm_storage_container" "rag_documents" {
   depends_on = [module.function_app]
 }
 
+# ─── Data source for Function App Identity (Prevents role assignment replacement drift) ──
+data "azurerm_linux_function_app" "taxb_func" {
+  name                = module.taxb_func_name.name
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  depends_on          = [module.function_app]
+}
+
 # ─── Identity propagation wait ─────────────────────────────────────────────────
 resource "time_sleep" "wait_for_func_identity" {
   create_duration = "10s"
@@ -293,7 +300,7 @@ resource "azurerm_role_assignment" "func_blob_contributor" {
   count                = var.enable_role_assignments ? 1 : 0
   scope                = module.function_app.storage_account_id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = module.function_app.principal_id
+  principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
   depends_on           = [time_sleep.wait_for_func_identity]
 }
 
@@ -301,7 +308,7 @@ resource "azurerm_role_assignment" "func_openai_user" {
   count                = var.enable_role_assignments ? 1 : 0
   scope                = module.openai.id
   role_definition_name = "Cognitive Services OpenAI User"
-  principal_id         = module.function_app.principal_id
+  principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
   depends_on           = [time_sleep.wait_for_func_identity, module.openai]
 }
 
@@ -309,7 +316,7 @@ resource "azurerm_role_assignment" "func_search_reader" {
   count                = var.enable_role_assignments ? 1 : 0
   scope                = module.search_service.id
   role_definition_name = "Search Index Data Reader"
-  principal_id         = module.function_app.principal_id
+  principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
   depends_on           = [time_sleep.wait_for_func_identity, module.search_service]
 }
 
@@ -318,7 +325,7 @@ resource "azurerm_cosmosdb_sql_role_assignment" "func_cosmos_contributor" {
   resource_group_name = azurerm_resource_group.tax_advisor.name
   account_name        = module.cosmos_db.name
   role_definition_id  = "${module.cosmos_db.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
-  principal_id        = module.function_app.principal_id
+  principal_id        = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
   scope               = module.cosmos_db.id
   depends_on          = [time_sleep.wait_for_func_identity, module.cosmos_db]
 }
@@ -533,6 +540,13 @@ resource "azurerm_static_web_app" "frontend" {
   resource_group_name = azurerm_resource_group.tax_advisor.name
   sku_tier            = "Free"
   sku_size            = "Free"
+
+  lifecycle {
+    ignore_changes = [
+      repository_url,
+      repository_branch
+    ]
+  }
 
   tags = local.tags
 }
