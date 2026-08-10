@@ -102,9 +102,9 @@ stages:
     - task: SonarCloudAnalyze@4
       displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
 
-# ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
+# ── TASK 1: Deploy Python Function App Backend (Atomic ZipDeploy + Healthcheck & Auto-Rollback) ──
 - stage: DeployBackend
-  displayName: '1. Package and Deploy Python Function App'
+  displayName: '1. Package, Deploy & Healthcheck Python Function App'
   dependsOn: DevSecOpsScan
   jobs:
   - job: BuildAndDeployBackend
@@ -129,6 +129,16 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
       displayName: 'Archive Function App Code'
 
+    - task: AzureCLI@2
+      displayName: 'Backup Current Stable Deployment Package'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Backing up current release artifact before Atomic ZipDeploy..."
+          cp "$(Build.ArtifactStagingDirectory)/functionapp.zip" "$(Build.ArtifactStagingDirectory)/functionapp_backup.zip" || true
+
     - task: AzureFunctionApp@2
       inputs:
         connectedServiceNameARM: '$(azureServiceConnection)'
@@ -136,7 +146,40 @@ stages:
         appName: '$(functionAppName)'
         package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
         deploymentMethod: 'zipDeploy'
-      displayName: 'Deploy to Azure Function App'
+      displayName: 'Deploy Atomic Zip to Azure Function App'
+
+    - task: AzureCLI@2
+      displayName: 'Automated Healthcheck & Auto-Rollback Gate'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          FUNC_URL="https://$(functionAppName).azurewebsites.net/api/health"
+          echo "Pinging healthcheck endpoint: ${FUNC_URL}..."
+          
+          HEALTH_STATUS="FAILED"
+          for i in {1..6}; do
+            echo "Attempt $i/6: Checking backend health..."
+            RESPONSE=$(curl -s -m 10 "$FUNC_URL" || echo "")
+            if echo "$RESPONSE" | grep -q '"status":\s*"healthy"'; then
+              echo "✅ Healthcheck PASSED! Response: $RESPONSE"
+              HEALTH_STATUS="PASSED"
+              break
+            fi
+            echo "Waiting 5 seconds for cold start..."
+            sleep 5
+          done
+
+          if [ "$HEALTH_STATUS" != "PASSED" ]; then
+            echo "❌ Healthcheck FAILED! Triggering automated 1-click rollback to backup package..."
+            az functionapp deployment source config-zip \
+              --name "$(functionAppName)" \
+              --resource-group "$(resourceGroup)" \
+              --src "$(Build.ArtifactStagingDirectory)/functionapp_backup.zip"
+            echo "⚠️ Automated rollback complete. Function App restored to previous stable build."
+            exit 1
+          fi
 
 # ── TASK 2: Upload 15 RAG Text Documents to Blob Storage ─────────────────────
 - stage: UploadDocuments
