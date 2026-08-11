@@ -9,7 +9,7 @@ name: App - TaxBot India CI/CD
 
 on:
   push:
-    branches: [main, develop, 'feature/**', 'release/**']
+    branches: [main, develop, 'feature/**', 'release/**', 'hotfix/**']
     tags: ['release/*', 'v*']
     paths:
       - 'app/tax-advisor/**'
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: devsecops-scan
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -165,7 +165,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: deploy-backend
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -193,7 +193,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: upload-documents
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -242,7 +242,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: deploy-frontend
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -279,7 +279,7 @@ jobs:
       # Triggered on manual dispatch OR push to main/release/* branches.
       # ─────────────────────────────────────────────────────────────────────────
       - name: Auto-Create Enterprise Git Release Tag (SemVer)
-        if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
+        if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
