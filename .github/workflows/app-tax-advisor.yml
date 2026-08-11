@@ -37,7 +37,7 @@ jobs:
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
     runs-on: ubuntu-latest
-    environment: shared-services-prod
+    environment: tax-advisor-prod
 
     steps:
       - name: Checkout
