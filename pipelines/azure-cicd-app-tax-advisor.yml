@@ -292,8 +292,12 @@ stages:
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
           echo "Latest Git tag: $LATEST_TAG"
           
-          VERSION=${LATEST_TAG#v}
+          # Clean version string (remove 'v' prefix and any hyphenated suffix like -release-1-0-0-0)
+          VERSION=$(echo "$LATEST_TAG" | sed -E 's/^v//; s/-.*//')
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          MAJOR=${MAJOR:-1}
+          MINOR=${MINOR:-0}
+          PATCH=${PATCH:-0}
           
           COMMIT_MSG=$(git log -1 --pretty=%B)
           if echo "$COMMIT_MSG" | grep -qi "BREAKING CHANGE"; then
@@ -315,10 +319,14 @@ stages:
           git push origin "${TAG_NAME}" || echo "Tag ${TAG_NAME} already exists."
 
           if [ -n "$GITHUB_TOKEN" ]; then
-            echo "📢 Creating official GitHub Release for ${TAG_NAME}..."
+            echo "📢 Creating official GitHub Release for ${TAG_NAME} with auto-generated changelog..."
             curl -s -X POST \
               -H "Authorization: token ${GITHUB_TOKEN}" \
               -H "Accept: application/vnd.github.v3+json" \
               https://api.github.com/repos/RepoCodeGanesh/terraform-azure-iac/releases \
-              -d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"Release ${TAG_NAME}\",\"body\":\"Automated Production Deployment Release ${TAG_NAME}\",\"draft\":false,\"prerelease\":false}" || true
+              -d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"Release ${TAG_NAME}\",\"body\":\"Automated Enterprise Production Deployment ${TAG_NAME}\",\"draft\":false,\"prerelease\":false,\"generate_release_notes\":true}" || true
+          else
+            echo "⚠️ GITHUB_TOKEN is not set in pipeline environment. Skipping GitHub Release API call."
           fi
+      env:
+        GITHUB_TOKEN: $(GITHUB_TOKEN)
