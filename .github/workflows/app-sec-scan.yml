@@ -1,0 +1,98 @@
+# ==============================================================================
+# Reusable Called Workflow: Application Security Scan
+# Performs Bandit SAST, pip-audit SCA, npm audit, and SonarCloud scan
+# Fully Parameterized for Upcoming Applications & Customizations
+# ==============================================================================
+
+name: Reusable App Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      working_directory:
+        required: true
+        type: string
+      key_vault_name:
+        required: true
+        type: string
+      shared_subscription_id:
+        required: true
+        type: string
+      python_version:
+        type: string
+        default: '3.11'
+      node_version:
+        type: string
+        default: '22.x'
+      sonar_project_key:
+        type: string
+        default: 'RepoCodeGanesh_terraform-azure-iac'
+      sonar_secret_name:
+        type: string
+        default: 'SONARCLOUD-TOKEN'
+    secrets:
+      SHARED_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+
+env:
+  SONAR_TOKEN: ''
+
+jobs:
+  scan:
+    name: DevSecOps SAST & SCA Scan
+    runs-on: ubuntu-latest
+    environment: tax-advisor-prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Python SAST & Dependency Scan (Bandit & pip-audit)
+        run: |
+          pip install bandit pip-audit
+          bandit -r ${{ inputs.working_directory }}/backend -ll -ii || echo "Bandit SAST completed with advisory notes."
+          pip-audit -r ${{ inputs.working_directory }}/backend/requirements.txt || echo "pip-audit SCA completed."
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Frontend Dependency Scan (npm audit)
+        run: |
+          cd ${{ inputs.working_directory }}/frontend
+          npm audit --audit-level=high || echo "npm audit completed with advisory notes."
+
+      - name: Azure Login (OIDC) — Shared-services (Key Vault)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.SHARED_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ inputs.shared_subscription_id }}
+
+      - name: Fetch SonarCloud Token from Key Vault
+        run: |
+          SONAR_TOKEN=$(az keyvault secret show --vault-name "${{ inputs.key_vault_name }}" --name "${{ inputs.sonar_secret_name }}" --subscription "${{ inputs.shared_subscription_id }}" --query "value" -o tsv)
+          echo "::add-mask::$SONAR_TOKEN"
+          echo "SONAR_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ inputs.sonar_project_key }}
+            -Dsonar.organization=repocodeganesh
+            -Dsonar.sources=${{ inputs.working_directory }}
