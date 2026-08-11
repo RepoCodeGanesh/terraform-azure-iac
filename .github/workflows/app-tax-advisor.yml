@@ -270,12 +270,17 @@ jobs:
             echo "✅ CORS configured successfully."
           fi
 
-      - name: Auto-Create Git Release Tag
+      # ── Enterprise Semantic Versioning (SemVer) Tagging ──────────────────────
+      # Automatically calculates & creates the next incremental release tag on GitHub.
+      # Increment Rules:
+      #   • default / fix: ... ➔ Bumps patch version (e.g., v1.0.29 ➔ v1.0.30)
+      #   • feat: ...        ➔ Bumps minor version (e.g., v1.0.29 ➔ v1.1.0)
+      #   • BREAKING CHANGE  ➔ Bumps major version (e.g., v1.0.29 ➔ v2.0.0)
+      # Triggered on manual dispatch OR push to main/release/* branches.
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Auto-Create Enterprise Git Release Tag (SemVer)
         if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
-        run: |
-          TAG_NAME="v1.0.${{ github.run_number }}"
-          echo "🏷️ Automatically tagging release: ${TAG_NAME}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${TAG_NAME}" -m "Automated CI/CD Release ${TAG_NAME}"
-          git push origin "${TAG_NAME}" || echo "Tag ${TAG_NAME} already exists."
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
