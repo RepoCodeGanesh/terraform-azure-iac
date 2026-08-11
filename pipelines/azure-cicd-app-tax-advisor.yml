@@ -313,3 +313,12 @@ stages:
           git config user.email "azure-devops[bot]@users.noreply.github.com"
           git tag -a "${TAG_NAME}" -m "Automated ADO CI/CD Release ${TAG_NAME}"
           git push origin "${TAG_NAME}" || echo "Tag ${TAG_NAME} already exists."
+
+          if [ -n "$GITHUB_TOKEN" ]; then
+            echo "📢 Creating official GitHub Release for ${TAG_NAME}..."
+            curl -s -X POST \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/RepoCodeGanesh/terraform-azure-iac/releases \
+              -d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"Release ${TAG_NAME}\",\"body\":\"Automated Production Deployment Release ${TAG_NAME}\",\"draft\":false,\"prerelease\":false}" || true
+          fi

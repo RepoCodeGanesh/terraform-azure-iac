@@ -278,9 +278,10 @@ jobs:
       #   • BREAKING CHANGE  ➔ Bumps major version (e.g., v1.0.29 ➔ v2.0.0)
       # Triggered on manual dispatch OR push to main/release/* branches.
       # ─────────────────────────────────────────────────────────────────────────
-      - name: Auto-Create Enterprise Git Release Tag (SemVer)
+      - name: Auto-Create Enterprise Git Release Tag & GitHub Release (SemVer)
         if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
+          create_release: true
