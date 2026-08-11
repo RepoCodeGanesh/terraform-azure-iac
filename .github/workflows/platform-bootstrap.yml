@@ -9,7 +9,8 @@ name: Platform - Bootstrap IaC
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, develop, 'feature/**', 'release/**']
+    tags: ['release/*', 'v*']
     paths:
       - 'platform/bootstrap/**'
       - '.github/workflows/platform-bootstrap.yml'
