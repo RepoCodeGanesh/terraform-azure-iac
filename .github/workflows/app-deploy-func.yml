@@ -1,0 +1,89 @@
+# ==============================================================================
+# Reusable Called Workflow: Function App Deployment
+# Packages Python backend, deploys via ZipDeploy, and executes healthcheck
+# ==============================================================================
+
+name: Reusable Function App Deploy
+
+on:
+  workflow_call:
+    inputs:
+      function_app_name:
+        required: true
+        type: string
+      working_directory:
+        required: true
+        type: string
+      app_subscription_id:
+        required: true
+        type: string
+    secrets:
+      APP_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+
+jobs:
+  deploy-backend:
+    name: Deploy Python Function App Backend
+    runs-on: ubuntu-latest
+    environment: tax-advisor-prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC) — Apps-prod
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ inputs.app_subscription_id }}
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install manylinux2014 Compatible Wheels
+        run: |
+          cd ${{ inputs.working_directory }}
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt \
+            --target=".python_packages/lib/site-packages" \
+            --platform manylinux2014_x86_64 \
+            --only-binary=:all: \
+            --python-version 311 \
+            --implementation cp \
+            --upgrade
+
+      - name: Package Function App
+        run: |
+          cd ${{ inputs.working_directory }}
+          zip -r ../../../functionapp.zip . -x "*.pyc" -x "__pycache__/*"
+
+      - name: Deploy to Azure Function App (ZipDeploy)
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ inputs.function_app_name }}
+          package: functionapp.zip
+
+      - name: Healthcheck & Auto-Rollback Gate
+        run: |
+          FUNC_URL="https://${{ inputs.function_app_name }}.azurewebsites.net/api/health"
+          echo "Pinging healthcheck: ${FUNC_URL}"
+          HEALTH_STATUS="FAILED"
+          for i in {1..6}; do
+            echo "Attempt $i/6..."
+            RESPONSE=$(curl -s -m 10 "$FUNC_URL" || echo "")
+            if echo "$RESPONSE" | grep -q '"status":\s*"healthy"'; then
+              echo "✅ Healthcheck PASSED!"
+              HEALTH_STATUS="PASSED"
+              break
+            fi
+            sleep 5
+          done
+          if [ "$HEALTH_STATUS" != "PASSED" ]; then
+            echo "❌ Healthcheck FAILED — marking deployment as failed."
+            exit 1
+          fi
