@@ -42,7 +42,8 @@ variables:
     value: 'workloads/tax-advisor'
 
 pool:
-  vmImage: ubuntu-latest
+  name: local
+  # vmImage: ubuntu-latest  # previously used hosted agent; switched to self-hosted
 
 stages:
 
