@@ -56,10 +56,10 @@ jobs:
           bandit -r app/tax-advisor/backend -ll -ii || echo "Bandit SAST completed with advisory notes."
           pip-audit -r app/tax-advisor/backend/requirements.txt || echo "pip-audit SCA completed."
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Frontend Dependency Scan (npm audit)
         run: |
@@ -217,10 +217,10 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "SWA_CLI_DEPLOYMENT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Build Production React Bundle
         run: |
