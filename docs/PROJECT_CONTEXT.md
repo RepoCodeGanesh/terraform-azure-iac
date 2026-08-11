@@ -74,3 +74,10 @@ Keep Terraform roots separate. Do not merge state:
 - `platform/hub`             → `sthtbootpcin01/tfstate/hub/prod.tfstate`
 - `platform/shared-services` → `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
 - `workloads/tax-advisor`    → `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
+
+## CI/CD Automated Versioning & Branching Strategy Guides
+
+- **Git Branching Strategy:** [docs/BRANCHING_STRATEGY.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/BRANCHING_STRATEGY.md)
+- **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/AUTOMATED_VERSIONING_GUIDE.md)
+- **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/REUSABLE_APP_WORKFLOW_GUIDE.md)
+

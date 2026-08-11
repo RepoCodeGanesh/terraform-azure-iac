@@ -83,8 +83,8 @@ stages:
 
     - task: UseNode@1
       inputs:
-        version: '20.x'
-      displayName: 'Install Node.js 20.x'
+        version: '22.x'
+      displayName: 'Install Node.js 22.x'
 
     - script: |
         cd app/tax-advisor/frontend
@@ -200,14 +200,12 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "Uploading updated FY 2026-27 RAG documents using Entra ID RBAC..."
-          az storage blob upload-batch \
+          echo "Syncing updated FY 2026-27 RAG documents using Entra ID RBAC..."
+          az storage blob sync \
             --account-name "$(storageAccount)" \
-            --destination "documents" \
+            --container "documents" \
             --source "app/tax-advisor/documents" \
-            --pattern "*.txt" \
-            --auth-mode login \
-            --overwrite true
+            --auth-mode login
 
 # ── TASK 3: Build & Deploy React Frontend to Static Web App ──────────────────
 - stage: DeployFrontend
@@ -233,8 +231,8 @@ stages:
 
     - task: UseNode@1
       inputs:
-        version: '20.x'
-      displayName: 'Install Node.js 20.x'
+        version: '22.x'
+      displayName: 'Install Node.js 22.x'
 
     - script: |
         cd app/tax-advisor/frontend
@@ -272,4 +270,55 @@ stages:
               --name "$(functionAppName)" \
               --resource-group "$(resourceGroup)" \
               --allowed-origins "https://${SWA_HOST}" "*"
+          fi
+
+    # ── Enterprise Semantic Versioning (SemVer) Tagging ──────────────────────
+    # Automatically calculates & creates the next incremental release tag on GitHub.
+    # Increment Rules:
+    #   • default / fix: ... ➔ Bumps patch version (e.g., v1.0.29 ➔ v1.0.30)
+    #   • feat: ...        ➔ Bumps minor version (e.g., v1.0.29 ➔ v1.1.0)
+    #   • BREAKING CHANGE  ➔ Bumps major version (e.g., v1.0.29 ➔ v2.0.0)
+    # Triggered on manual dispatch OR push to main/release/* branches.
+    # ─────────────────────────────────────────────────────────────────────────
+    - task: AzureCLI@2
+      displayName: 'Auto-Create Enterprise Git Release Tag (SemVer)'
+      condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/'))
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          echo "Latest Git tag: $LATEST_TAG"
+          
+          VERSION=${LATEST_TAG#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -qi "BREAKING CHANGE"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif echo "$COMMIT_MSG" | grep -qi "^feat"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+          
+          TAG_NAME="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "🏷️ Automatically tagging ADO release: ${TAG_NAME}"
+          git config user.name "azure-devops[bot]"
+          git config user.email "azure-devops[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Automated ADO CI/CD Release ${TAG_NAME}"
+          git push origin "${TAG_NAME}" || echo "Tag ${TAG_NAME} already exists."
+
+          if [ -n "$GITHUB_TOKEN" ]; then
+            echo "📢 Creating official GitHub Release for ${TAG_NAME}..."
+            curl -s -X POST \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/RepoCodeGanesh/terraform-azure-iac/releases \
+              -d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"Release ${TAG_NAME}\",\"body\":\"Automated Production Deployment Release ${TAG_NAME}\",\"draft\":false,\"prerelease\":false}" || true
           fi
