@@ -271,7 +271,7 @@ jobs:
           fi
 
       - name: Auto-Create Git Release Tag
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
         run: |
           TAG_NAME="v1.0.${{ github.run_number }}"
           echo "🏷️ Automatically tagging release: ${TAG_NAME}"
