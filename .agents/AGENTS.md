@@ -5,14 +5,16 @@ This repository provisions an enterprise-grade **Azure AI Landing Zone** followi
 
 ---
 
-## 🔑 Subscriptions & Federated Service Connections (WIF)
+## 🔑 Subscriptions & Dual CI/CD Authentication (Workload Identity Federation)
 
-| Tier / Scope | Azure Subscription Name | Subscription ID | Azure DevOps Service Connection | Workload Target |
+Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
+
+| Tier / Scope | Azure Subscription | Azure DevOps (ADO) Pipeline & Connection | GitHub Actions Workflow & Secret | Entra ID App Registration (Client ID) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Bootstrap** | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | Remote Terraform backend storage (`sthtbootpcin01`) |
-| **Hub Network** | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | Hub VNet (`vnet-ht-hub-p-cin-01`) & central routing |
-| **Shared Services** | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Private DNS Zones |
-| **Apps (AI Workloads)**| `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | TaxBot India (`workloads/tax-advisor`), OpenAI, AI Search |
+| **Bootstrap** | `bootstrap`<br>`7689ad81-71ba-481b-a17c-e1b6be61bab1` | `pipelines/azure-cicd-bootstrap.yml`<br>Service Connection: `bootstrap` | `.github/workflows/platform-bootstrap.yml`<br>Secret: `BOOTSTRAP_CLIENT_ID` | `DevOpsUniverse-Terraform- bootstrap`<br>`934ab83b-2f61-475e-bdbc-85c9eaed83e6` |
+| **Hub Network** | `Hub-prod`<br>`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `pipelines/azure-cicd-hub.yml`<br>Service Connection: `hub-prod` | `.github/workflows/platform-hub.yml`<br>Secret: `HUB_CLIENT_ID` | `DevOpsUniverse-Terraform- hub-prod`<br>`78960c14-26d2-4a0c-ab21-579c3030155e` |
+| **Shared Services** | `Shared-services`<br>`859a785c-bd38-402d-b595-1f44f40fb9bf` | `pipelines/azure-cicd-shared-ser.yml`<br>Service Connection: `shared-services` | `.github/workflows/platform-shared-services.yml`<br>Secret: `SHARED_CLIENT_ID` | `DevOpsUniverse-Terraform-shared-services`<br>`580ffcfd-51ee-4dc3-9204-d03cb438ff82` |
+| **Apps (AI Workloads)** | `Apps-prod`<br>`f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `pipelines/azure-cicd-app-tax-advisor.yml`<br>Service Connection: `app-prod` | `.github/workflows/app-tax-advisor.yml`<br>Secret: `APP_CLIENT_ID` | `DevOpsUniverse-Terraform-app-prod`<br>`99ab7987-3989-46c3-bae9-92279be16608` |
 
 ---
 
