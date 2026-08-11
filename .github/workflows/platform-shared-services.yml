@@ -1,19 +1,18 @@
 # ==============================================================================
-# Workflow: Platform - Shared Services IaC (Uses Reusable Templates)
+# Workflow: Platform - Shared Services IaC (Uses Central Organization Templates)
 # Provisions: APIM Gateway, Log Analytics, Key Vault & Private DNS Zones
 # Target Subscription: Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
-# Triggers: Automatic (push/PR) & Manual (workflow_dispatch)
+# Central Template Repo: RepoCodeGanesh/.github
 # ==============================================================================
 
 name: Platform - Shared Services IaC
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feature/**']
     paths:
       - 'platform/shared-services/**'
       - '.github/workflows/platform-shared-services.yml'
-      - '.github/workflows/template-tf-*.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -27,7 +26,7 @@ permissions:
 jobs:
   plan:
     name: Plan
-    uses: ./.github/workflows/template-tf-plan.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-plan.yml@main
     with:
       working_directory: 'platform/shared-services'
       subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
@@ -40,8 +39,8 @@ jobs:
   apply:
     name: Apply
     needs: plan
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    uses: ./.github/workflows/template-tf-apply.yml
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-apply.yml@main
     with:
       working_directory: 'platform/shared-services'
       subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'

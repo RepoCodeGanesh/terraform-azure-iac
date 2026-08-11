@@ -1,7 +1,6 @@
 # ==============================================================================
 # Workflow: App - TaxBot India Application CI/CD
-# Stages: 1. DevSecOps Scan | 2. Deploy Backend | 3. Upload RAG Docs
-#         4. Deploy Frontend | 5. Configure CORS & APIM
+# Rules: feature/** push & PR -> Build & DevSecOps Scan | push(develop/main) OR workflow_dispatch -> Deploy
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
 # SP Client ID secrets: APP_CLIENT_ID, SHARED_CLIENT_ID
 # ==============================================================================
@@ -10,7 +9,7 @@ name: App - TaxBot India CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feature/**']
     paths:
       - 'app/tax-advisor/**'
       - '.github/workflows/app-tax-advisor.yml'
@@ -33,7 +32,7 @@ env:
   APP_SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
   SHARED_SUBSCRIPTION_ID: '859a785c-bd38-402d-b595-1f44f40fb9bf'
 
-# ── JOB 0: DevSecOps SAST & SCA Security Scanning ────────────────────────────
+# ── JOB 0: DevSecOps SAST & SCA Security Scanning (Runs on PR & feature/** pushes) ──
 jobs:
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
@@ -77,12 +76,13 @@ jobs:
             -Dsonar.organization=repocodeganesh
             -Dsonar.sources=app/tax-advisor
 
-# ── JOB 1: Deploy Python Backend (ZipDeploy + Healthcheck + Auto-Rollback) ───
+# ── JOB 1: Deploy Python Backend ──────────────────────────────────────────────
   deploy-backend:
     name: Deploy Python Function App Backend
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: devsecops-scan
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -149,6 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: deploy-backend
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -178,6 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: upload-documents
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -226,6 +228,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: deploy-frontend
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
 
     steps:
       - name: Checkout
