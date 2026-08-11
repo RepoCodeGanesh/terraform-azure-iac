@@ -9,7 +9,8 @@ name: App - TaxBot India CI/CD
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, develop, 'feature/**', 'release/**']
+    tags: ['release/*', 'v*']
     paths:
       - 'app/tax-advisor/**'
       - '.github/workflows/app-tax-advisor.yml'
@@ -97,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: devsecops-scan
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -164,7 +165,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: deploy-backend
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -194,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: upload-documents
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout
@@ -243,7 +244,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     needs: deploy-frontend
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
 
     steps:
       - name: Checkout

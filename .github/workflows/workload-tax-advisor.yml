@@ -9,7 +9,8 @@ name: Workload - TaxBot India IaC
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, develop, 'feature/**', 'release/**']
+    tags: ['release/*', 'v*']
     paths:
       - 'workloads/tax-advisor/**'
       - '.github/workflows/workload-tax-advisor.yml'

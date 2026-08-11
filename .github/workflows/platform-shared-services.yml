@@ -9,7 +9,8 @@ name: Platform - Shared Services IaC
 
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, develop, 'feature/**', 'release/**']
+    tags: ['release/*', 'v*']
     paths:
       - 'platform/shared-services/**'
       - '.github/workflows/platform-shared-services.yml'
