@@ -282,7 +282,7 @@ stages:
     # ─────────────────────────────────────────────────────────────────────────
     - task: AzureCLI@2
       displayName: 'Auto-Create Enterprise Git Release Tag (SemVer)'
-      condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+      condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/'))
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'bash'
