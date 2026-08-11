@@ -30,10 +30,10 @@ jobs:
     with:
       working_directory: 'platform/hub'
       subscription_id: '3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b'
-      client_id: ${{ secrets.HUB_CLIENT_ID }}
       environment_name: 'hub-prod'
       artifact_name: 'hub-tfplan'
     secrets:
+      CLIENT_ID: ${{ secrets.HUB_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
   apply:
@@ -44,8 +44,8 @@ jobs:
     with:
       working_directory: 'platform/hub'
       subscription_id: '3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b'
-      client_id: ${{ secrets.HUB_CLIENT_ID }}
       environment_name: 'hub-prod'
       artifact_name: 'hub-tfplan'
     secrets:
+      CLIENT_ID: ${{ secrets.HUB_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

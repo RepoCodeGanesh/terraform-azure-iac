@@ -30,10 +30,10 @@ jobs:
     with:
       working_directory: 'platform/shared-services'
       subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-      client_id: ${{ secrets.SHARED_CLIENT_ID }}
       environment_name: 'shared-services-prod'
       artifact_name: 'shared-tfplan'
     secrets:
+      CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
   apply:
@@ -44,8 +44,8 @@ jobs:
     with:
       working_directory: 'platform/shared-services'
       subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-      client_id: ${{ secrets.SHARED_CLIENT_ID }}
       environment_name: 'shared-services-prod'
       artifact_name: 'shared-tfplan'
     secrets:
+      CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

@@ -14,9 +14,6 @@ on:
       subscription_id:
         required: true
         type: string
-      client_id:
-        required: true
-        type: string
       environment_name:
         required: true
         type: string
@@ -28,6 +25,8 @@ on:
         type: string
         default: '1.15.8'
     secrets:
+      CLIENT_ID:
+        required: true
       AZURE_TENANT_ID:
         required: true
 
@@ -52,7 +51,7 @@ jobs:
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ inputs.client_id }}
+          client-id: ${{ secrets.CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ inputs.subscription_id }}
 

@@ -30,10 +30,10 @@ jobs:
     with:
       working_directory: 'platform/bootstrap'
       subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
-      client_id: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
       environment_name: 'bootstrap-prod'
       artifact_name: 'bootstrap-tfplan'
     secrets:
+      CLIENT_ID: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
   apply:
@@ -44,8 +44,8 @@ jobs:
     with:
       working_directory: 'platform/bootstrap'
       subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
-      client_id: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
       environment_name: 'bootstrap-prod'
       artifact_name: 'bootstrap-tfplan'
     secrets:
+      CLIENT_ID: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
