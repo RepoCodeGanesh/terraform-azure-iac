@@ -3,7 +3,7 @@
 # Called by: platform-bootstrap, platform-hub, platform-shared-services, workload-tax-advisor
 # ==============================================================================
 
-name: Template - Terraform Plan
+name: z-Reusable - Terraform Plan
 
 on:
   workflow_call:
