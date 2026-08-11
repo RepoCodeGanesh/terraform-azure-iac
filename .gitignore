@@ -12,8 +12,10 @@
 # Terraform plans
 *.tfplan
 *.tfplan.*
+tfplan
 tfplan.binary
 plan.json
+
 
 # Terraform variable files
 *.auto.tfvars
@@ -129,3 +131,9 @@ Thumbs.db
 *.zip
 *.tar.gz
 *.tgz
+
+###############################################################################
+# GitHub Actions Local Testing
+###############################################################################
+
+.act/

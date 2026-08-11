@@ -6,29 +6,33 @@
 
 name: Platform-HubNetwork-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
 
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-  paths:
-    include:
-      - platform/hub/**
-      - pipelines/azure-cicd-hub.yml
-    exclude:
-      - '**/*.md'
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+trigger: none
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - platform/hub/**
+#       - pipelines/azure-cicd-hub.yml
+#     exclude:
+#       - '**/*.md'
 
-pr:
-  branches:
-    include:
-      - main
-      - develop
-  paths:
-    include:
-      - platform/hub/**
-      - pipelines/azure-cicd-hub.yml
-    exclude:
-      - '**/*.md'
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+pr: none
+# pr:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - platform/hub/**
+#       - pipelines/azure-cicd-hub.yml
+#     exclude:
+#       - '**/*.md'
 
 variables:
   - name: terraformVersion
@@ -40,10 +44,9 @@ variables:
   - name: workingDirectory
     value: 'platform/hub'
 
-
 pool:
-  name: local
-  # vmImage: ubuntu-latest  # previously used hosted agent; switched to self-hosted
+  vmImage: ubuntu-latest
+  # name: local  # self-hosted agent pool
 
 stages:
 

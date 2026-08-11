@@ -1,0 +1,51 @@
+# ==============================================================================
+# Workflow: Platform - Hub Network IaC (Uses Reusable Templates)
+# Provisions: Hub VNet (vnet-ht-hub-p-cin-01) & Central Firewall/Routing
+# Target Subscription: Hub-prod (3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b)
+# ==============================================================================
+
+name: Platform - Hub Network IaC
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'platform/hub/**'
+      - '.github/workflows/platform-hub.yml'
+      - '.github/workflows/templates/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'platform/hub/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    name: Plan
+    uses: ./.github/workflows/templates/tf-plan.yml
+    with:
+      working_directory: 'platform/hub'
+      subscription_id: '3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b'
+      client_id: ${{ secrets.HUB_CLIENT_ID }}
+      environment_name: 'hub-prod'
+      artifact_name: 'hub-tfplan'
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  apply:
+    name: Apply
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    uses: ./.github/workflows/templates/tf-apply.yml
+    with:
+      working_directory: 'platform/hub'
+      subscription_id: '3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b'
+      client_id: ${{ secrets.HUB_CLIENT_ID }}
+      environment_name: 'hub-prod'
+      artifact_name: 'hub-tfplan'
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

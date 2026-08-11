@@ -1,0 +1,51 @@
+# ==============================================================================
+# Workflow: Platform - Bootstrap IaC (Uses Reusable Templates)
+# Provisions: Central Terraform remote state storage (sthtbootpcin01)
+# Target Subscription: Bootstrap (7689ad81-71ba-481b-a17c-e1b6be61bab1)
+# ==============================================================================
+
+name: Platform - Bootstrap IaC
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'platform/bootstrap/**'
+      - '.github/workflows/platform-bootstrap.yml'
+      - '.github/workflows/templates/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'platform/bootstrap/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    name: Plan
+    uses: ./.github/workflows/templates/tf-plan.yml
+    with:
+      working_directory: 'platform/bootstrap'
+      subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
+      client_id: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
+      environment_name: 'bootstrap-prod'
+      artifact_name: 'bootstrap-tfplan'
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  apply:
+    name: Apply
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    uses: ./.github/workflows/templates/tf-apply.yml
+    with:
+      working_directory: 'platform/bootstrap'
+      subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
+      client_id: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
+      environment_name: 'bootstrap-prod'
+      artifact_name: 'bootstrap-tfplan'
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
