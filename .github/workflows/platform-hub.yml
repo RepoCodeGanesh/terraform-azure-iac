@@ -12,7 +12,7 @@ on:
     paths:
       - 'platform/hub/**'
       - '.github/workflows/platform-hub.yml'
-      - '.github/workflows/templates/**'
+      - '.github/workflows/template-tf-*.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -26,7 +26,7 @@ permissions:
 jobs:
   plan:
     name: Plan
-    uses: ./.github/workflows/templates/tf-plan.yml
+    uses: ./.github/workflows/template-tf-plan.yml
     with:
       working_directory: 'platform/hub'
       subscription_id: '3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b'
@@ -40,7 +40,7 @@ jobs:
     name: Apply
     needs: plan
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    uses: ./.github/workflows/templates/tf-apply.yml
+    uses: ./.github/workflows/template-tf-apply.yml
     with:
       working_directory: 'platform/hub'
       subscription_id: '3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b'
