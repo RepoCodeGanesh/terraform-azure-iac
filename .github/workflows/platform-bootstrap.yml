@@ -1,19 +1,18 @@
 # ==============================================================================
-# Workflow: Platform - Bootstrap IaC (Uses Reusable Templates)
+# Workflow: Platform - Bootstrap IaC (Uses Central Organization Templates)
 # Provisions: Central Terraform remote state storage (sthtbootpcin01)
 # Target Subscription: Bootstrap (7689ad81-71ba-481b-a17c-e1b6be61bab1)
-# Triggers: Automatic (push/PR) & Manual (workflow_dispatch)
+# Central Template Repo: RepoCodeGanesh/.github
 # ==============================================================================
 
 name: Platform - Bootstrap IaC
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'feature/**']
     paths:
       - 'platform/bootstrap/**'
       - '.github/workflows/platform-bootstrap.yml'
-      - '.github/workflows/template-tf-*.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -27,7 +26,7 @@ permissions:
 jobs:
   plan:
     name: Plan
-    uses: ./.github/workflows/template-tf-plan.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-plan.yml@main
     with:
       working_directory: 'platform/bootstrap'
       subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
@@ -40,8 +39,8 @@ jobs:
   apply:
     name: Apply
     needs: plan
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    uses: ./.github/workflows/template-tf-apply.yml
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-apply.yml@main
     with:
       working_directory: 'platform/bootstrap'
       subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
