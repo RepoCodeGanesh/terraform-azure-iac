@@ -1,7 +1,6 @@
 # ==============================================================================
 # Workflow: App - TaxBot India Application CI/CD (Caller Workflow)
-# Pattern: Enterprise Caller/Called Reusable Workflow Pattern
-# Central Templates: RepoCodeGanesh/.github
+# Pattern: Enterprise Caller/Called Reusable Workflow Pattern (Local Workflows)
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
 # ==============================================================================
 
@@ -14,6 +13,9 @@ on:
     paths:
       - 'app/tax-advisor/**'
       - '.github/workflows/app-tax-advisor.yml'
+      - '.github/workflows/app-sec-scan.yml'
+      - '.github/workflows/app-deploy-func.yml'
+      - '.github/workflows/app-deploy-swa.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -25,10 +27,10 @@ permissions:
   contents: write
 
 jobs:
-  # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Called Template) ────────
+  # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Called Local Template) ──
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
-    uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
+    uses: ./.github/workflows/app-sec-scan.yml
     with:
       working_directory: 'app/tax-advisor'
       key_vault_name: 'kv-ht-ss-p-cin-01'
@@ -37,12 +39,12 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 1: Deploy Python Backend Function App (Called Template) ────────────
+  # ── JOB 1: Deploy Python Backend Function App (Called Local Template) ──────
   deploy-backend:
     name: Deploy Python Function App Backend
     needs: devsecops-scan
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
-    uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-func.yml@main
+    uses: ./.github/workflows/app-deploy-func.yml
     with:
       function_app_name: 'func-ht-taxb-p-cin-01'
       working_directory: 'app/tax-advisor/backend'
@@ -51,7 +53,7 @@ jobs:
       APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 2: Upload RAG Documents to Blob Storage (Application-Specific Job) ──
+  # ── JOB 2: Upload RAG Documents to Blob Storage (App-Specific Job) ────────
   upload-documents:
     name: Upload RAG Documents
     runs-on: ubuntu-latest
@@ -79,12 +81,12 @@ jobs:
             --source "app/tax-advisor/documents" \
             --auth-mode login
 
-  # ── JOB 3: Build & Deploy React Frontend SPA (Called Template) ─────────────
+  # ── JOB 3: Build & Deploy React Frontend SPA (Called Local Template) ───────
   deploy-frontend:
     name: Build & Deploy React Frontend
     needs: upload-documents
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
-    uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
+    uses: ./.github/workflows/app-deploy-swa.yml
     with:
       static_web_app_name: 'stapp-ht-taxb-p-cin-01'
       working_directory: 'app/tax-advisor/frontend'
