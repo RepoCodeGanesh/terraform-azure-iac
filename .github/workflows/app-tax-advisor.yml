@@ -178,16 +178,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ env.APP_SUBSCRIPTION_ID }}
 
-      - name: Upload RAG Text Files to Blob Storage
+      - name: Sync RAG Text Files to Blob Storage (Incremental & Auto-Clean)
         run: |
-          echo "Uploading FY 2026-27 RAG documents via Entra ID RBAC..."
-          az storage blob upload-batch \
+          echo "Syncing FY 2026-27 RAG documents via Entra ID RBAC..."
+          az storage blob sync \
             --account-name "${{ env.STORAGE_ACCOUNT }}" \
-            --destination "documents" \
+            --container "documents" \
             --source "app/tax-advisor/documents" \
-            --pattern "*.txt" \
-            --auth-mode login \
-            --overwrite true
+            --auth-mode login
 
 # ── JOB 3: Build & Deploy React Frontend SPA ─────────────────────────────────
   deploy-frontend:
