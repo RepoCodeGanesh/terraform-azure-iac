@@ -66,6 +66,17 @@ In [.github/workflows/app-tax-advisor.yml](file:///c:/Users/RichT/OneDrive/Docum
 
 ---
 
+## 🏗️ Application vs. Infrastructure (IaC) Versioning Strategy
+
+This repository enforces a clear architectural distinction between Application software releases and Infrastructure as Code state:
+
+| Layer | Component | Versioning Mechanism | Rationale |
+| :--- | :--- | :--- | :--- |
+| **Application CI/CD** | `app-tax-advisor` | **Automated SemVer Git Tags (`v1.0.X`)** | Application code compiles into React bundles and Function App packages. Release versioning is required for deployment gates, QA, and rollbacks. |
+| **Infrastructure (IaC)** | `platform/*` & `workloads/*` | **Terraform Remote State Versioning + Git SHAs** | Infrastructure is declarative. Terraform natively versions its remote state (`sthtbootpcin01`) in Azure Blob Storage on every `terraform apply`. Git release tags are not created per IaC push. |
+
+---
+
 ## 📊 Where to View Release Tags
 
 All generated tags are immediately published to GitHub and can be inspected live at:
