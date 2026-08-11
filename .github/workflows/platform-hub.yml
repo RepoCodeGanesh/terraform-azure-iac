@@ -2,7 +2,7 @@
 # Workflow: Platform - Hub Network IaC (Uses Reusable Templates)
 # Provisions: Hub VNet (vnet-ht-hub-p-cin-01) & Central Firewall/Routing
 # Target Subscription: Hub-prod (3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b)
-# Triggers: Automatic (push/PR) & Manual (workflow_dispatch)
+# Rules: PR -> Plan only | push(develop/main) OR workflow_dispatch(any branch) -> Apply
 # ==============================================================================
 
 name: Platform - Hub Network IaC
@@ -40,7 +40,7 @@ jobs:
   apply:
     name: Apply
     needs: plan
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
     uses: ./.github/workflows/template-tf-apply.yml
     with:
       working_directory: 'platform/hub'
