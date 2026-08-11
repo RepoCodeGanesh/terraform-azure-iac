@@ -22,7 +22,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 env:
   FUNCTION_APP_NAME: 'func-ht-taxb-p-cin-01'
@@ -271,3 +271,13 @@ jobs:
               --allowed-origins "https://${SWA_HOST}" "*"
             echo "✅ CORS configured successfully."
           fi
+
+      - name: Auto-Create Git Release Tag
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          TAG_NAME="v1.0.${{ github.run_number }}"
+          echo "🏷️ Automatically tagging release: ${TAG_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Automated CI/CD Release ${TAG_NAME}"
+          git push origin "${TAG_NAME}" || echo "Tag ${TAG_NAME} already exists."
