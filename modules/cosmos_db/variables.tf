@@ -22,7 +22,7 @@ variable "enable_free_tier" {
 variable "database_name" {
   description = "Name of the SQL Database."
   type        = string
-  default     = "db-ai-assistant"
+  default     = "db-tax-advisor"
 }
 
 variable "container_name" {

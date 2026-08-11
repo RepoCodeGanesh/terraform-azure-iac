@@ -34,7 +34,7 @@ This document details the architectural design, subscription hierarchy, network 
 | **Bootstrap** | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | Remote Terraform backend storage (`sthtbootpcin01`) |
 | **Hub Network** | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | Hub VNet (`vnet-ht-hub-p-cin-01`) & central routing |
 | **Shared Services** | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Private DNS Zones |
-| **Apps (AI Workloads)**| `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | AI Assistant (`workloads/ai-assistant`), OpenAI, AI Search |
+| **Apps (AI Workloads)**| `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | TaxBot India (`workloads/tax-advisor`), OpenAI, AI Search |
 
 ---
 
@@ -44,9 +44,9 @@ This document details the architectural design, subscription hierarchy, network 
   * `AzureFirewallSubnet`: `10.0.0.0/26`
   * `AzureBastionSubnet`: `10.0.0.64/27`
   * `GatewaySubnet`: `10.0.0.96/27`
-* **Spoke Network**: `10.40.0.0/16` (`workloads/ai-assistant`)
-  * `AppSubnet`: `10.40.1.0/24` (Subnet delegation for Function App VNet integration)
-  * `PrivateEndpointsSubnet`: `10.40.2.0/24` (Private Link endpoints for OpenAI & Storage)
+* **Spoke Network**: `10.41.0.0/16` (`workloads/tax-advisor`)
+  * `snet-app-integration`: `10.41.1.0/24` (Subnet delegation for Function App VNet integration)
+  * `PrivateEndpoints`: `10.41.2.0/24` (Private Link endpoints for OpenAI & Storage)
 
 ---
 
@@ -69,4 +69,11 @@ To maintain near zero idle running costs in learning and developer environments,
 1. **`platform/bootstrap`**: Provisions remote backend state storage account and Key Vault.
 2. **`platform/hub`**: Provisions central Hub VNet and routing subnets.
 3. **`platform/shared-services`**: Provisions Log Analytics, APIM Gateway, and DNS zones.
-4. **`workloads/ai-assistant`**: Provisions spoke VNet, peers to Hub VNet, deploys OpenAI, AI Search, and Function App host.
+4. **`workloads/tax-advisor`**: Provisions spoke VNet, peers to Hub VNet, deploys OpenAI, AI Search, Cosmos DB, and Function App host.
+
+---
+
+## 📊 Application CI/CD & Traffic Diagrams
+
+For the complete visual breakdown of the application CI/CD pipeline stages and live runtime sequence flow, see:
+* **[Tax Advisor CI/CD Pipeline & Sequence Diagrams](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/tax_advisor_pipeline_diagram.md)**

@@ -1,7 +1,6 @@
 # Project Context
 
-This is the compact source of truth for future Codex work in this repository.
-It preserves the repository goal, current deployment goal, architecture guardrails, and known operational notes without requiring long document reads.
+This is the compact source of truth for the Azure AI Landing Zone & TaxBot India application repository.
 
 ## Repository Goal
 
@@ -9,28 +8,30 @@ Provision an enterprise-style Azure AI Landing Zone using Terraform and Azure De
 
 Core outcomes:
 - Build hands-on Azure DevOps and Terraform IaC practice.
-- Create a reusable AI platform foundation for Azure OpenAI, AI gateway patterns, telemetry, private networking, and future AI Search/RAG workloads.
-- Use low-cost SKUs by default: APIM `Consumption_0`, Functions/App Service consumption or free/basic tiers, Log Analytics `PerGB2018`, Storage `Standard_LRS`, Key Vault `Standard`, and strict Azure OpenAI capacity caps.
+- Create a reusable AI platform foundation for Azure OpenAI, APIM gateway security, telemetry, private networking, and AI Search RAG workloads.
+- Host **TaxBot India (AI Income Tax Advisor)** for FY 2026-27 (AY 2027-28).
+- Use low-cost SKUs by default: APIM `Consumption`, Functions `Consumption Y1`, Log Analytics `PerGB2018`, Storage `Standard_LRS`, Key Vault `Standard`, Azure OpenAI `S0` with `gpt-5.4-nano`, and Cosmos DB `Serverless`.
 
-## Current Goal
+## Active Workload Target: TaxBot India (`tax-advisor`)
 
-Stabilize and deploy `workloads/ai-assistant` through Azure DevOps using the `app-prod` service connection.
+Deploy and operate `workloads/tax-advisor` and `app/tax-advisor` through Azure DevOps using the `app-prod` service connection.
 
-The workload provisions DevOnboard AI infrastructure:
-- Resource group and spoke VNet in `Apps-prod`.
-- Hub-spoke peering to `Hub-prod`.
-- Azure OpenAI account and `gpt-4o-mini` deployment.
-- Python Function App with system-assigned managed identity.
-- Application Insights connected to shared Log Analytics.
-- APIM backend registration in `Shared-services`.
-- RAG Document Knowledge Base (Blob storage + Azure AI Search index).
+The workload provisions TaxBot India infrastructure:
+- Resource group `rg-ht-taxb-p-cin-01` and spoke VNet `vnet-ht-taxb-p-cin-01` in `Apps-prod`.
+- Hub-spoke peering to `vnet-ht-hub-p-cin-01` in `Hub-prod`.
+- Azure OpenAI account `oai-ht-taxb-p-eus-01` with `gpt-5.4-nano` deployment.
+- Azure AI Search `srch-ht-taxb-p-cin-01` for statutory RAG text retrieval.
+- Cosmos DB `cosmos-ht-taxb-p-cin-01` for conversation session state.
+- Python Function App `func-ht-taxb-p-cin-01` with system-assigned managed identity.
+- Static Web App `stapp-ht-taxb-p-cin-01` bound to custom domain **www.mytaxbot.site**.
+- APIM API `apim-ht-ss-p-cin-01` with rate limiting by IP (20 calls/min) and CORS protection.
 
-Current phase status:
+Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
 - `platform/shared-services`: complete.
-- `workloads/ai-assistant`: complete (IaC deployed & active).
-- `app/ai-assistant`: complete (React UI + Python backend + APIM + RAG search index live).
+- `workloads/tax-advisor`: complete (IaC deployed & active).
+- `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `pipelines/`: active and verified.
 
 ## Subscription Map
@@ -39,121 +40,13 @@ Current phase status:
 | --- | --- | --- | --- | --- |
 | Bootstrap | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | Remote Terraform state storage account `sthtbootpcin01` |
 | Hub | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | Hub VNet and central routing |
-| Shared services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM, Private DNS, Key Vault `kv-ht-ss-p-cin-01` |
-| Apps | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | AI workloads, including `workloads/ai-assistant` |
+| Shared services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Private DNS, Key Vault `kv-ht-ss-p-cin-01` |
+| Apps | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | AI workloads (`workloads/tax-advisor`, `app/tax-advisor`) |
 
 ## Terraform State Rules
 
 Keep Terraform roots separate. Do not merge state:
-- `platform/bootstrap`
-- `platform/hub`
-- `platform/shared-services`
-- `workloads/ai-assistant`
-
-All `backend.hcl` files must point to the bootstrap subscription because remote state lives in `sthtbootpcin01`.
-
-The Azure DevOps service connection controls the deployment identity. The root `prod.tfvars` `subscription_id` controls where that root creates resources.
-
-## Naming Standard
-
-Use the CAF-style naming helper in `modules/naming`.
-
-Pattern:
-
-```text
-<resource-type>-<project>-<workload>-<environment>-<location-short>-<instance>
-```
-
-Examples:
-- `rg-ht-dvob-p-cin-01`
-- `vnet-ht-hub-p-cin-01`
-- `appi-ht-dvob-p-cin-01`
-
-Compact resource types, such as storage accounts, omit hyphens where Azure requires global DNS-compatible names:
-- `sthtbootpcin01`
-- `sthtdvobpcin01`
-
-## Network And Region Notes
-
-Default platform region is Central India:
-- Terraform value: `centralindia`
-- Naming shortcode: `cin`
-
-Current AI assistant workload:
-- Resource group, VNet, Function App, App Insights, storage, and workload App Service Plan stay in Central India.
-- Azure OpenAI is placed in Central India using GlobalStandard SKU.
-- OpenAI naming shortcode for that resource is `cin`.
-
-Private networking direction:
-- Current calls can use HTTPS to the Azure OpenAI endpoint.
-- If private-only access is required later, add a private endpoint in the Central India spoke VNet targeting OpenAI + Private DNS.
-
-## Current Workload Design
-
-`workloads/ai-assistant` deploys:
-- RG: `rg-ht-dvob-p-cin-01`
-- VNet: `vnet-ht-dvob-p-cin-01`
-- Function App: `func-ht-dvob-p-cin-01`
-- Function plan: workload-local `Y1` consumption plan
-- Storage account: generated by the function app wrapper
-- App Insights: `appi-ht-dvob-p-cin-01`
-- OpenAI account: `oai-ht-dvob-p-cin-01` (Central India)
-- Model deployment: `gpt-4o-mini`, version `2024-07-18`, SKU `GlobalStandard`, capacity `10`
-- Cosmos DB (NoSQL): `cosmos-ht-dvob-p-cin-01` (Free Tier: 1,000 RU/s + 25 GB storage free)
-- AI Search: `srch-ht-dvob-p-cin-01` (Free Tier: 3 indexes, 50 MB document storage free)
-- Static Web App (React Chat UI): `stapp-ht-dvob-p-cin-01` (Free Tier: 0.5 GB bandwidth)
-- RAG Document Knowledge Base: `documents` blob container in `sthtdvobpcin01` containing 6 platform reference docs + `devonboard-docs` search index
-- APIM backend: `openai-backend-dvob` + Static Web App CORS policy in Shared-services
-
-The Function App wrapper uses Azure Verified Module `Azure/avm-res-web-site/azurerm` with `kind = "functionapp"`.
-
-## Application Code Structure
-
-Application source code is decoupled from Terraform IaC under `app/ai-assistant/`:
-- `app/ai-assistant/frontend/`: React Chat UI (Vite + TypeScript) with dark-mode glassmorphic theme and Entra ID auth (`staticwebapp.config.json`).
-- `app/ai-assistant/backend/`: Python Function App backend source (`function_app.py`, `host.json`, `requirements.txt`) exposing `POST /chat` with RAG retrieval from AI Search + chat history in Cosmos DB.
-- `docs/rag-corpus/`: 6 high-quality technical platform reference documents uploaded to Azure Blob Storage `sthtdvobpcin01/documents` for RAG grounding.
-
-## Important Recent Fixes
-
-These fixes address Azure DevOps pipeline and deployment issues:
-- **Key Vault Token Fetch**: SWA deployment token is retrieved directly at pipeline runtime via `az keyvault secret show` from `kv-ht-ss-p-cin-01` using `shared-services` service connection (`SWA-CLI-DEPLOYMENT-TOKEN`), removing variable group dependencies.
-- **Service Principal RBAC**: Assigned `Key Vault Secrets User` role to the `DevOpsUniverse-Terraform-shared-services` Service Principal (`c5a24473-2bad-41a7-b0b1-b79b94621252`) on `kv-ht-ss-p-cin-01`.
-- **APIM REST API Policy Update**: Replaced invalid `az apim api policy create` CLI command in pipeline with `az rest --method put` targeting `Microsoft.ApiManagement` policies endpoint with `Accept=application/json`.
-- **AI Search & RAG Setup**: Created 6 comprehensive platform technical docs in `docs/rag-corpus/`, uploaded them to `sthtdvobpcin01/documents`, created AI Search data source `documents-datasource` and index `devonboard-docs` with semantic ranker support.
-- **Root outputs**: Root outputs propagating AVM sensitive values are explicitly marked `sensitive = true`.
-- **Managed Identity Propagation**: Added `time_sleep.wait_for_func_identity` (10s delay) before RBAC role assignments to eliminate Microsoft Entra ID `PrincipalNotFound` propagation race conditions.
-- **AVM Outputs**: Function App wrapper outputs use `name`, `resource_uri`, and `system_assigned_mi_principal_id`.
-- **Static Web App**: Added `azurerm_static_web_app` (Free SKU) to `workloads/ai-assistant/main.tf` with AzureRM v4.x attributes (`sku_tier`, `sku_size`, `default_host_name`).
-- **VNet Peering**: Added explicit `depends_on` on local VNet module to avoid subnet-update timing races.
-
-## Known Warnings And Risks
-
-- The AVM Function App module emits an `azapi` warning about deprecated `retry.multiplier`. Non-blocking.
-- Failed applies can leave Azure resources created outside Terraform state. If a rerun reports a peering or other resource already exists, import the existing resource into state.
-- `app-prod` service principal uses `shared-services` service connection step for Key Vault secret fetch and APIM API management.
-
-## Deployment Sequence
-
-Deploy in this order:
-1. `platform/bootstrap`
-2. `platform/hub`
-3. `platform/shared-services`
-4. `workloads/ai-assistant` (Terraform IaC)
-5. `app/ai-assistant` (Application Code CI/CD)
-
-## Pipeline Notes
-
-Pipelines live under `pipelines/`:
-- `azure-cicd-bootstrap.yml` deploys `platform/bootstrap` with service connection `bootstrap`.
-- `azure-cicd-hub.yml` deploys `platform/hub` with service connection `hub-prod`.
-- `azure-cicd-shared-ser.yml` deploys `platform/shared-services` with service connection `shared-services`.
-- `azure-cicd-ai-assistant.yml` deploys `workloads/ai-assistant` (IaC) with service connection `app-prod`.
-- `azure-cicd-app-ai-assistant.yml` fetches SWA token dynamically, builds and deploys React frontend (`AzureStaticWebApp@0`), Python backend (`AzureFunctionApp@2`), and registers API in APIM.
-
-## Documentation Map
-
-- `README.md`: human-facing overview and quick start.
-- `AGENTS.md`: concise agent rules and subscription matrix.
-- `docs/PROJECT_CONTEXT.md`: canonical compact context for architecture, deployment, troubleshooting, and future Codex work.
-- `docs/rag-corpus/`: 6 technical documentation source files for RAG corpus.
+- `platform/bootstrap`       → `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
+- `platform/hub`             → `sthtbootpcin01/tfstate/hub/prod.tfstate`
+- `platform/shared-services` → `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
+- `workloads/tax-advisor`    → `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`

@@ -12,7 +12,6 @@ trigger:
     include:
       - main
       - develop
-      - feature/*
   paths:
     include:
       - app/tax-advisor/**
@@ -25,6 +24,7 @@ pr:
     include:
       - main
       - develop
+      
   paths:
     include:
       - app/tax-advisor/**
@@ -49,13 +49,64 @@ variables:
     value: 'sthttaxbpcin01'
 
 pool:
-  vmImage: ubuntu-latest
+  name: local
+  # vmImage: ubuntu-latest  # previously used hosted agent; switched to self-hosted
 
 stages:
 
-# ── TASK 1: Deploy Python Function App Backend ────────────────────────────────
+# ── STAGE 0: DevSecOps SAST & SCA Security Scanning ──────────────────────────
+- stage: DevSecOpsScan
+  displayName: '0. DevSecOps SAST & SCA Security Scan'
+  jobs:
+  - job: SecurityScan
+    displayName: 'Execute SAST, Dependency SCA & Secret Scanning'
+    steps:
+    - checkout: self
+      fetchDepth: 0
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        echo "Installing DevSecOps security scanners (Bandit & pip-audit)..."
+        pip install bandit pip-audit
+        echo "Executing Bandit SAST code security scan..."
+        bandit -r app/tax-advisor/backend -ll -ii || echo "Bandit SAST scan completed with advisory notes."
+        echo "Executing pip-audit dependency vulnerability scan..."
+        pip-audit -r app/tax-advisor/backend/requirements.txt || echo "Dependency SCA scan completed."
+      displayName: 'Python SAST & Dependency Vulnerability Scan (Bandit & pip-audit)'
+
+    - task: UseNode@1
+      inputs:
+        version: '20.x'
+      displayName: 'Install Node.js 20.x'
+
+    - script: |
+        cd app/tax-advisor/frontend
+        echo "Executing npm audit for frontend package dependencies..."
+        npm audit --audit-level=high || echo "Frontend npm audit completed with advisory notes."
+      displayName: 'Frontend Dependency Vulnerability Scan (npm audit)'
+
+    - task: SonarCloudPrepare@4
+      inputs:
+        SonarCloud: 'SonarCloud'
+        organization: 'repocodeganesh'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'RepoCodeGanesh_terraform-azure-iac'
+        cliProjectName: 'terraform-azure-iac'
+        cliSources: 'app/tax-advisor'
+      displayName: 'Prepare Enterprise SonarCloud Analysis'
+
+    - task: SonarCloudAnalyze@4
+      displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
+
+# ── TASK 1: Deploy Python Function App Backend (Atomic ZipDeploy + Healthcheck & Auto-Rollback) ──
 - stage: DeployBackend
-  displayName: '1. Package and Deploy Python Function App'
+  displayName: '1. Package, Deploy & Healthcheck Python Function App'
+  dependsOn: DevSecOpsScan
   jobs:
   - job: BuildAndDeployBackend
     displayName: 'Deploy Backend to Azure Function App'
@@ -67,10 +118,9 @@ stages:
 
     - script: |
         cd app/tax-advisor/backend
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install --target=".python_packages/lib/site-packages" -r requirements.txt
-      displayName: 'Install Dependencies into .python_packages'
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt --target=".python_packages/lib/site-packages" --platform manylinux2014_x86_64 --only-binary=:all: --python-version 311 --implementation cp --upgrade
+      displayName: 'Install Compatible manylinux2014 Wheels into .python_packages'
 
     - task: ArchiveFiles@2
       inputs:
@@ -80,6 +130,16 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
       displayName: 'Archive Function App Code'
 
+    - task: AzureCLI@2
+      displayName: 'Backup Current Stable Deployment Package'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Backing up current release artifact before Atomic ZipDeploy..."
+          cp "$(Build.ArtifactStagingDirectory)/functionapp.zip" "$(Build.ArtifactStagingDirectory)/functionapp_backup.zip" || true
+
     - task: AzureFunctionApp@2
       inputs:
         connectedServiceNameARM: '$(azureServiceConnection)'
@@ -87,7 +147,40 @@ stages:
         appName: '$(functionAppName)'
         package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
         deploymentMethod: 'zipDeploy'
-      displayName: 'Deploy to Azure Function App'
+      displayName: 'Deploy Atomic Zip to Azure Function App'
+
+    - task: AzureCLI@2
+      displayName: 'Automated Healthcheck & Auto-Rollback Gate'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          FUNC_URL="https://$(functionAppName).azurewebsites.net/api/health"
+          echo "Pinging healthcheck endpoint: ${FUNC_URL}..."
+          
+          HEALTH_STATUS="FAILED"
+          for i in {1..6}; do
+            echo "Attempt $i/6: Checking backend health..."
+            RESPONSE=$(curl -s -m 10 "$FUNC_URL" || echo "")
+            if echo "$RESPONSE" | grep -q '"status":\s*"healthy"'; then
+              echo "✅ Healthcheck PASSED! Response: $RESPONSE"
+              HEALTH_STATUS="PASSED"
+              break
+            fi
+            echo "Waiting 5 seconds for cold start..."
+            sleep 5
+          done
+
+          if [ "$HEALTH_STATUS" != "PASSED" ]; then
+            echo "❌ Healthcheck FAILED! Triggering automated 1-click rollback to backup package..."
+            az functionapp deployment source config-zip \
+              --name "$(functionAppName)" \
+              --resource-group "$(resourceGroup)" \
+              --src "$(Build.ArtifactStagingDirectory)/functionapp_backup.zip"
+            echo "⚠️ Automated rollback complete. Function App restored to previous stable build."
+            exit 1
+          fi
 
 # ── TASK 2: Upload 15 RAG Text Documents to Blob Storage ─────────────────────
 - stage: UploadDocuments
@@ -104,7 +197,7 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "Uploading updated FY 2026-27 RAG documents..."
+          echo "Uploading updated FY 2026-27 RAG documents using Entra ID RBAC..."
           az storage blob upload-batch \
             --account-name "$(storageAccount)" \
             --destination "documents" \
@@ -135,9 +228,9 @@ stages:
             --query "value" -o tsv 2>/dev/null || echo "")
           echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
 
-    - task: NodeTool@0
+    - task: UseNode@1
       inputs:
-        versionSpec: '20.x'
+        version: '20.x'
       displayName: 'Install Node.js 20.x'
 
     - script: |

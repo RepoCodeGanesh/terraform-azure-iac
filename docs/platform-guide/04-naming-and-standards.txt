@@ -1,0 +1,42 @@
+Title: CAF Naming Conventions and Tagging Standards
+Source: modules/naming/
+
+CAF RESOURCE NAMING CONVENTIONS
+
+Resource names follow the Microsoft Cloud Adoption Framework (CAF) pattern:
+  [type]-[project]-[workload]-[environment]-[location_short]-[instance]
+
+Components:
+  type:           Azure resource abbreviation (rg, vnet, snet, st, kv, law, apim, func, stapp, oai, srch, cosmos)
+  project:        Project identifier (ht = HappyTechies)
+  workload:       Workload name (boot, hub, ss, taxb = TaxBot India)
+  environment:    Environment single-letter code (p = production, d = dev)
+  location_short: Azure region abbreviation (cin = Central India, eus = East US)
+  instance:       Two-digit instance number (01)
+
+EXAMPLES
+
+Resource Type           | Pattern                              | TaxBot Example
+------------------------|--------------------------------------|-----------------------------------------
+Resource Group          | rg-[proj]-[workload]-[env]-[loc]-[no]| rg-ht-taxb-p-cin-01
+Virtual Network         | vnet-[proj]-[workload]-[env]-[loc]-[no]| vnet-ht-taxb-p-cin-01
+Storage Account         | st[proj][workload][env][loc][no]     | sthttaxbpcin01
+Key Vault               | kv-[proj]-[workload]-[env]-[loc]-[no]| kv-ht-ss-p-cin-01
+Log Analytics           | law-[proj]-[workload]-[env]-[loc]-[no]| law-ht-ss-p-cin-01
+API Management          | apim-[proj]-[workload]-[env]-[loc]-[no]| apim-ht-ss-p-cin-01
+Function App            | func-[proj]-[workload]-[env]-[loc]-[no]| func-ht-taxb-p-cin-01
+Static Web App          | stapp-[proj]-[workload]-[env]-[loc]-[no]| stapp-ht-taxb-p-cin-01
+Azure OpenAI            | oai-[proj]-[workload]-[env]-[loc]-[no]| oai-ht-taxb-p-eus-01
+AI Search               | srch-[proj]-[workload]-[env]-[loc]-[no]| srch-ht-taxb-p-cin-01
+Cosmos DB               | cosmos-[proj]-[workload]-[env]-[loc]-[no]| cosmos-ht-taxb-p-cin-01
+
+TAGGING STANDARDS
+
+All resources must include these standard tags defined in locals.tf:
+  Project     = "ht"
+  Workload    = "taxb"
+  Environment = "p"
+  ManagedBy   = "Terraform"
+  CostCenter  = "taxbot-india"
+  Owner       = "ai-platform-team"
+  Company     = "HappyTechies"

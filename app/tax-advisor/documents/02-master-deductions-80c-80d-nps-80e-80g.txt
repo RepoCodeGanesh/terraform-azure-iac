@@ -56,11 +56,10 @@ SECTION 80CCD(1B) — EXCLUSIVE EXTRA DEDUCTION:
   • Over and above the Section 80C ₹1,50,000 limit (Total self-claim = ₹2,00,000).
   • Old Tax Regime ONLY.
 
-SECTION 80CCD(2) — EMPLOYER NPS CONTRIBUTION (WORKS IN NEW & OLD REGIME!):
+SECTION 80CCD(2) — EMPLOYER NPS CONTRIBUTION:
   • Contribution made by employer directly into employee's NPS Tier-1 account.
-  • Private Sector Employees: Deduction allowed up to 14% of (Basic Salary + DA).
-  • Central / State Govt Employees: Deduction allowed up to 14% of (Basic Salary + DA).
-  • Works in BOTH New (Sec 115BAC) and Old tax regimes!
+  • NEW TAX REGIME (SECTION 115BAC): Deduction allowed up to 14% of (Basic Salary + DA) for BOTH Private Sector and Government Sector employees.
+  • OLD TAX REGIME: Deduction allowed up to 10% of (Basic Salary + DA) for Private Sector employees, and 14% for Central/State Govt employees.
   • Statutory Cap: Combined annual employer contribution to (EPF + NPS + Superannuation) exceeding ₹7,50,000 is taxable perquisite under Section 17(2)(vii).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
