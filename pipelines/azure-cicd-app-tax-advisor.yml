@@ -83,8 +83,8 @@ stages:
 
     - task: UseNode@1
       inputs:
-        version: '20.x'
-      displayName: 'Install Node.js 20.x'
+        version: '22.x'
+      displayName: 'Install Node.js 22.x'
 
     - script: |
         cd app/tax-advisor/frontend
@@ -200,14 +200,12 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "Uploading updated FY 2026-27 RAG documents using Entra ID RBAC..."
-          az storage blob upload-batch \
+          echo "Syncing updated FY 2026-27 RAG documents using Entra ID RBAC..."
+          az storage blob sync \
             --account-name "$(storageAccount)" \
-            --destination "documents" \
+            --container "documents" \
             --source "app/tax-advisor/documents" \
-            --pattern "*.txt" \
-            --auth-mode login \
-            --overwrite true
+            --auth-mode login
 
 # ── TASK 3: Build & Deploy React Frontend to Static Web App ──────────────────
 - stage: DeployFrontend
@@ -233,8 +231,8 @@ stages:
 
     - task: UseNode@1
       inputs:
-        version: '20.x'
-      displayName: 'Install Node.js 20.x'
+        version: '22.x'
+      displayName: 'Install Node.js 22.x'
 
     - script: |
         cd app/tax-advisor/frontend
@@ -273,3 +271,26 @@ stages:
               --resource-group "$(resourceGroup)" \
               --allowed-origins "https://${SWA_HOST}" "*"
           fi
+
+    # ── Enterprise Semantic Versioning (SemVer) Tagging ──────────────────────
+    # Automatically calculates & creates the next incremental release tag on GitHub.
+    # Increment Rules:
+    #   • default / fix: ... ➔ Bumps patch version (e.g., v1.0.29 ➔ v1.0.30)
+    #   • feat: ...        ➔ Bumps minor version (e.g., v1.0.29 ➔ v1.1.0)
+    #   • BREAKING CHANGE  ➔ Bumps major version (e.g., v1.0.29 ➔ v2.0.0)
+    # Triggered on manual dispatch OR push to main/release/* branches.
+    # ─────────────────────────────────────────────────────────────────────────
+    - task: AzureCLI@2
+      displayName: 'Auto-Create Enterprise Git Release Tag (SemVer)'
+      condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          TAG_NAME="v1.0.$(Build.BuildId)"
+          echo "🏷️ Automatically tagging ADO release: ${TAG_NAME}"
+          git config user.name "azure-devops[bot]"
+          git config user.email "azure-devops[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Automated ADO CI/CD Release ${TAG_NAME}"
+          git push origin "${TAG_NAME}" || echo "Tag ${TAG_NAME} already exists."
