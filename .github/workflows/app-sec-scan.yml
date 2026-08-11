@@ -1,6 +1,7 @@
 # ==============================================================================
 # Reusable Called Workflow: Application Security Scan
 # Performs Bandit SAST, pip-audit SCA, npm audit, and SonarCloud scan
+# Fully Parameterized for Upcoming Applications & Customizations
 # ==============================================================================
 
 name: Reusable App Security Scan
@@ -17,6 +18,18 @@ on:
       shared_subscription_id:
         required: true
         type: string
+      python_version:
+        type: string
+        default: '3.11'
+      node_version:
+        type: string
+        default: '22.x'
+      sonar_project_key:
+        type: string
+        default: 'RepoCodeGanesh_terraform-azure-iac'
+      sonar_secret_name:
+        type: string
+        default: 'SONARCLOUD-TOKEN'
     secrets:
       SHARED_CLIENT_ID:
         required: true
@@ -38,10 +51,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python 3.11
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ inputs.python_version }}
 
       - name: Python SAST & Dependency Scan (Bandit & pip-audit)
         run: |
@@ -49,10 +62,10 @@ jobs:
           bandit -r ${{ inputs.working_directory }}/backend -ll -ii || echo "Bandit SAST completed with advisory notes."
           pip-audit -r ${{ inputs.working_directory }}/backend/requirements.txt || echo "pip-audit SCA completed."
 
-      - name: Setup Node.js 22.x
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: ${{ inputs.node_version }}
 
       - name: Frontend Dependency Scan (npm audit)
         run: |
@@ -68,7 +81,7 @@ jobs:
 
       - name: Fetch SonarCloud Token from Key Vault
         run: |
-          SONAR_TOKEN=$(az keyvault secret show --vault-name "${{ inputs.key_vault_name }}" --name "SONARCLOUD-TOKEN" --subscription "${{ inputs.shared_subscription_id }}" --query "value" -o tsv)
+          SONAR_TOKEN=$(az keyvault secret show --vault-name "${{ inputs.key_vault_name }}" --name "${{ inputs.sonar_secret_name }}" --subscription "${{ inputs.shared_subscription_id }}" --query "value" -o tsv)
           echo "::add-mask::$SONAR_TOKEN"
           echo "SONAR_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
 
@@ -80,6 +93,6 @@ jobs:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=RepoCodeGanesh_terraform-azure-iac
+            -Dsonar.projectKey=${{ inputs.sonar_project_key }}
             -Dsonar.organization=repocodeganesh
             -Dsonar.sources=${{ inputs.working_directory }}

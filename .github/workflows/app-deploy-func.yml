@@ -1,6 +1,7 @@
 # ==============================================================================
 # Reusable Called Workflow: Function App Deployment
 # Packages Python backend, deploys via ZipDeploy, and executes healthcheck
+# Fully Parameterized for Upcoming Applications & Customizations
 # ==============================================================================
 
 name: Reusable Function App Deploy
@@ -17,6 +18,12 @@ on:
       app_subscription_id:
         required: true
         type: string
+      python_version:
+        type: string
+        default: '3.11'
+      health_endpoint:
+        type: string
+        default: '/api/health'
     secrets:
       APP_CLIENT_ID:
         required: true
@@ -40,10 +47,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ inputs.app_subscription_id }}
 
-      - name: Setup Python 3.11
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ inputs.python_version }}
 
       - name: Install manylinux2014 Compatible Wheels
         run: |
@@ -70,7 +77,7 @@ jobs:
 
       - name: Healthcheck & Auto-Rollback Gate
         run: |
-          FUNC_URL="https://${{ inputs.function_app_name }}.azurewebsites.net/api/health"
+          FUNC_URL="https://${{ inputs.function_app_name }}.azurewebsites.net${{ inputs.health_endpoint }}"
           echo "Pinging healthcheck: ${FUNC_URL}"
           HEALTH_STATUS="FAILED"
           for i in {1..6}; do

@@ -1,6 +1,7 @@
 # ==============================================================================
 # Reusable Called Workflow: Static Web App Deployment
 # Fetches SWA token from Key Vault, builds React SPA, and deploys
+# Fully Parameterized for Upcoming Applications & Customizations
 # ==============================================================================
 
 name: Reusable Static Web App Deploy
@@ -20,6 +21,15 @@ on:
       shared_subscription_id:
         required: true
         type: string
+      node_version:
+        type: string
+        default: '22.x'
+      swa_token_secret_name:
+        type: string
+        default: 'SWA-TAXB-DEPLOYMENT-TOKEN'
+      output_location:
+        type: string
+        default: 'dist'
     secrets:
       SHARED_CLIENT_ID:
         required: true
@@ -50,16 +60,16 @@ jobs:
         run: |
           TOKEN=$(az keyvault secret show \
             --vault-name "${{ inputs.key_vault_name }}" \
-            --name "SWA-TAXB-DEPLOYMENT-TOKEN" \
+            --name "${{ inputs.swa_token_secret_name }}" \
             --subscription "${{ inputs.shared_subscription_id }}" \
             --query "value" -o tsv 2>/dev/null || echo "")
           echo "::add-mask::$TOKEN"
           echo "SWA_CLI_DEPLOYMENT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
-      - name: Setup Node.js 22.x
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: ${{ inputs.node_version }}
 
       - name: Build Production React Bundle
         run: |
@@ -74,4 +84,4 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: ${{ inputs.working_directory }}
-          output_location: dist
+          output_location: ${{ inputs.output_location }}
