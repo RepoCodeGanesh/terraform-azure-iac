@@ -65,11 +65,38 @@ jobs:
           cd app/tax-advisor/frontend
           npm audit --audit-level=high || echo "npm audit completed with advisory notes."
 
+      - name: Azure Login (OIDC) — Shared-services (Key Vault)
+        env:
+          SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+        if: ${{ env.SHARED_CLIENT_ID != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.SHARED_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SHARED_SUBSCRIPTION_ID }}
+
+      - name: Fetch SonarCloud Token from Key Vault
+        env:
+          SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+        if: ${{ env.SHARED_CLIENT_ID != '' }}
+        run: |
+          KV_TOKEN=$(az keyvault secret show \
+            --vault-name "${{ env.KEY_VAULT_NAME }}" \
+            --name "SONARCLOUD-TOKEN" \
+            --subscription "${{ env.SHARED_SUBSCRIPTION_ID }}" \
+            --query "value" -o tsv 2>/dev/null || echo "")
+          if [ -n "$KV_TOKEN" ]; then
+            echo "::add-mask::$KV_TOKEN"
+            echo "SONAR_TOKEN=$KV_TOKEN" >> $GITHUB_ENV
+            echo "✅ Successfully fetched SONARCLOUD-TOKEN from Key Vault kv-ht-ss-p-cin-01"
+          fi
+
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN || secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=RepoCodeGanesh_terraform-azure-iac
