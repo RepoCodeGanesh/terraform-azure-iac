@@ -66,6 +66,7 @@ jobs:
           npm audit --audit-level=high || echo "npm audit completed with advisory notes."
 
       - name: Azure Login (OIDC) — Shared-services (Key Vault)
+        id: azure_login
         env:
           SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
         if: ${{ env.SHARED_CLIENT_ID != '' }}
@@ -77,9 +78,7 @@ jobs:
           subscription-id: ${{ env.SHARED_SUBSCRIPTION_ID }}
 
       - name: Fetch SonarCloud Token from Key Vault
-        env:
-          SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
-        if: ${{ env.SHARED_CLIENT_ID != '' }}
+        if: ${{ steps.azure_login.outcome == 'success' }}
         run: |
           KV_TOKEN=$(az keyvault secret show \
             --vault-name "${{ env.KEY_VAULT_NAME }}" \
@@ -97,7 +96,7 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN || secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=RepoCodeGanesh_terraform-azure-iac
