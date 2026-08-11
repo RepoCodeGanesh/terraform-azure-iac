@@ -5,14 +5,16 @@ This repository provisions an enterprise-grade **Azure AI Landing Zone** followi
 
 ---
 
-## 🔑 Subscriptions & Federated Service Connections (WIF)
+## 🔑 Subscriptions & Service Principals (Workload Identity Federation)
 
-| Tier / Scope | Azure Subscription Name | Subscription ID | Azure DevOps Service Connection | Workload Target |
-| :--- | :--- | :--- | :--- | :--- |
-| **Bootstrap** | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | Remote Terraform backend storage (`sthtbootpcin01`) |
-| **Hub Network** | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | Hub VNet (`vnet-ht-hub-p-cin-01`) & central routing |
-| **Shared Services** | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Private DNS Zones |
-| **Apps (AI Workloads)**| `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | TaxBot India (`workloads/tax-advisor`), OpenAI, AI Search |
+Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
+
+| Tier / Scope | App Registration Name | Application (Client) ID | Object ID | Azure Subscription | Subscription ID | ADO Service Connection | GitHub Secret |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Bootstrap** | `DevOpsUniverse-Terraform- bootstrap` | `934ab83b-2f61-475e-bdbc-85c9eaed83e6` | `18409448-e4a2-44d6-b183-9f6078f8cca9` | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | `BOOTSTRAP_CLIENT_ID` |
+| **Hub Network** | `DevOpsUniverse-Terraform- hub-prod` | `78960c14-26d2-4a0c-ab21-579c3030155e` | `53c050aa-35b4-44fe-b5a7-be9534de76f4` | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | `HUB_CLIENT_ID` |
+| **Shared Services** | `DevOpsUniverse-Terraform-shared-services` | `580ffcfd-51ee-4dc3-9204-d03cb438ff82` | `95b2158a-b8a5-443c-8d37-c8eae790363d` | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | `SHARED_CLIENT_ID` |
+| **Apps (AI Workloads)**| `DevOpsUniverse-Terraform-app-prod` | `99ab7987-3989-46c3-bae9-92279be16608` | `418b13c5-39a6-4be7-9ad4-fe57b49b0f67` | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | `APP_CLIENT_ID` |
 
 ---
 
