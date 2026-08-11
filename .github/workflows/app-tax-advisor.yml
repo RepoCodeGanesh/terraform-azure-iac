@@ -69,6 +69,7 @@ jobs:
         env:
           SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
         if: ${{ env.SHARED_CLIENT_ID != '' }}
+        continue-on-error: true
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.SHARED_CLIENT_ID }}
