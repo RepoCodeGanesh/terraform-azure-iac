@@ -1,6 +1,6 @@
 # ==============================================================================
 # Workflow: App - TaxBot India Application CI/CD
-# Rules: Feature push & PR -> Build & DevSecOps Scan | push(develop/main) OR workflow_dispatch -> Deploy
+# Rules: feature/** push & PR -> Build & DevSecOps Scan | push(develop/main) OR workflow_dispatch -> Deploy
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
 # SP Client ID secrets: APP_CLIENT_ID, SHARED_CLIENT_ID
 # ==============================================================================
@@ -9,7 +9,7 @@ name: App - TaxBot India CI/CD
 
 on:
   push:
-    branches: ['**']
+    branches: [main, develop, 'feature/**']
     paths:
       - 'app/tax-advisor/**'
       - '.github/workflows/app-tax-advisor.yml'
@@ -32,7 +32,7 @@ env:
   APP_SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
   SHARED_SUBSCRIPTION_ID: '859a785c-bd38-402d-b595-1f44f40fb9bf'
 
-# ── JOB 0: DevSecOps SAST & SCA Security Scanning (Runs on ALL branches) ──────
+# ── JOB 0: DevSecOps SAST & SCA Security Scanning (Runs on PR & feature/** pushes) ──
 jobs:
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan

@@ -2,14 +2,14 @@
 # Workflow: Platform - Hub Network IaC (Uses Reusable Templates)
 # Provisions: Hub VNet (vnet-ht-hub-p-cin-01) & Central Firewall/Routing
 # Target Subscription: Hub-prod (3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b)
-# Rules: Feature push & PR -> Plan only | push(develop/main) OR workflow_dispatch -> Apply
+# Rules: feature/** push & PR -> Plan only | push(develop/main) OR workflow_dispatch -> Apply
 # ==============================================================================
 
 name: Platform - Hub Network IaC
 
 on:
   push:
-    branches: ['**']
+    branches: [main, develop, 'feature/**']
     paths:
       - 'platform/hub/**'
       - '.github/workflows/platform-hub.yml'
