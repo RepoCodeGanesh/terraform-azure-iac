@@ -34,16 +34,38 @@ Current status:
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `pipelines/`: active and verified.
 
-## Subscription Map & Entra ID Service Principal (WIF) Inventory
+## Subscription Map
+
+| Scope | Subscription | Subscription ID | Azure DevOps Service Connection | Purpose |
+| --- | --- | --- | --- | --- |
+| Bootstrap | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | Remote Terraform state storage account `sthtbootpcin01` |
+| Hub | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | Hub VNet and central routing |
+| Shared services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Private DNS, Key Vault `kv-ht-ss-p-cin-01` |
+| Apps | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | AI workloads (`workloads/tax-advisor`, `app/tax-advisor`) |
+
+### Entra ID App Registrations & CI/CD Mapping (Workload Identity Federation)
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
-| Scope | App Registration Name | Application (Client) ID | Object ID | Subscription Name & ID | ADO Connection | GitHub Secret | GitHub OIDC Subject |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Bootstrap** | `DevOpsUniverse-Terraform- bootstrap` | `934ab83b-2f61-475e-bdbc-85c9eaed83e6` | `18409448-e4a2-44d6-b183-9f6078f8cca9` | `bootstrap`<br>`7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | `BOOTSTRAP_CLIENT_ID` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:bootstrap-prod` |
-| **Hub Network** | `DevOpsUniverse-Terraform- hub-prod` | `78960c14-26d2-4a0c-ab21-579c3030155e` | `53c050aa-35b4-44fe-b5a7-be9534de76f4` | `Hub-prod`<br>`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | `HUB_CLIENT_ID` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:hub-prod` |
-| **Shared Services** | `DevOpsUniverse-Terraform-shared-services` | `580ffcfd-51ee-4dc3-9204-d03cb438ff82` | `95b2158a-b8a5-443c-8d37-c8eae790363d` | `Shared-services`<br>`859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | `SHARED_CLIENT_ID` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:shared-services-prod` |
-| **Apps (AI Workloads)** | `DevOpsUniverse-Terraform-app-prod` | `99ab7987-3989-46c3-bae9-92279be16608` | `418b13c5-39a6-4be7-9ad4-fe57b49b0f67` | `Apps-prod`<br>`f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | `APP_CLIENT_ID` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:tax-advisor-prod` |
+1. **Bootstrap Tier** (`bootstrap` subscription: `7689ad81-71ba-481b-a17c-e1b6be61bab1`)
+   - **App Registration**: `DevOpsUniverse-Terraform- bootstrap` (Client ID: `934ab83b-2f61-475e-bdbc-85c9eaed83e6`)
+   - **Azure DevOps (ADO)**: `pipelines/azure-cicd-bootstrap.yml` using Service Connection `bootstrap`
+   - **GitHub Actions**: `.github/workflows/platform-bootstrap.yml` using Secret `BOOTSTRAP_CLIENT_ID`
+
+2. **Hub Network Tier** (`Hub-prod` subscription: `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`)
+   - **App Registration**: `DevOpsUniverse-Terraform- hub-prod` (Client ID: `78960c14-26d2-4a0c-ab21-579c3030155e`)
+   - **Azure DevOps (ADO)**: `pipelines/azure-cicd-hub.yml` using Service Connection `hub-prod`
+   - **GitHub Actions**: `.github/workflows/platform-hub.yml` using Secret `HUB_CLIENT_ID`
+
+3. **Shared Services Tier** (`Shared-services` subscription: `859a785c-bd38-402d-b595-1f44f40fb9bf`)
+   - **App Registration**: `DevOpsUniverse-Terraform-shared-services` (Client ID: `580ffcfd-51ee-4dc3-9204-d03cb438ff82`)
+   - **Azure DevOps (ADO)**: `pipelines/azure-cicd-shared-ser.yml` using Service Connection `shared-services`
+   - **GitHub Actions**: `.github/workflows/platform-shared-services.yml` using Secret `SHARED_CLIENT_ID`
+
+4. **Apps / AI Workloads Tier** (`Apps-prod` subscription: `f4ffefe1-d689-4059-969c-ccc73e2a11d4`)
+   - **App Registration**: `DevOpsUniverse-Terraform-app-prod` (Client ID: `99ab7987-3989-46c3-bae9-92279be16608`)
+   - **Azure DevOps (ADO)**: `pipelines/azure-cicd-tax-advisor.yml` & `pipelines/azure-cicd-app-tax-advisor.yml` using Service Connection `app-prod`
+   - **GitHub Actions**: `.github/workflows/workload-tax-advisor.yml` & `.github/workflows/app-tax-advisor.yml` using Secret `APP_CLIENT_ID`
 
 ## Terraform State Rules
 
