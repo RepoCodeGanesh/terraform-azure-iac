@@ -130,10 +130,20 @@ jobs:
             echo "✅ CORS configured successfully."
           fi
 
-      - name: Auto-Create Enterprise Git Release Tag & GitHub Release (SemVer)
+      - name: Auto-Create Enterprise Git Release Tag (SemVer)
+        id: tag_version
         if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
-          create_release: true
+          tag_prefix: v
+
+      - name: Create Official GitHub Release
+        if: (github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')) && steps.tag_version.outputs.new_tag != ''
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
