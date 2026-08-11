@@ -1,0 +1,88 @@
+parameters:
+  - name: terraformVersion
+    type: string
+
+  - name: azureServiceConnection
+    type: string
+
+  - name: workingDirectory
+    type: string
+
+  - name: environmentName
+    type: string
+    default: 'prod'
+
+stages:
+- stage: Apply
+  displayName: "Terraform Apply"
+  dependsOn: Plan
+
+  # Only run Apply on direct branch pushes/merges (never on Pull Request validation runs)
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
+  jobs:
+  - deployment: Apply
+    displayName: "Apply Terraform Changes"
+
+    environment: ${{ parameters.environmentName }}
+
+    strategy:
+      runOnce:
+        deploy:
+
+          steps:
+
+          - checkout: self
+            clean: true
+
+          - download: current
+            artifact: terraform-plan
+
+          - task: TerraformInstaller@1
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: ${{ parameters.terraformVersion }}
+
+          - task: Cache@2
+            displayName: Cache Terraform Providers
+            inputs:
+              key: 'terraform-providers | "$(Agent.OS)"'
+              restoreKeys: |
+                terraform-providers | "$(Agent.OS)"
+              path: $(Pipeline.Workspace)/.terraform.d/plugin-cache
+
+          - script: |
+              mkdir -p $(Pipeline.Workspace)/.terraform.d/plugin-cache
+
+              cat > ~/.terraformrc <<EOF
+              plugin_cache_dir = "$(Pipeline.Workspace)/.terraform.d/plugin-cache"
+              EOF
+            displayName: Configure Terraform Plugin Cache
+
+          - task: AzureCLI@2
+            displayName: Terraform Init
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              workingDirectory: ${{ parameters.workingDirectory }}
+              inlineScript: |
+                terraform init \
+                  -reconfigure \
+                  -backend-config=backend.hcl \
+                  -input=false
+
+          - script: |
+              cp $(Pipeline.Workspace)/terraform-plan/tfplan.binary .
+            workingDirectory: ${{ parameters.workingDirectory }}
+            displayName: Restore Saved Plan
+
+          - task: AzureCLI@2
+            displayName: Terraform Apply
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              workingDirectory: ${{ parameters.workingDirectory }}
+              inlineScript: |
+                terraform apply -input=false -auto-approve tfplan.binary

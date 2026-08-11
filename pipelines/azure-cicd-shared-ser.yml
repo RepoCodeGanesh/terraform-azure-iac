@@ -1,0 +1,64 @@
+# ==============================================================================
+# Pipeline Name: Azure Platform - Shared Services IaC CI/CD Pipeline
+# Description: Provisions APIM Gateway, Log Analytics, Key Vault & Private DNS Zones
+# Target Subscription: Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
+# ==============================================================================
+
+name: Platform-SharedServices-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+trigger: none
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - platform/shared-services/**
+#       - pipelines/azure-cicd-shared-ser.yml
+#     exclude:
+#       - '**/*.md'
+
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+pr: none
+# pr:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - platform/shared-services/**
+#       - pipelines/azure-cicd-shared-ser.yml
+#     exclude:
+#       - '**/*.md'
+
+variables:
+  - name: terraformVersion
+    value: '1.15.8'
+
+  - name: azureServiceConnection
+    value: 'shared-services'
+
+  - name: workingDirectory
+    value: 'platform/shared-services'
+
+pool:
+  vmImage: ubuntu-latest
+  # name: local  # self-hosted agent pool
+
+stages:
+
+- template: templates/plan.yml
+  parameters:
+    terraformVersion: $(terraformVersion)
+    azureServiceConnection: $(azureServiceConnection)
+    workingDirectory: $(workingDirectory)
+
+- template: templates/apply.yml
+  parameters:
+    terraformVersion: $(terraformVersion)
+    azureServiceConnection: $(azureServiceConnection)
+    workingDirectory: $(workingDirectory)
+    environmentName: 'shared-services-prod'

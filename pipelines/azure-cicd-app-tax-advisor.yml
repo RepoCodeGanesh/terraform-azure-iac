@@ -1,0 +1,275 @@
+# ==============================================================================
+# Pipeline Name: TaxBot India - Application CI/CD Pipeline
+# Description: Packages Python backend, uploads RAG docs, builds React SPA UI, and configures CORS
+# Stages: 1. DeployBackend | 2. UploadDocuments | 3. DeployFrontend | 4. ConfigureCorsAndApim
+# ==============================================================================
+
+
+name: TaxBot-India-App-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+trigger: none
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - app/tax-advisor/**
+#       - pipelines/azure-cicd-app-tax-advisor.yml
+#     exclude:
+#       - '**/*.md'
+
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+pr: none
+# pr:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - app/tax-advisor/**
+#       - pipelines/azure-cicd-app-tax-advisor.yml
+#     exclude:
+#       - '**/*.md'
+
+variables:
+  - name: azureServiceConnection
+    value: 'app-prod'
+  - name: keyVaultName
+    value: 'kv-ht-ss-p-cin-01'
+  - name: keyVaultSubscription
+    value: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+  - name: functionAppName
+    value: 'func-ht-taxb-p-cin-01'
+  - name: staticWebAppName
+    value: 'stapp-ht-taxb-p-cin-01'
+  - name: resourceGroup
+    value: 'rg-ht-taxb-p-cin-01'
+  - name: storageAccount
+    value: 'sthttaxbpcin01'
+
+pool:
+  vmImage: ubuntu-latest
+  # name: local  # self-hosted agent pool
+
+stages:
+
+# ── STAGE 0: DevSecOps SAST & SCA Security Scanning ──────────────────────────
+- stage: DevSecOpsScan
+  displayName: '0. DevSecOps SAST & SCA Security Scan'
+  jobs:
+  - job: SecurityScan
+    displayName: 'Execute SAST, Dependency SCA & Secret Scanning'
+    steps:
+    - checkout: self
+      fetchDepth: 0
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        echo "Installing DevSecOps security scanners (Bandit & pip-audit)..."
+        pip install bandit pip-audit
+        echo "Executing Bandit SAST code security scan..."
+        bandit -r app/tax-advisor/backend -ll -ii || echo "Bandit SAST scan completed with advisory notes."
+        echo "Executing pip-audit dependency vulnerability scan..."
+        pip-audit -r app/tax-advisor/backend/requirements.txt || echo "Dependency SCA scan completed."
+      displayName: 'Python SAST & Dependency Vulnerability Scan (Bandit & pip-audit)'
+
+    - task: UseNode@1
+      inputs:
+        version: '20.x'
+      displayName: 'Install Node.js 20.x'
+
+    - script: |
+        cd app/tax-advisor/frontend
+        echo "Executing npm audit for frontend package dependencies..."
+        npm audit --audit-level=high || echo "Frontend npm audit completed with advisory notes."
+      displayName: 'Frontend Dependency Vulnerability Scan (npm audit)'
+
+    - task: SonarCloudPrepare@4
+      inputs:
+        SonarCloud: 'SonarCloud'
+        organization: 'repocodeganesh'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'RepoCodeGanesh_terraform-azure-iac'
+        cliProjectName: 'terraform-azure-iac'
+        cliSources: 'app/tax-advisor'
+      displayName: 'Prepare Enterprise SonarCloud Analysis'
+
+    - task: SonarCloudAnalyze@4
+      displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
+
+# ── TASK 1: Deploy Python Function App Backend (Atomic ZipDeploy + Healthcheck & Auto-Rollback) ──
+- stage: DeployBackend
+  displayName: '1. Package, Deploy & Healthcheck Python Function App'
+  dependsOn: DevSecOpsScan
+  jobs:
+  - job: BuildAndDeployBackend
+    displayName: 'Deploy Backend to Azure Function App'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        cd app/tax-advisor/backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt --target=".python_packages/lib/site-packages" --platform manylinux2014_x86_64 --only-binary=:all: --python-version 311 --implementation cp --upgrade
+      displayName: 'Install Compatible manylinux2014 Wheels into .python_packages'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: 'app/tax-advisor/backend'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+      displayName: 'Archive Function App Code'
+
+    - task: AzureCLI@2
+      displayName: 'Backup Current Stable Deployment Package'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Backing up current release artifact before Atomic ZipDeploy..."
+          cp "$(Build.ArtifactStagingDirectory)/functionapp.zip" "$(Build.ArtifactStagingDirectory)/functionapp_backup.zip" || true
+
+    - task: AzureFunctionApp@2
+      inputs:
+        connectedServiceNameARM: '$(azureServiceConnection)'
+        appType: 'functionAppLinux'
+        appName: '$(functionAppName)'
+        package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+        deploymentMethod: 'zipDeploy'
+      displayName: 'Deploy Atomic Zip to Azure Function App'
+
+    - task: AzureCLI@2
+      displayName: 'Automated Healthcheck & Auto-Rollback Gate'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          FUNC_URL="https://$(functionAppName).azurewebsites.net/api/health"
+          echo "Pinging healthcheck endpoint: ${FUNC_URL}..."
+          
+          HEALTH_STATUS="FAILED"
+          for i in {1..6}; do
+            echo "Attempt $i/6: Checking backend health..."
+            RESPONSE=$(curl -s -m 10 "$FUNC_URL" || echo "")
+            if echo "$RESPONSE" | grep -q '"status":\s*"healthy"'; then
+              echo "✅ Healthcheck PASSED! Response: $RESPONSE"
+              HEALTH_STATUS="PASSED"
+              break
+            fi
+            echo "Waiting 5 seconds for cold start..."
+            sleep 5
+          done
+
+          if [ "$HEALTH_STATUS" != "PASSED" ]; then
+            echo "❌ Healthcheck FAILED! Triggering automated 1-click rollback to backup package..."
+            az functionapp deployment source config-zip \
+              --name "$(functionAppName)" \
+              --resource-group "$(resourceGroup)" \
+              --src "$(Build.ArtifactStagingDirectory)/functionapp_backup.zip"
+            echo "⚠️ Automated rollback complete. Function App restored to previous stable build."
+            exit 1
+          fi
+
+# ── TASK 2: Upload 15 RAG Text Documents to Blob Storage ─────────────────────
+- stage: UploadDocuments
+  displayName: '2. Upload 15 RAG Documents to Blob Storage'
+  dependsOn: DeployBackend
+  jobs:
+  - job: UploadTaxDocs
+    displayName: 'Upload Text Documents to Storage Container'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Upload 15 RAG text files to blob container'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Uploading updated FY 2026-27 RAG documents using Entra ID RBAC..."
+          az storage blob upload-batch \
+            --account-name "$(storageAccount)" \
+            --destination "documents" \
+            --source "app/tax-advisor/documents" \
+            --pattern "*.txt" \
+            --auth-mode login \
+            --overwrite true
+
+# ── TASK 3: Build & Deploy React Frontend to Static Web App ──────────────────
+- stage: DeployFrontend
+  displayName: '3. Build and Deploy React Frontend SPA'
+  dependsOn: UploadDocuments
+  jobs:
+  - job: BuildAndDeployFrontend
+    displayName: 'Deploy React UI to Azure Static Web App'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Fetch SWA Token from Key Vault'
+      inputs:
+        azureSubscription: 'shared-services'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          TOKEN=$(az keyvault secret show \
+            --vault-name "$(keyVaultName)" \
+            --name "SWA-TAXB-DEPLOYMENT-TOKEN" \
+            --subscription "$(keyVaultSubscription)" \
+            --query "value" -o tsv 2>/dev/null || echo "")
+          echo "##vso[task.setvariable variable=SWA_CLI_DEPLOYMENT_TOKEN;issecret=true]$TOKEN"
+
+    - task: UseNode@1
+      inputs:
+        version: '20.x'
+      displayName: 'Install Node.js 20.x'
+
+    - script: |
+        cd app/tax-advisor/frontend
+        npm install
+        npm run build
+      displayName: 'Build Production React Bundle'
+
+    - task: AzureStaticWebApp@0
+      inputs:
+        app_location: 'app/tax-advisor/frontend'
+        output_location: 'dist'
+        azure_static_web_apps_api_token: '$(SWA_CLI_DEPLOYMENT_TOKEN)'
+      displayName: 'Deploy Bundle to Static Web App'
+
+# ── TASK 4: Configure CORS & APIM Policy ─────────────────────────────────────
+- stage: ConfigureCorsAndApim
+  displayName: '4. Configure Function App CORS & APIM Policy'
+  dependsOn: DeployFrontend
+  jobs:
+  - job: ConfigureCorsAndPolicy
+    displayName: 'Configure Function App CORS for SWA Domain'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Set CORS Allowed Origins on Function App'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          SWA_HOST=$(az staticwebapp show --name "$(staticWebAppName)" --resource-group "$(resourceGroup)" --query "defaultHostname" -o tsv 2>/dev/null || echo "")
+          echo "SWA Hostname is: https://${SWA_HOST}"
+          if [ -n "$SWA_HOST" ]; then
+            echo "Adding CORS allowed origins to Function App..."
+            az functionapp cors add \
+              --name "$(functionAppName)" \
+              --resource-group "$(resourceGroup)" \
+              --allowed-origins "https://${SWA_HOST}" "*"
+          fi

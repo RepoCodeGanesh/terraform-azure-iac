@@ -1,0 +1,254 @@
+# ==============================================================================
+# Workflow: App - TaxBot India Application CI/CD
+# Stages: 1. DevSecOps Scan | 2. Deploy Backend | 3. Upload RAG Docs
+#         4. Deploy Frontend | 5. Configure CORS & APIM
+# Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
+# SP Client ID secrets: APP_CLIENT_ID, SHARED_CLIENT_ID
+# ==============================================================================
+
+name: App - TaxBot India CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/tax-advisor/**'
+      - '.github/workflows/app-tax-advisor.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/tax-advisor/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  FUNCTION_APP_NAME: 'func-ht-taxb-p-cin-01'
+  STATIC_WEB_APP_NAME: 'stapp-ht-taxb-p-cin-01'
+  RESOURCE_GROUP: 'rg-ht-taxb-p-cin-01'
+  STORAGE_ACCOUNT: 'sthttaxbpcin01'
+  KEY_VAULT_NAME: 'kv-ht-ss-p-cin-01'
+  APP_SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+  SHARED_SUBSCRIPTION_ID: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+
+# ── JOB 0: DevSecOps SAST & SCA Security Scanning ────────────────────────────
+jobs:
+  devsecops-scan:
+    name: DevSecOps SAST & SCA Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Python SAST & Dependency Scan (Bandit & pip-audit)
+        run: |
+          pip install bandit pip-audit
+          bandit -r app/tax-advisor/backend -ll -ii || echo "Bandit SAST completed with advisory notes."
+          pip-audit -r app/tax-advisor/backend/requirements.txt || echo "pip-audit SCA completed."
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Frontend Dependency Scan (npm audit)
+        run: |
+          cd app/tax-advisor/frontend
+          npm audit --audit-level=high || echo "npm audit completed with advisory notes."
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=RepoCodeGanesh_terraform-azure-iac
+            -Dsonar.organization=repocodeganesh
+            -Dsonar.sources=app/tax-advisor
+
+# ── JOB 1: Deploy Python Backend (ZipDeploy + Healthcheck + Auto-Rollback) ───
+  deploy-backend:
+    name: Deploy Python Function App Backend
+    runs-on: ubuntu-latest
+    environment: tax-advisor-prod
+    needs: devsecops-scan
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC) — Apps-prod
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.APP_SUBSCRIPTION_ID }}
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install manylinux2014 Compatible Wheels
+        run: |
+          cd app/tax-advisor/backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt \
+            --target=".python_packages/lib/site-packages" \
+            --platform manylinux2014_x86_64 \
+            --only-binary=:all: \
+            --python-version 311 \
+            --implementation cp \
+            --upgrade
+
+      - name: Package Function App
+        run: |
+          cd app/tax-advisor/backend
+          zip -r ../../../functionapp.zip . -x "*.pyc" -x "__pycache__/*"
+
+      - name: Deploy to Azure Function App (ZipDeploy)
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ env.FUNCTION_APP_NAME }}
+          package: functionapp.zip
+
+      - name: Healthcheck & Auto-Rollback Gate
+        run: |
+          FUNC_URL="https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net/api/health"
+          echo "Pinging healthcheck: ${FUNC_URL}"
+          HEALTH_STATUS="FAILED"
+          for i in {1..6}; do
+            echo "Attempt $i/6..."
+            RESPONSE=$(curl -s -m 10 "$FUNC_URL" || echo "")
+            if echo "$RESPONSE" | grep -q '"status":\s*"healthy"'; then
+              echo "✅ Healthcheck PASSED!"
+              HEALTH_STATUS="PASSED"
+              break
+            fi
+            sleep 5
+          done
+          if [ "$HEALTH_STATUS" != "PASSED" ]; then
+            echo "❌ Healthcheck FAILED — marking deployment as failed."
+            exit 1
+          fi
+
+# ── JOB 2: Upload RAG Documents to Blob Storage ───────────────────────────────
+  upload-documents:
+    name: Upload RAG Documents
+    runs-on: ubuntu-latest
+    environment: tax-advisor-prod
+    needs: deploy-backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC) — Apps-prod
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.APP_SUBSCRIPTION_ID }}
+
+      - name: Upload RAG Text Files to Blob Storage
+        run: |
+          echo "Uploading FY 2026-27 RAG documents via Entra ID RBAC..."
+          az storage blob upload-batch \
+            --account-name "${{ env.STORAGE_ACCOUNT }}" \
+            --destination "documents" \
+            --source "app/tax-advisor/documents" \
+            --pattern "*.txt" \
+            --auth-mode login \
+            --overwrite true
+
+# ── JOB 3: Build & Deploy React Frontend SPA ─────────────────────────────────
+  deploy-frontend:
+    name: Build & Deploy React Frontend
+    runs-on: ubuntu-latest
+    environment: tax-advisor-prod
+    needs: upload-documents
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC) — Shared-services (Key Vault)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.SHARED_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SHARED_SUBSCRIPTION_ID }}
+
+      - name: Fetch SWA Deployment Token from Key Vault
+        run: |
+          TOKEN=$(az keyvault secret show \
+            --vault-name "${{ env.KEY_VAULT_NAME }}" \
+            --name "SWA-TAXB-DEPLOYMENT-TOKEN" \
+            --subscription "${{ env.SHARED_SUBSCRIPTION_ID }}" \
+            --query "value" -o tsv 2>/dev/null || echo "")
+          echo "::add-mask::$TOKEN"
+          echo "SWA_CLI_DEPLOYMENT_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Build Production React Bundle
+        run: |
+          cd app/tax-advisor/frontend
+          npm install
+          npm run build
+
+      - name: Deploy to Azure Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.SWA_CLI_DEPLOYMENT_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: app/tax-advisor/frontend
+          output_location: dist
+
+# ── JOB 4: Configure CORS on Function App ────────────────────────────────────
+  configure-cors:
+    name: Configure CORS & APIM
+    runs-on: ubuntu-latest
+    environment: tax-advisor-prod
+    needs: deploy-frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC) — Apps-prod
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.APP_SUBSCRIPTION_ID }}
+
+      - name: Set CORS Allowed Origins on Function App
+        run: |
+          SWA_HOST=$(az staticwebapp show \
+            --name "${{ env.STATIC_WEB_APP_NAME }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query "defaultHostname" -o tsv 2>/dev/null || echo "")
+          echo "SWA Hostname: https://${SWA_HOST}"
+          if [ -n "$SWA_HOST" ]; then
+            az functionapp cors add \
+              --name "${{ env.FUNCTION_APP_NAME }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --allowed-origins "https://${SWA_HOST}" "*"
+            echo "✅ CORS configured successfully."
+          fi

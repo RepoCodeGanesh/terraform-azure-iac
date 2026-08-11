@@ -1,0 +1,60 @@
+Title: Terraform IaC Structure and Module Guide
+Source: docs/PROJECT_CONTEXT.md
+
+TERRAFORM REPOSITORY STRUCTURE
+
+The repository is organized into platform layers (independent Terraform roots) and reusable modules:
+
+terraform-azure-iac/
+├── platform/
+│   ├── bootstrap/        Layer 1 — Remote state storage account and Key Vault
+│   ├── hub/              Layer 2 — Hub VNet, subnets, NSGs
+│   └── shared-services/  Layer 3 — APIM, Log Analytics, Private DNS
+├── workloads/
+│   └── tax-advisor/      Layer 4 — TaxBot India workload (OpenAI, Search, Cosmos DB, Function App)
+├── modules/
+│   ├── naming/           CAF naming helper — generates resource names from variables
+│   ├── network/          VNet + subnet wrapper
+│   └── vnet_peering/     Hub-spoke peering module (aliased providers)
+└── app/
+    └── tax-advisor/
+        ├── frontend/     React SPA UI (Vite, Tailwind, Custom Domain: www.mytaxbot.site)
+        ├── backend/      Python Azure Function (function_app.py)
+        └── documents/    10 Master Statutory Tax RAG Text Files (FY 2026-27 / AY 2027-28)
+
+PLATFORM/BOOTSTRAP
+
+Provisions the foundation for all other layers:
+- azurerm_resource_group — rg-ht-boot-p-cin-01
+- azurerm_storage_account — sthtbootpcin01 (Standard_LRS) with blob container "tfstate"
+- azurerm_key_vault — kv-ht-boot-p-cin-01 (Standard SKU, RBAC authorization model)
+
+All other roots depend on this being deployed first.
+
+PLATFORM/HUB
+
+Provisions central networking:
+- azurerm_resource_group — rg-ht-hub-p-cin-01
+- module.hub_vnet — vnet-ht-hub-p-cin-01 (10.0.0.0/16) with subnets:
+    AzureFirewallSubnet, AzureBastionSubnet, GatewaySubnet
+
+PLATFORM/SHARED-SERVICES
+
+Provisions shared platform services:
+- azurerm_resource_group — rg-ht-ss-p-cin-01
+- azurerm_log_analytics_workspace — law-ht-ss-p-cin-01 (PerGB2018, 30-day retention)
+- azurerm_api_management — apim-ht-ss-p-cin-01 (Consumption SKU — $0 base cost)
+- azurerm_key_vault — kv-ht-ss-p-cin-01 (stores SWA deployment token)
+- azurerm_private_dns_zone — for Key Vault, Storage, OpenAI, Search, and Cosmos DB
+
+WORKLOADS/TAX-ADVISOR
+
+Provisions the TaxBot India workload infrastructure:
+- azurerm_resource_group — rg-ht-taxb-p-cin-01
+- module.taxb_vnet — vnet-ht-taxb-p-cin-01 (10.41.0.0/16)
+- module.openai — oai-ht-taxb-p-eus-01 (S0 SKU with gpt-5.4-nano deployment)
+- module.search_service — srch-ht-taxb-p-cin-01 (Basic SKU, semantic search)
+- module.cosmos_db — cosmos-ht-taxb-p-cin-01 (Serverless SKU)
+- module.function_app — func-ht-taxb-p-cin-01 (Consumption Y1 SKU, Python 3.11)
+- azurerm_static_web_app — stapp-ht-taxb-p-cin-01 (Free tier, bound to www.mytaxbot.site)
+- azapi_resource.apim_tax_advisor_api — APIM API registration & rate limiting security policies
