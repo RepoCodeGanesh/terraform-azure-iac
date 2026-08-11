@@ -2,14 +2,14 @@
 # Workflow: Platform - Shared Services IaC (Uses Reusable Templates)
 # Provisions: APIM Gateway, Log Analytics, Key Vault & Private DNS Zones
 # Target Subscription: Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
-# Rules: PR -> Plan only | push(develop/main) OR workflow_dispatch(any branch) -> Apply
+# Rules: Feature push & PR -> Plan only | push(develop/main) OR workflow_dispatch -> Apply
 # ==============================================================================
 
 name: Platform - Shared Services IaC
 
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
     paths:
       - 'platform/shared-services/**'
       - '.github/workflows/platform-shared-services.yml'
