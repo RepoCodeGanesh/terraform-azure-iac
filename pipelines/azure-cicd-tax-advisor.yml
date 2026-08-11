@@ -1,35 +1,38 @@
 # ==============================================================================
 # Pipeline Name: TaxBot India - Infrastructure IaC CI/CD Pipeline
 # Description: Provisions Azure AI Landing Zone infrastructure for TaxBot India
-# Trigger: Changes to workloads/tax-advisor/**
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
 # ==============================================================================
 
 name: TaxBot-India-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
 
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-  paths:
-    include:
-      - workloads/tax-advisor/**
-      - pipelines/azure-cicd-tax-advisor.yml
-    exclude:
-      - '**/*.md'
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+trigger: none
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - workloads/tax-advisor/**
+#       - pipelines/azure-cicd-tax-advisor.yml
+#     exclude:
+#       - '**/*.md'
 
-pr:
-  branches:
-    include:
-      - main
-      - develop
-  paths:
-    include:
-      - workloads/tax-advisor/**
-      - pipelines/azure-cicd-tax-advisor.yml
-    exclude:
-      - '**/*.md'
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+pr: none
+# pr:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - workloads/tax-advisor/**
+#       - pipelines/azure-cicd-tax-advisor.yml
+#     exclude:
+#       - '**/*.md'
 
 variables:
   - name: terraformVersion
@@ -42,8 +45,8 @@ variables:
     value: 'workloads/tax-advisor'
 
 pool:
-  name: local
-  # vmImage: ubuntu-latest  # previously used hosted agent; switched to self-hosted
+  vmImage: ubuntu-latest
+  # name: local  # self-hosted agent pool
 
 stages:
 

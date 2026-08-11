@@ -1,0 +1,52 @@
+# ==============================================================================
+# Workflow: Platform - Shared Services IaC (Uses Reusable Templates)
+# Provisions: APIM Gateway, Log Analytics, Key Vault & Private DNS Zones
+# Target Subscription: Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
+# Triggers: Automatic (push/PR) & Manual (workflow_dispatch)
+# ==============================================================================
+
+name: Platform - Shared Services IaC
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'platform/shared-services/**'
+      - '.github/workflows/platform-shared-services.yml'
+      - '.github/workflows/template-tf-*.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'platform/shared-services/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    name: Plan
+    uses: ./.github/workflows/template-tf-plan.yml
+    with:
+      working_directory: 'platform/shared-services'
+      subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+      environment_name: 'shared-services-prod'
+      artifact_name: 'shared-tfplan'
+    secrets:
+      CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  apply:
+    name: Apply
+    needs: plan
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    uses: ./.github/workflows/template-tf-apply.yml
+    with:
+      working_directory: 'platform/shared-services'
+      subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+      environment_name: 'shared-services-prod'
+      artifact_name: 'shared-tfplan'
+    secrets:
+      CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

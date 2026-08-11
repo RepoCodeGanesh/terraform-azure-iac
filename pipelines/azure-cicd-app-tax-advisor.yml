@@ -1,36 +1,39 @@
 # ==============================================================================
 # Pipeline Name: TaxBot India - Application CI/CD Pipeline
 # Description: Packages Python backend, uploads RAG docs, builds React SPA UI, and configures CORS
-# Trigger: Changes to app/tax-advisor/**
 # Stages: 1. DeployBackend | 2. UploadDocuments | 3. DeployFrontend | 4. ConfigureCorsAndApim
 # ==============================================================================
 
+
 name: TaxBot-India-App-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
 
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-  paths:
-    include:
-      - app/tax-advisor/**
-      - pipelines/azure-cicd-app-tax-advisor.yml
-    exclude:
-      - '**/*.md'
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+trigger: none
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - app/tax-advisor/**
+#       - pipelines/azure-cicd-app-tax-advisor.yml
+#     exclude:
+#       - '**/*.md'
 
-pr:
-  branches:
-    include:
-      - main
-      - develop
-      
-  paths:
-    include:
-      - app/tax-advisor/**
-      - pipelines/azure-cicd-app-tax-advisor.yml
-    exclude:
-      - '**/*.md'
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+pr: none
+# pr:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - app/tax-advisor/**
+#       - pipelines/azure-cicd-app-tax-advisor.yml
+#     exclude:
+#       - '**/*.md'
 
 variables:
   - name: azureServiceConnection
@@ -49,8 +52,8 @@ variables:
     value: 'sthttaxbpcin01'
 
 pool:
-  name: local
-  # vmImage: ubuntu-latest  # previously used hosted agent; switched to self-hosted
+  vmImage: ubuntu-latest
+  # name: local  # self-hosted agent pool
 
 stages:
 
