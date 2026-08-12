@@ -70,6 +70,13 @@ Industry standard practice requires that every production deployment creates **b
 
 ### 2. GitHub Actions Workflow ([.github/workflows/app-tax-advisor.yml](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/.github/workflows/app-tax-advisor.yml))
 ```yaml
+      - name: Download Backend Package Artifact for Release
+        uses: actions/download-artifact@v4
+        with:
+          name: taxbot-backend-package
+          path: .
+        continue-on-error: true
+
       - name: Auto-Create Enterprise Git Tag (SemVer)
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
@@ -78,12 +85,13 @@ Industry standard practice requires that every production deployment creates **b
           default_bump: patch
           tag_prefix: v
 
-      - name: Create Official GitHub Release
+      - name: Create Official GitHub Release with Attached Build Artifacts
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
+          artifacts: "functionapp.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
 

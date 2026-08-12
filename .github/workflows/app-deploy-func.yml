@@ -69,6 +69,13 @@ jobs:
           cd ${{ inputs.working_directory }}
           zip -r ../../../functionapp.zip . -x "*.pyc" -x "__pycache__/*"
 
+      - name: Upload Backend Package as Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: taxbot-backend-package
+          path: functionapp.zip
+          retention-days: 7
+
       - name: Deploy to Azure Function App (ZipDeploy)
         uses: azure/functions-action@v1
         with:
