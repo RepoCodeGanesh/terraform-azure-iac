@@ -6,6 +6,7 @@ This repo builds a CAF-style multi-subscription platform for Azure AI workloads,
 
 Start here:
 - [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) - canonical project context, architecture, deployment order, current goal, and troubleshooting notes.
+- [docs/platform-guide/README.md](docs/platform-guide/README.md) - **Platform Guide Visual Documentation Suite** (Mermaid topology, IaC guide, CI/CD pipelines, CAF naming, Blue-Green deployments, & telemetry).
 - [AGENTS.md](AGENTS.md) - concise rules for Codex/AI agents working in this repo.
 
 ## Terraform Roots

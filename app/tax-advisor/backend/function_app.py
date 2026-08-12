@@ -2,7 +2,7 @@ import azure.functions as func
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
@@ -57,6 +57,26 @@ def get_openai_client() -> AzureOpenAI:
         ).token,
         api_version="2024-12-01-preview",
     )
+
+def extract_response_text(resp) -> str:
+    """Safely extract text content from OpenAI ChatCompletion or Stream object."""
+    if not resp:
+        return ""
+    if hasattr(resp, "choices") and resp.choices:
+        return resp.choices[0].message.content or ""
+    try:
+        parts = []
+        for chunk in resp:
+            if hasattr(chunk, "choices") and chunk.choices:
+                delta = getattr(chunk.choices[0], "delta", None)
+                if delta and hasattr(delta, "content") and delta.content:
+                    parts.append(delta.content)
+                elif hasattr(chunk.choices[0], "message") and chunk.choices[0].message and chunk.choices[0].message.content:
+                    parts.append(chunk.choices[0].message.content)
+        return "".join(parts)
+    except Exception as e:
+        logging.error(f"Error extracting stream response text: {e}")
+        return ""
 
 def get_search_client() -> SearchClient:
     return SearchClient(
@@ -174,7 +194,7 @@ def health(req: func.HttpRequest) -> func.HttpResponse:
         "app": APP_NAME,
         "version": APP_VERSION,
         "model": OPENAI_MODEL,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "tax_year": "FY 2026-27 (AY 2027-28)",
     })
 
@@ -227,8 +247,9 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
             messages=messages,
             temperature=0.2,
             max_completion_tokens=1024,
+            stream=False,
         )
-        reply = resp.choices[0].message.content
+        reply = extract_response_text(resp)
 
         return cors_response(200, {
             "reply": reply,
@@ -315,6 +336,7 @@ def compare_regime(req: func.HttpRequest) -> func.HttpResponse:
 def analyse_salary(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
+    resp = None
     try:
         body = req.get_json()
         salary_text = body.get("salary_text", "").strip()
@@ -326,7 +348,7 @@ def analyse_salary(req: func.HttpRequest) -> func.HttpResponse:
         client = get_openai_client()
         prompt = f"""You are an Indian salary slip tax analyser.
 
-Analyse this salary slip and provide a structured tax breakdown for FY 2025-26.
+Analyse this salary slip and provide a structured tax breakdown for FY 2026-27 (AY 2027-28).
 City: {city} ({'metro' if 'metro' in city or city in ['mumbai','delhi','kolkata','chennai'] else 'non-metro'})
 
 Salary Slip:
@@ -375,8 +397,9 @@ Return ONLY valid JSON, no markdown."""
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_completion_tokens=1500,
+            stream=False,
         )
-        raw = resp.choices[0].message.content.strip()
+        raw = extract_response_text(resp).strip()
         # Clean markdown if present
         if raw.startswith("```"):
             raw = raw.split("```")[1]
@@ -387,8 +410,9 @@ Return ONLY valid JSON, no markdown."""
         return cors_response(200, result)
     except json.JSONDecodeError as e:
         logging.error(f"JSON parse error in analyse-salary: {e}")
+        raw_text = extract_response_text(resp) or "Analysis failed"
         return cors_response(200, {
-            "raw_analysis": resp.choices[0].message.content if "resp" in dir() else "Analysis failed",
+            "raw_analysis": raw_text,
             "error": "Could not parse structured response",
             "tax_year": "FY 2026-27 (AY 2027-28)",
         })
@@ -401,6 +425,7 @@ Return ONLY valid JSON, no markdown."""
 def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
+    resp = None
     try:
         body = req.get_json()
         ctc_text = body.get("ctc_text", "").strip()
@@ -471,8 +496,9 @@ Return ONLY valid JSON, no markdown."""
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_completion_tokens=1800,
+            stream=False,
         )
-        raw = resp.choices[0].message.content.strip()
+        raw = extract_response_text(resp).strip()
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
@@ -490,7 +516,7 @@ Return ONLY valid JSON, no markdown."""
                 "section": "Rule 15(5)(a)",
                 "tax_saving": 32947,
                 "works_in_new_regime": True,
-                "steps": "Request HR for up to ₹4,400/month (₹200/meal, ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. 100% Tax-Exempt under BOTH New and Old Tax Regimes for FY 2026-27!"
+                "steps": "Request HR for up to ₹8,800/month (₹200/meal, ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance."
             }
             raw_recs.append(food_card_rec)
 
@@ -519,8 +545,9 @@ Return ONLY valid JSON, no markdown."""
         result["target_regime"] = regime
         return cors_response(200, result)
     except json.JSONDecodeError:
+        raw_text = extract_response_text(resp) or "Analysis failed"
         return cors_response(200, {
-            "raw_analysis": resp.choices[0].message.content if "resp" in dir() else "Analysis failed",
+            "raw_analysis": raw_text,
             "tax_year": "FY 2026-27 (AY 2027-28)",
         })
     except Exception as e:

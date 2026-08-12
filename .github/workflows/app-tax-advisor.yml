@@ -26,6 +26,9 @@ permissions:
   id-token: write
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Called Local Template) ──
   devsecops-scan:
@@ -63,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Azure Login (OIDC) — Apps-prod
         uses: azure/login@v2
@@ -106,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Azure Login (OIDC) — Apps-prod
         uses: azure/login@v2
@@ -130,6 +133,13 @@ jobs:
             echo "✅ CORS configured successfully."
           fi
 
+      - name: Download Backend Package Artifact for Release
+        uses: actions/download-artifact@v5
+        with:
+          name: taxbot-backend-package
+          path: .
+        continue-on-error: true
+
       - name: Auto-Create Enterprise Git Release Tag (SemVer)
         id: tag_version
         if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')
@@ -139,11 +149,12 @@ jobs:
           default_bump: patch
           tag_prefix: v
 
-      - name: Create Official GitHub Release
+      - name: Create Official GitHub Release with Attached Build Artifacts
         if: (github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')) && steps.tag_version.outputs.new_tag != ''
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
+          artifacts: "functionapp.zip"
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,46 +1,40 @@
 ###############################################################################
-# Terraform
+# 1. Terraform & IaC
 ###############################################################################
 
-# Terraform working directory
+# Terraform working directory & providers
 **/.terraform/
+.terraform.lock.hcl.bak
 
-# Terraform state
+# Terraform state files (Remote state is stored in sthtbootpcin01)
 *.tfstate
 *.tfstate.*
 
-# Terraform plans
+# Terraform plan outputs
 *.tfplan
 *.tfplan.*
 tfplan
 tfplan.binary
 plan.json
 
-
-# Terraform variable files
-*.auto.tfvars
-*.auto.tfvars.json
-
-# Ignore local tfvars but allow examples
+# Local secret var files (prod.tfvars is committed; secrets are ignored)
+secrets.tfvars
+*.secret.tfvars
+*.local.tfvars
 terraform.tfvars
-!*.tfvars.example
 
-# Override files
+# Override files & logs
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-
-# Crash logs
 crash.log
 crash.*.log
-
-# CLI configuration
 .terraformrc
 terraform.rc
 
 ###############################################################################
-# Node.js & React Frontend (app/ai-assistant/frontend)
+# 2. Node.js & React Frontend (app/tax-advisor/frontend)
 ###############################################################################
 
 node_modules/
@@ -48,13 +42,15 @@ dist/
 build/
 .output/
 .vite/
+coverage/
+.eslintcache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
 ###############################################################################
-# Python & Azure Functions (app/ai-assistant/backend)
+# 3. Python & Azure Functions (app/tax-advisor/backend)
 ###############################################################################
 
 __pycache__/
@@ -66,10 +62,20 @@ venv/
 env/
 ENV/
 .python_packages/
+
+# Azure Functions local settings & secrets
 local.settings.json
+local.settings.*.json
+
+# Python testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
 ###############################################################################
-# Environment & Secrets
+# 4. Secrets, Credentials & Environment Files
 ###############################################################################
 
 .env
@@ -86,13 +92,13 @@ local.settings.json
 *.pub
 
 ###############################################################################
-# Azure CLI & Tools
+# 5. Azure CLI & Cloud Tools
 ###############################################################################
 
 .azure/
 
 ###############################################################################
-# IDE & Editor Settings
+# 6. IDEs, AI Assistant Caches & OS Files
 ###############################################################################
 
 .vscode/
@@ -103,37 +109,26 @@ local.settings.json
 *.userosscache
 *.sln.docstates
 
-###############################################################################
-# OS Files
-###############################################################################
+# AI Agent & local tool caches
+.gemini/
+.claude/
+.antigravity/
+.act/
 
+# OS metadata
 .DS_Store
 Thumbs.db
 
 ###############################################################################
-# Logs
-###############################################################################
-
-*.log
-
-###############################################################################
-# Temporary Files
+# 7. Temporary Files & Build Archives
 ###############################################################################
 
 *.bak
 *.tmp
 *.swp
+*.log
 
-###############################################################################
-# Archives & Packages
-###############################################################################
-
+# Build archives (CI/CD handles packaging dynamically)
 *.zip
 *.tar.gz
 *.tgz
-
-###############################################################################
-# GitHub Actions Local Testing
-###############################################################################
-
-.act/
