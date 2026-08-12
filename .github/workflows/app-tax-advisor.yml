@@ -26,6 +26,9 @@ permissions:
   id-token: write
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Called Local Template) ──
   devsecops-scan:
@@ -63,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Azure Login (OIDC) — Apps-prod
         uses: azure/login@v2
@@ -106,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Azure Login (OIDC) — Apps-prod
         uses: azure/login@v2
@@ -131,7 +134,7 @@ jobs:
           fi
 
       - name: Download Backend Package Artifact for Release
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: taxbot-backend-package
           path: .

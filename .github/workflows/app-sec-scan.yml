@@ -37,6 +37,7 @@ on:
         required: true
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   SONAR_TOKEN: ''
 
 jobs:
@@ -47,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -63,7 +64,7 @@ jobs:
           pip-audit -r ${{ inputs.working_directory }}/backend/requirements.txt || echo "pip-audit SCA completed."
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ inputs.node_version }}
 
