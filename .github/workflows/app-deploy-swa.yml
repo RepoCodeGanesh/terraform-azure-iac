@@ -37,6 +37,7 @@ on:
         required: true
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   SWA_CLI_DEPLOYMENT_TOKEN: ''
 
 jobs:
@@ -47,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Azure Login (OIDC) — Shared-services (Key Vault)
         uses: azure/login@v2
@@ -67,7 +68,7 @@ jobs:
           echo "SWA_CLI_DEPLOYMENT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ inputs.node_version }}
 
