@@ -32,7 +32,5 @@ resource "azurerm_cosmosdb_sql_container" "this" {
   database_name       = azurerm_cosmosdb_sql_database.this.name
   partition_key_paths = [var.partition_key_path]
 
-  autoscale_settings {
-    max_throughput = 1000 # Autoscale up to 1k RU/s (100% free under Free Tier)
-  }
+  throughput = var.throughput # 400 RU/s (100% Free under Free Tier, $0.00/month)
 }

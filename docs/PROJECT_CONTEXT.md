@@ -96,6 +96,7 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 | **App Service Plan** | Function App Host | `F1` (Free) / `B1` | **$0 – $13 / month** |
 | **Log Analytics** | Application Insights & Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
 | **Storage Account** | Terraform `.tfstate` & Functions | `Standard_LRS` | Pennies / month |
+| **Cosmos DB** | Session Chat History Storage | Manual `400 RU/s` (Free Tier) | **$0 / month** |
 | **Azure OpenAI** | LLM Inferences & Embeddings | Pay-As-You-Go (`S0` + `gpt-5.4-nano`) | Cap per token |
 
 ---
