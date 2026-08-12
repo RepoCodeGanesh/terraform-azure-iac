@@ -98,6 +98,35 @@ flowchart TD
 
 ---
 
+## 🌐 Live Runtime Sequence Architecture
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User Browser / Client
+    participant Domain as www.mytaxbot.site
+    participant SWA as Azure Static Web App<br/>(stapp-ht-taxb-p-cin-01)
+    participant APIM as APIM Gateway<br/>(apim-ht-ss-p-cin-01)
+    participant Func as Azure Function App<br/>(func-ht-taxb-p-cin-01)
+    participant Search as Azure AI Search<br/>(srch-ht-taxb-p-cin-01)
+    participant OAI as Azure OpenAI<br/>(gpt-5.4-nano)
+    participant DB as Azure Cosmos DB<br/>(cosmos-ht-taxb-p-cin-01)
+
+    User->>Domain: 1. Request Web Page
+    Domain->>SWA: 2. Serve React SPA Assets
+    User->>APIM: 3. POST /api/chat (Rate Limited: 20 req/min)
+    APIM->>Func: 4. Forward Authorized Request (CORS Validated)
+    Func->>Search: 5. Retrieve Statutory RAG Tax Context (FY 2026-27)
+    Search-->>Func: 6. Return Relevant Legal Tax Clauses
+    Func->>OAI: 7. Prompt with Context & User Query
+    OAI-->>Func: 8. Return Tax Calculation & Recommendation
+    Func->>DB: 9. Persist Session & Conversation State
+    Func-->>APIM: 10. HTTP 200 OK (Tax Response JSON)
+    APIM-->>User: 11. Render Answer in React UI
+```
+
+---
+
 ## 🏷️ Automated SemVer & Release Asset Attachment
 
 When a push occurs on `main` or a `release/*` branch, the pipeline automatically:
