@@ -1,7 +1,8 @@
 # ==============================================================================
 # Workflow: App - TaxBot India Application CI/CD (Caller Workflow)
-# Pattern: Enterprise Caller/Called Reusable Workflow Pattern (Local Workflows)
+# Pattern: Enterprise Parameterized Reusable Workflow Pattern
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
+# Central Template Repo: RepoCodeGanesh/.github
 # ==============================================================================
 
 name: App - TaxBot India CI/CD
@@ -13,9 +14,6 @@ on:
     paths:
       - 'app/tax-advisor/**'
       - '.github/workflows/app-tax-advisor.yml'
-      - '.github/workflows/app-sec-scan.yml'
-      - '.github/workflows/app-deploy-func.yml'
-      - '.github/workflows/app-deploy-swa.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -30,10 +28,10 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Called Local Template) ──
+  # ── JOB 0: DevSecOps SAST & SCA Security Scanning ──────────────────────────
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
-    uses: ./.github/workflows/app-sec-scan.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
     with:
       working_directory: 'app/tax-advisor'
       key_vault_name: 'kv-ht-ss-p-cin-01'
@@ -42,12 +40,12 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 1: Deploy Python Backend Function App (Called Local Template) ──────
+  # ── JOB 1: Deploy Python Backend Function App ──────────────────────────────
   deploy-backend:
     name: Deploy Python Function App Backend
     needs: devsecops-scan
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
-    uses: ./.github/workflows/app-deploy-func.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-func.yml@main
     with:
       function_app_name: 'func-ht-taxb-p-cin-01'
       working_directory: 'app/tax-advisor/backend'
@@ -56,40 +54,27 @@ jobs:
       APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 2: Upload RAG Documents to Blob Storage (App-Specific Job) ────────
+  # ── JOB 2: Upload RAG Documents to Blob Storage ───────────────────────────
   upload-documents:
     name: Upload RAG Documents
-    runs-on: ubuntu-latest
-    environment: tax-advisor-prod
     needs: deploy-backend
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/app-sync-docs.yml@main
+    with:
+      storage_account_name: 'sthttaxbpcin01'
+      container_name: 'documents'
+      source_directory: 'app/tax-advisor/documents'
+      app_subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Azure Login (OIDC) — Apps-prod
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
-
-      - name: Sync RAG Text Files to Blob Storage (Incremental & Auto-Clean)
-        run: |
-          echo "Syncing FY 2026-27 RAG documents via Entra ID RBAC..."
-          az storage blob sync \
-            --account-name "sthttaxbpcin01" \
-            --container "documents" \
-            --source "app/tax-advisor/documents" \
-            --auth-mode login
-
-  # ── JOB 3: Build & Deploy React Frontend SPA (Called Local Template) ───────
+  # ── JOB 3: Build & Deploy React Frontend SPA ───────────────────────────────
   deploy-frontend:
     name: Build & Deploy React Frontend
     needs: upload-documents
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
-    uses: ./.github/workflows/app-deploy-swa.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
     with:
       static_web_app_name: 'stapp-ht-taxb-p-cin-01'
       working_directory: 'app/tax-advisor/frontend'
@@ -99,62 +84,27 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 4: Configure CORS & Enterprise SemVer Tagging ──────────────────────
+  # ── JOB 4: Configure CORS Origins ──────────────────────────────────────────
   configure-cors:
     name: Configure CORS & APIM
-    runs-on: ubuntu-latest
-    environment: tax-advisor-prod
     needs: deploy-frontend
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/release/') || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/app-config-cors.yml@main
+    with:
+      static_web_app_name: 'stapp-ht-taxb-p-cin-01'
+      function_app_name: 'func-ht-taxb-p-cin-01'
+      resource_group: 'rg-ht-taxb-p-cin-01'
+      app_subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Azure Login (OIDC) — Apps-prod
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
-
-      - name: Set CORS Allowed Origins on Function App
-        run: |
-          SWA_HOST=$(az staticwebapp show \
-            --name "stapp-ht-taxb-p-cin-01" \
-            --resource-group "rg-ht-taxb-p-cin-01" \
-            --query "defaultHostname" -o tsv 2>/dev/null || echo "")
-          echo "SWA Hostname: https://${SWA_HOST}"
-          if [ -n "$SWA_HOST" ]; then
-            az functionapp cors add \
-              --name "func-ht-taxb-p-cin-01" \
-              --resource-group "rg-ht-taxb-p-cin-01" \
-              --allowed-origins "https://${SWA_HOST}" "*"
-            echo "✅ CORS configured successfully."
-          fi
-
-      - name: Download Backend Package Artifact for Release
-        uses: actions/download-artifact@v5
-        with:
-          name: taxbot-backend-package
-          path: .
-        continue-on-error: true
-
-      - name: Auto-Create Enterprise Git Release Tag (SemVer)
-        id: tag_version
-        if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
-          tag_prefix: v
-
-      - name: Create Official GitHub Release with Attached Build Artifacts
-        if: (github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')) && steps.tag_version.outputs.new_tag != ''
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
-          artifacts: "functionapp.zip"
-          token: ${{ secrets.GITHUB_TOKEN }}
+  # ── JOB 5: Enterprise SemVer Tagging & Release ─────────────────────────────
+  create-release:
+    name: Enterprise SemVer Release
+    needs: configure-cors
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/app-tag-semver.yml@main
+    with:
+      artifact_name: 'taxbot-backend-package'
+      release_artifacts: 'functionapp.zip'
