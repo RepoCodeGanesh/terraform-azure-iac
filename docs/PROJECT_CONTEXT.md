@@ -40,7 +40,7 @@ Current status:
 | --- | --- | --- | --- | --- |
 | Bootstrap | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | Remote Terraform state storage account `sthtbootpcin01` |
 | Hub | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | Hub VNet and central routing |
-| Shared services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Private DNS, Key Vault `kv-ht-ss-p-cin-01` |
+| Shared services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | Log Analytics, APIM Gateway, Key Vault `kv-ht-ss-p-cin-01` |
 | Apps | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | AI workloads (`workloads/tax-advisor`, `app/tax-advisor`) |
 
 ### Entra ID App Registrations & CI/CD Mapping (Workload Identity Federation)
