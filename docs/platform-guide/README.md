@@ -59,13 +59,13 @@ Click any guide below for detailed specs, operational runbooks, and deep-dive te
 
 | Module | Guide Title | Core Topics & Visuals | Link |
 | :---: | :--- | :--- | :---: |
-| **01** | **Platform Overview** | Subscription topology, Hub-Spoke networks, deployment order. | [01-platform-overview.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/01-platform-overview.md) |
-| **02** | **Terraform IaC Guide** | Roots vs modules, state rules, layer dependencies. | [02-terraform-iac-guide.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/02-terraform-iac-guide.md) |
-| **03** | **CI/CD Pipelines Guide** | Dual CI/CD authentication, 3-Stage IaC & 4-Stage App workflows. | [03-cicd-pipelines-guide.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/03-cicd-pipelines-guide.md) |
-| **04** | **Naming & Standards** | CAF resource naming syntax, 12 resource type examples, mandatory tags. | [04-naming-and-standards.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/04-naming-and-standards.md) |
-| **05** | **Troubleshooting Guide** | Incident flowchart, APIM 500, SWA CORS, Tax rules (80CCD(2), Rule 2A HRA). | [05-troubleshooting-guide.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/05-troubleshooting-guide.md) |
-| **06** | **Blue-Green Deployments** | Zero-downtime slot swaps, SWA global CDN cutover, 1-click rollback. | [06-blue-green-deployment-guide.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/06-blue-green-deployment-guide.md) |
-| **07** | **Monitoring & Telemetry** | Log Analytics aggregation, Application Insights, KQL queries, alerts. | [07-monitoring-telemetry-guide.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/07-monitoring-telemetry-guide.md) |
+| **01** | **Platform Overview** | Subscription topology, Hub-Spoke networks, deployment order. | [01-platform-overview.md](01-platform-overview.md) |
+| **02** | **Terraform IaC Guide** | Roots vs modules, state rules, layer dependencies. | [02-terraform-iac-guide.md](02-terraform-iac-guide.md) |
+| **03** | **CI/CD Pipelines Guide** | Dual CI/CD authentication, 3-Stage IaC & 4-Stage App workflows. | [03-cicd-pipelines-guide.md](03-cicd-pipelines-guide.md) |
+| **04** | **Naming & Standards** | CAF resource naming syntax, 12 resource type examples, mandatory tags. | [04-naming-and-standards.md](04-naming-and-standards.md) |
+| **05** | **Troubleshooting Guide** | Incident flowchart, APIM 500, SWA CORS, Tax rules (80CCD(2), Rule 2A HRA). | [05-troubleshooting-guide.md](05-troubleshooting-guide.md) |
+| **06** | **Blue-Green Deployments** | Zero-downtime slot swaps, SWA global CDN cutover, 1-click rollback. | [06-blue-green-deployment-guide.md](06-blue-green-deployment-guide.md) |
+| **07** | **Monitoring & Telemetry** | Log Analytics aggregation, Application Insights, KQL queries, alerts. | [07-monitoring-telemetry-guide.md](07-monitoring-telemetry-guide.md) |
 
 ---
 

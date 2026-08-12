@@ -1,6 +1,6 @@
 # Platform Guide 01 — Azure AI Landing Zone Overview
 
-[← Back to Master Index](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/platform-guide/README.md)
+[← Back to Master Index](README.md)
 
 ---
 

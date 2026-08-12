@@ -86,7 +86,7 @@ $$\mathbf{v\underbrace{1}_{\text{1st Digit (MAJOR)}} . \underbrace{0}_{\text{2nd
 
 ## 🤖 Automated CI/CD Tagging Integration
 
-Both **GitHub Actions** ([.github/workflows/app-tax-advisor.yml](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/.github/workflows/app-tax-advisor.yml)) and **Azure DevOps** ([pipelines/azure-cicd-app-tax-advisor.yml](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/pipelines/azure-cicd-app-tax-advisor.yml)) automatically generate SemVer release tags upon deployment to `main` or `release/*`:
+Both **GitHub Actions** ([.github/workflows/app-tax-advisor.yml](../.github/workflows/app-tax-advisor.yml)) and **Azure DevOps** ([pipelines/azure-cicd-app-tax-advisor.yml](../pipelines/azure-cicd-app-tax-advisor.yml)) automatically generate SemVer release tags upon deployment to `main` or `release/*`:
 
 ```yaml
 # GitHub Actions SemVer Step

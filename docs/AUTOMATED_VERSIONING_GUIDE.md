@@ -47,7 +47,7 @@ BREAKING CHANGE: updated request payload structure"
 
 Industry standard practice requires that every production deployment creates **both** a Git Tag and an official **GitHub Release** with auto-generated release notes:
 
-### 1. Azure DevOps Pipeline ([azure-cicd-app-tax-advisor.yml](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/pipelines/azure-cicd-app-tax-advisor.yml))
+### 1. Azure DevOps Pipeline ([azure-cicd-app-tax-advisor.yml](../pipelines/azure-cicd-app-tax-advisor.yml))
 ```yaml
     - task: AzureCLI@2
       displayName: 'Auto-Create Enterprise Git Release Tag & GitHub Release (SemVer)'
@@ -68,7 +68,7 @@ Industry standard practice requires that every production deployment creates **b
         GITHUB_TOKEN: $(GITHUB_TOKEN)
 ```
 
-### 2. GitHub Actions Workflow ([.github/workflows/app-tax-advisor.yml](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/.github/workflows/app-tax-advisor.yml))
+### 2. GitHub Actions Workflow ([.github/workflows/app-tax-advisor.yml](../.github/workflows/app-tax-advisor.yml))
 ```yaml
       - name: Download Backend Package Artifact for Release
         uses: actions/download-artifact@v4
