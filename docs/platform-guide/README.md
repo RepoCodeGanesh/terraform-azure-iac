@@ -1,5 +1,7 @@
 # Azure AI Landing Zone — Platform Guide Documentation
 
+[← Back to Master Documentation Hub](../README.md)
+
 Welcome to the **Platform Guide Documentation Suite** for the enterprise-grade **Azure AI Landing Zone** and **TaxBot India** AI workload platform.
 
 This suite provides interactive diagrams, architectural specs, deployment blueprints, troubleshooting playbooks, and operational standards following the **Microsoft Cloud Adoption Framework (CAF)**.

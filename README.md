@@ -5,9 +5,10 @@ Terraform and Azure DevOps infrastructure for a low-cost Azure AI landing zone.
 This repo builds a CAF-style multi-subscription platform for Azure AI workloads, with separate Terraform state per layer, Workload Identity Federation in Azure DevOps, hub-spoke networking, shared telemetry/APIM services, and an active `workloads/tax-advisor` deployment.
 
 Start here:
-- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) - canonical project context, architecture, deployment order, current goal, and troubleshooting notes.
-- [docs/platform-guide/README.md](docs/platform-guide/README.md) - **Platform Guide Visual Documentation Suite** (Mermaid topology, IaC guide, CI/CD pipelines, CAF naming, Blue-Green deployments, & telemetry).
-- [AGENTS.md](AGENTS.md) - concise rules for Codex/AI agents working in this repo.
+- [docs/README.md](docs/README.md) - **Master Documentation Hub** (Table of Contents for Architecture, CI/CD, Platform Runbooks, and Standards).
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) - Canonical project context, subscription map, deployment sequence, and cost matrix.
+- [docs/platform-guide/README.md](docs/platform-guide/README.md) - Platform Guide Visual Documentation Suite (Mermaid topology, IaC guide, CI/CD pipelines, CAF naming, Blue-Green deployments, & telemetry).
+- [AGENTS.md](AGENTS.md) - Concise rules for AI agents working in this repository.
 
 ## Terraform Roots
 
