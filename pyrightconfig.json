@@ -1,0 +1,8 @@
+{
+  "venvPath": "app/tax-advisor/backend",
+  "venv": ".venv",
+  "extraPaths": [
+    "app/tax-advisor/backend/.venv/Lib/site-packages",
+    "app/tax-advisor/backend"
+  ]
+}
