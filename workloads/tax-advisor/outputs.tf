@@ -83,5 +83,5 @@ output "static_web_app_api_key" {
 
 output "apim_base_url" {
   description = "APIM gateway base URL for TaxBot India API."
-  value       = "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
+  value       = "${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
 }
