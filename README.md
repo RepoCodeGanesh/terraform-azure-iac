@@ -1,5 +1,11 @@
 # Azure AI Landing Zone
 
+[![GitHub Stars](https://img.shields.io/github/stars/RepoCodeGanesh/terraform-azure-iac?style=social)](https://github.com/RepoCodeGanesh/terraform-azure-iac)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Terraform](https://img.shields.io/badge/IaC-Terraform-purple.svg)](https://www.terraform.io/)
+[![Azure CAF](https://img.shields.io/badge/Architecture-Azure%20CAF-0078D4.svg)](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/)
+[![Live App](https://img.shields.io/badge/Live-mytaxbot.site-brightgreen.svg)](https://www.mytaxbot.site)
+
 Terraform and Azure DevOps infrastructure for a low-cost Azure AI landing zone.
 
 This repo builds a CAF-style multi-subscription platform for Azure AI workloads, with separate Terraform state per layer, Workload Identity Federation in Azure DevOps, hub-spoke networking, shared telemetry/APIM services, and an active `workloads/tax-advisor` deployment.
@@ -43,3 +49,9 @@ terraform validate
 ```
 
 Use the pipeline for backend-enabled plan/apply.
+
+---
+
+## ⭐ Support & Star
+
+If you find this Enterprise Azure AI Landing Zone repository useful, please give it a **⭐ Star** on GitHub! It helps increase visibility and supports open-source enterprise IaC templates.
