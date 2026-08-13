@@ -541,6 +541,11 @@ resource "azurerm_static_web_app" "frontend" {
   sku_tier            = "Free"
   sku_size            = "Free"
 
+  app_settings = {
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = module.function_app.app_insights_instrumentation_key
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.function_app.app_insights_connection_string
+  }
+
   lifecycle {
     ignore_changes = [
       repository_url,
@@ -650,4 +655,126 @@ resource "azurerm_portal_dashboard" "taxb_dashboard" {
 
   tags = local.tags
 }
+
+# ─── MONITORING & OBSERVABILITY: Diagnostic Settings ──────────────────────────
+
+resource "azurerm_monitor_diagnostic_setting" "openai_diagnostics" {
+  name                       = "ds-oai-taxb-p-eus-01"
+  target_resource_id         = module.openai.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+
+  enabled_log {
+    category = "Audit"
+  }
+
+  enabled_log {
+    category = "RequestResponse"
+  }
+
+  enabled_log {
+    category = "Trace"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "search_diagnostics" {
+  name                       = "ds-srch-taxb-p-cin-01"
+  target_resource_id         = module.search_service.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+
+  enabled_log {
+    category = "OperationLogs"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "cosmos_diagnostics" {
+  name                       = "ds-cosmos-taxb-p-cin-01"
+  target_resource_id         = module.cosmos_db.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+
+  enabled_log {
+    category = "DataPlaneRequests"
+  }
+
+  enabled_log {
+    category = "QueryRuntimeStatistics"
+  }
+
+  enabled_log {
+    category = "PartitionKeyRUConsumption"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+}
+
+# ─── MONITORING & OBSERVABILITY: Metric Alerts ────────────────────────────────
+
+resource "azurerm_monitor_action_group" "taxb_ops" {
+  name                = "ag-taxb-ops-p-cin-01"
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  short_name          = "TaxbOps"
+
+  tags = local.tags
+}
+
+resource "azurerm_monitor_metric_alert" "function_high_errors" {
+  name                = "alert-func-high-5xx-errors"
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  scopes              = [module.function_app.id]
+  description         = "Triggers when Function App experiences > 5 server errors (HTTP 5xx) in 5 minutes."
+  severity            = 1
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+
+  criteria {
+    metric_namespace = "Microsoft.Web/sites"
+    metric_name      = "Http5xx"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 5
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.taxb_ops.id
+  }
+
+  tags = local.tags
+}
+
+resource "azurerm_monitor_metric_alert" "openai_throttling" {
+  name                = "alert-openai-throttled-429"
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  scopes              = [module.openai.id]
+  description         = "Triggers when Azure OpenAI rate limit (HTTP 429) throttling is encountered."
+  severity            = 2
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+
+  criteria {
+    metric_namespace = "Microsoft.CognitiveServices/accounts"
+    metric_name      = "BlockedCalls"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 1
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.taxb_ops.id
+  }
+
+  tags = local.tags
+}
+
 

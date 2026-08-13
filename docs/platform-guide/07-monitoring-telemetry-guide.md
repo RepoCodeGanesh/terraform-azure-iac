@@ -1,6 +1,6 @@
-# Platform Guide 07 — Monitoring, Telemetry & KQL Playbook
+# Platform Guide 07 — Enterprise Monitoring, Telemetry & KQL Playbook
 
-[← Back to Master Index](README.md)
+[← Back to Master Index](../README.md) | [View Platform Guide Index](README.md)
 
 ---
 
@@ -33,9 +33,12 @@ flowchart TD
 
 | Component Name | Resource Type | Subscription | Resource Group | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| `law-ht-ss-p-cin-01` | Log Analytics Workspace | `Shared-services` | `rg-ht-ss-p-cin-01` | Central telemetry & log aggregation store (`PerGB2018`, 30-day retention) |
-| `appi-ht-taxb-p-cin-01` | Application Insights | `Apps-prod` | `rg-ht-taxb-p-cin-01` | Workspace-based APM for Python Function App traces & exception logs |
-| `apim-ht-ss-p-cin-01` | API Management | `Shared-services` | `rg-ht-ss-p-cin-01` | Logs HTTP request status codes (200, 429, 500) and IP rate limiting |
+| **`law-ht-ss-p-cin-01`** | Log Analytics Workspace | `Shared-services` | `rg-ht-ss-p-cin-01` | Central telemetry & log aggregation store (`PerGB2018`, 30-day retention) |
+| **`appi-ht-taxb-p-cin-01`** | Application Insights | `Apps-prod` | `rg-ht-taxb-p-cin-01` | Workspace-based APM for Python Function App traces & exception logs |
+| **`apim-ht-ss-p-cin-01`** | API Management | `Shared-services` | `rg-ht-ss-p-cin-01` | Logs HTTP request status codes (200, 429, 500) and IP rate limiting |
+| **`ds-oai-taxb-p-eus-01`** | Diagnostic Setting | `Apps-prod` | `rg-ht-taxb-p-cin-01` | Streams Azure OpenAI audit, request/response, and trace logs to LAW |
+| **`ds-srch-taxb-p-cin-01`** | Diagnostic Setting | `Apps-prod` | `rg-ht-taxb-p-cin-01` | Streams AI Search query operation logs and latency metrics |
+| **`ds-cosmos-taxb-p-cin-01`** | Diagnostic Setting | `Apps-prod` | `rg-ht-taxb-p-cin-01` | Streams Cosmos DB DataPlane requests and RU consumption |
 
 ---
 
@@ -88,12 +91,24 @@ AzureDiagnostics
     by Resource, Model_s = tostring(properties_s.model)
 ```
 
+### 5. Cosmos DB Request Unit (RU) Consumption & Latency
+Tracks RU consumption per query operation:
+
+```kql
+AzureDiagnostics
+| where ResourceType == "DOCUMENTDBS"
+| summarize 
+    TotalRU = sum(todouble(requestCharge_s)),
+    AvgDurationMs = avg(todouble(duration_s)),
+    Requests = count()
+    by CollectionName_s, OperationName
+```
+
 ---
 
-## 🚨 Azure Monitor Metric Alert Threshold Rules
+## 🚨 Automated Azure Monitor Metric Alert Threshold Rules
 
-| Alert Rule Name | Target Scope | Metric Monitored | Threshold Condition | Notification Channel |
+| Alert Rule Name | Target Scope | Metric Monitored | Threshold Condition | Action Group |
 | :--- | :--- | :--- | :--- | :--- |
-| **Function App HTTP 5xx Alert** | `func-ht-taxb-p-cin-01` | `Http5xx` | Count > 0 over 5-minute window | Email / PagerDuty / Webhook |
-| **APIM Rate Limit Spikes (429)** | `apim-ht-ss-p-cin-01` | `Gateway Requests` (429 filtered) | Count > 5 over 5-minute window | Email / Slack Notification |
-| **Cosmos DB Serverless Throttling** | `cosmos-ht-taxb-p-cin-01` | `Total Requests` (412/429 filtered) | Count > 0 over 5-minute window | Email Notification |
+| **`alert-func-high-5xx-errors`** | `func-ht-taxb-p-cin-01` | `Http5xx` | Count > 5 over 5-minute window | `ag-taxb-ops-p-cin-01` |
+| **`alert-openai-throttled-429`** | `oai-ht-taxb-p-eus-01` | `BlockedCalls` | Count > 1 over 5-minute window | `ag-taxb-ops-p-cin-01` |
