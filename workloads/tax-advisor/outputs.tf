@@ -41,6 +41,7 @@ output "function_app_default_hostname" {
 output "function_app_system_identity_principal_id" {
   description = "System-Assigned Managed Identity Principal ID (used for RBAC assignments)."
   value       = module.function_app.principal_id
+  sensitive   = true
 }
 
 output "app_insights_instrumentation_key" {

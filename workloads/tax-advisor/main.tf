@@ -575,9 +575,8 @@ resource "azurerm_monitor_diagnostic_setting" "openai_diagnostics" {
     category = "Trace"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
@@ -590,9 +589,8 @@ resource "azurerm_monitor_diagnostic_setting" "search_diagnostics" {
     category = "OperationLogs"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
@@ -613,9 +611,8 @@ resource "azurerm_monitor_diagnostic_setting" "cosmos_diagnostics" {
     category = "PartitionKeyRUConsumption"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
