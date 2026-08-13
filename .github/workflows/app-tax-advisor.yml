@@ -10,7 +10,6 @@ name: App - TaxBot India CI/CD
 on:
   push:
     branches: [main, develop, 'feature/**', 'release/**', 'hotfix/**']
-    tags: ['release/*', 'v*']
     paths:
       - 'app/tax-advisor/**'
       - '.github/workflows/app-tax-advisor.yml'
