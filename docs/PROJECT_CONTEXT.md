@@ -47,6 +47,7 @@ The workload provisions TaxBot India infrastructure:
 - Resource group `rg-ht-taxb-p-cin-01` and spoke VNet `vnet-ht-taxb-p-cin-01` in `Apps-prod`.
 - Hub-spoke peering to `vnet-ht-hub-p-cin-01` in `Hub-prod`.
 - Azure OpenAI account `oai-ht-taxb-p-eus-01` with `gpt-5.4-nano` deployment.
+- Azure AI Content Safety `cs-ht-taxb-p-cin-01` (`F0` Free SKU) for prompt injection defense & PII sanitization.
 - Azure AI Search `srch-ht-taxb-p-cin-01` for statutory RAG text retrieval.
 - Cosmos DB `cosmos-ht-taxb-p-cin-01` for conversation session state.
 - Python Function App `func-ht-taxb-p-cin-01` with system-assigned managed identity.
@@ -97,6 +98,7 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 | **Log Analytics** | Application Insights & Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
 | **Storage Account** | Terraform `.tfstate` & Functions | `Standard_LRS` | Pennies / month |
 | **Cosmos DB** | Session Chat History Storage | Manual `400 RU/s` (Free Tier) | **$0 / month** |
+| **Azure AI Content Safety** | Jailbreak Shield & PII Sanitizer | `F0` (5,000 calls/mo Free) | **$0 / month** |
 | **Azure OpenAI** | LLM Inferences & Embeddings | Pay-As-You-Go (`S0` + `gpt-5.4-nano`) | Cap per token |
 
 ---
