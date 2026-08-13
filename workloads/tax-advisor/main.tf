@@ -230,6 +230,18 @@ module "search_service" {
   tags = local.tags
 }
 
+# ─── Azure AI Content Safety (Free F0 tier — Jailbreak Shield & Prompt Filtering) ──
+module "content_safety" {
+  source = "../../modules/content_safety"
+
+  name                = "cs-ht-taxb-p-cin-01"
+  location            = azurerm_resource_group.tax_advisor.location
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  sku_name            = "F0"
+
+  tags = local.tags
+}
+
 # ─── App Service Plan (Y1 Consumption — $0 idle) ──────────────────────────────
 module "taxb_service_plan" {
   source = "../../modules/service_plan"
@@ -258,16 +270,17 @@ module "function_app" {
   identity_type              = "SystemAssigned"
 
   app_settings = {
-    "AZURE_OPENAI_ENDPOINT"   = module.openai.endpoint
-    "AZURE_OPENAI_MODEL"      = var.openai_model_name
-    "COSMOS_DB_ENDPOINT"      = module.cosmos_db.endpoint
-    "COSMOS_DB_DATABASE"      = module.cosmos_db.database_name
-    "COSMOS_DB_CONTAINER"     = module.cosmos_db.container_name
-    "AZURE_SEARCH_ENDPOINT"   = module.search_service.endpoint
-    "AZURE_SEARCH_INDEX"      = "tax-docs"
-    "RAG_DOCUMENTS_CONTAINER" = "documents"
-    "APP_NAME"                = "TaxBot India"
-    "APP_VERSION"             = "1.0.0"
+    "AZURE_OPENAI_ENDPOINT"         = module.openai.endpoint
+    "AZURE_OPENAI_MODEL"            = var.openai_model_name
+    "COSMOS_DB_ENDPOINT"            = module.cosmos_db.endpoint
+    "COSMOS_DB_DATABASE"            = module.cosmos_db.database_name
+    "COSMOS_DB_CONTAINER"           = module.cosmos_db.container_name
+    "AZURE_SEARCH_ENDPOINT"         = module.search_service.endpoint
+    "AZURE_SEARCH_INDEX"            = "tax-docs"
+    "AZURE_CONTENT_SAFETY_ENDPOINT" = module.content_safety.endpoint
+    "RAG_DOCUMENTS_CONTAINER"       = "documents"
+    "APP_NAME"                      = "TaxBot India"
+    "APP_VERSION"                   = "1.0.0"
   }
 
   tags = local.tags
@@ -328,6 +341,14 @@ resource "azurerm_cosmosdb_sql_role_assignment" "func_cosmos_contributor" {
   principal_id        = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
   scope               = module.cosmos_db.id
   depends_on          = [time_sleep.wait_for_func_identity, module.cosmos_db]
+}
+
+resource "azurerm_role_assignment" "func_content_safety_user" {
+  count                = var.enable_role_assignments ? 1 : 0
+  scope                = module.content_safety.id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
+  depends_on           = [time_sleep.wait_for_func_identity, module.content_safety]
 }
 
 # ─── APIM Backends ─────────────────────────────────────────────────────────────
@@ -651,5 +672,59 @@ resource "azurerm_monitor_metric_alert" "openai_throttling" {
 
   tags = local.tags
 }
+
+# ─── Content Safety Diagnostics & Security Alerts ─────────────────────────────
+resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
+  name                       = "ds-cs-taxb-p-cin-01"
+  target_resource_id         = module.content_safety.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+
+  enabled_log {
+    category = "Audit"
+  }
+
+  enabled_log {
+    category = "RequestResponse"
+  }
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
+
+  depends_on = [
+    module.content_safety,
+    data.azurerm_log_analytics_workspace.shared
+  ]
+}
+
+resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
+  name                = "alert-cs-jailbreak-detected"
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  scopes              = [module.content_safety.id]
+  description         = "Triggers when Azure AI Content Safety blocks >5 prompt injection/jailbreak attempts in 15 mins."
+  severity            = 1
+  frequency           = "PT5M"
+  window_size         = "PT15M"
+
+  criteria {
+    metric_namespace = "Microsoft.CognitiveServices/accounts"
+    metric_name      = "BlockedCalls"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 5
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.taxb_ops.id
+  }
+
+  tags = local.tags
+
+  depends_on = [
+    module.content_safety,
+    azurerm_monitor_action_group.taxb_ops
+  ]
+}
+
 
 
