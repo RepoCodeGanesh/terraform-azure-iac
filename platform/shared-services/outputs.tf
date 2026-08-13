@@ -1,3 +1,8 @@
+# ==============================================================================
+# Platform: Shared Services Outputs
+# Formatted for immediate usability in downstream workload roots & pipelines
+# ==============================================================================
+
 output "resource_group_name" {
   description = "Name of the shared services resource group."
   value       = azurerm_resource_group.shared_services.name
@@ -23,6 +28,11 @@ output "key_vault_id" {
   value       = module.shared_key_vault.id
 }
 
+output "key_vault_uri" {
+  description = "Vault URI of the shared Key Vault."
+  value       = module.shared_key_vault.vault_uri
+}
+
 output "log_analytics_workspace_id" {
   description = "Resource ID of the shared Log Analytics workspace."
   value       = module.shared_log_analytics.id
@@ -30,7 +40,7 @@ output "log_analytics_workspace_id" {
 
 output "apim_gateway_url" {
   description = "Gateway URL for the API Management instance."
-  value       = module.shared_api_management.gateway_url
+  value       = startswith(module.shared_api_management.gateway_url, "https://") ? module.shared_api_management.gateway_url : "https://${module.shared_api_management.gateway_url}"
 }
 
 output "service_plan_name" {

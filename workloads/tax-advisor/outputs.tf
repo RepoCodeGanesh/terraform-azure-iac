@@ -1,3 +1,8 @@
+# ==============================================================================
+# Workload: TaxBot India Outputs
+# Formatted for immediate usability in CI/CD pipelines, CLI, & developer tooling
+# ==============================================================================
+
 output "resource_group_name" {
   description = "Name of the TaxBot India workload resource group."
   value       = azurerm_resource_group.tax_advisor.name
@@ -30,13 +35,12 @@ output "function_app_name" {
 
 output "function_app_default_hostname" {
   description = "Default hostname of the Function App."
-  value       = module.function_app.default_hostname
+  value       = "https://${module.function_app.default_hostname}"
 }
 
 output "function_app_system_identity_principal_id" {
-  description = "System-Assigned Managed Identity Principal ID."
+  description = "System-Assigned Managed Identity Principal ID (used for RBAC assignments)."
   value       = module.function_app.principal_id
-  sensitive   = true
 }
 
 output "app_insights_instrumentation_key" {
@@ -71,8 +75,13 @@ output "static_web_app_name" {
 }
 
 output "static_web_app_url" {
-  description = "Default hostname for the Static Web App."
-  value       = azurerm_static_web_app.frontend.default_host_name
+  description = "Default clickable URL for the Static Web App."
+  value       = "https://${azurerm_static_web_app.frontend.default_host_name}"
+}
+
+output "custom_domain_url" {
+  description = "Live Production Custom Domain URL for TaxBot India."
+  value       = "https://www.mytaxbot.site"
 }
 
 output "static_web_app_api_key" {
@@ -83,5 +92,5 @@ output "static_web_app_api_key" {
 
 output "apim_base_url" {
   description = "APIM gateway base URL for TaxBot India API."
-  value       = "${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
+  value       = startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/tax-advisor" : "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
 }
