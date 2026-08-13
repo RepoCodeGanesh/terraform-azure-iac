@@ -558,28 +558,6 @@ resource "azurerm_static_web_app" "frontend" {
 
 # ─── MONITORING & OBSERVABILITY: Diagnostic Settings ──────────────────────────
 
-resource "azurerm_monitor_diagnostic_setting" "openai_diagnostics" {
-  name                       = "ds-oai-taxb-p-eus-01"
-  target_resource_id         = module.openai.id
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
-
-  enabled_log {
-    category = "Audit"
-  }
-
-  enabled_log {
-    category = "RequestResponse"
-  }
-
-  enabled_log {
-    category = "Trace"
-  }
-
-  enabled_metric {
-    category = "AllMetrics"
-  }
-}
-
 resource "azurerm_monitor_diagnostic_setting" "search_diagnostics" {
   name                       = "ds-srch-taxb-p-cin-01"
   target_resource_id         = module.search_service.id

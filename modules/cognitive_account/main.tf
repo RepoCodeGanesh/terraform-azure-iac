@@ -49,6 +49,10 @@ resource "azurerm_monitor_diagnostic_setting" "this" {
     category = "RequestResponse"
   }
 
+  enabled_log {
+    category = "Trace"
+  }
+
   enabled_metric {
     category = "AllMetrics"
   }
