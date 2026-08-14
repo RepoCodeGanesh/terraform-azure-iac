@@ -28,6 +28,18 @@ variable "openai_location_short" {
   default     = "eus"
 }
 
+variable "content_safety_location" {
+  description = "Azure region for Azure AI Content Safety account (must be a supported region; Asia Pacific: southeastasia)."
+  type        = string
+  default     = "southeastasia"
+}
+
+variable "content_safety_location_short" {
+  description = "Azure region short name for Azure AI Content Safety account."
+  type        = string
+  default     = "sea"
+}
+
 variable "swa_location" {
   description = "Azure region for Static Web App control plane."
   type        = string
