@@ -15,7 +15,8 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 5** | Dual CI/CD Pipelines & WIF OIDC Authentication | `pipelines/` & `.github/` | ✅ Completed |
 | **Phase 6** | DevSecOps SAST/SCA & Release Asset Distribution | `.github/workflows/` | ✅ Completed |
 | **Phase 7** | Platform Visual Documentation & Incident Playbooks | `docs/platform-guide/` | ✅ Completed |
-| **Phase 8** | *[Active]* FinOps Cost Alerts & RAG Vector Tuning | AI Workloads & Governance | 🔄 Planned |
+| **Phase 8** | *[Active]* FinOps Cost Alerts & AI Content Safety Guardrails | AI Workloads & Governance | 🔄 Planned |
+| **Phase 9** | Banking Regulatory Compliance AI Copilot on AKS (KAITO, Qdrant, KEDA) | `workloads/bank-compliance-ai-aks` | 🔄 Planned |
 
 ---
 
@@ -74,7 +75,13 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 
 ---
 
-## 🚀 Phase 8: Upcoming Enhancements (Backlog)
-* [ ] Implement FinOps automated cost anomaly alerts in Azure Monitor.
-* [ ] Enhance Azure AI Search indexer with hybrid vector search and semantic ranker tuning.
-* [ ] Add automated k6 / Locust load testing pipelines for APIM rate-limiting verification.
+---
+
+## 🏦 Phase 9: Banking Regulatory Compliance AI Copilot on AKS (`workloads/bank-compliance-ai-aks`)
+* [ ] Provision AKS Free Tier Cluster (`aks-ht-bankc-p-cin-01`, `sku_tier = "Free"`) & Azure Container Registry (`acrhtbankcpcin01`) in `workloads/bank-compliance-ai-aks`.
+* [ ] Initialize separate application repository `bank-compliance-ai-app` (Python FastAPI + React SPA).
+* [ ] Deploy Qdrant Vector Database on AKS with Persistent Volume Claims (`PVC`) for RBI Master Direction HNSW indexing.
+* [ ] Configure KAITO operator (`kind: Workspace`) for open-source model serving (`Phi-3-mini` / `vLLM`).
+* [ ] Implement KEDA (`ScaledObject`) queue-depth autoscaling for AI worker pods.
+* [ ] Architecture & Implementation Plan: [docs/BANKING_COMPLIANCE_AI_PLAN.md](docs/BANKING_COMPLIANCE_AI_PLAN.md)
+

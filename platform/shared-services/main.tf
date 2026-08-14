@@ -135,6 +135,25 @@ module "shared_api_management" {
   tags                 = local.tags
 }
 
+resource "azurerm_monitor_diagnostic_setting" "apim_diagnostics" {
+  name                       = "ds-${module.shared_apim_name.name}"
+  target_resource_id         = module.shared_api_management.id
+  log_analytics_workspace_id = module.shared_log_analytics.id
+
+  enabled_log {
+    category = "GatewayLogs"
+  }
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
+
+  depends_on = [
+    module.shared_api_management,
+    module.shared_log_analytics
+  ]
+}
+
 module "shared_service_plan" {
   source = "../../modules/service_plan"
 

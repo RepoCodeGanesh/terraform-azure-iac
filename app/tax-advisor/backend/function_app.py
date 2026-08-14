@@ -10,6 +10,14 @@ from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizedQuery
 from openai import AzureOpenAI
 
+# ── Azure Monitor OpenTelemetry Instrumentation (Safe Initialization) ─────────
+try:
+    from azure.monitor.opentelemetry import configure_azure_monitor
+    if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        configure_azure_monitor()
+except Exception as _telemetry_err:
+    logging.getLogger(__name__).debug("OpenTelemetry initialization skipped: %s", _telemetry_err)
+
 try:
     from azure.ai.contentsafety import ContentSafetyClient
     from azure.ai.contentsafety.models import AnalyzeTextOptions

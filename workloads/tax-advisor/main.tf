@@ -131,6 +131,16 @@ module "taxb_stapp_name" {
   instance       = var.instance
 }
 
+module "taxb_cs_name" {
+  source         = "../../modules/naming"
+  resource_type  = "cs"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.content_safety_location_short
+  instance       = var.instance
+}
+
 # ─── Resource Group ────────────────────────────────────────────────────────────
 resource "azurerm_resource_group" "tax_advisor" {
   name     = module.taxb_rg_name.name
@@ -234,8 +244,8 @@ module "search_service" {
 module "content_safety" {
   source = "../../modules/content_safety"
 
-  name                = "cs-ht-taxb-p-cin-01"
-  location            = azurerm_resource_group.tax_advisor.location
+  name                = module.taxb_cs_name.name
+  location            = var.content_safety_location
   resource_group_name = azurerm_resource_group.tax_advisor.name
   sku_name            = "F0"
 
@@ -633,6 +643,7 @@ resource "azurerm_monitor_metric_alert" "function_high_errors" {
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
+  enabled             = false # Disabled to maintain $0.00 idle cost; enable as needed in production
 
   criteria {
     metric_namespace = "Microsoft.Web/sites"
@@ -657,6 +668,7 @@ resource "azurerm_monitor_metric_alert" "openai_throttling" {
   severity            = 2
   frequency           = "PT1M"
   window_size         = "PT5M"
+  enabled             = true # Active primary quota & rate limit guardian (~$0.10/month)
 
   criteria {
     metric_namespace = "Microsoft.CognitiveServices/accounts"
@@ -705,6 +717,7 @@ resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
   severity            = 1
   frequency           = "PT5M"
   window_size         = "PT15M"
+  enabled             = false # Disabled to maintain $0.00 idle cost; enable as needed in production
 
   criteria {
     metric_namespace = "Microsoft.CognitiveServices/accounts"
