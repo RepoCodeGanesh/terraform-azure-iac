@@ -39,25 +39,31 @@ Core outcomes:
 
 ---
 
-## 🚀 Active Workload Target: TaxBot India (`tax-advisor`)
+## 🚀 Active Workload Portfolio
 
-Deploy and operate `workloads/tax-advisor` and `app/tax-advisor` through Azure DevOps using the `app-prod` service connection.
+### Workload 1: TaxBot India (`workloads/tax-advisor` & `app/tax-advisor`)
+* **Production Domain:** [https://www.mytaxbot.site](https://www.mytaxbot.site)
+* **Architecture:** Serverless PaaS (Python Function App `func-ht-taxb-p-cin-01`, Azure OpenAI `gpt-5.4-nano`, Azure AI Search, Cosmos DB).
+* **Resource Group:** `rg-ht-taxb-p-cin-01` (`Apps-prod`) with Spoke VNet `10.41.0.0/16`.
+* **CI/CD:** `pipelines/azure-cicd-tax-advisor.yml` & `.github/workflows/workload-tax-advisor.yml`.
 
-The workload provisions TaxBot India infrastructure:
-- Resource group `rg-ht-taxb-p-cin-01` and spoke VNet `vnet-ht-taxb-p-cin-01` in `Apps-prod`.
-- Hub-spoke peering to `vnet-ht-hub-p-cin-01` in `Hub-prod`.
-- Azure OpenAI account `oai-ht-taxb-p-eus-01` with `gpt-5.4-nano` deployment.
-- Azure AI Content Safety `cs-ht-taxb-p-sea-01` (`F0` Free SKU in `southeastasia`) for prompt injection defense & PII sanitization.
-- Azure AI Search `srch-ht-taxb-p-cin-01` for statutory RAG text retrieval.
-- Cosmos DB `cosmos-ht-taxb-p-cin-01` for conversation session state.
-- Python Function App `func-ht-taxb-p-cin-01` with system-assigned managed identity.
-- Static Web App `stapp-ht-taxb-p-cin-01` bound to custom domain **www.mytaxbot.site**.
-- APIM API `apim-ht-ss-p-cin-01` with rate limiting by IP (20 calls/min) and CORS protection.
+### Workload 2: BankCompliance AI (`workloads/bank-compliance-ai-aks` & `bank-compliance-ai-app`)
+* **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
+* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway, Qdrant Vector DB on 4GB CSI Managed Disk, KEDA Scale-to-Zero, DPDP PII Auto-Masking).
+* **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
+* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml`.
+
+---
+
+## 📚 Central Confluence Space
+* **HappyTechies Cloud & AI Platform:** [https://happytechies.atlassian.net/wiki/spaces/HT/overview](https://happytechies.atlassian.net/wiki/spaces/HT/overview)
 
 Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
 - `platform/shared-services`: complete.
+- `workloads/tax-advisor`: complete.
+- `workloads/bank-compliance-ai-aks`: complete.
 - `workloads/tax-advisor`: complete (IaC deployed & active).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `pipelines/`: active and verified.
