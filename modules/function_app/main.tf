@@ -27,11 +27,11 @@ module "function_app" {
   source  = "Azure/avm-res-web-site/azurerm"
   version = "~> 0.22"
 
-  name                     = var.name
-  location                 = var.location
-  parent_id                = var.resource_group_id
-  service_plan_resource_id = replace(var.service_plan_id, "serverFarms", "serverfarms")
-  kind                     = "functionapp"
+  name                          = var.name
+  location                      = var.location
+  parent_id                     = var.resource_group_id
+  service_plan_resource_id      = replace(var.service_plan_id, "serverFarms", "serverfarms")
+  kind                          = "functionapp"
   public_network_access_enabled = var.public_network_access_enabled
 
   # Application Insights – passed from the inline resource above

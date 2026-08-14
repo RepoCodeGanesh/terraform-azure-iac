@@ -1,0 +1,308 @@
+data "azurerm_client_config" "current" {}
+
+# Lookups for Hub VNet (for peering)
+data "azurerm_resource_group" "hub" {
+  provider = azurerm.hub
+  name     = var.hub_resource_group_name
+}
+
+data "azurerm_virtual_network" "hub" {
+  provider            = azurerm.hub
+  name                = var.hub_vnet_name
+  resource_group_name = data.azurerm_resource_group.hub.name
+}
+
+# Lookups for Shared Services Resources (LAW, APIM)
+data "azurerm_resource_group" "shared" {
+  provider = azurerm.shared
+  name     = var.shared_resource_group_name
+}
+
+data "azurerm_log_analytics_workspace" "shared" {
+  provider            = azurerm.shared
+  name                = var.shared_law_name
+  resource_group_name = data.azurerm_resource_group.shared.name
+}
+
+data "azurerm_api_management" "shared" {
+  provider            = azurerm.shared
+  name                = var.shared_apim_name
+  resource_group_name = data.azurerm_resource_group.shared.name
+}
+
+# ─── Naming Modules ───────────────────────────────────────────────────────────
+
+module "bankc_rg_name" {
+  source         = "../../modules/naming"
+  resource_type  = "rg"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
+module "bankc_vnet_name" {
+  source         = "../../modules/naming"
+  resource_type  = "vnet"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
+module "bankc_aks_name" {
+  source         = "../../modules/naming"
+  resource_type  = "aks"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
+module "bankc_cs_name" {
+  source         = "../../modules/naming"
+  resource_type  = "cs"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.content_safety_location_short
+  instance       = var.instance
+}
+
+module "bankc_uami_name" {
+  source         = "../../modules/naming"
+  resource_type  = "uami"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
+module "bankc_stapp_name" {
+  source         = "../../modules/naming"
+  resource_type  = "stapp"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
+# ─── Resource Group ───────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "bank_compliance" {
+  name     = module.bankc_rg_name.name
+  location = var.location
+  tags     = local.tags
+}
+
+# ─── Spoke Virtual Network & Subnets ──────────────────────────────────────────
+
+resource "azurerm_virtual_network" "bank_compliance" {
+  name                = module.bankc_vnet_name.name
+  location            = azurerm_resource_group.bank_compliance.location
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  address_space       = var.vnet_address_space
+  tags                = local.tags
+}
+
+resource "azurerm_subnet" "aks" {
+  name                 = "snet-aks-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  resource_group_name  = azurerm_resource_group.bank_compliance.name
+  virtual_network_name = azurerm_virtual_network.bank_compliance.name
+  address_prefixes     = [var.aks_subnet_prefix]
+}
+
+resource "azurerm_subnet" "private_endpoints" {
+  name                 = "snet-pe-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  resource_group_name  = azurerm_resource_group.bank_compliance.name
+  virtual_network_name = azurerm_virtual_network.bank_compliance.name
+  address_prefixes     = [var.private_endpoints_subnet_prefix]
+}
+
+# ─── Bi-directional VNet Peering to Hub ───────────────────────────────────────
+
+module "spoke_to_hub_peering" {
+  source = "../../modules/vnet_peering"
+
+  providers = {
+    azurerm.vnet_1 = azurerm
+    azurerm.vnet_2 = azurerm.hub
+  }
+
+  vnet_1_name = azurerm_virtual_network.bank_compliance.name
+  vnet_1_rg   = azurerm_resource_group.bank_compliance.name
+  vnet_1_id   = azurerm_virtual_network.bank_compliance.id
+
+  vnet_2_name = data.azurerm_virtual_network.hub.name
+  vnet_2_rg   = data.azurerm_resource_group.hub.name
+  vnet_2_id   = data.azurerm_virtual_network.hub.id
+
+  depends_on = [
+    azurerm_virtual_network.bank_compliance
+  ]
+}
+
+# ─── User-Assigned Managed Identities ─────────────────────────────────────────
+
+# Identity used by the AKS Control Plane to manage Spoke VNet networking
+resource "azurerm_user_assigned_identity" "aks_control_plane" {
+  name                = "uami-aks-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  location            = azurerm_resource_group.bank_compliance.location
+  tags                = local.tags
+}
+
+resource "azurerm_role_assignment" "aks_vnet_contributor" {
+  count                = var.enable_role_assignments ? 1 : 0
+  scope                = azurerm_virtual_network.bank_compliance.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_user_assigned_identity.aks_control_plane.principal_id
+}
+
+# Identity used by the BankCompliance application pods via Workload Identity (OIDC)
+resource "azurerm_user_assigned_identity" "bankc_app" {
+  name                = module.bankc_uami_name.name
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  location            = azurerm_resource_group.bank_compliance.location
+  tags                = local.tags
+}
+
+# ─── Azure Kubernetes Service (AKS Free Tier) ─────────────────────────────────
+
+resource "azurerm_kubernetes_cluster" "bank_compliance" {
+  name                = module.bankc_aks_name.name
+  location            = azurerm_resource_group.bank_compliance.location
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  dns_prefix          = "aks-${var.project}-${var.workload}-${var.environment}-${var.location_short}"
+  sku_tier            = var.aks_sku_tier
+
+  oidc_issuer_enabled       = true
+  workload_identity_enabled = true
+  azure_policy_enabled      = var.enable_azure_policy
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.aks_control_plane.id]
+  }
+
+  default_node_pool {
+    name            = "system"
+    node_count      = var.aks_node_count
+    vm_size         = var.aks_vm_size
+    os_disk_type    = "Ephemeral"
+    os_disk_size_gb = var.aks_os_disk_size_gb
+    vnet_subnet_id  = azurerm_subnet.aks.id
+    type            = "VirtualMachineScaleSets"
+    tags            = local.tags
+  }
+
+  network_profile {
+    network_plugin      = "azure"
+    network_plugin_mode = "overlay"
+    pod_cidr            = "192.168.0.0/16"
+    service_cidr        = "172.16.0.0/16"
+    dns_service_ip      = "172.16.0.10"
+  }
+
+  oms_agent {
+    log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+  }
+
+  tags = local.tags
+
+  depends_on = [
+    module.spoke_to_hub_peering,
+    azurerm_role_assignment.aks_vnet_contributor,
+    data.azurerm_log_analytics_workspace.shared
+  ]
+}
+
+# ─── Workload Identity Federated Credential ───────────────────────────────────
+
+resource "azurerm_federated_identity_credential" "bankc_app" {
+  name                = "fic-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = azurerm_kubernetes_cluster.bank_compliance.oidc_issuer_url
+  parent_id           = azurerm_user_assigned_identity.bankc_app.id
+  subject             = "system:serviceaccount:bank-compliance:bankc-sa"
+
+  depends_on = [
+    azurerm_kubernetes_cluster.bank_compliance,
+    azurerm_user_assigned_identity.bankc_app
+  ]
+}
+
+# ─── Azure AI Content Safety (F0 Free Tier) ───────────────────────────────────
+
+module "content_safety" {
+  source = "../../modules/content_safety"
+
+  name                = module.bankc_cs_name.name
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  location            = var.content_safety_location
+  sku_name            = "F0"
+  tags                = local.tags
+}
+
+resource "azurerm_role_assignment" "bankc_cs_user" {
+  count                = var.enable_role_assignments ? 1 : 0
+  scope                = module.content_safety.id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = azurerm_user_assigned_identity.bankc_app.principal_id
+
+  depends_on = [
+    module.content_safety,
+    azurerm_user_assigned_identity.bankc_app
+  ]
+}
+
+resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
+  name                       = "ds-${module.bankc_cs_name.name}"
+  target_resource_id         = module.content_safety.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+
+  enabled_log {
+    category = "Audit"
+  }
+
+  enabled_log {
+    category = "RequestResponse"
+  }
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
+
+  depends_on = [
+    module.content_safety,
+    data.azurerm_log_analytics_workspace.shared
+  ]
+}
+
+# ─── Azure Static Web App (Frontend on bank.mytaxbot.site) ────────────────────
+
+resource "azurerm_static_web_app" "bankc_frontend" {
+  name                = module.bankc_stapp_name.name
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  location            = var.swa_location
+  sku_tier            = "Free"
+  sku_size            = "Free"
+  tags                = local.tags
+}
+
+resource "azurerm_static_web_app_custom_domain" "bankc" {
+  count             = var.enable_custom_domain ? 1 : 0
+  static_web_app_id = azurerm_static_web_app.bankc_frontend.id
+  domain_name       = var.custom_domain_name
+  validation_type   = "cname-delegation"
+
+  depends_on = [
+    azurerm_static_web_app.bankc_frontend
+  ]
+}
