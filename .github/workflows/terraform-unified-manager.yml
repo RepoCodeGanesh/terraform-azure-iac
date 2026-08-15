@@ -101,9 +101,7 @@ jobs:
       - name: Terraform Init
         working-directory: ${{ inputs.target }}
         run: |
-          terraform init \
-            -backend-config=backend.hcl \
-            -backend-config="subscription_id=${{ secrets.BOOTSTRAP_SUBSCRIPTION_ID || '7689ad81-71ba-481b-a17c-e1b6be61bab1' }}"
+          terraform init -backend-config=backend.hcl -input=false
 
       - name: Terraform Plan
         if: inputs.action == 'plan'
