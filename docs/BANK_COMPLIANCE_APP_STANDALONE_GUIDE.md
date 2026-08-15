@@ -10,6 +10,13 @@ Following Microsoft Cloud Adoption Framework (CAF) role separation:
 * **Infrastructure Repo (`terraform-azure-iac`)**: Deploys the AKS Free Tier cluster, spoke VNet, Content Safety (`F0`), and Managed Identities in `workloads/bank-compliance-ai-aks`.
 * **Application Repo (`bank-compliance-ai-app`)**: Contains the frontend SPA, FastAPI backend, Qdrant vector client, LiteLLM gateway configuration, Helm charts, and CI/CD pipelines.
 
+### 🗂️ Local Workspace Layout (Sibling Repositories)
+```
+<workspace-root>/Repos/
+├── terraform-azure-iac/       # Infrastructure repository (Landing Zone, AKS IaC)
+└── bank-compliance-ai-app/    # Application repository (FastAPI, React, Helm, KEDA)
+```
+
 ---
 
 ## 📁 Recommended Repository Layout
