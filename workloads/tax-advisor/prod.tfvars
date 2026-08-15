@@ -20,6 +20,7 @@ shared_subscription_id          = "859a785c-bd38-402d-b595-1f44f40fb9bf"
 shared_resource_group_name      = "rg-ht-ss-p-cin-01"
 shared_law_name                 = "law-ht-ss-p-cin-01"
 shared_apim_name                = "apim-ht-ss-p-cin-01"
+shared_key_vault_name           = "kv-ht-ss-p-cin-01"
 
 # OpenAI Model configuration
 openai_model_name    = "gpt-5.4-nano"

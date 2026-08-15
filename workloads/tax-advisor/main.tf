@@ -30,6 +30,12 @@ data "azurerm_api_management" "shared" {
   resource_group_name = data.azurerm_resource_group.shared.name
 }
 
+data "azurerm_key_vault" "shared" {
+  provider            = azurerm.shared
+  name                = var.shared_key_vault_name
+  resource_group_name = data.azurerm_resource_group.shared.name
+}
+
 # ─── Naming modules ────────────────────────────────────────────────────────────
 module "taxb_rg_name" {
   source         = "../../modules/naming"
@@ -585,6 +591,20 @@ resource "azurerm_static_web_app" "frontend" {
   }
 
   tags = local.tags
+}
+
+# ─── SWA Deployment Token stored in Central Key Vault ─────────────────────────
+resource "azurerm_key_vault_secret" "taxb_swa_api_token" {
+  provider     = azurerm.shared
+  name         = "taxb-swa-deployment-token"
+  value        = azurerm_static_web_app.frontend.api_key
+  key_vault_id = data.azurerm_key_vault.shared.id
+  tags         = local.tags
+
+  depends_on = [
+    azurerm_static_web_app.frontend,
+    data.azurerm_key_vault.shared
+  ]
 }
 
 # ─── MONITORING & OBSERVABILITY: Diagnostic Settings ──────────────────────────
