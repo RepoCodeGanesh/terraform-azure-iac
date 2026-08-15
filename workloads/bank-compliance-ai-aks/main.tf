@@ -30,6 +30,12 @@ data "azurerm_api_management" "shared" {
   resource_group_name = data.azurerm_resource_group.shared.name
 }
 
+data "azurerm_key_vault" "shared" {
+  provider            = azurerm.shared
+  name                = var.shared_key_vault_name
+  resource_group_name = data.azurerm_resource_group.shared.name
+}
+
 # ─── Naming Modules ───────────────────────────────────────────────────────────
 
 module "bankc_rg_name" {
@@ -306,3 +312,19 @@ resource "azurerm_static_web_app_custom_domain" "bankc" {
     azurerm_static_web_app.bankc_frontend
   ]
 }
+
+# ─── SWA Deployment Token stored in Central Key Vault ─────────────────────────
+
+resource "azurerm_key_vault_secret" "bankc_swa_api_token" {
+  provider     = azurerm.shared
+  name         = "bankc-swa-deployment-token"
+  value        = azurerm_static_web_app.bankc_frontend.api_key
+  key_vault_id = data.azurerm_key_vault.shared.id
+  tags         = local.tags
+
+  depends_on = [
+    azurerm_static_web_app.bankc_frontend,
+    data.azurerm_key_vault.shared
+  ]
+}
+

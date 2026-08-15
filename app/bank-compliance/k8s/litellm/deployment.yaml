@@ -1,4 +1,4 @@
-﻿apiVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: litellm-proxy
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: litellm
-          image: ghcr.io/berriai/litellm:main-latest
+          image: ghcr.io/berriai/litellm:main-v1.41.0
           args: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
           volumeMounts:
             - name: litellm-config

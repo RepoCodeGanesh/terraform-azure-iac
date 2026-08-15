@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { Send, Bot, User, Shield, Sparkles } from 'lucide-react'
 import PIIBanner from './PIIBanner'
 import CitationCard from './CitationCard'
@@ -7,7 +7,7 @@ export default function ChatWindow({ selectedCircular }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Welcome to BankCompliance AI ðŸ™\n\nI am your Enterprise Banking Regulatory Copilot. Ask any compliance question regarding RBI Master Directions (KYC, IT Governance, Cloud Outsourcing, Tokenisation). All PAN, Aadhaar, and account numbers are auto-redacted in real-time.',
+      text: 'Welcome to BankCompliance AI 🙏\n\nI am your Enterprise Banking Regulatory Copilot. Ask any compliance question regarding RBI Master Directions (KYC, IT Governance, Cloud Outsourcing, Tokenisation). All PAN, Aadhaar, and account numbers are auto-redacted in real-time.',
       citations: [],
       pii: []
     }
@@ -29,7 +29,11 @@ export default function ChatWindow({ selectedCircular }) {
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userQuery, department: 'legal-compliance' })
+        body: JSON.stringify({
+          query: userQuery,
+          department: 'legal-compliance',
+          circular: selectedCircular !== 'All' ? selectedCircular : undefined
+        })
       })
       const data = await res.json()
       
@@ -42,7 +46,7 @@ export default function ChatWindow({ selectedCircular }) {
     } catch (err) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: 'âš ï¸ Unable to connect to BankCompliance AKS backend API. Please ensure the cluster and backend services are active.',
+        text: '⚠️ Unable to connect to BankCompliance AKS backend API. Please ensure the cluster and backend services are active.',
         citations: [],
         pii: []
       }])

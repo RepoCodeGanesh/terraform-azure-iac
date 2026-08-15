@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     
     # Azure Content Safety
     CONTENT_SAFETY_ENDPOINT: str = os.getenv("CONTENT_SAFETY_ENDPOINT", "")
+    
+    # CORS
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
     
     class Config:
         case_sensitive = True

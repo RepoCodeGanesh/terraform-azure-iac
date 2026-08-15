@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankc-backend
+  namespace: bank-compliance
+  labels:
+    app: bankc-backend
+    app.kubernetes.io/name: bank-compliance-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bankc-backend
+  template:
+    metadata:
+      labels:
+        app: bankc-backend
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: bankc-sa
+      containers:
+        - name: backend
+          image: ghcr.io/repocodeganesh/bank-compliance-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: bankc-backend-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankc-backend
+  namespace: bank-compliance
+  labels:
+    app: bankc-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: bankc-backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000

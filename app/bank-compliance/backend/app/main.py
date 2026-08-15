@@ -1,8 +1,9 @@
-﻿import os
+import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router as api_router
+from app.core.config import settings
 
 # Configure Azure Monitor OpenTelemetry if connection string is present
 try:
@@ -18,9 +19,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Parse allowed origins
+raw_origins = settings.ALLOWED_ORIGINS
+if raw_origins == "*":
+    origins = ["*"]
+else:
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

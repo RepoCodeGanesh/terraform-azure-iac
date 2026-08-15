@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bank-compliance
+  labels:
+    name: bank-compliance
+    app.kubernetes.io/part-of: bank-compliance-ai

@@ -1,4 +1,4 @@
-﻿name: Build & Deploy BankCompliance AI
+name: Build & Deploy BankCompliance AI
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
         with:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: "f4ffefe1-d689-4059-969c-ccc73e2a11d4"
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy Frontend to Azure Static Web App
         uses: Azure/static-web-apps-deploy@v1

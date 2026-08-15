@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { Shield, Building2, BookOpen, ExternalLink } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 
@@ -25,7 +25,7 @@ export default function App() {
               BankCompliance AI
             </h1>
             <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-              RBI Master Directions & Regulatory Legal Copilot â€¢ Hosted on AKS
+              RBI Master Directions &amp; Regulatory Legal Copilot • Hosted on AKS
             </p>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function App() {
           <div style={{ marginTop: 'auto', background: '#111827', padding: '12px', borderRadius: '8px', border: '1px solid #1f2937' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b' }}>Cluster FinOps State</div>
             <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '4px' }}>
-              AKS Free Tier â€¢ Ephemeral OS â€¢ 4GB CSI Managed Disk
+              AKS Free Tier • Ephemeral OS • 4GB CSI Managed Disk
             </div>
           </div>
         </aside>

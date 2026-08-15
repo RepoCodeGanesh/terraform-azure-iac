@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import httpx
@@ -13,6 +13,7 @@ class QueryRequest(BaseModel):
     query: str
     department: Optional[str] = "compliance"
     session_id: Optional[str] = "default-session"
+    circular: Optional[str] = None
 
 class Citation(BaseModel):
     circular_no: str
