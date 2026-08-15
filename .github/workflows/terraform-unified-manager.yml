@@ -40,6 +40,9 @@ jobs:
   execute-terraform:
     name: Terraform ${{ inputs.action }} on ${{ inputs.target }}
     runs-on: ubuntu-latest
+    env:
+      ARM_PROVIDER_RETRY_MAX: "10"
+      ARM_CLIENT_TIMEOUT: "600"
     steps:
       - name: Validate Destroy Confirmation
         if: inputs.action == 'destroy'
@@ -108,9 +111,9 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform plan -var-file=prod.tfvars
+            terraform plan -var-file=prod.tfvars -parallelism=10
           else
-            terraform plan
+            terraform plan -parallelism=10
           fi
 
       - name: Terraform Apply
@@ -118,9 +121,9 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform apply -auto-approve -var-file=prod.tfvars
+            terraform apply -auto-approve -var-file=prod.tfvars -parallelism=10
           else
-            terraform apply -auto-approve
+            terraform apply -auto-approve -parallelism=10
           fi
 
       - name: Terraform Destroy
@@ -128,7 +131,7 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform destroy -auto-approve -var-file=prod.tfvars
+            terraform destroy -auto-approve -var-file=prod.tfvars -parallelism=10
           else
-            terraform destroy -auto-approve
+            terraform destroy -auto-approve -parallelism=10
           fi
