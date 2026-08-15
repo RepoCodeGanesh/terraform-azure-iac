@@ -51,6 +51,7 @@ Core outcomes:
 * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway, Qdrant Vector DB on 4GB CSI Managed Disk, KEDA Scale-to-Zero, DPDP PII Auto-Masking).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
+* **Sister Application Repository:** [`bank-compliance-ai-app`](https://github.com/RepoCodeGanesh/bank-compliance-ai-app) (Local: `c:\Users\RichT\OneDrive\Documents\Repos\bank-compliance-ai-app`)
 * **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml`.
 
 ---

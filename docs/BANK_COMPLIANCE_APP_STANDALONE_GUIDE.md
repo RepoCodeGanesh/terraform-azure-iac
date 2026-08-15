@@ -8,11 +8,15 @@ This guide provides the complete architecture, directory structure, Docker conta
 
 Following Microsoft Cloud Adoption Framework (CAF) role separation:
 * **Infrastructure Repo (`terraform-azure-iac`)**: Deploys the AKS Free Tier cluster, spoke VNet, Content Safety (`F0`), and Managed Identities in `workloads/bank-compliance-ai-aks`.
+  * **Local Path:** `c:\Users\RichT\OneDrive\Documents\Repos\terraform-azure-iac`
+  * **Remote URL:** `https://github.com/RepoCodeGanesh/terraform-azure-iac`
 * **Application Repo (`bank-compliance-ai-app`)**: Contains the frontend SPA, FastAPI backend, Qdrant vector client, LiteLLM gateway configuration, Helm charts, and CI/CD pipelines.
+  * **Local Path:** `c:\Users\RichT\OneDrive\Documents\Repos\bank-compliance-ai-app`
+  * **Remote URL:** `https://github.com/RepoCodeGanesh/bank-compliance-ai-app`
 
 ### 🗂️ Local Workspace Layout (Sibling Repositories)
 ```
-<workspace-root>/Repos/
+c:\Users\RichT\OneDrive\Documents\Repos\
 ├── terraform-azure-iac/       # Infrastructure repository (Landing Zone, AKS IaC)
 └── bank-compliance-ai-app/    # Application repository (FastAPI, React, Helm, KEDA)
 ```
