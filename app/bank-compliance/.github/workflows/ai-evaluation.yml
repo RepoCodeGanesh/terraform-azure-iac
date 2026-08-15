@@ -59,9 +59,10 @@ jobs:
 
       - name: Run AI Quality Evaluation
         env:
-          AZURE_OPENAI_ENDPOINT:    ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-          AZURE_OPENAI_DEPLOYMENT:  "gpt-5.4-nano"
-          LITELLM_URL:              "http://localhost:4000/v1"
+          # Endpoint URL is NOT a secret — it is plain configuration (like subscription IDs)
+          AZURE_OPENAI_ENDPOINT:   "https://oai-ht-taxb-p-eus-01.openai.azure.com/"
+          AZURE_OPENAI_DEPLOYMENT: "gpt-5.4-nano"
+          LITELLM_URL:             "http://localhost:4000/v1"
         run: python eval/evaluate.py
 
       - name: Upload Evaluation Results
