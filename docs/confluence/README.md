@@ -5,7 +5,7 @@ The documentation suite in your Atlassian Confluence Space: **`HappyTechies Clou
 ---
 
 ## 🏛️ Section 1: Cloud Platform & IaC Infrastructure
-*Master Hub for Azure Multi-Subscription Foundation, Multi-Root Terraform IaC, Security Governance, Naming Standards, and FinOps.*
+*Master Hub for Azure Multi-Subscription Foundation, Multi-Root Terraform IaC, Security Governance, Naming Standards, FinOps, and the 10-Year Interview Masterclass.*
 
 | Page # | Published Page Title | Focus & Domain | Live Confluence Link |
 | :---: | :--- | :--- | :--- |
@@ -15,6 +15,8 @@ The documentation suite in your Atlassian Confluence Space: **`HappyTechies Clou
 | **04** | **07. Enterprise Security, Zero-Trust Architecture & Governance** | DPDP PII Redaction, AI Content Safety F0, OPA Gatekeeper | [Open Page 07](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7503874/07.+Enterprise+Security+Zero-Trust+Architecture+Governance) |
 | **05** | **05. Dual CI/CD, Workload Identity & Operations Runbook** | Dual CI/CD (GHA & ADO), WIF OIDC federation, Playbooks | [Open Page 05](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7766017/05.+Dual+CI+CD+Workload+Identity+Operations+Runbook) |
 | **06** | **04. FinOps & Near-Zero Idle Cost Strategy** | Master Cost Matrix ($0.25/mo), KEDA Scale-to-Zero | [Open Page 04](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7733249/04.+FinOps+Near-Zero+Idle+Cost+Strategy) |
+| **07** | **09. 10-Yr AI Platform Masterclass (Part 1: 30 Basic to Medium Q&A)** | Core Terraform, CNI Overlay, Ephemeral OS, LiteLLM, Qdrant | [Open Masterclass Part 1](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7569410/09.+10-Yr+AI+Platform+Masterclass+Part+1+-+30+Basic+to+Medium+Q+and+A) |
+| **08** | **10. 10-Yr AI Platform Masterclass (Part 2: 30 Hard Scenarios)** | Split-Brain State, OOM Vector Recovery, ZDR Audits, DR SLAs | [Open Masterclass Part 2](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7798803/10.+10-Yr+AI+Platform+Masterclass+Part+2+-+30+Hard+Scenario+Dilemmas) |
 
 ---
 
