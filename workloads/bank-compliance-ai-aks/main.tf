@@ -230,11 +230,11 @@ resource "azurerm_kubernetes_cluster" "bank_compliance" {
 # ─── Workload Identity Federated Credential ───────────────────────────────────
 
 resource "azurerm_federated_identity_credential" "bankc_app" {
-  name      = "fic-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = azurerm_kubernetes_cluster.bank_compliance.oidc_issuer_url
-  parent_id = azurerm_user_assigned_identity.bankc_app.id
-  subject   = "system:serviceaccount:bank-compliance:bankc-sa"
+  name                      = "fic-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.bank_compliance.oidc_issuer_url
+  user_assigned_identity_id = azurerm_user_assigned_identity.bankc_app.id
+  subject                   = "system:serviceaccount:bank-compliance:bankc-sa"
 
   depends_on = [
     azurerm_kubernetes_cluster.bank_compliance,

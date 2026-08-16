@@ -1,7 +1,13 @@
+# ==============================================================================
+# Platform: Shared Services Variables
+# Defines the schema and validation for APIM, Key Vault, LAW, OpenAI & Content Safety.
+# ==============================================================================
+
+# ── Subscription & Core Region ───────────────────────────────────────────────
+
 variable "subscription_id" {
-  description = "Azure subscription ID for the shared services environment."
+  description = "Azure subscription ID for the shared services environment (Shared-services)."
   type        = string
-  default     = "859a785c-bd38-402d-b595-1f44f40fb9bf"
 }
 
 variable "location" {
@@ -16,11 +22,7 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "company_name" {
-  description = "Company name for tagging purposes."
-  type        = string
-  default     = "HappyTechies"
-}
+# ── CAF Resource Naming Tokens ──────────────────────────────────────────────
 
 variable "project" {
   description = "Project code used in resource naming."
@@ -51,6 +53,14 @@ variable "instance" {
   default     = "01"
 }
 
+# ── Governance Tags ──────────────────────────────────────────────────────────
+
+variable "company_name" {
+  description = "Company name for tagging purposes."
+  type        = string
+  default     = "HappyTechies"
+}
+
 variable "owner" {
   description = "Owner tag value."
   type        = string
@@ -62,6 +72,8 @@ variable "cost_center" {
   type        = string
   default     = "shared-services"
 }
+
+# ── Network Architecture ────────────────────────────────────────────────────
 
 variable "vnet_address_space" {
   description = "CIDR block for the shared services virtual network."
@@ -87,6 +99,27 @@ variable "private_endpoints_subnet_prefix" {
   default     = "10.30.2.0/24"
 }
 
+# ── Hub Network Peering Lookups ──────────────────────────────────────────────
+
+variable "hub_subscription_id" {
+  description = "Azure subscription ID for the Hub environment."
+  type        = string
+}
+
+variable "hub_resource_group_name" {
+  description = "Name of the Hub resource group for peering lookup."
+  type        = string
+  default     = "rg-ht-hub-p-cin-01"
+}
+
+variable "hub_vnet_name" {
+  description = "Name of the Hub virtual network for peering lookup."
+  type        = string
+  default     = "vnet-ht-hub-p-cin-01"
+}
+
+# ── Platform Service Configurations ─────────────────────────────────────────
+
 variable "publisher_name" {
   description = "Publisher name used by API Management."
   type        = string
@@ -111,23 +144,7 @@ variable "private_dns_zone_name" {
   default     = "privatelink.vaultcore.azure.net"
 }
 
-variable "hub_subscription_id" {
-  description = "Azure subscription ID for the Hub environment."
-  type        = string
-  default     = "3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b"
-}
-
-variable "hub_resource_group_name" {
-  description = "Name of the Hub resource group for peering lookup."
-  type        = string
-  default     = "rg-ht-hub-p-cin-01"
-}
-
-variable "hub_vnet_name" {
-  description = "Name of the Hub virtual network for peering lookup."
-  type        = string
-  default     = "vnet-ht-hub-p-cin-01"
-}
+# ── Shared AI Services (Multi-Region) ────────────────────────────────────────
 
 variable "content_safety_location" {
   description = "Azure region for the shared Content Safety account (must be a supported region)."

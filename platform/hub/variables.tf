@@ -1,7 +1,13 @@
+# ==============================================================================
+# Platform: Hub Network Variables
+# Defines the schema and validation for Hub VNet, Azure Firewall, Bastion, & Gateway.
+# ==============================================================================
+
+# ── Subscription & Core Region ───────────────────────────────────────────────
+
 variable "subscription_id" {
-  description = "Azure subscription ID for the hub environment."
+  description = "Azure subscription ID for the hub environment (Hub-prod)."
   type        = string
-  default     = "3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b"
 }
 
 variable "location" {
@@ -16,11 +22,7 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "company_name" {
-  description = "Company name for tagging purposes."
-  type        = string
-  default     = "HappyTechies"
-}
+# ── CAF Resource Naming Tokens ──────────────────────────────────────────────
 
 variable "project" {
   description = "Project code used in resource naming."
@@ -51,6 +53,14 @@ variable "instance" {
   default     = "01"
 }
 
+# ── Governance Tags ──────────────────────────────────────────────────────────
+
+variable "company_name" {
+  description = "Company name for tagging purposes."
+  type        = string
+  default     = "HappyTechies"
+}
+
 variable "owner" {
   description = "Owner tag value."
   type        = string
@@ -62,6 +72,8 @@ variable "cost_center" {
   type        = string
   default     = "shared-services"
 }
+
+# ── Hub Network Architecture ────────────────────────────────────────────────
 
 variable "vnet_address_space" {
   description = "CIDR block for the hub virtual network."

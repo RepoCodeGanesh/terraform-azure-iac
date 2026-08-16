@@ -1,3 +1,10 @@
+# ==============================================================================
+# Platform: Bootstrap Variables
+# Defines the schema and validation for remote state storage & key bootstrap components.
+# ==============================================================================
+
+# ── Subscription & Core Region ───────────────────────────────────────────────
+
 variable "subscription_id" {
   description = "Azure subscription ID for the bootstrap subscription."
   type        = string
@@ -15,11 +22,7 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "company_name" {
-  description = "Company name for tagging purposes."
-  type        = string
-  default     = "HappyTechies"
-}
+# ── CAF Resource Naming Tokens ──────────────────────────────────────────────
 
 variable "project" {
   description = "Project code used in resource naming."
@@ -50,6 +53,14 @@ variable "instance" {
   default     = "01"
 }
 
+# ── Governance Tags ──────────────────────────────────────────────────────────
+
+variable "company_name" {
+  description = "Company name for tagging purposes."
+  type        = string
+  default     = "HappyTechies"
+}
+
 variable "owner" {
   description = "Owner tag value."
   type        = string
@@ -61,6 +72,8 @@ variable "cost_center" {
   type        = string
   default     = "shared-services"
 }
+
+# ── Bootstrap Storage Configuration ─────────────────────────────────────────
 
 variable "tfstate_container_name" {
   description = "Name of the blob container that will hold Terraform state."

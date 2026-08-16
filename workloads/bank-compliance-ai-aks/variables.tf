@@ -1,10 +1,17 @@
+# ==============================================================================
+# Workload: BankCompliance AI Variables
+# Defines the schema and validation for BankCompliance AKS, LiteLLM, Qdrant, & SWA.
+# ==============================================================================
+
+# ── Subscription & Core Region ───────────────────────────────────────────────
+
 variable "subscription_id" {
-  description = "The subscription ID where the BankCompliance AI workload resources will be deployed (Apps-prod)."
+  description = "Azure subscription ID where BankCompliance AI resources will be deployed (Apps-prod)."
   type        = string
 }
 
 variable "location" {
-  description = "The Azure region for main resources."
+  description = "Azure region for main workload resources."
   type        = string
   default     = "centralindia"
 }
@@ -15,46 +22,49 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "shared_content_safety_name" {
-  description = "Name of the shared Azure AI Content Safety account in platform/shared-services."
-  type        = string
-  default     = "cs-ht-ss-p-sea-01"
-}
-
 variable "swa_location" {
-  description = "The Azure region for the Static Web App (e.g. eastus2 or centralindia)."
+  description = "Azure region for the Static Web App (e.g. eastus2)."
   type        = string
   default     = "eastus2"
 }
 
-variable "company_name" {
-  description = "Company name for tagging."
-  type        = string
-  default     = "HappyTechies"
-}
+# ── CAF Resource Naming Tokens ──────────────────────────────────────────────
 
 variable "project" {
-  description = "Project code."
+  description = "Project code used in resource naming."
   type        = string
   default     = "ht"
 }
 
 variable "workload" {
-  description = "Workload name (bankc for Bank Compliance AI)."
+  description = "Workload code used in resource naming (bankc for Bank Compliance AI)."
   type        = string
   default     = "bankc"
 }
 
 variable "environment" {
-  description = "Environment code (e.g. p for production)."
+  description = "Environment code (d = dev, p = prod)."
   type        = string
   default     = "p"
+
+  validation {
+    condition     = contains(["d", "p"], var.environment)
+    error_message = "Environment must be either 'd' or 'p'."
+  }
 }
 
 variable "instance" {
   description = "Instance number."
   type        = string
   default     = "01"
+}
+
+# ── Governance Tags ──────────────────────────────────────────────────────────
+
+variable "company_name" {
+  description = "Company name for tagging."
+  type        = string
+  default     = "HappyTechies"
 }
 
 variable "owner" {
@@ -69,7 +79,7 @@ variable "cost_center" {
   default     = "CC-AI-PLATFORM-01"
 }
 
-# ── Network Variables ─────────────────────────────────────────────────────────
+# ── Network Architecture ────────────────────────────────────────────────────
 
 variable "vnet_address_space" {
   description = "Address space for the spoke VNet."
@@ -89,7 +99,7 @@ variable "private_endpoints_subnet_prefix" {
   default     = "10.42.2.0/24"
 }
 
-# ── Hub Lookup Variables ──────────────────────────────────────────────────────
+# ── Hub Network Peering Lookups ──────────────────────────────────────────────
 
 variable "hub_subscription_id" {
   description = "Subscription ID of the Hub Network."
@@ -108,7 +118,7 @@ variable "hub_vnet_name" {
   default     = "vnet-ht-hub-p-cin-01"
 }
 
-# ── Shared Services Lookup Variables ──────────────────────────────────────────
+# ── Shared Services Platform Lookups ─────────────────────────────────────────
 
 variable "shared_subscription_id" {
   description = "Subscription ID of Shared Services."
@@ -139,7 +149,13 @@ variable "shared_key_vault_name" {
   default     = "kv-ht-ss-p-cin-01"
 }
 
-# ── AKS Cluster Variables ─────────────────────────────────────────────────────
+variable "shared_content_safety_name" {
+  description = "Name of the shared Azure AI Content Safety account in platform/shared-services."
+  type        = string
+  default     = "cs-ht-ss-p-sea-01"
+}
+
+# ── AKS Cluster Configuration ───────────────────────────────────────────────
 
 variable "aks_sku_tier" {
   description = "Pricing tier of the AKS cluster (Free for $0 control plane)."
@@ -148,9 +164,9 @@ variable "aks_sku_tier" {
 }
 
 variable "aks_vm_size" {
-  description = "VM size for the default AKS node pool (Standard_B4ms for 4 vCPU, 16GB RAM)."
+  description = "VM size for the default AKS node pool (Standard_B2ms or Standard_B4ms)."
   type        = string
-  default     = "Standard_B4ms"
+  default     = "Standard_B2ms"
 }
 
 variable "aks_node_count" {
@@ -160,7 +176,7 @@ variable "aks_node_count" {
 }
 
 variable "aks_os_disk_size_gb" {
-  description = "OS disk size in GB (30GB fits ephemeral cache on Standard_B4ms)."
+  description = "OS disk size in GB (30GB fits ephemeral cache on Standard_B2ms/B4ms)."
   type        = number
   default     = 30
 }
@@ -171,7 +187,7 @@ variable "enable_azure_policy" {
   default     = true
 }
 
-# ── Custom Domain Variables ───────────────────────────────────────────────────
+# ── Custom Domain & Governance Configurations ───────────────────────────────
 
 variable "custom_domain_name" {
   description = "Custom domain for the BankCompliance AI frontend."

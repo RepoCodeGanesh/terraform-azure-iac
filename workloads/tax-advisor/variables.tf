@@ -1,7 +1,13 @@
+# ==============================================================================
+# Workload: TaxBot India Variables
+# Defines the schema and validation for TaxBot Serverless AI (Function App, SWA, Cosmos DB, AI Search).
+# ==============================================================================
+
+# ── Subscription & Core Region ───────────────────────────────────────────────
+
 variable "subscription_id" {
   description = "Azure subscription ID for the TaxBot workload (Apps-prod)."
   type        = string
-  default     = "f4ffefe1-d689-4059-969c-ccc73e2a11d4"
 }
 
 variable "location" {
@@ -16,29 +22,13 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "shared_openai_name" {
-  description = "Name of the shared Azure OpenAI account in platform/shared-services."
-  type        = string
-  default     = "oai-ht-ss-p-eus-01"
-}
-
-variable "shared_content_safety_name" {
-  description = "Name of the shared Azure AI Content Safety account in platform/shared-services."
-  type        = string
-  default     = "cs-ht-ss-p-sea-01"
-}
-
 variable "swa_location" {
   description = "Azure region for Static Web App control plane."
   type        = string
   default     = "eastus2"
 }
 
-variable "company_name" {
-  description = "Company name for tagging."
-  type        = string
-  default     = "HappyTechies"
-}
+# ── CAF Resource Naming Tokens ──────────────────────────────────────────────
 
 variable "project" {
   description = "Project code used in resource naming."
@@ -69,6 +59,14 @@ variable "instance" {
   default     = "01"
 }
 
+# ── Governance Tags ──────────────────────────────────────────────────────────
+
+variable "company_name" {
+  description = "Company name for tagging."
+  type        = string
+  default     = "HappyTechies"
+}
+
 variable "owner" {
   description = "Owner tag value."
   type        = string
@@ -80,6 +78,8 @@ variable "cost_center" {
   type        = string
   default     = "taxbot-india"
 }
+
+# ── Network Architecture ────────────────────────────────────────────────────
 
 variable "vnet_address_space" {
   description = "CIDR block for the TaxBot spoke virtual network."
@@ -99,10 +99,11 @@ variable "private_endpoints_subnet_prefix" {
   default     = "10.41.2.0/24"
 }
 
+# ── Hub Network Peering Lookups ──────────────────────────────────────────────
+
 variable "hub_subscription_id" {
   description = "Azure subscription ID for the Hub environment."
   type        = string
-  default     = "3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b"
 }
 
 variable "hub_resource_group_name" {
@@ -117,10 +118,11 @@ variable "hub_vnet_name" {
   default     = "vnet-ht-hub-p-cin-01"
 }
 
+# ── Shared Services Platform Lookups ─────────────────────────────────────────
+
 variable "shared_subscription_id" {
   description = "Azure subscription ID for Shared Services."
   type        = string
-  default     = "859a785c-bd38-402d-b595-1f44f40fb9bf"
 }
 
 variable "shared_resource_group_name" {
@@ -146,6 +148,20 @@ variable "shared_key_vault_name" {
   type        = string
   default     = "kv-ht-ss-p-cin-01"
 }
+
+variable "shared_openai_name" {
+  description = "Name of the shared Azure OpenAI account in platform/shared-services."
+  type        = string
+  default     = "oai-ht-ss-p-eus-01"
+}
+
+variable "shared_content_safety_name" {
+  description = "Name of the shared Azure AI Content Safety account in platform/shared-services."
+  type        = string
+  default     = "cs-ht-ss-p-sea-01"
+}
+
+# ── Workload AI & RBAC Configurations ────────────────────────────────────────
 
 variable "openai_model_name" {
   description = "Name of the OpenAI model to deploy."
