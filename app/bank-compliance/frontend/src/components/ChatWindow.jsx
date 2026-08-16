@@ -48,9 +48,10 @@ export default function ChatWindow({ selectedCircular }) {
         pii: data.pii_redacted || []
       }])
     } catch (err) {
+      console.error('BankCompliance API fetch error:', err)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: '⚠️ Unable to connect to BankCompliance AKS backend API. Please ensure the cluster and backend services are active.',
+        text: `⚠️ Unable to connect to BankCompliance AKS backend API (${err.message || 'Network error'}). Please ensure the cluster and backend services are active.`,
         citations: [],
         pii: []
       }])
