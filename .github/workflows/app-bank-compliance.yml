@@ -53,9 +53,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Downcase Image Name
+        id: prep_tag
         run: |
-          echo "IMAGE_TAG=${{ env.REGISTRY }}/$(echo ${{ env.IMAGE_NAME }} | tr '[A-Z]' '[a-z]'):latest" >> $GITHUB_ENV
-          echo "IMAGE_SHA_TAG=${{ env.REGISTRY }}/$(echo ${{ env.IMAGE_NAME }} | tr '[A-Z]' '[a-z]'):${{ github.sha }}" >> $GITHUB_ENV
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=${IMAGE_LOWER}:latest" >> $GITHUB_OUTPUT
+          echo "image_sha_tag=${IMAGE_LOWER}:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
@@ -63,8 +65,8 @@ jobs:
           context: app/bank-compliance/backend
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_SHA_TAG }}
+            ${{ steps.prep_tag.outputs.image_tag }}
+            ${{ steps.prep_tag.outputs.image_sha_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
