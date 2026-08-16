@@ -15,6 +15,7 @@ Welcome to the **Azure AI Landing Zone & TaxBot India** documentation repository
 * **[BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md)**: Git branching strategy (`main`, `develop`, `feature/*`, `release/*`, `hotfix/*`), pull request merge requirements, and environment deployments.
 * **[AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)**: Automated Semantic Versioning (SemVer) guide. Explains how Conventional Commit PR titles (`feat:`, `fix:`, `BREAKING CHANGE:`) drive automatic release tagging (`v1.0.0` $\rightarrow$ `v1.1.0`).
 * **[REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)**: Enterprise Caller/Called Reusable Workflow Pattern guide for GitHub Actions applications. Explains parameterization and integration with central templates in `RepoCodeGanesh/.github`.
+* **[BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md](BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md)**: Comprehensive engineering learnings, root causes, and solutions for AKS, APIM, LiteLLM, and Static Web Apps.
 
 ---
 
