@@ -86,9 +86,14 @@ output "custom_domain_url" {
 }
 
 output "static_web_app_api_key" {
-  description = "Deployment token for Static Web App CI/CD."
+  description = "Deployment token for the Static Web App."
   value       = azurerm_static_web_app.frontend.api_key
   sensitive   = true
+}
+
+output "key_vault_secret_name" {
+  description = "The secret name in central Key Vault for the Static Web App deployment token."
+  value       = azurerm_key_vault_secret.taxb_swa_api_token.name
 }
 
 output "apim_base_url" {

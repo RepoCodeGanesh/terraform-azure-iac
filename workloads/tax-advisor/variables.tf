@@ -153,6 +153,12 @@ variable "shared_apim_name" {
   default     = "apim-ht-ss-p-cin-01"
 }
 
+variable "shared_key_vault_name" {
+  description = "Name of the central Key Vault in Shared Services."
+  type        = string
+  default     = "kv-ht-ss-p-cin-01"
+}
+
 variable "openai_model_name" {
   description = "Name of the OpenAI model to deploy."
   type        = string

@@ -54,6 +54,11 @@ output "static_web_app_api_key" {
   sensitive   = true
 }
 
+output "key_vault_secret_name" {
+  description = "The secret name in central Key Vault for the Static Web App deployment token."
+  value       = azurerm_key_vault_secret.bankc_swa_api_token.name
+}
+
 output "custom_domain_cname_instruction" {
   description = "Instruction for DNS CNAME configuration at domain registrar."
   value       = "Create a CNAME record at your DNS provider: Host 'bank' pointing to '${azurerm_static_web_app.bankc_frontend.default_host_name}', then set enable_custom_domain = true in prod.tfvars."

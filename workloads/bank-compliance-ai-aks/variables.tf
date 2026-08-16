@@ -139,6 +139,12 @@ variable "shared_apim_name" {
   default     = "apim-ht-ss-p-cin-01"
 }
 
+variable "shared_key_vault_name" {
+  description = "Name of the central Key Vault in Shared Services."
+  type        = string
+  default     = "kv-ht-ss-p-cin-01"
+}
+
 # ── AKS Cluster Variables ─────────────────────────────────────────────────────
 
 variable "aks_sku_tier" {
