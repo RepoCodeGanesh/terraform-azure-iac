@@ -15,6 +15,7 @@ pipelines/
 ├── azure-cicd-tax-advisor.yml     # Pipeline for workloads/tax-advisor
 ├── azure-cicd-app-tax-advisor.yml # Pipeline for app/tax-advisor
 ├── azure-cicd-bank-compliance-aks.yml # Pipeline for workloads/bank-compliance-ai-aks
+├── azure-cicd-app-bank-compliance.yml # Pipeline for app/bank-compliance (DevSecOps + AKS + SWA)
 └── templates/                     # Reusable pipeline stage templates
     ├── validate.yml               # Optional standalone validate stage
     ├── plan.yml                   # Format check, validation & speculative terraform plan
@@ -33,6 +34,7 @@ Pipelines are configured with **Path Filtering** (`paths: include/exclude`) to e
 * **TaxBot Workload Changes** (`workloads/tax-advisor/**`) ➔ Triggers `azure-cicd-tax-advisor.yml`
 * **TaxBot Application Changes** (`app/tax-advisor/**`) ➔ Triggers `azure-cicd-app-tax-advisor.yml`
 * **BankCompliance Workload Changes** (`workloads/bank-compliance-ai-aks/**`) ➔ Triggers `azure-cicd-bank-compliance-aks.yml`
+* **BankCompliance Application Changes** (`app/bank-compliance/**`) ➔ Triggers `azure-cicd-app-bank-compliance.yml`
 * **Documentation Edits** (`**/*.md`) ➔ **Excluded** from triggering builds to preserve agent minutes.
 
 ---

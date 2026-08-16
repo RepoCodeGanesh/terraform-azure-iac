@@ -34,9 +34,22 @@ env:
   SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
 
 jobs:
+  # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Phase 1) ────────────────
+  devsecops-scan:
+    name: DevSecOps SAST & SCA Scan
+    uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
+    with:
+      working_directory: 'app/bank-compliance'
+      key_vault_name: 'kv-ht-ss-p-cin-01'
+      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+    secrets:
+      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
   # ── JOB 1: Build & Push Backend Container to GHCR ─────────────────────────
   build-and-push-backend:
     name: Build & Push Backend Image
+    needs: devsecops-scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -113,6 +126,7 @@ jobs:
   # ── JOB 3: Build & Deploy Frontend to Azure Static Web App ─────────────────
   deploy-frontend:
     name: Build & Deploy Frontend SPA
+    needs: devsecops-scan
     runs-on: ubuntu-latest
     environment: tax-advisor-prod
     steps:
