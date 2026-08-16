@@ -298,3 +298,134 @@ resource "azurerm_key_vault_secret" "bankc_swa_api_token" {
   ]
 }
 
+# ─── APIM Backend for BankCompliance AKS ──────────────────────────────────────
+
+resource "azurerm_api_management_backend" "bankc_backend" {
+  provider            = azurerm.shared
+  name                = "aks-backend-${var.workload}"
+  resource_group_name = data.azurerm_resource_group.shared.name
+  api_management_name = data.azurerm_api_management.shared.name
+  protocol            = "http"
+  url                 = "http://bankc-api-ht-cin.centralindia.cloudapp.azure.com"
+  description         = "APIM backend for BankCompliance AKS backend"
+}
+
+# ─── APIM API Definition for BankCompliance AI ────────────────────────────────
+
+resource "azapi_resource" "apim_bankc_api" {
+  type      = "Microsoft.ApiManagement/service/apis@2022-08-01"
+  name      = "bankc-compliance-api"
+  parent_id = data.azurerm_api_management.shared.id
+
+  body = {
+    properties = {
+      displayName          = "BankCompliance AI — Regulatory Copilot"
+      path                 = "bankc"
+      protocols            = ["https"]
+      serviceUrl           = "http://bankc-api-ht-cin.centralindia.cloudapp.azure.com"
+      subscriptionRequired = false
+    }
+  }
+
+  depends_on = [azurerm_api_management_backend.bankc_backend]
+}
+
+# POST /api/v1/compliance/query
+resource "azapi_resource" "compliance_query_post" {
+  type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
+  name      = "compliance-query-post"
+  parent_id = azapi_resource.apim_bankc_api.id
+
+  body = {
+    properties = {
+      displayName = "Query Compliance"
+      method      = "POST"
+      urlTemplate = "/api/v1/compliance/query"
+      description = "Submit regulatory compliance question"
+    }
+  }
+
+  depends_on = [azapi_resource.apim_bankc_api]
+}
+
+# GET /healthz
+resource "azapi_resource" "bankc_healthz_get" {
+  type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
+  name      = "healthz-get"
+  parent_id = azapi_resource.apim_bankc_api.id
+
+  body = {
+    properties = {
+      displayName = "Health Check"
+      method      = "GET"
+      urlTemplate = "/healthz"
+      description = "Returns AKS backend health status"
+    }
+  }
+
+  depends_on = [azapi_resource.apim_bankc_api]
+}
+
+# GET /api/v1/compliance/circulars
+resource "azapi_resource" "compliance_circulars_get" {
+  type      = "Microsoft.ApiManagement/service/apis/operations@2022-08-01"
+  name      = "compliance-circulars-get"
+  parent_id = azapi_resource.apim_bankc_api.id
+
+  body = {
+    properties = {
+      displayName = "List Master Directions"
+      method      = "GET"
+      urlTemplate = "/api/v1/compliance/circulars"
+      description = "Returns list of indexed RBI circulars"
+    }
+  }
+
+  depends_on = [azapi_resource.apim_bankc_api]
+}
+
+# ─── APIM Policy: CORS + Forward to AKS Backend ────────────────────────────────
+
+resource "azapi_resource" "bankc_cors_policy" {
+  type      = "Microsoft.ApiManagement/service/apis/policies@2022-08-01"
+  name      = "policy"
+  parent_id = azapi_resource.apim_bankc_api.id
+
+  body = {
+    properties = {
+      format = "xml"
+      value  = <<XML
+<policies>
+  <inbound>
+    <cors allow-credentials="false">
+      <allowed-origins>
+        <origin>*</origin>
+      </allowed-origins>
+      <allowed-methods preflight-result-max-age="300">
+        <method>POST</method>
+        <method>GET</method>
+        <method>OPTIONS</method>
+      </allowed-methods>
+      <allowed-headers>
+        <header>*</header>
+      </allowed-headers>
+    </cors>
+    <set-backend-service backend-id="aks-backend-${var.workload}" />
+  </inbound>
+  <backend>
+    <forward-request timeout="30" />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
+XML
+    }
+  }
+
+  depends_on = [azapi_resource.apim_bankc_api]
+}
+

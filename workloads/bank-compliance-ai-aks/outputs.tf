@@ -63,3 +63,8 @@ output "custom_domain_cname_instruction" {
   description = "Instruction for DNS CNAME configuration at domain registrar."
   value       = "Create a CNAME record at your DNS provider: Host 'bank' pointing to '${azurerm_static_web_app.bankc_frontend.default_host_name}', then set enable_custom_domain = true in prod.tfvars."
 }
+
+output "apim_gateway_url" {
+  description = "The gateway URL for BankCompliance AI via APIM."
+  value       = startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/bankc" : "https://${data.azurerm_api_management.shared.gateway_url}/bankc"
+}

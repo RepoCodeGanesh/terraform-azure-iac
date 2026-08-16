@@ -131,7 +131,7 @@ jobs:
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         env:
-          VITE_API_URL: "http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/api/v1/compliance/query"
+          VITE_API_URL: "https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query"
         with:
           azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.SWA_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
