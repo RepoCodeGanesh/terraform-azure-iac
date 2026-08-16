@@ -19,6 +19,9 @@ spec:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-v1.41.0
           args: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
+          envFrom:
+            - secretRef:
+                name: litellm-secret
           volumeMounts:
             - name: litellm-config
               mountPath: /etc/litellm
