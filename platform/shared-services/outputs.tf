@@ -62,3 +62,18 @@ output "content_safety_id" {
   description = "Resource ID of the shared Azure AI Content Safety account."
   value       = module.shared_content_safety.id
 }
+
+output "openai_name" {
+  description = "Name of the shared Azure OpenAI account."
+  value       = module.shared_openai.name
+}
+
+output "openai_endpoint" {
+  description = "Endpoint URL of the shared Azure OpenAI account."
+  value       = module.shared_openai.endpoint
+}
+
+output "openai_model_name" {
+  description = "Deployed model name on the shared Azure OpenAI account."
+  value       = var.openai_model_name
+}

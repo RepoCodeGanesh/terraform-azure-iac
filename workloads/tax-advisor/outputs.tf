@@ -19,13 +19,13 @@ output "vnet_name" {
 }
 
 output "openai_account_name" {
-  description = "Name of the Azure OpenAI account."
-  value       = module.openai.name
+  description = "Name of the shared Azure OpenAI account."
+  value       = data.azurerm_cognitive_account.openai.name
 }
 
 output "openai_endpoint" {
-  description = "Endpoint URL for Azure OpenAI."
-  value       = module.openai.endpoint
+  description = "Endpoint URL for the shared Azure OpenAI account."
+  value       = data.azurerm_cognitive_account.openai.endpoint
 }
 
 output "function_app_name" {

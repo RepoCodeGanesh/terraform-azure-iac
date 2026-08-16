@@ -1,8 +1,8 @@
-﻿model_list:
+model_list:
   - model_name: gpt-5.4-nano
     litellm_params:
       model: azure/gpt-5.4-nano
-      api_base: https://oai-ht-taxb-p-eus-01.openai.azure.com/
+      api_base: https://oai-ht-ss-p-eus-01.openai.azure.com/
       api_version: "2026-03-17"
 
 general_settings:

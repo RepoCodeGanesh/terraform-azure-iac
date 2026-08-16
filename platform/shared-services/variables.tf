@@ -141,3 +141,32 @@ variable "content_safety_location_short" {
   default     = "sea"
 }
 
+variable "openai_location" {
+  description = "Azure region for the shared Azure OpenAI account (e.g. eastus)."
+  type        = string
+  default     = "eastus"
+}
+
+variable "openai_location_short" {
+  description = "Short name of the Azure region for shared OpenAI naming."
+  type        = string
+  default     = "eus"
+}
+
+variable "openai_model_name" {
+  description = "Model name to deploy on the shared Azure OpenAI account."
+  type        = string
+  default     = "gpt-5.4-nano"
+}
+
+variable "openai_model_version" {
+  description = "API version of the OpenAI model deployment."
+  type        = string
+  default     = "2026-03-17"
+}
+
+variable "openai_model_capacity" {
+  description = "TPM capacity (in thousands) for the OpenAI model deployment."
+  type        = number
+  default     = 10
+}

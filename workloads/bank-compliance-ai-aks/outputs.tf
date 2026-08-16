@@ -29,13 +29,13 @@ output "aks_workload_identity_client_id" {
 }
 
 output "content_safety_id" {
-  description = "The ID of the Azure AI Content Safety account."
-  value       = module.content_safety.id
+  description = "The ID of the shared Azure AI Content Safety account."
+  value       = data.azurerm_cognitive_account.content_safety.id
 }
 
 output "content_safety_endpoint" {
-  description = "The endpoint of the Azure AI Content Safety account."
-  value       = module.content_safety.endpoint
+  description = "The endpoint of the shared Azure AI Content Safety account."
+  value       = data.azurerm_cognitive_account.content_safety.endpoint
 }
 
 output "static_web_app_name" {

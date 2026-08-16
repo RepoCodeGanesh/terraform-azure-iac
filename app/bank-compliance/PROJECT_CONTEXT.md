@@ -1,4 +1,4 @@
-﻿# Project Context & Environment Specifications
+# Project Context & Environment Specifications
 
 This document defines the runtime environment, endpoint connections, and operational configuration for **BankCompliance AI (`bank-compliance-ai-app`)**.
 
@@ -21,8 +21,8 @@ c:\Users\RichT\OneDrive\Documents\Repos\
 * **Domain Name:** `https://bank.mytaxbot.site`
 * **Static Web App:** `stapp-ht-bankc-p-cin-01`
 * **Kubernetes Cluster:** `aks-ht-bankc-p-cin-01` (Resource Group: `rg-ht-bankc-p-cin-01` in Central India)
-* **Content Safety:** `https://cs-ht-bankc-p-sea-01.cognitiveservices.azure.com/` (Southeast Asia)
-* **OpenAI Endpoint:** `https://oai-ht-taxb-p-eus-01.openai.azure.com/` (East US)
+* **Content Safety:** `https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/` (Southeast Asia — shared-services)
+* **OpenAI Endpoint:** `https://oai-ht-ss-p-eus-01.openai.azure.com/` (East US — shared-services)
 * **Model Deployment:** `gpt-5.4-nano` (API Version: `2026-03-17`)
 * **APIM Gateway:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
 

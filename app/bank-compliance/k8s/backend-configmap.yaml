@@ -1,10 +1,10 @@
-﻿apiVersion: v1
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: bankc-backend-config
   namespace: bank-compliance
 data:
-  CONTENT_SAFETY_ENDPOINT: "https://cs-ht-bankc-p-sea-01.cognitiveservices.azure.com/"
+  CONTENT_SAFETY_ENDPOINT: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
 
   # Internal cluster DNS
   LITELLM_URL: "http://litellm:4000/v1"

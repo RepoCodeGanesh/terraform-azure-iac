@@ -57,15 +57,7 @@ module "taxb_vnet_name" {
   instance       = var.instance
 }
 
-module "taxb_oai_name" {
-  source         = "../../modules/naming"
-  resource_type  = "oai"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.openai_location_short
-  instance       = var.instance
-}
+# taxb_oai_name removed — Azure OpenAI is now shared via platform/shared-services
 
 module "taxb_asp_name" {
   source         = "../../modules/naming"
@@ -137,15 +129,7 @@ module "taxb_stapp_name" {
   instance       = var.instance
 }
 
-module "taxb_cs_name" {
-  source         = "../../modules/naming"
-  resource_type  = "cs"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.content_safety_location_short
-  instance       = var.instance
-}
+# taxb_cs_name removed — Content Safety is now shared via platform/shared-services
 
 # ─── Resource Group ────────────────────────────────────────────────────────────
 resource "azurerm_resource_group" "tax_advisor" {
@@ -196,28 +180,19 @@ module "taxb_to_hub_peering" {
   depends_on = [module.taxb_vnet]
 }
 
-# ─── Azure OpenAI ──────────────────────────────────────────────────────────────
-module "openai" {
-  source = "../../modules/cognitive_account"
 
-  name                       = module.taxb_oai_name.name
-  location                   = var.openai_location
-  resource_group_id          = azurerm_resource_group.tax_advisor.id
-  sku_name                   = "S0"
-  custom_subdomain_name      = module.taxb_oai_name.name
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+# ─── Shared Azure OpenAI (from platform/shared-services) ──────────────────────
+data "azurerm_cognitive_account" "openai" {
+  provider            = azurerm.shared
+  name                = var.shared_openai_name
+  resource_group_name = var.shared_resource_group_name
+}
 
-  deployments = {
-    (var.openai_model_name) = {
-      model_format  = "OpenAI"
-      model_name    = var.openai_model_name
-      model_version = var.openai_model_version
-      sku_name      = "GlobalStandard"
-      sku_capacity  = 10
-    }
-  }
-
-  tags = local.tags
+# ─── Shared Azure AI Content Safety (from platform/shared-services) ───────────
+data "azurerm_cognitive_account" "content_safety" {
+  provider            = azurerm.shared
+  name                = var.shared_content_safety_name
+  resource_group_name = var.shared_resource_group_name
 }
 
 # ─── Cosmos DB (Free Tier — session history for TaxBot chat) ──────────────────
@@ -242,18 +217,6 @@ module "search_service" {
   location            = azurerm_resource_group.tax_advisor.location
   resource_group_name = azurerm_resource_group.tax_advisor.name
   sku                 = "free"
-
-  tags = local.tags
-}
-
-# ─── Azure AI Content Safety (Free F0 tier — Jailbreak Shield & Prompt Filtering) ──
-module "content_safety" {
-  source = "../../modules/content_safety"
-
-  name                = module.taxb_cs_name.name
-  location            = var.content_safety_location
-  resource_group_name = azurerm_resource_group.tax_advisor.name
-  sku_name            = "F0"
 
   tags = local.tags
 }
@@ -286,14 +249,14 @@ module "function_app" {
   identity_type              = "SystemAssigned"
 
   app_settings = {
-    "AZURE_OPENAI_ENDPOINT"         = module.openai.endpoint
+    "AZURE_OPENAI_ENDPOINT"         = data.azurerm_cognitive_account.openai.endpoint
     "AZURE_OPENAI_MODEL"            = var.openai_model_name
     "COSMOS_DB_ENDPOINT"            = module.cosmos_db.endpoint
     "COSMOS_DB_DATABASE"            = module.cosmos_db.database_name
     "COSMOS_DB_CONTAINER"           = module.cosmos_db.container_name
     "AZURE_SEARCH_ENDPOINT"         = module.search_service.endpoint
     "AZURE_SEARCH_INDEX"            = "tax-docs"
-    "AZURE_CONTENT_SAFETY_ENDPOINT" = module.content_safety.endpoint
+    "AZURE_CONTENT_SAFETY_ENDPOINT" = data.azurerm_cognitive_account.content_safety.endpoint
     "RAG_DOCUMENTS_CONTAINER"       = "documents"
     "APP_NAME"                      = "TaxBot India"
     "APP_VERSION"                   = "1.0.0"
@@ -335,10 +298,10 @@ resource "azurerm_role_assignment" "func_blob_contributor" {
 
 resource "azurerm_role_assignment" "func_openai_user" {
   count                = var.enable_role_assignments ? 1 : 0
-  scope                = module.openai.id
+  scope                = data.azurerm_cognitive_account.openai.id
   role_definition_name = "Cognitive Services OpenAI User"
   principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
-  depends_on           = [time_sleep.wait_for_func_identity, module.openai]
+  depends_on           = [time_sleep.wait_for_func_identity, data.azurerm_cognitive_account.openai]
 }
 
 resource "azurerm_role_assignment" "func_search_reader" {
@@ -361,10 +324,10 @@ resource "azurerm_cosmosdb_sql_role_assignment" "func_cosmos_contributor" {
 
 resource "azurerm_role_assignment" "func_content_safety_user" {
   count                = var.enable_role_assignments ? 1 : 0
-  scope                = module.content_safety.id
+  scope                = data.azurerm_cognitive_account.content_safety.id
   role_definition_name = "Cognitive Services User"
   principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
-  depends_on           = [time_sleep.wait_for_func_identity, module.content_safety]
+  depends_on           = [time_sleep.wait_for_func_identity, data.azurerm_cognitive_account.content_safety]
 }
 
 # ─── APIM Backends ─────────────────────────────────────────────────────────────
@@ -374,9 +337,9 @@ resource "azurerm_api_management_backend" "openai_backend" {
   resource_group_name = data.azurerm_resource_group.shared.name
   api_management_name = data.azurerm_api_management.shared.name
   protocol            = "http"
-  url                 = "${module.openai.endpoint}openai"
+  url                 = "${data.azurerm_cognitive_account.openai.endpoint}openai"
   description         = "APIM backend for Azure OpenAI (TaxBot India)"
-  depends_on          = [module.openai]
+  depends_on          = [data.azurerm_cognitive_account.openai]
 }
 
 resource "azurerm_api_management_backend" "function_backend" {
@@ -683,7 +646,7 @@ resource "azurerm_monitor_metric_alert" "function_high_errors" {
 resource "azurerm_monitor_metric_alert" "openai_throttling" {
   name                = "alert-openai-throttled-429"
   resource_group_name = azurerm_resource_group.tax_advisor.name
-  scopes              = [module.openai.id]
+  scopes              = [data.azurerm_cognitive_account.openai.id]
   description         = "Triggers when Azure OpenAI rate limit (HTTP 429) throttling is encountered."
   severity            = 2
   frequency           = "PT1M"
@@ -708,7 +671,7 @@ resource "azurerm_monitor_metric_alert" "openai_throttling" {
 # ─── Content Safety Diagnostics & Security Alerts ─────────────────────────────
 resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
   name                       = "ds-cs-taxb-p-cin-01"
-  target_resource_id         = module.content_safety.id
+  target_resource_id         = data.azurerm_cognitive_account.content_safety.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
 
   enabled_log {
@@ -724,7 +687,7 @@ resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
   }
 
   depends_on = [
-    module.content_safety,
+    data.azurerm_cognitive_account.content_safety,
     data.azurerm_log_analytics_workspace.shared
   ]
 }
@@ -732,7 +695,7 @@ resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
 resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
   name                = "alert-cs-jailbreak-detected"
   resource_group_name = azurerm_resource_group.tax_advisor.name
-  scopes              = [module.content_safety.id]
+  scopes              = [data.azurerm_cognitive_account.content_safety.id]
   description         = "Triggers when Azure AI Content Safety blocks >5 prompt injection/jailbreak attempts in 15 mins."
   severity            = 1
   frequency           = "PT5M"
@@ -754,7 +717,7 @@ resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
   tags = local.tags
 
   depends_on = [
-    module.content_safety,
+    data.azurerm_cognitive_account.content_safety,
     azurerm_monitor_action_group.taxb_ops
   ]
 }

@@ -16,28 +16,16 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "openai_location" {
-  description = "Azure region for Azure OpenAI account."
+variable "shared_openai_name" {
+  description = "Name of the shared Azure OpenAI account in platform/shared-services."
   type        = string
-  default     = "eastus"
+  default     = "oai-ht-ss-p-eus-01"
 }
 
-variable "openai_location_short" {
-  description = "Azure region short name for Azure OpenAI resources."
+variable "shared_content_safety_name" {
+  description = "Name of the shared Azure AI Content Safety account in platform/shared-services."
   type        = string
-  default     = "eus"
-}
-
-variable "content_safety_location" {
-  description = "Azure region for Azure AI Content Safety account (must be a supported region; Asia Pacific: southeastasia)."
-  type        = string
-  default     = "southeastasia"
-}
-
-variable "content_safety_location_short" {
-  description = "Azure region short name for Azure AI Content Safety account."
-  type        = string
-  default     = "sea"
+  default     = "cs-ht-ss-p-sea-01"
 }
 
 variable "swa_location" {

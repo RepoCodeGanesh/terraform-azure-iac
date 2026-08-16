@@ -15,16 +15,10 @@ variable "location_short" {
   default     = "cin"
 }
 
-variable "content_safety_location" {
-  description = "The Azure region for Azure AI Content Safety (e.g. southeastasia for F0 SKU)."
+variable "shared_content_safety_name" {
+  description = "Name of the shared Azure AI Content Safety account in platform/shared-services."
   type        = string
-  default     = "southeastasia"
-}
-
-variable "content_safety_location_short" {
-  description = "Short code for Content Safety region (e.g. sea)."
-  type        = string
-  default     = "sea"
+  default     = "cs-ht-ss-p-sea-01"
 }
 
 variable "swa_location" {

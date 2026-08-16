@@ -68,15 +68,7 @@ module "bankc_aks_name" {
   instance       = var.instance
 }
 
-module "bankc_cs_name" {
-  source         = "../../modules/naming"
-  resource_type  = "cs"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.content_safety_location_short
-  instance       = var.instance
-}
+# bankc_cs_name removed — Content Safety is now shared via platform/shared-services
 
 module "bankc_uami_name" {
   source         = "../../modules/naming"
@@ -244,33 +236,28 @@ resource "azurerm_federated_identity_credential" "bankc_app" {
   ]
 }
 
-# ─── Azure AI Content Safety (F0 Free Tier) ───────────────────────────────────
-
-module "content_safety" {
-  source = "../../modules/content_safety"
-
-  name                = module.bankc_cs_name.name
-  resource_group_name = azurerm_resource_group.bank_compliance.name
-  location            = var.content_safety_location
-  sku_name            = "F0"
-  tags                = local.tags
+# ─── Shared Azure AI Content Safety (from platform/shared-services) ─────────────────
+data "azurerm_cognitive_account" "content_safety" {
+  provider            = azurerm.shared
+  name                = var.shared_content_safety_name
+  resource_group_name = var.shared_resource_group_name
 }
 
 resource "azurerm_role_assignment" "bankc_cs_user" {
   count                = var.enable_role_assignments ? 1 : 0
-  scope                = module.content_safety.id
+  scope                = data.azurerm_cognitive_account.content_safety.id
   role_definition_name = "Cognitive Services User"
   principal_id         = azurerm_user_assigned_identity.bankc_app.principal_id
 
   depends_on = [
-    module.content_safety,
+    data.azurerm_cognitive_account.content_safety,
     azurerm_user_assigned_identity.bankc_app
   ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
-  name                       = "ds-${module.bankc_cs_name.name}"
-  target_resource_id         = module.content_safety.id
+  name                       = "ds-cs-bankc-p-sea-01"
+  target_resource_id         = data.azurerm_cognitive_account.content_safety.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
 
   enabled_log {
@@ -286,7 +273,7 @@ resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
   }
 
   depends_on = [
-    module.content_safety,
+    data.azurerm_cognitive_account.content_safety,
     data.azurerm_log_analytics_workspace.shared
   ]
 }
