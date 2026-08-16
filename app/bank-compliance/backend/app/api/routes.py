@@ -64,8 +64,7 @@ async def query_compliance(request: QueryRequest):
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": user_message}
                     ],
-                    "temperature": 0.1,
-                    "max_tokens": 800,
+                    "max_completion_tokens": 800,
                     "user": f"{request.department}:{request.session_id}"
                 }
             )
