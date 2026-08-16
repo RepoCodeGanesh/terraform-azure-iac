@@ -47,12 +47,12 @@ Core outcomes:
 * **Resource Group:** `rg-ht-taxb-p-cin-01` (`Apps-prod`) with Spoke VNet `10.41.0.0/16`.
 * **CI/CD:** `pipelines/azure-cicd-tax-advisor.yml` & `.github/workflows/workload-tax-advisor.yml`.
 
-### Workload 2: BankCompliance AI (`workloads/bank-compliance-ai-aks` & `bank-compliance-ai-app`)
+### Workload 2: BankCompliance AI (`workloads/bank-compliance-ai-aks` & `app/bank-compliance`)
 * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
-* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway, Qdrant Vector DB on 4GB CSI Managed Disk, KEDA Scale-to-Zero, DPDP PII Auto-Masking).
+* **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
+* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway with Azure OpenAI `gpt-5.4-nano`, Qdrant Vector DB on 4GB CSI Managed Disk, DPDP PII Auto-Masking, Azure Static Web Apps).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
-* **Sister Application Repository:** [`bank-compliance-ai-app`](https://github.com/RepoCodeGanesh/bank-compliance-ai-app) (Local: `c:\Users\RichT\OneDrive\Documents\Repos\bank-compliance-ai-app`)
-* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml`.
+* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Fully automated, zero-touch OIDC deployments).
 
 ---
 
@@ -64,10 +64,10 @@ Current status:
 - `platform/hub`: complete.
 - `platform/shared-services`: complete.
 - `workloads/tax-advisor`: complete.
-- `workloads/bank-compliance-ai-aks`: complete.
-- `workloads/tax-advisor`: complete (IaC deployed & active).
+- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + SWA live).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
-- `pipelines/`: active and verified.
+- `app/bank-compliance`: complete (React SPA + FastAPI backend + LiteLLM + Qdrant Vector DB live).
+- `pipelines/`: active and verified across both GitHub Actions and Azure DevOps.
 
 ---
 
