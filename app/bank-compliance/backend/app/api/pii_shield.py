@@ -1,4 +1,4 @@
-﻿import re
+import re
 from typing import Tuple, List
 
 # Indian Financial PII Regex Patterns

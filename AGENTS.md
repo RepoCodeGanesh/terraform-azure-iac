@@ -1,4 +1,4 @@
-﻿# Repository Configuration & AI Agent Context
+# Repository Configuration & AI Agent Context
 
 ## Purpose
 This is the **Enterprise Azure Landing Zone monorepo** for HappyTechies Cloud & AI Platform.

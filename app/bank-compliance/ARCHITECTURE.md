@@ -1,4 +1,4 @@
-﻿# Architecture & Request Lifecycle
+# Architecture & Request Lifecycle
 
 ```
   [ Branch Officer / React SPA ]

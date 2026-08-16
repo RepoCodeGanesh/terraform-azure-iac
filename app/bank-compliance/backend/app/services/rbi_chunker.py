@@ -1,4 +1,4 @@
-﻿import re
+import re
 from typing import List, Dict
 
 CLAUSE_PATTERN = re.compile(r'^(Section|Clause|Chapter)\s+([0-9\.\(\)\w]+)', re.MULTILINE)

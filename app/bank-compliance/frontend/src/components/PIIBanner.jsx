@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { ShieldCheck } from 'lucide-react'
 
 export default function PIIBanner({ piiList }) {

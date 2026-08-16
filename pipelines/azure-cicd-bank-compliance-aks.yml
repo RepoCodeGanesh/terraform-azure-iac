@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Pipeline Name: BankCompliance AI - Infrastructure IaC CI/CD Pipeline
 # Description: Provisions AKS Free Tier & AI Landing Zone infrastructure for BankCompliance AI
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)

@@ -1,1 +1,1 @@
-﻿# BankCompliance AI Backend Package
+# BankCompliance AI Backend Package

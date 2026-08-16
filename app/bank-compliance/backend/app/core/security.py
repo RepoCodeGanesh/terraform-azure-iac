@@ -1,4 +1,4 @@
-﻿import os
+import os
 import logging
 from azure.identity import DefaultAzureCredential
 from app.core.config import settings

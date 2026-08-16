@@ -1,4 +1,4 @@
-﻿persistence:
+persistence:
   enabled: true
   storageClassName: "managed-csi"
   size: 4Gi
