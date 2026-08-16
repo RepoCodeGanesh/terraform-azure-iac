@@ -189,46 +189,52 @@ resource "azurerm_kubernetes_cluster" "bank_compliance" {
   }
 
   default_node_pool {
-    name            = "system"
-    node_count      = var.aks_node_count
-    vm_size         = var.aks_vm_size
-    os_disk_type    = "Ephemeral"
-    os_disk_size_gb = var.aks_os_disk_size_gb
-    vnet_subnet_id  = azurerm_subnet.aks.id
-    type            = "VirtualMachineScaleSets"
-    tags            = local.tags
+    name                        = "system"
+    node_count                  = var.aks_node_count
+    vm_size                     = var.aks_vm_size
+    os_disk_type                = "Ephemeral"
+    os_disk_size_gb             = var.aks_os_disk_size_gb
+    vnet_subnet_id              = azurerm_subnet.aks.id
+    type                        = "VirtualMachineScaleSets"
+    temporary_name_for_rotation = "temppool"
+    tags                        = local.tags
   }
 
   network_profile {
     network_plugin      = "azure"
     network_plugin_mode = "overlay"
-    pod_cidr            = "192.168.0.0/16"
-    service_cidr        = "172.16.0.0/16"
+    pod_cidr            = "10.244.0.0/16"
     dns_service_ip      = "172.16.0.10"
+    service_cidr        = "172.16.0.0/16"
   }
 
-  oms_agent {
-    log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+  web_app_routing {
+    dns_zone_ids = []
+  }
+
+  key_vault_secrets_provider {
+    secret_rotation_enabled = true
+  }
+
+  workload_autoscaler_profile {
+    keda_enabled = true
   }
 
   tags = local.tags
 
   depends_on = [
-    module.spoke_to_hub_peering,
-    azurerm_role_assignment.aks_vnet_contributor,
-    data.azurerm_log_analytics_workspace.shared
+    azurerm_role_assignment.aks_vnet_contributor
   ]
 }
 
 # ─── Workload Identity Federated Credential ───────────────────────────────────
 
 resource "azurerm_federated_identity_credential" "bankc_app" {
-  name                = "fic-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
-  resource_group_name = azurerm_resource_group.bank_compliance.name
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = azurerm_kubernetes_cluster.bank_compliance.oidc_issuer_url
-  parent_id           = azurerm_user_assigned_identity.bankc_app.id
-  subject             = "system:serviceaccount:bank-compliance:bankc-sa"
+  name      = "fic-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = azurerm_kubernetes_cluster.bank_compliance.oidc_issuer_url
+  parent_id = azurerm_user_assigned_identity.bankc_app.id
+  subject   = "system:serviceaccount:bank-compliance:bankc-sa"
 
   depends_on = [
     azurerm_kubernetes_cluster.bank_compliance,
@@ -252,29 +258,6 @@ resource "azurerm_role_assignment" "bankc_cs_user" {
   depends_on = [
     data.azurerm_cognitive_account.content_safety,
     azurerm_user_assigned_identity.bankc_app
-  ]
-}
-
-resource "azurerm_monitor_diagnostic_setting" "cs_diagnostics" {
-  name                       = "ds-cs-bankc-p-sea-01"
-  target_resource_id         = data.azurerm_cognitive_account.content_safety.id
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
-
-  enabled_log {
-    category = "Audit"
-  }
-
-  enabled_log {
-    category = "RequestResponse"
-  }
-
-  enabled_metric {
-    category = "AllMetrics"
-  }
-
-  depends_on = [
-    data.azurerm_cognitive_account.content_safety,
-    data.azurerm_log_analytics_workspace.shared
   ]
 }
 
