@@ -105,8 +105,10 @@ jobs:
           kubectl create configmap litellm-config --from-file=config.yaml=litellm/config.yaml -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f litellm/deployment.yaml
           kubectl apply -f backend-deployment.yaml
-          kubectl rollout restart deployment/litellm-proxy -n bank-compliance || true
-          kubectl rollout restart deployment/bankc-backend -n bank-compliance || true
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          kubectl set image deployment/bankc-backend backend="${IMAGE_LOWER}:${{ github.sha }}" -n bank-compliance
+          kubectl rollout status deployment/bankc-backend -n bank-compliance
+          kubectl rollout status deployment/litellm-proxy -n bank-compliance
 
   # ── JOB 3: Build & Deploy Frontend to Azure Static Web App ─────────────────
   deploy-frontend:

@@ -21,7 +21,7 @@ spec:
       containers:
         - name: backend
           image: ghcr.io/repocodeganesh/bank-compliance-backend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
               name: http
