@@ -12,7 +12,9 @@ spec:
     metadata:
       labels:
         app: litellm-proxy
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: bankc-sa
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-v1.41.0
@@ -22,8 +24,8 @@ spec:
               mountPath: /etc/litellm
           resources:
             requests:
-              cpu: "100m"
-              memory: "150Mi"
+              cpu: "10m"
+              memory: "64Mi"
             limits:
               cpu: "500m"
               memory: "300Mi"

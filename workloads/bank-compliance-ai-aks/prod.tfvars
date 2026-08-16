@@ -47,7 +47,7 @@ enable_azure_policy = true
 
 # ── Custom Domain Configuration ─────────────────────────────────────────────
 custom_domain_name   = "bank.mytaxbot.site"
-enable_custom_domain = false # Set to true after CNAME record is configured at registrar
+enable_custom_domain = true
 
 # ── RBAC Role Assignments ───────────────────────────────────────────────────
 enable_role_assignments = true
