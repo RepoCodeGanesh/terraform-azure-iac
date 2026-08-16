@@ -16,8 +16,8 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 6** | DevSecOps SAST/SCA & Release Asset Distribution | `.github/workflows/` | ✅ Completed |
 | **Phase 7** | Platform Visual Documentation & Incident Playbooks | `docs/platform-guide/` | ✅ Completed |
 | **Phase 8** | FinOps Cost Alerts & Logging Diagnostic Streamline | AI Workloads & Shared Services | ✅ Completed |
-| **Phase 9** | *[Active]* BankCompliance AI Copilot on AKS (LiteLLM, Qdrant, KEDA) | `workloads/bank-compliance-ai-aks` | 🔄 In Progress |
-
+| **Phase 9** | BankCompliance AI Copilot on AKS (LiteLLM, Qdrant, Full RAG) | `workloads/bank-compliance-ai-aks` & `app/bank-compliance/` | ✅ Completed |
+| **Phase 10** | *[Next]* Automated Raw PDF Ingestion & Split-Pane Document Intelligence | `app/bank-compliance/` & Azure Blob Storage | 📋 Planned |
 
 ---
 
@@ -76,13 +76,20 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 
 ---
 
+## 🏦 Phase 9: Banking Regulatory Compliance AI Copilot on AKS (`workloads/bank-compliance-ai-aks`)
+* [x] Provision AKS Free Tier Cluster (`aks-ht-bankc-p-cin-01`, `sku_tier = "Free"`) in `workloads/bank-compliance-ai-aks`.
+* [x] Deploy Qdrant Vector Database on AKS with 4GB Persistent CSI Disk (`managed-csi`) for RBI Master Direction HNSW indexing.
+* [x] Configure LiteLLM proxy gateway & Azure OpenAI deployment (`gpt-5.4-nano`).
+* [x] Build and deploy React SPA frontend (`bank.mytaxbot.site`) on Azure Static Web Apps.
+* [x] Integrate Dual CI/CD (GitHub Actions + Azure DevOps) with DevSecOps SonarCloud SAST/SCA security scans.
+* [x] Establish Full Document RAG corpus covering 6 official RBI Master Directions (60 legal clauses with hierarchical chunking).
+
 ---
 
-## 🏦 Phase 9: Banking Regulatory Compliance AI Copilot on AKS (`workloads/bank-compliance-ai-aks`)
-* [ ] Provision AKS Free Tier Cluster (`aks-ht-bankc-p-cin-01`, `sku_tier = "Free"`) & Azure Container Registry (`acrhtbankcpcin01`) in `workloads/bank-compliance-ai-aks`.
-* [ ] Initialize separate application repository `bank-compliance-ai-app` (Python FastAPI + React SPA).
-* [ ] Deploy Qdrant Vector Database on AKS with Persistent Volume Claims (`PVC`) for RBI Master Direction HNSW indexing.
-* [ ] Configure KAITO operator (`kind: Workspace`) for open-source model serving (`Phi-3-mini` / `vLLM`).
-* [ ] Implement KEDA (`ScaledObject`) queue-depth autoscaling for AI worker pods.
-* [ ] Architecture & Implementation Plan: [docs/BANKING_COMPLIANCE_AI_PLAN.md](docs/BANKING_COMPLIANCE_AI_PLAN.md)
+## 🚀 Phase 10: Automated Raw PDF Ingestion & Split-Pane Document Intelligence (Next Project)
+* [ ] **Tier 1 (Raw Storage):** Provision `rbi-raw-pdfs` container on Azure Blob Storage with automated crawler and SHA-256 checksum deduplication.
+* [ ] **Tier 2 (Document Intelligence):** Integrate layout-aware PDF parser (Azure AI Document Intelligence / open-source Docling) to extract tables and page-level section maps.
+* [ ] **Tier 3 (Deep-Linked Vector Store):** Embed chunks into Qdrant with precise start/end page numbers and section bounding boxes.
+* [ ] **Tier 4 (Interactive Split-View Portal):** Enhance React UI with split-pane layout: Interactive compliance chat on the left + integrated PDF viewer on the right deep-linking to exact pages.
+* [ ] Architecture Document: [docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md](docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
 
