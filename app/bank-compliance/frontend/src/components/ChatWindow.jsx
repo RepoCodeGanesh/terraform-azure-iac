@@ -25,7 +25,11 @@ export default function ChatWindow({ selectedCircular }) {
     setLoading(true)
 
     try {
-      const apiEndpoint = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1/compliance/query'
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      const defaultEndpoint = isLocal
+        ? 'http://localhost:8000/api/v1/compliance/query'
+        : 'http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/api/v1/compliance/query'
+      const apiEndpoint = import.meta.env.VITE_API_URL || defaultEndpoint
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

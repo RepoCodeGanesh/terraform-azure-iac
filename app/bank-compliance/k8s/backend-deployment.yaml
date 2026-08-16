@@ -55,11 +55,16 @@ metadata:
   namespace: bank-compliance
   labels:
     app: bankc-backend
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: "bankc-api-ht-cin"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: bankc-backend
   ports:
     - name: http
+      port: 80
+      targetPort: 8000
+    - name: http-alt
       port: 8000
       targetPort: 8000
