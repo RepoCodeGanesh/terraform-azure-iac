@@ -47,3 +47,18 @@ output "service_plan_name" {
   description = "Name of the App Service Plan."
   value       = module.shared_service_plan.name
 }
+
+output "content_safety_name" {
+  description = "Name of the shared Azure AI Content Safety account."
+  value       = module.shared_content_safety.name
+}
+
+output "content_safety_endpoint" {
+  description = "Endpoint URL of the shared Azure AI Content Safety account."
+  value       = module.shared_content_safety.endpoint
+}
+
+output "content_safety_id" {
+  description = "Resource ID of the shared Azure AI Content Safety account."
+  value       = module.shared_content_safety.id
+}

@@ -129,3 +129,15 @@ variable "hub_vnet_name" {
   default     = "vnet-ht-hub-p-cin-01"
 }
 
+variable "content_safety_location" {
+  description = "Azure region for the shared Content Safety account (must be a supported region)."
+  type        = string
+  default     = "southeastasia"
+}
+
+variable "content_safety_location_short" {
+  description = "Short name of the Azure region for shared Content Safety naming."
+  type        = string
+  default     = "sea"
+}
+

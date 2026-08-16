@@ -201,3 +201,46 @@ module "shared_to_hub_peering" {
   ]
 }
 
+# ─── Grant app-prod SP write access to shared KV (for BankCompliance SWA token) ─
+# The bank-compliance workload writes bankc-swa-deployment-token into this vault
+# via provider = azurerm.shared. The app-prod SP needs Key Vault Secrets Officer
+# so it can create/update that secret.
+
+data "azuread_service_principal" "app_prod" {
+  client_id = "99ab7987-3989-46c3-bae9-92279be16608" # DevOpsUniverse-Terraform-app-prod
+}
+
+resource "azurerm_role_assignment" "app_prod_kv_secrets_officer" {
+  scope                = module.shared_key_vault.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azuread_service_principal.app_prod.object_id
+
+  depends_on = [module.shared_key_vault]
+}
+
+# ─── Shared Azure AI Content Safety (F0 Free Tier) ────────────────────────────
+# Single shared account consumed by all workloads via data source lookup.
+# Lives in the shared-services sub (859a785c) — separate F0 quota from Apps-prod.
+
+module "shared_cs_name" {
+  source = "../../modules/naming"
+
+  resource_type  = "cs"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.content_safety_location_short
+  instance       = var.instance
+}
+
+module "shared_content_safety" {
+  source = "../../modules/content_safety"
+
+  name                = module.shared_cs_name.name
+  location            = var.content_safety_location
+  resource_group_name = azurerm_resource_group.shared_services.name
+  sku_name            = "F0"
+  tags                = local.tags
+
+  depends_on = [azurerm_resource_group.shared_services]
+}

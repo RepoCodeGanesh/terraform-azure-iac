@@ -22,7 +22,7 @@ shared_key_vault_name           = "kv-ht-ss-p-cin-01"
 
 # AKS Cluster Configuration
 aks_sku_tier        = "Free"
-aks_vm_size         = "Standard_B4ms"
+aks_vm_size         = "Standard_B2ms"
 aks_node_count      = 1
 aks_os_disk_size_gb = 30
 enable_azure_policy = true
