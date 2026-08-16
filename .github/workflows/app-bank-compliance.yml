@@ -31,6 +31,7 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/bank-compliance-backend
   AKS_CLUSTER_NAME: aks-ht-bankc-p-cin-01
   AKS_RESOURCE_GROUP: rg-ht-bankc-p-cin-01
+  SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
 
 jobs:
   # ── JOB 1: Build & Push Backend Container to GHCR ─────────────────────────
@@ -73,7 +74,7 @@ jobs:
     needs: build-and-push-backend
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
     runs-on: ubuntu-latest
-    environment: bank-compliance-prod
+    environment: tax-advisor-prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -83,7 +84,7 @@ jobs:
         with:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
 
       - name: Set AKS Context
         uses: azure/aks-set-context@v3
@@ -106,16 +107,17 @@ jobs:
   deploy-frontend:
     name: Build & Deploy Frontend SPA
     runs-on: ubuntu-latest
+    environment: tax-advisor-prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Azure OIDC Login (Fetch SWA Token if needed)
+      - name: Azure OIDC Login (Fetch SWA Token)
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
 
       - name: Get SWA Deployment Token from Azure CLI
         id: swa_token
@@ -127,7 +129,7 @@ jobs:
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.SWA_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.SWA_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "app/bank-compliance/frontend"
