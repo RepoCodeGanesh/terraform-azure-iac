@@ -46,13 +46,16 @@ async def query_compliance(request: QueryRequest):
     # 2. Qdrant Vector Retrieval
     retrieved_clauses = await search_rbi_clauses(sanitized_prompt, limit=3)
     
-    context_text = "\n\n".join([
-        f"--- [{c['circular_no']} - {c['clause']}] ---\n{c['text']}"
-        for c in retrieved_clauses
-    ])
+    if retrieved_clauses:
+        context_text = "\n\n".join([
+            f"--- [{c['circular_no']} - {c['clause']}] ---\n{c['text']}"
+            for c in retrieved_clauses
+        ])
+        user_message = f"Relevant RBI Master Direction Context:\n{context_text}\n\nCompliance Officer Question:\n{sanitized_prompt}"
+    else:
+        user_message = sanitized_prompt
     
     # 3. Call LiteLLM Proxy Gateway
-    user_message = f"Relevant RBI Master Direction Context:\n{context_text}\n\nCompliance Officer Question:\n{sanitized_prompt}"
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:

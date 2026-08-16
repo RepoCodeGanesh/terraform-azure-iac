@@ -38,18 +38,24 @@ RBI_CLAUSE_CORPUS = [
 async def search_rbi_clauses(query: str, limit: int = 3) -> List[Dict[str, Any]]:
     """
     Searches Qdrant HNSW vector collection for matching RBI clauses.
-    Falls back gracefully to keyword scoring if Qdrant daemon is offline.
+    Returns matching clauses when relevant keywords match the compliance query.
+    Filters out casual greetings to avoid showing irrelevant legal citations.
     """
-    query_lower = query.lower()
+    query_lower = query.strip().lower()
     
-    # Keyword relevance scoring
+    # Casual greetings check
+    greetings = {"hi", "hello", "hey", "how are you", "how are u", "good morning", "good evening", "who are you", "test", "help"}
+    if query_lower in greetings or len(query_lower) <= 3:
+        return []
+    
     scored_results = []
     for item in RBI_CLAUSE_CORPUS:
-        score = sum(1 for kw in item["keywords"] if kw in query_lower)
-        scored_results.append({
-            **item,
-            "score": 0.80 + (score * 0.05) if score > 0 else 0.70
-        })
+        match_count = sum(1 for kw in item["keywords"] if kw in query_lower)
+        if match_count > 0:
+            scored_results.append({
+                **item,
+                "score": round(0.80 + (match_count * 0.05), 2)
+            })
         
     scored_results.sort(key=lambda x: x["score"], reverse=True)
     return scored_results[:limit]
