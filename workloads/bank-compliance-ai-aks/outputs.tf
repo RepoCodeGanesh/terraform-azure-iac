@@ -68,3 +68,21 @@ output "apim_gateway_url" {
   description = "The gateway URL for BankCompliance AI via APIM."
   value       = startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/bankc" : "https://${data.azurerm_api_management.shared.gateway_url}/bankc"
 }
+
+output "app_insights_name" {
+  description = "The name of the dedicated Application Insights instance for BankCompliance."
+  value       = azurerm_application_insights.bank_compliance.name
+}
+
+output "app_insights_connection_string" {
+  description = "Connection string for Application Insights OpenTelemetry."
+  value       = azurerm_application_insights.bank_compliance.connection_string
+  sensitive   = true
+}
+
+output "app_insights_instrumentation_key" {
+  description = "Instrumentation key for Application Insights."
+  value       = azurerm_application_insights.bank_compliance.instrumentation_key
+  sensitive   = true
+}
+

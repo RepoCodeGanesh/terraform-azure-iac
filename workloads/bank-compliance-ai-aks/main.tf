@@ -90,6 +90,16 @@ module "bankc_stapp_name" {
   instance       = var.instance
 }
 
+module "bankc_appi_name" {
+  source         = "../../modules/naming"
+  resource_type  = "appi"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
 # ─── Resource Group ───────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "bank_compliance" {
@@ -97,6 +107,18 @@ resource "azurerm_resource_group" "bank_compliance" {
   location = var.location
   tags     = local.tags
 }
+
+# ─── Application Performance Monitoring (Application Insights) ────────────────
+
+resource "azurerm_application_insights" "bank_compliance" {
+  name                = module.bankc_appi_name.name
+  location            = var.location
+  resource_group_name = azurerm_resource_group.bank_compliance.name
+  workspace_id        = data.azurerm_log_analytics_workspace.shared.id
+  application_type    = "web"
+  tags                = local.tags
+}
+
 
 # ─── Spoke Virtual Network & Subnets ──────────────────────────────────────────
 
