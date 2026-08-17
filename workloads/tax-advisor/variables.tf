@@ -187,3 +187,10 @@ variable "alert_email_address" {
   default     = "ganesank@mytaxbot.site"
 }
 
+variable "enable_observability_agent" {
+  description = "Whether to deploy the Azure Copilot Observability Agent for autonomous alert correlation."
+  type        = bool
+  default     = true
+}
+
+

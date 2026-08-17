@@ -129,6 +129,17 @@ module "taxb_stapp_name" {
   instance       = var.instance
 }
 
+module "taxb_oa_name" {
+  source         = "../../modules/naming"
+  resource_type  = "oa"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
+
 # taxb_cs_name removed — Content Safety is now shared via platform/shared-services
 
 # ─── Resource Group ────────────────────────────────────────────────────────────
@@ -727,6 +738,57 @@ resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
     azurerm_monitor_action_group.taxb_ops
   ]
 }
+
+# ─── AIOps: Azure Copilot Observability Agent (Autonomous Alert Correlation) ──
+
+resource "azapi_resource" "observability_agent" {
+  count     = var.enable_observability_agent ? 1 : 0
+  type      = "Microsoft.Monitor/observabilityAgents@2026-05-01-preview"
+  name      = module.taxb_oa_name.name
+  parent_id = azurerm_resource_group.tax_advisor.id
+  location  = var.location
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  body = {
+    properties = {
+      monitoringAccountId = data.azurerm_log_analytics_workspace.shared.id
+      enabled             = true
+      customInstructions  = <<-EOT
+        - TaxBot India ('taxb') uses Azure Functions, Azure OpenAI, and Cosmos DB.
+        - Treat OpenAI 429 throttling (alert-openai-throttled-429) as an upstream rate limit event.
+        - Group high 5xx server errors with upstream OpenAI throttling when occurring simultaneously.
+      EOT
+    }
+  }
+
+  tags = local.tags
+}
+
+resource "azapi_resource" "monitored_app_insights" {
+  count     = var.enable_observability_agent ? 1 : 0
+  type      = "Microsoft.Monitor/observabilityAgents/monitoredResources@2026-05-01-preview"
+  name      = "target-taxb-appi"
+  parent_id = azapi_resource.observability_agent[0].id
+
+  body = {
+    properties = {
+      resourceId = module.function_app.app_insights_id
+    }
+  }
+
+  depends_on = [azapi_resource.observability_agent]
+}
+
+resource "azurerm_role_assignment" "agent_monitoring_reader" {
+  count                = var.enable_observability_agent ? 1 : 0
+  scope                = azurerm_resource_group.tax_advisor.id
+  role_definition_name = "Monitoring Reader"
+  principal_id         = azapi_resource.observability_agent[0].identity[0].principal_id
+}
+
 
 
 

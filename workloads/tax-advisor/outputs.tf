@@ -100,3 +100,14 @@ output "apim_base_url" {
   description = "APIM gateway base URL for TaxBot India API."
   value       = startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/tax-advisor" : "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
 }
+
+output "observability_agent_id" {
+  description = "Resource ID of the Azure Copilot Observability Agent."
+  value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].id : null
+}
+
+output "observability_agent_name" {
+  description = "Name of the Azure Copilot Observability Agent."
+  value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].name : null
+}
+
