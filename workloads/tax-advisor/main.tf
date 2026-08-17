@@ -615,6 +615,12 @@ resource "azurerm_monitor_action_group" "taxb_ops" {
   resource_group_name = azurerm_resource_group.tax_advisor.name
   short_name          = "TaxbOps"
 
+  email_receiver {
+    name                    = "PrimaryOpsAdmin"
+    email_address           = var.alert_email_address
+    use_common_alert_schema = true
+  }
+
   tags = local.tags
 }
 

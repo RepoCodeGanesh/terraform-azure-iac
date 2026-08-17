@@ -45,3 +45,7 @@ openai_model_version = "2026-03-17"
 
 # ── RBAC Role Assignments ───────────────────────────────────────────────────
 enable_role_assignments = true
+
+# ── Monitoring & Alerting ───────────────────────────────────────────────────
+alert_email_address = "ganesank@mytaxbot.site"
+

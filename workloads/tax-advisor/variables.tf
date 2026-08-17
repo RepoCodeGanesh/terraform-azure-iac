@@ -180,3 +180,10 @@ variable "enable_role_assignments" {
   type        = bool
   default     = true
 }
+
+variable "alert_email_address" {
+  description = "Email address or distribution list for Azure Monitor operational alerts."
+  type        = string
+  default     = "ganesank@mytaxbot.site"
+}
+
