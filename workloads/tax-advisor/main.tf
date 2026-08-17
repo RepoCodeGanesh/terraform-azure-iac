@@ -742,11 +742,12 @@ resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
 # ─── AIOps: Azure Copilot Observability Agent (Autonomous Alert Correlation) ──
 
 resource "azapi_resource" "observability_agent" {
-  count     = var.enable_observability_agent ? 1 : 0
-  type      = "Microsoft.Monitor/observabilityAgents@2026-05-01-preview"
-  name      = module.taxb_oa_name.name
-  parent_id = azurerm_resource_group.tax_advisor.id
-  location  = var.location
+  count                     = var.enable_observability_agent ? 1 : 0
+  type                      = "Microsoft.Monitor/observabilityAgents@2026-05-01-preview"
+  name                      = module.taxb_oa_name.name
+  parent_id                 = azurerm_resource_group.tax_advisor.id
+  location                  = var.location
+  schema_validation_enabled = false
 
   identity {
     type = "SystemAssigned"
@@ -768,10 +769,11 @@ resource "azapi_resource" "observability_agent" {
 }
 
 resource "azapi_resource" "monitored_app_insights" {
-  count     = var.enable_observability_agent ? 1 : 0
-  type      = "Microsoft.Monitor/observabilityAgents/monitoredResources@2026-05-01-preview"
-  name      = "target-taxb-appi"
-  parent_id = azapi_resource.observability_agent[0].id
+  count                     = var.enable_observability_agent ? 1 : 0
+  type                      = "Microsoft.Monitor/observabilityAgents/monitoredResources@2026-05-01-preview"
+  name                      = "target-taxb-appi"
+  parent_id                 = azapi_resource.observability_agent[0].id
+  schema_validation_enabled = false
 
   body = {
     properties = {
