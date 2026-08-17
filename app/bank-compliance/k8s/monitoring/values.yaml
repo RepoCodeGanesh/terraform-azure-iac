@@ -1,0 +1,132 @@
+# ==============================================================================
+# kube-prometheus-stack Values — Cost-Optimized for AKS AI Workloads
+# ==============================================================================
+
+# Global configuration
+global:
+  rbac:
+    create: true
+
+# ─── Prometheus Configuration ──────────────────────────────────────────────────
+prometheus:
+  prometheusSpec:
+    # Retain metrics for 7 days (saves disk & memory)
+    retention: 7d
+    retentionSize: "4GB"
+    
+    # Scrape interval tuned for AI apps & low node overhead
+    scrapeInterval: "30s"
+    evaluationInterval: "30s"
+
+    # Auto-discover ServiceMonitors across all namespaces
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    # Resource requests & limits tuned for Free Tier / Low-Cost AKS nodes
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+    # Lightweight persistent storage using Azure Managed CSI
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "managed-csi"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+# ─── Grafana Configuration ────────────────────────────────────────────────────
+grafana:
+  enabled: true
+  adminUser: "admin"
+  adminPassword: "AdminSecurePassword123!"
+
+  # Resource requests & limits
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "300Mi"
+
+  # Lightweight persistent storage
+  persistence:
+    enabled: true
+    storageClassName: "managed-csi"
+    size: 2Gi
+
+  # Pre-configured dashboard providers & plugins
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+  # Enable sidecar to auto-discover dashboards from ConfigMaps
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+      searchNamespace: ALL
+
+# ─── Alertmanager Configuration ───────────────────────────────────────────────
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: "20m"
+        memory: "64Mi"
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "managed-csi"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+
+# ─── Node Exporter & kube-state-metrics ────────────────────────────────────────
+nodeExporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: "10m"
+      memory: "32Mi"
+    limits:
+      cpu: "50m"
+      memory: "64Mi"
+
+kubeStateMetrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: "10m"
+      memory: "32Mi"
+    limits:
+      cpu: "50m"
+      memory: "64Mi"

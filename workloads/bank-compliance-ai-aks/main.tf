@@ -242,11 +242,45 @@ resource "azurerm_kubernetes_cluster" "bank_compliance" {
     keda_enabled = true
   }
 
+  oms_agent {
+    log_analytics_workspace_id      = data.azurerm_log_analytics_workspace.shared.id
+    msi_auth_for_monitoring_enabled = true
+  }
+
   tags = local.tags
 
   depends_on = [
     azurerm_role_assignment.aks_vnet_contributor
   ]
+}
+
+# ─── AKS Diagnostic Settings to Central Log Analytics ─────────────────────────
+
+resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
+  name                       = "diag-${module.bankc_aks_name.name}"
+  target_resource_id         = azurerm_kubernetes_cluster.bank_compliance.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+
+  enabled_log {
+    category = "kube-apiserver"
+  }
+
+  enabled_log {
+    category = "kube-audit-admin"
+  }
+
+  enabled_log {
+    category = "kube-controller-manager"
+  }
+
+  enabled_log {
+    category = "cluster-autoscaler"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
 }
 
 # ─── Workload Identity Federated Credential ───────────────────────────────────

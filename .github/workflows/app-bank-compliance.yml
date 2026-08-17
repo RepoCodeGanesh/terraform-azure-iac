@@ -123,6 +123,12 @@ jobs:
           kubectl rollout status deployment/bankc-backend -n bank-compliance
           kubectl rollout status deployment/litellm-proxy -n bank-compliance
 
+      - name: Deploy Prometheus & Grafana Observability Stack
+        working-directory: app/bank-compliance/k8s/monitoring
+        run: |
+          chmod +x deploy-monitoring.sh
+          ./deploy-monitoring.sh
+
   # ── JOB 3: Build & Deploy Frontend to Azure Static Web App ─────────────────
   deploy-frontend:
     name: Build & Deploy Frontend SPA

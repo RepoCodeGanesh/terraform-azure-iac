@@ -152,6 +152,8 @@ stages:
                 kubectl create configmap litellm-config --from-file=config.yaml=app/bank-compliance/k8s/litellm/config.yaml -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
                 kubectl apply -f app/bank-compliance/k8s/litellm/deployment.yaml
                 kubectl apply -f app/bank-compliance/k8s/backend-deployment.yaml
+                chmod +x app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
+                ./app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
 
 # ── STAGE 3: Build & Deploy Frontend to Static Web App ──────────────────────
 - stage: DeployFrontend
