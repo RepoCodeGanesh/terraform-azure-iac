@@ -4,7 +4,7 @@
 
 Retrieval-Augmented Generation (RAG) is the dominant architecture for grounding Large Language Models (LLMs) on private enterprise knowledge. In Microsoft Azure and modern AI platform engineering, RAG has evolved far beyond simple vector similarity search into sophisticated multi-stage, agentic, and graph-augmented pipelines.
 
-This document serves as the authoritative technical reference for **RAG Architectural Patterns on Microsoft Azure**, detailing the 5 major RAG paradigms, their enterprise adoption lifecycle status, architectural components, cost-accuracy tradeoffs, and production implementations within this repository.
+This document serves as the authoritative technical reference for **RAG Architectural Patterns on Microsoft Azure**, detailing the 5 major RAG paradigms, their **industry alternate names & aliases**, enterprise adoption lifecycle status, architectural components, cost-accuracy tradeoffs, and production implementations within this repository.
 
 ---
 
@@ -16,24 +16,54 @@ graph TD
     Gateway --> Safety["Azure AI Content Safety (Prompt Shield)"]
     Safety --> Router{"RAG Architecture Selection"}
     
-    Router -->|Simple Lookups| Naive["1. Naive / Classic RAG<br>⚠️ Legacy / Tutorial-Only"]
-    Router -->|Document Q&A / Legal / Support| Hybrid["2. Hybrid + Semantic Ranker<br>🏆 Vastly Used (Industry Baseline)"]
-    Router -->|Autonomous Multi-Hop / Tools| Agent["3. Agentic RAG<br>🔥 Top Trending (2025/2026)"]
-    Router -->|Corpus-Wide Sensemaking| Graph["4. Graph RAG<br>🔬 Emerging / High Adoption"]
-    Router -->|Scanned Invoices / Tables| Multi["5. Multimodal RAG<br>📄 Specialized Standard"]
+    Router -->|Simple Lookups| Naive["1. Naive / Classic RAG<br>⚠️ Legacy / Tutorial-Only<br><i>(Vanilla RAG, Vector-Only RAG)</i>"]
+    Router -->|Document Q&A / Legal / Support| Hybrid["2. Hybrid + Semantic Ranker<br>🏆 Vastly Used (Industry Baseline)<br><i>(Sparse-Dense RAG, Two-Stage RAG)</i>"]
+    Router -->|Autonomous Multi-Hop / Tools| Agent["3. Agentic RAG<br>🔥 Top Trending (2025/2026)<br><i>(CRAG, Self-RAG, ReAct RAG)</i>"]
+    Router -->|Corpus-Wide Sensemaking| Graph["4. Graph RAG<br>🔬 Emerging / High Adoption<br><i>(KG-RAG, Community RAG)</i>"]
+    Router -->|Scanned Invoices / Tables| Multi["5. Multimodal RAG<br>📄 Specialized Standard<br><i>(Vision RAG, Layout-Aware RAG)</i>"]
 ```
 
 ---
 
 ## 📊 Master Azure RAG Comparison & Adoption Matrix
 
-| RAG Pattern | Industry Adoption Status | Retrieval Accuracy & Precision | Latency Profile | Cost & Complexity | Recommended Azure Stack | Enterprise Production Verdict & Best Use Cases |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. Naive / Classic RAG** *(Single Vector Lookup)* | ⚠️ **Legacy / Tutorial-Only**<br>*(Phase-out in Prod)* | ⭐⭐ (Low)<br>Misses exact keywords, section numbers & structural tables | ⚡ Ultra-Fast<br>(< 1.0s) | 💰 Lowest<br>🟢 Simple | Azure Cosmos DB Vector / AI Search (Free Tier) + GPT-4o-mini | **Do NOT use in Enterprise Production.** Great for quick Hackathons/POCs, but suffers from high hallucination rates and misses exact section numbers, error codes, and IDs. |
-| **2. Hybrid RAG + Semantic Ranker** *(BM25 + Vectors + Cross-Encoder)* | 🏆 **Vastly Used**<br>*(Current Industry Baseline)* | ⭐⭐⭐⭐⭐ (Very High)<br>Combines exact match + semantic intent + cross-encoder rerank | ⚡ Fast<br>(1.0 – 2.0s) | 💰 Low-Medium<br>🟡 Moderate | **Azure AI Search** (`Semantic Ranker`) + Azure OpenAI + APIM | **The Gold Standard for 80% of Enterprise Apps.** Balances low latency, high accuracy, and low maintenance. Default pattern for compliance, legal, support chatbots, and knowledge bases *(Implemented in TaxBot India)*. |
-| **3. Agentic RAG** *(Self-Correcting, Multi-Hop, Tool-Calling)* | 🔥 **Top Trending**<br>*(Fastest Growing in 2025/2026)* | ⭐⭐⭐⭐⭐ (Exceptional)<br>Self-evaluates & critiques retrieved context before responding | ⏳ Variable<br>(2.0 – 6.0s depending on reasoning hops) | 💰 Medium<br>🔴 High | **AKS / Container Apps** (LiteLLM, Qdrant) + **Semantic Kernel / LangGraph** | **The Future of Complex AI Systems.** Best when answers require multi-step reasoning, external calculators, SQL lookups, and auto-query rewriting upon low confidence *(Implemented in BankCompliance AI)*. |
-| **4. Graph RAG** *(Knowledge Graph + Community Clusters)* | 🔬 **Emerging / High Hype**<br>*(Rapid Enterprise Adoption)* | ⭐⭐⭐⭐⭐ (Holistic Sensemaking)<br>Superior for corpus-wide thematic synthesis | ⏳ Slow<br>(3.0 – 8.0s for global search) | 💰 High (LLM-heavy index phase)<br>🔴 High | **Microsoft GraphRAG** + **Azure Cosmos DB** (Gremlin/NoSQL) + Azure OpenAI | **Essential for "Sensemaking" & Auditing.** Solves the major blind spot of vector search: answering global questions like *"What are the top 5 recurring compliance risks across all 300 circulars?"* High indexing compute. |
-| **5. Multimodal RAG** *(Visual, Document Layout, Charts)* | 📄 **Specialized Standard**<br>*(Production Standard for Scans/PDFs)* | ⭐⭐⭐⭐ (High Visual Precision)<br>Preserves tables, graphs, and formatting | ⏳ Moderate<br>(2.0 – 4.0s) | 💰 Medium<br>🟡 Moderate | **Azure AI Document Intelligence** (`prebuilt-layout`) + Azure AI Search + **GPT-4o Vision** | **Indispensable for Real-World Paperwork.** Regular OCR loses table structures; Document Intelligence converts balance sheets, tax returns, and scanned invoices into Markdown tables before vectorizing. |
+| RAG Pattern | Industry Alternate Names & Aliases | Industry Adoption Status | Accuracy & Precision | Latency Profile | Cost & Complexity | Recommended Azure Stack | Enterprise Production Verdict & Best Use Cases |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Naive / Classic RAG** | • Vanilla RAG<br>• Basic Vector RAG<br>• Dense Retrieval RAG<br>• Bi-Encoder RAG<br>• Single-Hop Vector Search | ⚠️ **Legacy / Tutorial-Only**<br>*(Phase-out in Prod)* | ⭐⭐ (Low)<br>Misses exact keywords, section numbers & structural tables | ⚡ Ultra-Fast<br>(< 1.0s) | 💰 Lowest<br>🟢 Simple | Azure Cosmos DB Vector / AI Search (Free Tier) + GPT-4o-mini | **Do NOT use in Enterprise Production.** Great for quick Hackathons/POCs, but suffers from high hallucination rates and misses exact section numbers, error codes, and IDs. |
+| **2. Hybrid RAG + Semantic Ranker** | • Sparse-Dense RAG<br>• Two-Stage Retrieval<br>• Retrieve-then-Rerank<br>• Fusion RAG (RRF)<br>• Cross-Encoder RAG<br>• Late-Interaction RAG | 🏆 **Vastly Used**<br>*(Current Industry Baseline)* | ⭐⭐⭐⭐⭐ (Very High)<br>Combines exact match + semantic intent + cross-encoder rerank | ⚡ Fast<br>(1.0 – 2.0s) | 💰 Low-Medium<br>🟡 Moderate | **Azure AI Search** (`Semantic Ranker`) + Azure OpenAI + APIM | **The Gold Standard for 80% of Enterprise Apps.** Balances low latency, high accuracy, and low maintenance. Default pattern for compliance, legal, support chatbots, and knowledge bases *(Implemented in TaxBot India)*. |
+| **3. Agentic RAG** | • Autonomous RAG<br>• Corrective RAG (CRAG)<br>• Self-Reflective RAG (Self-RAG)<br>• Multi-Hop / Iterative RAG<br>• ReAct RAG (Reason + Act)<br>• Tool-Augmented RAG | 🔥 **Top Trending**<br>*(Fastest Growing in 2025/2026)* | ⭐⭐⭐⭐⭐ (Exceptional)<br>Self-evaluates & critiques retrieved context before responding | ⏳ Variable<br>(2.0 – 6.0s depending on reasoning hops) | 💰 Medium<br>🔴 High | **AKS / Container Apps** (LiteLLM, Qdrant) + **Semantic Kernel / LangGraph** | **The Future of Complex AI Systems.** Best when answers require multi-step reasoning, external calculators, SQL lookups, and auto-query rewriting upon low confidence *(Implemented in BankCompliance AI)*. |
+| **4. Graph RAG** | • Knowledge-Graph RAG (KG-RAG)<br>• Entity-Centric RAG<br>• Community-Clustered RAG<br>• Microsoft GraphRAG<br>• Global Sensemaking RAG<br>• Topological RAG | 🔬 **Emerging / High Hype**<br>*(Rapid Enterprise Adoption)* | ⭐⭐⭐⭐⭐ (Holistic Sensemaking)<br>Superior for corpus-wide thematic synthesis | ⏳ Slow<br>(3.0 – 8.0s for global search) | 💰 High (LLM-heavy index phase)<br>🔴 High | **Microsoft GraphRAG** + **Azure Cosmos DB** (Gremlin/NoSQL) + Azure OpenAI | **Essential for "Sensemaking" & Auditing.** Solves the major blind spot of vector search: answering global questions like *"What are the top 5 recurring compliance risks across all 300 circulars?"* High indexing compute. |
+| **5. Multimodal RAG** | • Vision RAG (V-RAG)<br>• Layout-Aware RAG<br>• Visual Document Understanding (VDU) RAG<br>• Table-Aware RAG<br>• OCR-Augmented RAG | 📄 **Specialized Standard**<br>*(Production Standard for Scans/PDFs)* | ⭐⭐⭐⭐ (High Visual Precision)<br>Preserves tables, graphs, and formatting | ⏳ Moderate<br>(2.0 – 4.0s) | 💰 Medium<br>🟡 Moderate | **Azure AI Document Intelligence** (`prebuilt-layout`) + Azure AI Search + **GPT-4o Vision** | **Indispensable for Real-World Paperwork.** Regular OCR loses table structures; Document Intelligence converts balance sheets, tax returns, and scanned invoices into Markdown tables before vectorizing. |
+
+---
+
+## 🏷️ Complete RAG Terminology & Industry Aliases Cheat Sheet
+
+When discussing architectures with cross-functional engineering teams, academic researchers, and cloud providers, use this vocabulary mapping:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        RAG INDUSTRY VOCABULARY MAPPING TABLE                           │
+├─────────────────────────┬──────────────────────────────────────────────────────────────┤
+│ Architecture Category   │ Synonyms, Framework Terms & Industry Aliases                 │
+├─────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ 1. Naive RAG            │ Vanilla RAG, Basic RAG, Vector-Only RAG, Dense Retrieval,    │
+│                         │ Bi-Encoder Search, Flat Cosine Lookup, Single-Hop Retrieval. │
+├─────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ 2. Hybrid RAG           │ Sparse-Dense Retrieval, Keyword+Vector Search, Two-Stage     │
+│                         │ Retrieval, RRF Fusion, Cross-Encoder Rerank, Cohere Rerank,  │
+│                         │ Azure Semantic Ranker, ColBERT Late-Interaction.             │
+├─────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ 3. Agentic RAG          │ Corrective RAG (CRAG), Self-RAG, Adaptive RAG, ReAct Agent,  │
+│                         │ Multi-Hop RAG, Toolformer RAG, Iterative RAG, Plan-and-Solve.│
+├─────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ 4. Graph RAG            │ Knowledge Graph RAG (KG-RAG), Leiden Community RAG,          │
+│                         │ Microsoft GraphRAG, Entity-Relationship RAG, Graph-Hop RAG.  │
+├─────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ 5. Multimodal RAG       │ Vision RAG (V-RAG), LayoutLM RAG, OCR-RAG, Document RAG,     │
+│                         │ Visual Document Understanding (VDU), Table-Preserving RAG.   │
+└─────────────────────────┴──────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -61,6 +91,8 @@ graph TD
 
 ### 1. Naive / Classic RAG (Single Vector Lookup)
 
+> **Also Known As:** *Vanilla RAG, Basic Vector RAG, Dense Retrieval RAG, Bi-Encoder RAG, Flat Cosine Lookup.*
+
 #### Architecture:
 1. Ingest documents $\rightarrow$ Chunk by character/token count $\rightarrow$ Generate embeddings via `text-embedding-3-small`.
 2. Store in vector database (Azure Cosmos DB Vector Search / Azure AI Search).
@@ -74,6 +106,8 @@ graph TD
 ---
 
 ### 2. Advanced / Hybrid RAG with Semantic Reranking
+
+> **Also Known As:** *Sparse-Dense RAG, Two-Stage Retrieval, Retrieve-then-Rerank, Fusion RAG (RRF), Cross-Encoder RAG, Late-Interaction RAG.*
 
 ```mermaid
 flowchart LR
@@ -100,6 +134,8 @@ flowchart LR
 ---
 
 ### 3. Agentic RAG (Autonomous Multi-Hop & Self-Correcting)
+
+> **Also Known As:** *Autonomous RAG, Corrective RAG (CRAG), Self-Reflective RAG (Self-RAG), Multi-Hop RAG, ReAct RAG (Reason + Act), Tool-Augmented RAG.*
 
 ```mermaid
 flowchart TD
@@ -131,6 +167,8 @@ flowchart TD
 
 ### 4. Graph RAG (Knowledge Graph Augmented RAG)
 
+> **Also Known As:** *Knowledge-Graph RAG (KG-RAG), Entity-Centric RAG, Community-Clustered RAG, Microsoft GraphRAG, Global Sensemaking RAG.*
+
 ```mermaid
 flowchart TD
     Docs["Raw Corpus (PDFs / Circulars)"] --> LLM_Extract["LLM Entity & Relationship Extraction"]
@@ -156,6 +194,8 @@ flowchart TD
 ---
 
 ### 5. Multimodal RAG (Vision, Complex Tables & Scans)
+
+> **Also Known As:** *Vision RAG (V-RAG), Layout-Aware RAG, Visual Document Understanding (VDU) RAG, Table-Aware RAG, OCR-Augmented RAG.*
 
 ```mermaid
 flowchart LR
@@ -195,10 +235,10 @@ graph TD
 
 ## 🏗️ Implementations in This Repository
 
-| Workload | RAG Type Implemented | Compute & Hosting | Vector Engine | LLM / Gateway | Key Files & References |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **TaxBot India** | **Type 2: Hybrid RAG + Semantic Ranker** | Azure Functions (Consumption Y1) | Azure AI Search (F1/Basic) | Azure OpenAI (`gpt-4o-mini`) via APIM | [`workloads/tax-advisor/`](../../workloads/tax-advisor/)<br>[`app/tax-advisor/`](../../app/tax-advisor/) |
-| **BankCompliance AI** | **Type 4: Agentic & Containerized RAG** | Azure Kubernetes Service (AKS Free Tier) | Qdrant Vector DB (StatefulSet) | LiteLLM Proxy + Content Safety | [`workloads/bank-compliance-ai-aks/`](../../workloads/bank-compliance-ai-aks/)<br>[`app/bank-compliance/`](../../app/bank-compliance/) |
+| Workload | RAG Type Implemented | Industry Aliases | Compute & Hosting | Vector Engine | LLM / Gateway | Key Files & References |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **TaxBot India** | **Type 2: Hybrid RAG + Semantic Ranker** | Two-Stage RAG, Sparse-Dense RAG | Azure Functions (Consumption Y1) | Azure AI Search (F1/Basic) | Azure OpenAI (`gpt-4o-mini`) via APIM | [`workloads/tax-advisor/`](../../workloads/tax-advisor/)<br>[`app/tax-advisor/`](../../app/tax-advisor/) |
+| **BankCompliance AI** | **Type 4: Agentic & Containerized RAG** | Corrective RAG (CRAG), Toolformer RAG | Azure Kubernetes Service (AKS Free Tier) | Qdrant Vector DB (StatefulSet) | LiteLLM Proxy + Content Safety | [`workloads/bank-compliance-ai-aks/`](../../workloads/bank-compliance-ai-aks/)<br>[`app/bank-compliance/`](../../app/bank-compliance/) |
 
 ---
 
