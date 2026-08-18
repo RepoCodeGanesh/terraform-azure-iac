@@ -34,6 +34,7 @@ Detailed step-by-step operational guides for provisioning and operating the Azur
 | **[07-monitoring-telemetry-guide.md](platform-guide/07-monitoring-telemetry-guide.md)** | Application Insights, Log Analytics queries, and APIM request rate limiting telemetry. |
 | **[08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)** | Master RAG taxonomy, 6 architectures, adoption lifecycle matrix, and architectural decision tree. |
 | **[09-multi-cloud-ai-gateway-and-fallback-guide.md](platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md)** | Multi-Cloud AI Gateway (Gemini Primary $0 + Azure OpenAI Standby Fallback). |
+| **[10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)** | Enterprise AI Platform Engineering Roadmap & Phased Gap Analysis. |
 
 ---
 
