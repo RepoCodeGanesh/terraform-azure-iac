@@ -48,7 +48,7 @@ enable_role_assignments = true
 
 # ── Monitoring & Alerting ───────────────────────────────────────────────────
 alert_email_address                = "ganesank@mytaxbot.site"
-enable_observability_agent        = true
+enable_observability_agent         = true
 observability_agent_location       = "eastus"
 observability_agent_location_short = "eus"
 

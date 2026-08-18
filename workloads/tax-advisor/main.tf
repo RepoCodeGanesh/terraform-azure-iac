@@ -139,6 +139,16 @@ module "taxb_oa_name" {
   instance       = var.instance
 }
 
+module "taxb_amw_name" {
+  source         = "../../modules/naming"
+  resource_type  = "amw"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.observability_agent_location_short
+  instance       = var.instance
+}
+
 
 # taxb_cs_name removed — Content Safety is now shared via platform/shared-services
 
@@ -739,6 +749,19 @@ resource "azurerm_monitor_metric_alert" "cs_jailbreak_alert" {
   ]
 }
 
+# ─── Azure Monitor Workspace (Microsoft.Monitor/accounts) ─────────────────────
+# Required by Azure Copilot Observability Agent for storing correlated metrics.
+
+resource "azurerm_monitor_workspace" "observability" {
+  count               = var.enable_observability_agent ? 1 : 0
+  name                = module.taxb_amw_name.name
+  resource_group_name = azurerm_resource_group.tax_advisor.name
+  location            = var.observability_agent_location
+  tags                = local.tags
+
+  depends_on = [azurerm_resource_group.tax_advisor]
+}
+
 # ─── AIOps: Azure Copilot Observability Agent (Autonomous Alert Correlation) ──
 
 resource "azapi_resource" "observability_agent" {
@@ -755,7 +778,7 @@ resource "azapi_resource" "observability_agent" {
 
   body = {
     properties = {
-      monitoringAccountId = data.azurerm_log_analytics_workspace.shared.id
+      monitoringAccountId = azurerm_monitor_workspace.observability[0].id
       enabled             = true
       customInstructions  = <<-EOT
         - TaxBot India ('taxb') uses Azure Functions, Azure OpenAI, and Cosmos DB.
@@ -766,6 +789,11 @@ resource "azapi_resource" "observability_agent" {
   }
 
   tags = local.tags
+
+  depends_on = [
+    azurerm_monitor_workspace.observability,
+    azurerm_resource_group.tax_advisor
+  ]
 }
 
 resource "azapi_resource" "monitored_app_insights" {
