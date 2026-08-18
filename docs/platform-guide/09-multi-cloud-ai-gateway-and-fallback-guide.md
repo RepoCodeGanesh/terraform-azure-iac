@@ -1,9 +1,14 @@
 # 🌐 Multi-Cloud Resilient AI Gateway & Dual-Model Strategy Guide
 ## Active-Passive Architecture: Google Gemini (Primary $0) + Azure OpenAI (Secondary Fallback)
 
+> [!NOTE]
+> **🗓️ ROADMAP STATUS: FUTURE ENHANCEMENT (PHASE 2+)**
+> This document serves as the approved architectural blueprint for future multi-cloud resilience and AI ETL ingestion pipelines. Implementation is scheduled for Phase 2, following the immediate completion of our **Core Azure Landing Zone Infrastructure & AKS Greenfield Pipeline Validation**.
+
 ---
 
 ## 📌 Executive Summary
+
 
 Modern enterprise AI platforms require **zero single-vendor lock-in**, **100% service availability**, and **strict cost optimization**. 
 
