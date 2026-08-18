@@ -193,4 +193,16 @@ variable "enable_observability_agent" {
   default     = true
 }
 
+variable "observability_agent_location" {
+  description = "Azure region for the Azure Copilot Observability Agent (must be a supported region e.g. eastus)."
+  type        = string
+  default     = "eastus"
+}
+
+variable "observability_agent_location_short" {
+  description = "Short name of the Azure region for Observability Agent naming."
+  type        = string
+  default     = "eus"
+}
+
 

@@ -135,7 +135,7 @@ module "taxb_oa_name" {
   project        = var.project
   workload       = var.workload
   environment    = var.environment
-  location_short = var.location_short
+  location_short = var.observability_agent_location_short
   instance       = var.instance
 }
 
@@ -746,7 +746,7 @@ resource "azapi_resource" "observability_agent" {
   type                      = "Microsoft.Monitor/observabilityAgents@2026-05-01-preview"
   name                      = module.taxb_oa_name.name
   parent_id                 = azurerm_resource_group.tax_advisor.id
-  location                  = var.location
+  location                  = var.observability_agent_location
   schema_validation_enabled = false
 
   identity {
