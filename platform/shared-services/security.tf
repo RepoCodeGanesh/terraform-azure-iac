@@ -32,3 +32,15 @@ resource "azurerm_role_assignment" "app_prod_kv_secrets_officer" {
 
   depends_on = [module.shared_key_vault]
 }
+
+# ─── Workload RBAC: App-Prod SP Role Delegation on Shared Content Safety ─────
+# Grants the app-prod SP authority to assign/unassign Cognitive Services User
+# roles on the shared Content Safety account for newly created spoke identities.
+
+resource "azurerm_role_assignment" "app_prod_cs_rbac_admin" {
+  scope                = module.shared_content_safety.id
+  role_definition_name = "Role Based Access Control Administrator"
+  principal_id         = var.app_prod_sp_object_id
+
+  depends_on = [module.shared_content_safety]
+}

@@ -1,6 +1,6 @@
 # ==============================================================================
 # Workload: BankCompliance AI — Security & RBAC Tier
-# Purpose: Shared Content Safety Lookups for Application Pod Identity
+# Purpose: Shared Content Safety RBAC role assignments for Application Pod Identity
 # ==============================================================================
 
 # ─── Shared Azure AI Content Safety Lookup & Access ───────────────────────────
@@ -11,14 +11,15 @@ data "azurerm_cognitive_account" "content_safety" {
   resource_group_name = var.shared_resource_group_name
 }
 
-# ─── State Migration: Cleanly forget legacy cross-sub role assignment ─────────
-# Role assignments on shared services resources are governed by platform/shared-services.
-# Removing from state without calling Azure IAM DELETE API to prevent 403 Forbidden.
+resource "azurerm_role_assignment" "bankc_cs_user" {
+  provider             = azurerm.shared
+  count                = var.enable_role_assignments ? 1 : 0
+  scope                = data.azurerm_cognitive_account.content_safety.id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = azurerm_user_assigned_identity.bankc_app.principal_id
 
-removed {
-  from = azurerm_role_assignment.bankc_cs_user
-
-  lifecycle {
-    destroy = false
-  }
+  depends_on = [
+    data.azurerm_cognitive_account.content_safety,
+    azurerm_user_assigned_identity.bankc_app
+  ]
 }
