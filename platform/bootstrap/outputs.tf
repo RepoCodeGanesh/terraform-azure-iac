@@ -10,20 +10,20 @@ output "resource_group_name" {
 
 output "storage_account_name" {
   description = "Terraform state storage account name."
-  value       = azurerm_storage_account.tfstate_new.name
+  value       = module.bootstrap_storage.name
 }
 
 output "storage_account_id" {
   description = "Terraform state storage account resource ID."
-  value       = azurerm_storage_account.tfstate_new.id
+  value       = module.bootstrap_storage.id
 }
 
 output "primary_blob_endpoint" {
   description = "Primary Blob storage endpoint for state storage."
-  value       = azurerm_storage_account.tfstate_new.primary_blob_endpoint
+  value       = module.bootstrap_storage.primary_blob_endpoint
 }
 
 output "storage_container_name" {
   description = "Terraform state container name."
-  value       = azurerm_storage_container.tfstate_new.name
+  value       = var.tfstate_container_name
 }

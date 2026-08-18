@@ -72,12 +72,12 @@ output "search_service_endpoint" {
 
 output "static_web_app_name" {
   description = "Name of the Azure Static Web App."
-  value       = azurerm_static_web_app.frontend.name
+  value       = module.taxb_frontend.name
 }
 
 output "static_web_app_url" {
   description = "Default clickable URL for the Static Web App."
-  value       = "https://${azurerm_static_web_app.frontend.default_host_name}"
+  value       = "https://${module.taxb_frontend.default_host_name}"
 }
 
 output "custom_domain_url" {
@@ -87,7 +87,7 @@ output "custom_domain_url" {
 
 output "static_web_app_api_key" {
   description = "Deployment token for the Static Web App."
-  value       = azurerm_static_web_app.frontend.api_key
+  value       = module.taxb_frontend.api_key
   sensitive   = true
 }
 
@@ -110,4 +110,3 @@ output "observability_agent_name" {
   description = "Name of the Azure Copilot Observability Agent."
   value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].name : null
 }
-
