@@ -32,6 +32,7 @@ Detailed step-by-step operational guides for provisioning and operating the Azur
 | **[05-troubleshooting-guide.md](platform-guide/05-troubleshooting-guide.md)** | Known apply risks, Azure OpenAI quota errors, VNet peering locks, and APIM CORS fixes. |
 | **[06-blue-green-deployment-guide.md](platform-guide/06-blue-green-deployment-guide.md)** | Zero-downtime Function App & Static Web App deployment strategies. |
 | **[07-monitoring-telemetry-guide.md](platform-guide/07-monitoring-telemetry-guide.md)** | Application Insights, Log Analytics queries, and APIM request rate limiting telemetry. |
+| **[08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)** | Master RAG taxonomy, 5 architectures, adoption lifecycle matrix, and architectural decision tree. |
 
 ---
 

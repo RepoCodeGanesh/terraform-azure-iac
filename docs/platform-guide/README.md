@@ -68,6 +68,7 @@ Click any guide below for detailed specs, operational runbooks, and deep-dive te
 | **05** | **Troubleshooting Guide** | Incident flowchart, APIM 500, SWA CORS, Tax rules (80CCD(2), Rule 2A HRA). | [05-troubleshooting-guide.md](05-troubleshooting-guide.md) |
 | **06** | **Blue-Green Deployments** | Zero-downtime slot swaps, SWA global CDN cutover, 1-click rollback. | [06-blue-green-deployment-guide.md](06-blue-green-deployment-guide.md) |
 | **07** | **Monitoring & Telemetry** | Log Analytics aggregation, Application Insights, KQL queries, alerts. | [07-monitoring-telemetry-guide.md](07-monitoring-telemetry-guide.md) |
+| **08** | **Azure RAG Architectures** | Master RAG taxonomy, 5 architectures, adoption matrix, decision playbook. | [08-azure-rag-architectural-patterns.md](08-azure-rag-architectural-patterns.md) |
 
 ---
 
