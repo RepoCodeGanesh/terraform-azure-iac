@@ -24,7 +24,7 @@ resource "azurerm_user_assigned_identity" "aks_control_plane" {
 }
 
 resource "azurerm_role_assignment" "aks_vnet_contributor" {
-  count                = var.enable_role_assignments && var.vnet_id != null ? 1 : 0
+  count                = var.enable_role_assignments ? 1 : 0
   scope                = var.vnet_id
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_user_assigned_identity.aks_control_plane.principal_id
