@@ -11,12 +11,12 @@ For compact current context, read `docs/PROJECT_CONTEXT.md` first. It preserves 
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
-| Tier / Scope | Azure Subscription | Azure DevOps (ADO) Pipeline & Connection | GitHub Actions Workflow & Secret | Entra ID App Registration (Client ID) |
+| Tier / Scope | Azure Subscription | Azure DevOps (ADO) Pipeline & Connection | GitHub Actions Workflow & Secret | Entra ID App Registration (Client ID & Object ID) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Bootstrap** | `bootstrap`<br>`7689ad81-71ba-481b-a17c-e1b6be61bab1` | `pipelines/azure-cicd-bootstrap.yml`<br>Service Connection: `bootstrap` | `.github/workflows/platform-bootstrap.yml`<br>Secret: `BOOTSTRAP_CLIENT_ID` | `DevOpsUniverse-Terraform-bootstrap`<br>`934ab83b-2f61-475e-bdbc-85c9eaed83e6` |
-| **Hub Network** | `Hub-prod`<br>`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `pipelines/azure-cicd-hub.yml`<br>Service Connection: `hub-prod` | `.github/workflows/platform-hub.yml`<br>Secret: `HUB_CLIENT_ID` | `DevOpsUniverse-Terraform-hub-prod`<br>`78960c14-26d2-4a0c-ab21-579c3030155e` |
-| **Shared Services** | `Shared-services`<br>`859a785c-bd38-402d-b595-1f44f40fb9bf` | `pipelines/azure-cicd-shared-ser.yml`<br>Service Connection: `shared-services` | `.github/workflows/platform-shared-services.yml`<br>Secret: `SHARED_CLIENT_ID` | `DevOpsUniverse-Terraform-shared-services`<br>`580ffcfd-51ee-4dc3-9204-d03cb438ff82` |
-| **Apps (AI Workloads)** | `Apps-prod`<br>`f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `pipelines/azure-cicd-app-tax-advisor.yml`<br>Service Connection: `app-prod` | `.github/workflows/app-tax-advisor.yml`<br>Secret: `APP_CLIENT_ID` | `DevOpsUniverse-Terraform-app-prod`<br>`99ab7987-3989-46c3-bae9-92279be16608` |
+| **Bootstrap** | `bootstrap`<br>`7689ad81-71ba-481b-a17c-e1b6be61bab1` | `pipelines/azure-cicd-bootstrap.yml`<br>Service Connection: `bootstrap` | `.github/workflows/platform-bootstrap.yml`<br>Secret: `BOOTSTRAP_CLIENT_ID` | `DevOpsUniverse-Terraform-bootstrap`<br>App ID: `934ab83b-2f61-475e-bdbc-85c9eaed83e6`<br>Obj ID: `f3a1b19b-11b8-4e13-8499-7f83ea39547a` |
+| **Hub Network** | `Hub-prod`<br>`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `pipelines/azure-cicd-hub.yml`<br>Service Connection: `hub-prod` | `.github/workflows/platform-hub.yml`<br>Secret: `HUB_CLIENT_ID` | `DevOpsUniverse-Terraform-hub-prod`<br>App ID: `78960c14-26d2-4a0c-ab21-579c3030155e`<br>Obj ID: `14cfc7b4-c3a2-4994-9f5c-0ce4d8db0f57` |
+| **Shared Services** | `Shared-services`<br>`859a785c-bd38-402d-b595-1f44f40fb9bf` | `pipelines/azure-cicd-shared-ser.yml`<br>Service Connection: `shared-services` | `.github/workflows/platform-shared-services.yml`<br>Secret: `SHARED_CLIENT_ID` | `DevOpsUniverse-Terraform-shared-services`<br>App ID: `580ffcfd-51ee-4dc3-9204-d03cb438ff82`<br>Obj ID: `c5a24473-2bad-41a7-b0b1-b79b94621252` |
+| **Apps (AI Workloads)** | `Apps-prod`<br>`f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `pipelines/azure-cicd-app-tax-advisor.yml`<br>Service Connection: `app-prod` | `.github/workflows/app-tax-advisor.yml`<br>Secret: `APP_CLIENT_ID` | `DevOpsUniverse-Terraform-app-prod`<br>App ID: `99ab7987-3989-46c3-bae9-92279be16608`<br>Obj ID: `9630f661-27e7-42f0-8377-5565ba7db7cd` |
 
 ---
 

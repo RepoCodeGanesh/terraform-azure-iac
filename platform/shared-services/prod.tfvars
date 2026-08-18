@@ -44,3 +44,6 @@ openai_location_short         = "eus"
 openai_model_name             = "gpt-5.4-nano"
 openai_model_version          = "2026-03-17"
 openai_model_capacity         = 10
+
+# ── Workload Cross-Access RBAC ──────────────────────────────────────────────
+app_prod_sp_object_id = "9630f661-27e7-42f0-8377-5565ba7db7cd"

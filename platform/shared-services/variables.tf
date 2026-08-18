@@ -187,3 +187,11 @@ variable "openai_model_capacity" {
   type        = number
   default     = 10
 }
+
+# ── Workload Cross-Access RBAC ──────────────────────────────────────────────
+
+variable "app_prod_sp_object_id" {
+  description = "Enterprise App Object ID of the DevOpsUniverse-Terraform-app-prod Service Principal."
+  type        = string
+  default     = "9630f661-27e7-42f0-8377-5565ba7db7cd"
+}

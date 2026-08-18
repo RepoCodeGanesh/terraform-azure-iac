@@ -67,12 +67,12 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
 ## CI/CD Authentication (Workload Identity Federation)
 
-| ADO Service Connection | GitHub Secret | App Registration Client ID |
-|----------------------|---------------|---------------------------|
-| `bootstrap` | `BOOTSTRAP_CLIENT_ID` | `934ab83b-2f61-475e-bdbc-85c9eaed83e6` |
-| `hub-prod` | `HUB_CLIENT_ID` | `78960c14-26d2-4a0c-ab21-579c3030155e` |
-| `shared-services` | `SHARED_CLIENT_ID` | `580ffcfd-51ee-4dc3-9204-d03cb438ff82` |
-| `app-prod` | `APP_CLIENT_ID` | `99ab7987-3989-46c3-bae9-92279be16608` |
+| ADO Service Connection | GitHub Secret | App Registration Client ID | Enterprise App Object ID (Principal ID) |
+|----------------------|---------------|---------------------------|------------------------------------------|
+| `bootstrap` | `BOOTSTRAP_CLIENT_ID` | `934ab83b-2f61-475e-bdbc-85c9eaed83e6` | `f3a1b19b-11b8-4e13-8499-7f83ea39547a` |
+| `hub-prod` | `HUB_CLIENT_ID` | `78960c14-26d2-4a0c-ab21-579c3030155e` | `14cfc7b4-c3a2-4994-9f5c-0ce4d8db0f57` |
+| `shared-services` | `SHARED_CLIENT_ID` | `580ffcfd-51ee-4dc3-9204-d03cb438ff82` | `c5a24473-2bad-41a7-b0b1-b79b94621252` |
+| `app-prod` | `APP_CLIENT_ID` | `99ab7987-3989-46c3-bae9-92279be16608` | `9630f661-27e7-42f0-8377-5565ba7db7cd` |
 
 GitHub Secrets required for BankCompliance GHA: `APP_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_STATIC_WEB_APPS_API_TOKEN`
 

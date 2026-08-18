@@ -206,14 +206,10 @@ module "shared_to_hub_peering" {
 # via provider = azurerm.shared. The app-prod SP needs Key Vault Secrets Officer
 # so it can create/update that secret.
 
-data "azuread_service_principal" "app_prod" {
-  client_id = "99ab7987-3989-46c3-bae9-92279be16608" # DevOpsUniverse-Terraform-app-prod
-}
-
 resource "azurerm_role_assignment" "app_prod_kv_secrets_officer" {
   scope                = module.shared_key_vault.id
   role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = data.azuread_service_principal.app_prod.object_id
+  principal_id         = var.app_prod_sp_object_id
 
   depends_on = [module.shared_key_vault]
 }
