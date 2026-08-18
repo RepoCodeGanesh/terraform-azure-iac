@@ -104,7 +104,7 @@ jobs:
       - name: Terraform Init
         working-directory: ${{ inputs.target }}
         run: |
-          terraform init -backend-config=backend.hcl -input=false
+          terraform init -reconfigure -backend-config=backend.hcl -input=false
 
       - name: Terraform Plan
         if: inputs.action == 'plan'
