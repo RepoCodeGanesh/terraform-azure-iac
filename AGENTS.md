@@ -100,3 +100,10 @@ State files are path-keyed — **git repo location does not affect state**.
 3. Terraform roots are independent — do not merge state files or add cross-root `terraform_remote_state` without explicit instruction.
 4. The ADO environment for BankCompliance infra approvals is `bank-compliance-prod`. Do not use `tax-advisor-prod`.
 5. LiteLLM image must be pinned to a specific version tag — never use `:main-latest`.
+
+---
+
+## 🤖 Developer AI Tooling & Environment Context
+- **AI Subscription:** **Google AI Plus** (India tier)
+- **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context capabilities.
+- **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.

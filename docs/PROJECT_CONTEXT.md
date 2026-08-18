@@ -126,3 +126,13 @@ Keep Terraform roots separate. Do not merge state:
 - **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)
 - **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)
 - **Master Documentation Index:** [docs/README.md](README.md)
+- **Azure RAG Architectural Patterns Guide:** [docs/platform-guide/08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)
+
+---
+
+## 🤖 Developer AI Tooling & Environment Context
+
+* **AI Subscription:** **Google AI Plus** (India tier)
+* **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context reasoning.
+* **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+
