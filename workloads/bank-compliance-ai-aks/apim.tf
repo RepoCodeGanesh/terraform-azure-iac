@@ -7,6 +7,10 @@
 module "bankc_apim_api" {
   source = "../../modules/apim_api"
 
+  providers = {
+    azurerm = azurerm.shared
+  }
+
   apim_id                  = data.azurerm_api_management.shared.id
   apim_name                = data.azurerm_api_management.shared.name
   apim_resource_group_name = data.azurerm_resource_group.shared.name
@@ -37,4 +41,36 @@ module "bankc_apim_api" {
       description  = "Returns list of indexed RBI circulars"
     }
   }
+}
+
+# ─── State Migration: Move legacy top-level APIM resources into module ─────────
+
+moved {
+  from = azurerm_api_management_backend.bankc_backend
+  to   = module.bankc_apim_api.azurerm_api_management_backend.this
+}
+
+moved {
+  from = azapi_resource.apim_bankc_api
+  to   = module.bankc_apim_api.azapi_resource.api
+}
+
+moved {
+  from = azapi_resource.bankc_cors_policy
+  to   = module.bankc_apim_api.azapi_resource.policy
+}
+
+moved {
+  from = azapi_resource.bankc_healthz_get
+  to   = module.bankc_apim_api.azapi_resource.operations["healthz-get"]
+}
+
+moved {
+  from = azapi_resource.compliance_circulars_get
+  to   = module.bankc_apim_api.azapi_resource.operations["compliance-circulars-get"]
+}
+
+moved {
+  from = azapi_resource.compliance_query_post
+  to   = module.bankc_apim_api.azapi_resource.operations["compliance-query-post"]
 }

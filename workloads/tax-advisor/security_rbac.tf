@@ -48,6 +48,7 @@ resource "azurerm_cosmosdb_sql_role_assignment" "func_cosmos_contributor" {
 # ─── RBAC: Cognitive Services User (for Content Safety Prompt Shield) ──────────
 
 resource "azurerm_role_assignment" "func_content_safety_user" {
+  provider             = azurerm.shared
   count                = var.enable_role_assignments ? 1 : 0
   scope                = data.azurerm_cognitive_account.content_safety.id
   role_definition_name = "Cognitive Services User"

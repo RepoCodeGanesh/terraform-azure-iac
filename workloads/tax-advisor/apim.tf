@@ -22,6 +22,10 @@ resource "azurerm_api_management_backend" "openai_backend" {
 module "taxb_apim_api" {
   source = "../../modules/apim_api"
 
+  providers = {
+    azurerm = azurerm.shared
+  }
+
   apim_id                  = data.azurerm_api_management.shared.id
   apim_name                = data.azurerm_api_management.shared.name
   apim_resource_group_name = data.azurerm_resource_group.shared.name

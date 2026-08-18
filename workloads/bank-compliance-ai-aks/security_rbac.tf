@@ -12,6 +12,7 @@ data "azurerm_cognitive_account" "content_safety" {
 }
 
 resource "azurerm_role_assignment" "bankc_cs_user" {
+  provider             = azurerm.shared
   count                = var.enable_role_assignments ? 1 : 0
   scope                = data.azurerm_cognitive_account.content_safety.id
   role_definition_name = "Cognitive Services User"
