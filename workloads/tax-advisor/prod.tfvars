@@ -52,4 +52,8 @@ enable_observability_agent         = true
 observability_agent_location       = "eastus"
 observability_agent_location_short = "eus"
 
+# ── Custom Domain & Cloudflare DNS ───────────────────────────────────────────
+custom_domain_name = "www.mytaxbot.site"
+cloudflare_zone_id = "45acc43e2f88066e0406eca94edffc53"
+
 

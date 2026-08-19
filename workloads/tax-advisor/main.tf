@@ -42,6 +42,12 @@ data "azurerm_key_vault" "shared" {
   resource_group_name = data.azurerm_resource_group.shared.name
 }
 
+data "azurerm_key_vault_secret" "cloudflare_api_token" {
+  provider     = azurerm.shared
+  name         = "cloudflare-api-token"
+  key_vault_id = data.azurerm_key_vault.shared.id
+}
+
 # ─── CAF Resource Naming Modules ──────────────────────────────────────────────
 
 module "taxb_rg_name" {

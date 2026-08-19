@@ -82,7 +82,27 @@ output "static_web_app_url" {
 
 output "custom_domain_url" {
   description = "Live Production Custom Domain URL for TaxBot India."
-  value       = "https://www.mytaxbot.site"
+  value       = "https://${var.custom_domain_name}"
+}
+
+output "cloudflare_cname_record_id" {
+  description = "The Cloudflare DNS CNAME record ID for www.mytaxbot.site."
+  value       = cloudflare_record.taxb_cname.id
+}
+
+output "dns_and_custom_domain_summary" {
+  description = "Complete summary of automated DNS and custom domain configuration for TaxBot."
+  value       = <<-EOT
+    ================================================================================
+    🌐 CLOUDFLARE DNS & AZURE CUSTOM DOMAIN AUTOMATION COMPLETE!
+    ================================================================================
+    • Public App URL:       https://${var.custom_domain_name}
+    • DNS CNAME Record:     www.mytaxbot.site ➔ ${module.taxb_frontend.default_host_name}
+    • DNS Automation:       Cloudflare API (Record ID: ${cloudflare_record.taxb_cname.id})
+    • SSL Certificate:      Active (Auto-provisioned & Managed by Azure SWA)
+    • APIM Gateway URL:     ${startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/tax-advisor" : "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"}
+    ================================================================================
+  EOT
 }
 
 output "static_web_app_api_key" {
