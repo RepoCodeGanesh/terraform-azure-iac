@@ -62,12 +62,13 @@ Core outcomes:
 Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
-- `platform/shared-services`: complete.
-- `workloads/tax-advisor`: complete.
-- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + SWA live).
+- `platform/shared-services`: complete (Key Vault, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
+- `workloads/tax-advisor`: complete (Serverless Function App + Cosmos + AI Search + Cloudflare DNS `www.mytaxbot.site` automated).
+- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `app/bank-compliance`: complete (React SPA + FastAPI backend + LiteLLM + Qdrant Vector DB live).
 - `pipelines/`: active and verified across both GitHub Actions and Azure DevOps.
+- `dns_automation`: 100% automated via Cloudflare Terraform provider across both workloads with 10s `time_sleep` buffer.
 
 ---
 
