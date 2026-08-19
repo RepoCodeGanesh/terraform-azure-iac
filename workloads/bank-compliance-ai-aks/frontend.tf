@@ -14,7 +14,7 @@ module "bankc_frontend" {
   location            = var.swa_location
   sku_tier            = "Free"
   sku_size            = "Free"
-  custom_domain_name  = var.enable_custom_domain ? var.custom_domain_name : null
+  custom_domain_name  = null # Managed in dns_cloudflare.tf with automated Cloudflare DNS dependency
   tags                = local.tags
 }
 

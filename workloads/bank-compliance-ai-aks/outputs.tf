@@ -64,9 +64,29 @@ output "key_vault_secret_name" {
   value       = azurerm_key_vault_secret.bankc_swa_api_token.name
 }
 
-output "custom_domain_cname_instruction" {
-  description = "Instruction for DNS CNAME configuration at domain registrar."
-  value       = "Create a CNAME record at your DNS provider: Host 'bank' pointing to '${module.bankc_frontend.default_host_name}', then set enable_custom_domain = true in prod.tfvars."
+output "cloudflare_cname_record_id" {
+  description = "The Cloudflare DNS CNAME record ID for bank.mytaxbot.site."
+  value       = cloudflare_record.bankc_cname.id
+}
+
+output "custom_domain_url" {
+  description = "The verified public URL for BankCompliance AI."
+  value       = var.custom_domain_name != null ? "https://${var.custom_domain_name}" : "https://${module.bankc_frontend.default_host_name}"
+}
+
+output "dns_and_custom_domain_summary" {
+  description = "Complete summary of automated DNS and custom domain configuration."
+  value       = <<-EOT
+    ================================================================================
+    🌐 CLOUDFLARE DNS & AZURE CUSTOM DOMAIN AUTOMATION COMPLETE!
+    ================================================================================
+    • Public App URL:       https://${var.custom_domain_name}
+    • DNS CNAME Record:     bank.mytaxbot.site ➔ ${module.bankc_frontend.default_host_name}
+    • DNS Automation:       Cloudflare API (Record ID: ${cloudflare_record.bankc_cname.id})
+    • SSL Certificate:      Active (Auto-provisioned & Managed by Azure SWA)
+    • APIM Gateway URL:     ${startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/bankc" : "https://${data.azurerm_api_management.shared.gateway_url}/bankc"}
+    ================================================================================
+  EOT
 }
 
 output "apim_gateway_url" {

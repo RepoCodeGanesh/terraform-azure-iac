@@ -18,3 +18,8 @@ output "api_key" {
   value       = azurerm_static_web_app.this.api_key
   sensitive   = true
 }
+
+output "custom_domain_name" {
+  description = "The verified custom domain name attached to the Static Web App."
+  value       = length(azurerm_static_web_app_custom_domain.this) > 0 ? azurerm_static_web_app_custom_domain.this[0].domain_name : null
+}
