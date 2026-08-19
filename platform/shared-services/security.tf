@@ -44,3 +44,26 @@ resource "azurerm_role_assignment" "app_prod_cs_rbac_admin" {
 
   depends_on = [module.shared_content_safety]
 }
+
+# ─── Workload RBAC: App-Prod SP Role Delegation on Shared OpenAI ─────────────
+# Grants the app-prod SP authority to assign/unassign Cognitive Services OpenAI User
+# roles on the shared OpenAI account for newly created spoke identities.
+
+resource "azurerm_role_assignment" "app_prod_openai_rbac_admin" {
+  scope                = module.shared_openai.id
+  role_definition_name = "Role Based Access Control Administrator"
+  principal_id         = var.app_prod_sp_object_id
+
+  depends_on = [module.shared_openai]
+}
+
+# ─── Workload RBAC: App-Prod SP Contributor on Shared Services Resource Group ─
+# Allows app-prod SP to manage APIM APIs, backend mappings, and policies.
+
+resource "azurerm_role_assignment" "app_prod_rg_contributor" {
+  scope                = azurerm_resource_group.shared_services.id
+  role_definition_name = "Contributor"
+  principal_id         = var.app_prod_sp_object_id
+
+  depends_on = [azurerm_resource_group.shared_services]
+}

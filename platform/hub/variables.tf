@@ -104,3 +104,11 @@ variable "management_subnet_prefix" {
   type        = string
   default     = "10.0.1.0/24"
 }
+
+# ── Cross-Subscription Workload SPN Delegation ──────────────────────────────
+
+variable "app_prod_sp_object_id" {
+  description = "Object ID of the app-prod Service Principal for VNet Peering authorization."
+  type        = string
+  default     = "9630f661-27e7-42f0-8377-5565ba7db7cd"
+}
