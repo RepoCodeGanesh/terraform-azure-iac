@@ -16,6 +16,14 @@ resource "cloudflare_record" "bankc_cname" {
   depends_on = [module.bankc_frontend]
 }
 
+# ─── Wait 10s for Global DNS Edge Propagation (Prevents Race Conditions) ──────
+
+resource "time_sleep" "wait_for_dns" {
+  create_duration = "10s"
+
+  depends_on = [cloudflare_record.bankc_cname]
+}
+
 # ─── Custom Domain Validation & SSL Binding on Azure SWA ─────────────────────
 
 resource "azurerm_static_web_app_custom_domain" "bankc_custom_domain" {
@@ -26,6 +34,7 @@ resource "azurerm_static_web_app_custom_domain" "bankc_custom_domain" {
 
   depends_on = [
     module.bankc_frontend,
-    cloudflare_record.bankc_cname
+    cloudflare_record.bankc_cname,
+    time_sleep.wait_for_dns
   ]
 }
