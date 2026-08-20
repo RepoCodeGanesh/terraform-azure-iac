@@ -17,7 +17,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 7** | Platform Visual Documentation & Incident Playbooks | `docs/platform-guide/` | ✅ Completed |
 | **Phase 8** | FinOps Cost Alerts & Logging Diagnostic Streamline | AI Workloads & Shared Services | ✅ Completed |
 | **Phase 9** | BankCompliance AI Copilot on AKS (LiteLLM, Qdrant, Full RAG) | `workloads/bank-compliance-ai-aks` & `app/bank-compliance/` | ✅ Completed |
-| **Phase 10** | *[Next]* Automated Raw PDF Ingestion & Split-Pane Document Intelligence | `app/bank-compliance/` & Azure Blob Storage | 📋 Planned |
+| **Phase 10** | *[Next]* Enterprise Auditable Document Intelligence & LLMOps Platform | `app/bank-compliance/` & `.github/workflows/` | 📋 Planned |
 
 ---
 
@@ -38,7 +38,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 ## 🛠️ Phase 3: Shared Platform Services (`platform/shared-services`)
 * [x] Deploy Log Analytics Workspace (`law-ht-ss-p-cin-01`) for central monitoring & AI telemetry.
 * [x] Deploy API Management Gateway (`apim-ht-ss-p-cin-01`, SKU: `Consumption`) for prompt rate-limiting & CORS protection.
-* [x] Deploy Shared Key Vault (`kv-ht-ss-p-cin-01`) for deployment tokens.
+* [x] Deploy Shared Key Vault (`kv-ht-ss-p-cin-01`) with dynamic AI endpoint registry (`openai-endpoint`, `openai-api-key`, `content-safety-endpoint`).
 * [x] Set Azure DevOps Service Connection `shared-services` (Subscription: `859a785c-bd38-402d-b595-1f44f40fb9bf`).
 
 ---
@@ -48,6 +48,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 * [x] Deploy Azure OpenAI account (`oai-ht-taxb-p-eus-01` with `gpt-5.4-nano`).
 * [x] Deploy Azure AI Search (`srch-ht-taxb-p-cin-01`) & Cosmos DB (`cosmos-ht-taxb-p-cin-01`).
 * [x] Deploy Linux Function App (`func-ht-taxb-p-cin-01`) & Static Web App (`stapp-ht-taxb-p-cin-01` on `www.mytaxbot.site`).
+* [x] Codify zero-race Cloudflare DNS provider automation (`dns_cloudflare.tf`) with auto-managed SSL.
 * [x] Wire System-Assigned Managed Identities & RBAC roles.
 * [x] Set Azure DevOps Service Connection `app-prod` (Subscription: `f4ffefe1-d689-4059-969c-ccc73e2a11d4`).
 
@@ -55,9 +56,9 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 
 ## 🔄 Phase 5: Dual CI/CD Pipelines & WIF OIDC Authentication (`pipelines/` & `.github/`)
 * [x] Create multi-stage IaC validation pipelines (Validate → Plan → Apply).
-* [x] Configure dual authentication (Azure DevOps & GitHub Actions OIDC federation).
+* [x] Configure dual authentication (Azure DevOps & GitHub Actions OIDC federation with dedicated `bank-compliance-prod` & `tax-advisor-prod` claims).
 * [x] Implement reusable called workflows (`app-deploy-func.yml`, `app-deploy-swa.yml`, `app-sec-scan.yml`).
-* [x] Execute end-to-end automated deployment tests across environments.
+* [x] Add automated hourly AKS auto-shutdown workflow (`aks-auto-shutdown.yml`) for 24/7 idle VM cost optimization ($0/mo).
 
 ---
 
@@ -79,17 +80,27 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 ## 🏦 Phase 9: Banking Regulatory Compliance AI Copilot on AKS (`workloads/bank-compliance-ai-aks`)
 * [x] Provision AKS Free Tier Cluster (`aks-ht-bankc-p-cin-01`, `sku_tier = "Free"`) in `workloads/bank-compliance-ai-aks`.
 * [x] Deploy Qdrant Vector Database on AKS with 4GB Persistent CSI Disk (`managed-csi`) for RBI Master Direction HNSW indexing.
-* [x] Configure LiteLLM proxy gateway & Azure OpenAI deployment (`gpt-5.4-nano`).
-* [x] Build and deploy React SPA frontend (`bank.mytaxbot.site`) on Azure Static Web Apps.
+* [x] Configure LiteLLM proxy gateway with dynamic environment variable expansion & Azure OpenAI (`gpt-5.4-nano`).
+* [x] Build and deploy React SPA frontend (`bank.mytaxbot.site`) on Azure Static Web Apps with Cloudflare DNS automation.
+* [x] Integrate Prometheus & Grafana in-cluster monitoring stack (`monitoring` namespace) with ServiceMonitors.
 * [x] Integrate Dual CI/CD (GitHub Actions + Azure DevOps) with DevSecOps SonarCloud SAST/SCA security scans.
-* [x] Establish Full Document RAG corpus covering 6 official RBI Master Directions (60 legal clauses with hierarchical chunking).
 
 ---
 
-## 🚀 Phase 10: Automated Raw PDF Ingestion & Split-Pane Document Intelligence (Next Project)
-* [ ] **Tier 1 (Raw Storage):** Provision `rbi-raw-pdfs` container on Azure Blob Storage with automated crawler and SHA-256 checksum deduplication.
-* [ ] **Tier 2 (Document Intelligence):** Integrate layout-aware PDF parser (Azure AI Document Intelligence / open-source Docling) to extract tables and page-level section maps.
-* [ ] **Tier 3 (Deep-Linked Vector Store):** Embed chunks into Qdrant with precise start/end page numbers and section bounding boxes.
-* [ ] **Tier 4 (Interactive Split-View Portal):** Enhance React UI with split-pane layout: Interactive compliance chat on the left + integrated PDF viewer on the right deep-linking to exact pages.
-* [ ] Architecture Document: [docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md](docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
+## 🚀 Phase 10: Enterprise Auditable Document Intelligence & LLMOps Platform (Merged Next Milestone)
+
+### 📂 Track 1: Raw Regulatory Data Lake & Multi-Model Ingestion
+* [ ] **Raw PDF Lake:** Provision `rbi-raw-pdfs` container on Azure Blob Storage with automated SHA-256 integrity checks.
+* [ ] **Multi-Model AI Gateway:** Configure LiteLLM to route between **Google Gemini 2.0 Flash (Free Tier in AI Studio)** for heavy 150-page PDF parsing and **Azure OpenAI (`gpt-5.4-nano`)** for low-latency live chat.
+* [ ] **Layout-Aware Parsing:** Extract complex RBI tables, circular amendments, and page-level section maps into structured vector payloads.
+
+### 🖥️ Track 2: Interactive Split-View Compliance Portal
+* [ ] **Split-Screen UI:** Left Pane (Conversational Copilot, PII shields, audit trail) + Right Pane (Live PDF Document Viewer).
+* [ ] **Deep-Linked Interactive Citations:** Clicking any legal citation (e.g. `[RBI Master Direction - Page 14]`) automatically scrolls the live PDF to Page 14 and highlights the corresponding clause.
+
+### 🛡️ Track 3: Automated CI/CD LLMOps Quality & Safety Gates
+* [ ] **Automated RAG Evaluation in GitHub Actions:** Automated **Ragas / TruLens** benchmarking on every Git Pull Request.
+* [ ] **Triad Quality Gates:** Automated build failure if **Faithfulness < 95%** (hallucination detector), **Answer Relevancy < 90%**, or **Context Recall < 90%**.
+* [ ] **Automated Jailbreak & Prompt Injection Testing:** Automated red-teaming tests running in the CI pipeline before production deployment.
+* [ ] Architecture & Execution Document: [`docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md`](docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
 
