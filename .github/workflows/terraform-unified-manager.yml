@@ -64,7 +64,7 @@ jobs:
           case "$TARGET" in
             "workloads/bank-compliance-ai-aks")
               echo "sub_id=f4ffefe1-d689-4059-969c-ccc73e2a11d4" >> $GITHUB_OUTPUT
-              echo "env_name=tax-advisor-prod" >> $GITHUB_OUTPUT
+              echo "env_name=bank-compliance-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             "workloads/tax-advisor")
@@ -100,6 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-target.outputs.env_name }}
     env:
+      ARM_USE_OIDC: "true"
       ARM_PROVIDER_RETRY_MAX: "10"
       ARM_CLIENT_TIMEOUT: "600"
     steps:
@@ -144,9 +145,9 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform plan -var-file=prod.tfvars -parallelism=10
+            terraform plan -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform plan -parallelism=10
+            terraform plan -input=false -parallelism=10
           fi
 
       - name: Terraform Apply
@@ -154,9 +155,9 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform apply -auto-approve -var-file=prod.tfvars -parallelism=10
+            terraform apply -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform apply -auto-approve -parallelism=10
+            terraform apply -auto-approve -input=false -parallelism=10
           fi
 
       - name: Terraform Destroy
@@ -164,7 +165,7 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform destroy -auto-approve -var-file=prod.tfvars -parallelism=10
+            terraform destroy -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform destroy -auto-approve -parallelism=10
+            terraform destroy -auto-approve -input=false -parallelism=10
           fi
