@@ -1,0 +1,81 @@
+# ==============================================================================
+# Workflow: AKS Auto-Cost Optimizer & Scheduled Auto-Stop
+# Purpose: Automatically stops AKS cluster if running to eliminate idle VM costs
+# Schedule: Runs every hour via Cron + supports manual Start/Stop dispatch
+# ==============================================================================
+
+name: AKS Cost Optimizer (Auto-Shutdown)
+
+on:
+  schedule:
+    # Runs at minute 0 past every hour (e.g. 01:00, 02:00, 03:00...)
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform on AKS cluster'
+        required: true
+        default: 'stop'
+        type: choice
+        options:
+          - stop
+          - start
+          - status
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AKS_CLUSTER_NAME: 'aks-ht-bankc-p-cin-01'
+  AKS_RESOURCE_GROUP: 'rg-ht-bankc-p-cin-01'
+  SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+
+jobs:
+  manage-cluster-power:
+    name: Manage AKS Power State
+    runs-on: ubuntu-latest
+    environment: bank-compliance-prod
+    steps:
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
+
+      - name: Check Cluster Status & Execute Power Action
+        run: |
+          ACTION="${{ github.event.inputs.action || 'stop' }}"
+          echo "Requested Action: $ACTION"
+          
+          # Check if resource group and AKS cluster exist
+          CLUSTER_EXISTS=$(az aks list --resource-group "${{ env.AKS_RESOURCE_GROUP }}" --query "[?name=='${{ env.AKS_CLUSTER_NAME }}'].name" -o tsv)
+          
+          if [ -z "$CLUSTER_EXISTS" ]; then
+            echo "⚠️ AKS cluster '${{ env.AKS_CLUSTER_NAME }}' does not exist in '${{ env.AKS_RESOURCE_GROUP }}'. Skipping."
+            exit 0
+          fi
+          
+          POWER_STATE=$(az aks show --name "${{ env.AKS_CLUSTER_NAME }}" --resource-group "${{ env.AKS_RESOURCE_GROUP }}" --query "powerState.code" -o tsv)
+          echo "Current AKS Power State: $POWER_STATE"
+          
+          if [ "$ACTION" == "stop" ]; then
+            if [ "$POWER_STATE" == "Running" ]; then
+              echo "🛑 Cluster is Running. Stopping cluster to save compute costs..."
+              az aks stop --name "${{ env.AKS_CLUSTER_NAME }}" --resource-group "${{ env.AKS_RESOURCE_GROUP }}" --no-wait
+              echo "✅ AKS Stop command initiated. VM compute billing stopped."
+            else
+              echo "💤 Cluster is already $POWER_STATE. No action needed."
+            fi
+          elif [ "$ACTION" == "start" ]; then
+            if [ "$POWER_STATE" == "Stopped" ]; then
+              echo "🟢 Cluster is Stopped. Starting cluster..."
+              az aks start --name "${{ env.AKS_CLUSTER_NAME }}" --resource-group "${{ env.AKS_RESOURCE_GROUP }}"
+              echo "✅ AKS Cluster is now Running and ready."
+            else
+              echo "⚡ Cluster is already $POWER_STATE."
+            fi
+          elif [ "$ACTION" == "status" ]; then
+            echo "📊 Cluster Status: $POWER_STATE"
+          fi
