@@ -154,7 +154,7 @@ jobs:
             -input=false
 
       - name: 🔍 Terraform Plan (Create / Update Preview)
-        if: inputs.action == 'plan'
+        if: inputs.action == 'plan' || inputs.action == 'apply'
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
