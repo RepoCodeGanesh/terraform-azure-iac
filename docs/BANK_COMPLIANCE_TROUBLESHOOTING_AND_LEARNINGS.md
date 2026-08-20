@@ -269,10 +269,30 @@ resp = await client.post(
 
 ---
 
+### 8. 🏷️ Semantic PR Title Validation Failure (`action-semantic-pull-request`)
+
+#### Symptom:
+* GitHub Actions job `Validate PR Title (Conventional Commits)` fails with error:
+  `No release type found in pull request title "Feature/phase11". Add a prefix to indicate what kind of release this pull request corresponds to.`
+
+#### Root Cause:
+* The repository enforces **Conventional Commits** (`amannn/action-semantic-pull-request@v5`) for automated SemVer changelog generation.
+* Default branch-based titles (e.g. `Feature/phase11`) lack the required semantic type prefix.
+
+#### Resolution:
+* Rename the PR title on GitHub using a valid semantic prefix:
+  * `feat: implement GenAIOps CI/CD quality gate, semantic caching, and Helm chart`
+  * `fix: resolve LiteLLM 400 parameter issue`
+  * `docs: update troubleshooting playbook`
+* Valid prefixes: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+
+---
+
 ## 🏆 Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
 | :--- | :--- | :--- |
+| **PR Titles** | Follow Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`. | Check PR title on GitHub UI. |
 | **File Encoding** | Always save JSON/YAML/HCL as UTF-8 **without BOM**. | `$b = [System.IO.File]::ReadAllBytes('file'); $b[0..2]` |
 | **GHA CI/CD** | Use `$GITHUB_OUTPUT` + `steps.<id>.outputs` for inter-step data. | Check workflow logs for context warnings. |
 | **K8s Deployments** | Always use `imagePullPolicy: Always` and commit SHA tags. | `kubectl get deployment bankc-backend -o yaml \| grep image:` |

@@ -44,7 +44,6 @@ jobs:
     outputs:
       sub_id: ${{ steps.resolve.outputs.sub_id }}
       env_name: ${{ steps.resolve.outputs.env_name }}
-      client_id: ${{ steps.resolve.outputs.client_id }}
     steps:
       - name: Validate Destroy Safety Confirmation
         if: inputs.action == 'destroy'
@@ -64,7 +63,7 @@ jobs:
           case "$TARGET" in
             "workloads/bank-compliance-ai-aks")
               echo "sub_id=f4ffefe1-d689-4059-969c-ccc73e2a11d4" >> $GITHUB_OUTPUT
-              echo "env_name=tax-advisor-prod" >> $GITHUB_OUTPUT
+              echo "env_name=bank-compliance-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             "workloads/tax-advisor")
@@ -100,6 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-target.outputs.env_name }}
     env:
+      ARM_USE_OIDC: "true"
       ARM_PROVIDER_RETRY_MAX: "10"
       ARM_CLIENT_TIMEOUT: "600"
     steps:
@@ -111,10 +111,28 @@ jobs:
         with:
           terraform_version: 1.15.8
 
+      - name: Resolve Client ID
+        id: auth_vars
+        run: |
+          case "${{ inputs.target }}" in
+            "workloads/bank-compliance-ai-aks"|"workloads/tax-advisor")
+              echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "platform/shared-services")
+              echo "client_id=${{ secrets.SHARED_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "platform/hub")
+              echo "client_id=${{ secrets.HUB_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "platform/bootstrap")
+              echo "client_id=${{ secrets.BOOTSTRAP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
       - name: Azure OIDC Login
         uses: azure/login@v2
         with:
-          client-id: ${{ needs.resolve-target.outputs.client_id }}
+          client-id: ${{ steps.auth_vars.outputs.client_id || secrets.APP_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ needs.resolve-target.outputs.sub_id }}
 
@@ -144,9 +162,9 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform plan -var-file=prod.tfvars -parallelism=10
+            terraform plan -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform plan -parallelism=10
+            terraform plan -input=false -parallelism=10
           fi
 
       - name: Terraform Apply
@@ -154,9 +172,9 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform apply -auto-approve -var-file=prod.tfvars -parallelism=10
+            terraform apply -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform apply -auto-approve -parallelism=10
+            terraform apply -auto-approve -input=false -parallelism=10
           fi
 
       - name: Terraform Destroy
@@ -164,7 +182,7 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform destroy -auto-approve -var-file=prod.tfvars -parallelism=10
+            terraform destroy -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform destroy -auto-approve -parallelism=10
+            terraform destroy -auto-approve -input=false -parallelism=10
           fi

@@ -58,28 +58,35 @@ flowchart TD
 ## 3. Option 1: Azure Container Insights Setup & KQL Queries
 
 ### A. Terraform Configuration
-Container Insights is enabled via the `oms_agent` block in [main.tf](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/workloads/bank-compliance-ai-aks/main.tf):
+Container Insights is enabled via the `oms_agent` block in [`modules/aks/main.tf`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/modules/aks/main.tf) and called by [`workloads/bank-compliance-ai-aks/aks_cluster.tf`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/workloads/bank-compliance-ai-aks/aks_cluster.tf):
 
 ```hcl
-resource "azurerm_kubernetes_cluster" "bank_compliance" {
-  name = module.bankc_aks_name.name
+# In modules/aks/main.tf:
+resource "azurerm_kubernetes_cluster" "this" {
+  name                = var.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   # ...
-  oms_agent {
-    log_analytics_workspace_id      = data.azurerm_log_analytics_workspace.shared.id
-    msi_auth_for_monitoring_enabled = true
+  dynamic "oms_agent" {
+    for_each = var.log_analytics_workspace_id != null ? [1] : []
+    content {
+      log_analytics_workspace_id      = var.log_analytics_workspace_id
+      msi_auth_for_monitoring_enabled = true
+    }
   }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
-  name                       = "diag-${module.bankc_aks_name.name}"
-  target_resource_id         = azurerm_kubernetes_cluster.bank_compliance.id
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = "diag-${var.name}"
+  target_resource_id         = azurerm_kubernetes_cluster.this.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
 
   enabled_log { category = "kube-apiserver" }
   enabled_log { category = "kube-audit-admin" }
   enabled_log { category = "kube-controller-manager" }
   enabled_log { category = "cluster-autoscaler" }
-  metric      { category = "AllMetrics" }
+  enabled_metric { category = "AllMetrics" }
 }
 ```
 
@@ -112,7 +119,7 @@ KubePodInventory
 | where TimeGenerated > ago(24h)
 | where Namespace == "bank-compliance"
 | where PodStatus in ("Failed", "CrashLoopBackOff", "Terminating") or ContainerStatusReason == "OOMKilled"
-| summarize RestartCount = max(ContainerRestartCount) by PodName, ContainerStatusReason, bin(TimeGenerated, 1h)
+| summarize RestartCount = max(ContainerRestartCount) by PodName = Name, ContainerStatusReason, bin(TimeGenerated, 1h)
 | order by TimeGenerated desc
 ```
 
@@ -177,6 +184,7 @@ Once inside Grafana, click **Dashboards** $\rightarrow$ **Browse** to open pre-l
 
 | Dashboard Name | Purpose | Key Metrics |
 | :--- | :--- | :--- |
+| **🏦 BankCompliance AI Workload Dashboard** | **Dedicated AI & App Dashboard** | LiteLLM request rates, p95 LLM latency, Token consumption, FastAPI throughput & 5xx error rate, Pod RAM/CPU |
 | **Kubernetes / Compute Resources / Cluster** | Cluster-wide utilization | Total CPU/RAM committed vs capacity |
 | **Kubernetes / Compute Resources / Namespace (Pods)** | Resource consumption per namespace | Pod CPU limits, memory working sets, network I/O |
 | **Kubernetes / Compute Resources / Pod** | Single pod drill-down | Container restarts, throttling, memory RSS |
@@ -186,23 +194,23 @@ Once inside Grafana, click **Dashboards** $\rightarrow$ **Browse** to open pre-l
 
 ## 5. Custom AI / LLM Observability with PromQL
 
-The AI app pods ([`bankc-backend`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/backend-deployment.yaml) and [`litellm-proxy`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/litellm/deployment.yaml)) are annotated and monitored by Prometheus.
+The AI app pods ([`bankc-backend`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/backend-deployment.yaml) and [`litellm-proxy`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/litellm/deployment.yaml)) are instrumented and monitored by Prometheus.
 
 ### Curated PromQL Cheatsheet
 
 #### 1. Request Rate per Second (RPS) on FastAPI Backend:
 ```promql
-sum(rate(http_requests_total{app="bankc-backend"}[2m])) by (handler, status)
+sum(rate(http_requests_total{namespace="bank-compliance"}[2m])) by (handler, status)
 ```
 
 #### 2. LiteLLM Proxy Request Latency (95th Percentile):
 ```promql
-histogram_quantile(0.95, sum(rate(litellm_request_duration_seconds_bucket[5m])) by (le, model))
+histogram_quantile(0.95, sum(rate(litellm_proxy_latency_bucket[5m])) by (le))
 ```
 
-#### 3. Total LLM Token Consumption Rate (Input + Output Tokens):
+#### 3. Total LLM Token Consumption Rate (Prompt & Completion Tokens):
 ```promql
-sum(rate(litellm_tokens_total[5m])) by (model, token_type)
+sum(rate(litellm_prompt_tokens[5m])) + sum(rate(litellm_completion_tokens[5m]))
 ```
 
 #### 4. Pod Memory Usage vs Limit Percentage:
@@ -223,13 +231,13 @@ sum(rate(container_cpu_cfs_periods_total{namespace="bank-compliance"}[5m])) by (
 
 ## 6. Resource Footprint & Cost Breakdown
 
-| Component | CPU Request | RAM Request | Storage | Azure Cost Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| **Azure Monitor Agent (AMA)** | ~20m | ~100Mi | None (Ephemeral) | Free ingestion under 5GB/mo |
-| **Prometheus Server** | 100m | 256Mi | 5GB Managed CSI | ~$0.50/month for 5GB disk |
-| **Grafana Server** | 50m | 128Mi | 2GB Managed CSI | ~$0.20/month for 2GB disk |
-| **Node Exporter + Kube-State** | 20m | 64Mi | None | $0 |
-| **Total Overhead** | **~190m CPU** | **~548Mi RAM** | **7GB Disk** | **< $1.00 / month total** |
+| Component | CPU Request | CPU Limit | RAM Request | RAM Limit | Storage | Azure Cost Impact |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Azure Monitor Agent (AMA)** | ~20m | ~100m | ~100Mi | ~256Mi | None (Ephemeral) | Free ingestion under 5GB/mo |
+| **Prometheus Server** | 100m | 500m | 256Mi | 512Mi | 5GB Managed CSI | ~$0.50/month for 5GB disk |
+| **Grafana Server** | 50m | 250m | 256Mi | 512Mi | 2GB Managed CSI | ~$0.20/month for 2GB disk |
+| **Node Exporter + Kube-State** | 20m | 100m | 64Mi | 128Mi | None | $0 |
+| **Total Overhead** | **~190m CPU** | **~950m CPU** | **~676Mi RAM** | **~1.4GB RAM** | **7GB Disk** | **< $1.00 / month total** |
 
 ---
 
@@ -240,13 +248,22 @@ Open Prometheus UI at `http://localhost:9090/targets`. Verify that:
 * `serviceMonitor/bank-compliance/bankc-backend-monitor` shows state **UP (1/1)**.
 * `serviceMonitor/bank-compliance/litellm-proxy-monitor` shows state **UP (1/1)**.
 
-### Q2: What if I forget the Grafana password?
+### Q2: Why did Grafana show "Failed to fetch" or restart?
+If Grafana hits an `OOMKilled` (Out of Memory) exit code 137, ensure its memory limit is configured to at least `512Mi` in [`app/bank-compliance/k8s/monitoring/values.yaml`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/monitoring/values.yaml#L52-L59). Then restart your port-forward:
+```powershell
+kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
+```
+
+### Q3: Why does "Drilldown > Logs" show "Plugin failed to load"?
+In Grafana, "Drilldown > Logs" requires **Grafana Loki**. In this architecture, all logs are streamed directly to **Azure Log Analytics (`law-ht-ss-p-cin-01`)** or viewed via `kubectl logs -n bank-compliance <pod-name> -f` to keep resource overhead at $0.00.
+
+### Q4: What if I forget the Grafana password?
 Reset it dynamically with `kubectl`:
 ```powershell
 kubectl exec -it deployment/monitoring-grafana -n monitoring -c grafana -- grafana-cli admin reset-admin-password "NewSecurePassword123!"
 ```
 
-### Q3: How do I cleanly uninstall Prometheus and Grafana?
+### Q5: How do I cleanly uninstall Prometheus and Grafana?
 ```powershell
 helm uninstall monitoring -n monitoring
 kubectl delete namespace monitoring

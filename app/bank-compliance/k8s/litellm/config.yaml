@@ -1,5 +1,11 @@
 model_list:
-  # 🥇 PRIMARY LLM: Google Gemini 2.0 Flash (Fast, Multimodal & Free Tier)
+  # 🥇 PRIMARY LLM: Google Gemini 2.0 Flash (Sub-second Latency & 1M Context)
+  - model_name: gemini-2.0-flash
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # 🥈 SECONDARY / FALLBACK LLM: Azure OpenAI GPT-5.4-nano
   - model_name: gpt-5.4-nano
     litellm_params:
       model: azure/gpt-5.4-nano
@@ -7,20 +13,18 @@ model_list:
       api_key: "os.environ/AZURE_API_KEY"
       api_version: "2024-06-01"
 
-  # 🥈 SECONDARY / FALLBACK LLM: Gemini 2.0 Flash
-  - model_name: gemini-2.0-flash
-    litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: "os.environ/GEMINI_API_KEY"
-
 general_settings:
   enable_prompt_caching: true
   cache_type: "in-memory"
   cache_ttl: 7200
+
+litellm_settings:
+  success_callback: ["prometheus"]
+  failure_callback: ["prometheus"]
 
 router_settings:
   routing_strategy: "latency-based-routing"
   num_retries: 3
   timeout: 30
   fallbacks:
-    - gpt-5.4-nano: ["gemini-2.0-flash"]
+    - gemini-2.0-flash: ["gpt-5.4-nano"]

@@ -138,6 +138,7 @@ jobs:
         run: |
           OPENAI_ENDPOINT=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-endpoint --query value -o tsv)
           OPENAI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-api-key --query value -o tsv)
+          GEMINI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name gemini-api-key --query value -o tsv)
           
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           
@@ -149,6 +150,7 @@ jobs:
             --set backend.image.tag="${{ github.sha }}" \
             --set secrets.openaiEndpoint="$OPENAI_ENDPOINT" \
             --set secrets.openaiKey="$OPENAI_KEY" \
+            --set secrets.geminiApiKey="$GEMINI_KEY" \
             --wait \
             --timeout 5m
 
@@ -169,6 +171,7 @@ jobs:
       working_directory: 'app/bank-compliance/frontend'
       key_vault_name: 'kv-ht-ss-p-cin-01'
       shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+      swa_token_secret_name: 'bankc-swa-deployment-token'
     secrets:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

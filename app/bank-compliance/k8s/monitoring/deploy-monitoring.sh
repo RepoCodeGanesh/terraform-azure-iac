@@ -23,8 +23,10 @@ helm upgrade --install "$RELEASE_NAME" prometheus-community/kube-prometheus-stac
   --create-namespace \
   --values "$VALUES_FILE"
 
-echo -e "\n[3/4] Applying ServiceMonitors for AI apps in 'bank-compliance' namespace..."
+# 3. Apply ServiceMonitors and Pre-built Dashboards
+echo -e "\n[3/4] Applying ServiceMonitors and Dashboards in '$NAMESPACE' & 'bank-compliance'..."
 kubectl apply -f "$DIR/service-monitors.yaml"
+kubectl apply -f "$DIR/bank-compliance-dashboard.yaml"
 
 echo -e "\n[4/4] Observability Stack Successfully Deployed!"
 echo "----------------------------------------------------------"

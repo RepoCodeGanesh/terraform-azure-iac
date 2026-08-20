@@ -2,6 +2,7 @@ import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.api.routes import router as api_router
 from app.core.config import settings
 
@@ -18,6 +19,9 @@ app = FastAPI(
     description="Cloud-Native Banking Regulatory & Compliance Copilot API",
     version="1.0.0"
 )
+
+# Initialize Prometheus instrumentation for live observability & Grafana
+Instrumentator().instrument(app).expose(app)
 
 # Parse allowed origins
 raw_origins = settings.ALLOWED_ORIGINS
