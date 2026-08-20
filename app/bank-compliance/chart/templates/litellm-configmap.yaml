@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bank-compliance.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    model_list:
+      - model_name: gpt-5.4-nano
+        litellm_params:
+          model: azure/gpt-5.4-nano
+          api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
+          api_key: "os.environ/AZURE_API_KEY"
+          api_version: "2024-06-01"
+
+      - model_name: gemini-2.0-flash
+        litellm_params:
+          model: gemini/gemini-2.0-flash
+          api_key: "os.environ/GEMINI_API_KEY"
+
+    general_settings:
+      enable_prompt_caching: true
+      cache_type: "in-memory"
+      cache_ttl: 7200
+
+    router_settings:
+      routing_strategy: "latency-based-routing"
+      num_retries: 3
+      timeout: 30
+      fallbacks:
+        - gpt-5.4-nano: ["gemini-2.0-flash"]

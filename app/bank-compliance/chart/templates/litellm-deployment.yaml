@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-proxy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: litellm-proxy
+    {{- include "bank-compliance.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.litellm.replicaCount }}
+  selector:
+    matchLabels:
+      app: litellm-proxy
+  template:
+    metadata:
+      labels:
+        app: litellm-proxy
+        azure.workload.identity/use: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: litellm
+          image: "{{ .Values.litellm.image.repository }}:{{ .Values.litellm.image.tag }}"
+          args: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
+          envFrom:
+            - secretRef:
+                name: litellm-secret
+          volumeMounts:
+            - name: litellm-config
+              mountPath: /etc/litellm
+          resources:
+            {{- toYaml .Values.litellm.resources | nindent 12 }}
+          ports:
+            - containerPort: {{ .Values.litellm.service.port }}
+      volumes:
+        - name: litellm-config
+          configMap:
+            name: litellm-config

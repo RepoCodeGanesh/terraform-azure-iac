@@ -1,0 +1,9 @@
+apiVersion: v2
+name: bank-compliance
+description: Enterprise Banking Compliance RegTech AI Copilot Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: HappyTechies AI Platform Team
+    email: ai-platform@happytechies.com

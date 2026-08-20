@@ -1,14 +1,16 @@
 # ==============================================================================
 # Pipeline Name: BankCompliance AI - Application CI/CD Pipeline
-# Description: DevSecOps scanning (SonarCloud, Bandit, pip-audit, npm audit),
-#              Docker container build, AKS deployment & Static Web App deploy
-# Stages: 0. DevSecOpsScan | 1. BuildBackend | 2. DeployAKS | 3. DeployFrontend
+# Description: DevSecOps scanning, GenAIOps AI Quality Evaluation Gate,
+#              Docker container build, Helm AKS deployment & Static Web App deploy
+# Strategy: GitHub Actions is MASTER/PRIMARY. This Azure DevOps pipeline mirrors
+#           the exact same stages, quality gates, and Helm deployment mechanics.
+# Stages: 0. DevSecOpsScan | 1. AIEvalQualityGate | 2. BuildBackend | 3. DeployAKS | 4. DeployFrontend
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
 # ==============================================================================
 
 name: BankCompliance-AI-App-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
 
-# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+# Disabled — GitHub Actions owns active push/PR triggers. Uncomment to revert to ADO-driven CI.
 trigger: none
 # trigger:
 #   branches:
@@ -22,7 +24,7 @@ trigger: none
 #     exclude:
 #       - '**/*.md'
 
-# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+# Disabled — GitHub Actions owns active push/PR triggers. Uncomment to revert to ADO-driven PR checks.
 pr: none
 # pr:
 #   branches:
@@ -102,10 +104,36 @@ stages:
     - task: SonarCloudAnalyze@4
       displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
 
-# ── STAGE 1: Build & Push Backend Docker Image ──────────────────────────────
+# ── STAGE 1: Continuous AI Quality & Regression Evaluation Gate ──────────────
+- stage: AIEvalQualityGate
+  displayName: '1. AI Quality & Regression Evaluation Gate'
+  jobs:
+  - job: RunEvaluation
+    displayName: 'Evaluate RAG Groundedness, Citation & Security'
+    steps:
+    - checkout: self
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+      displayName: 'Use Python 3.11'
+
+    - script: |
+        python app/bank-compliance/eval/evaluate.py
+      displayName: 'Execute Golden Dataset Evaluation Gate'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'app/bank-compliance/eval/eval_results.json'
+        ArtifactName: 'genaiops-quality-scorecard'
+        publishLocation: 'Container'
+      displayName: 'Publish AI Evaluation Scorecard'
+      condition: always()
+
+# ── STAGE 2: Build & Push Backend Docker Image ──────────────────────────────
 - stage: BuildBackend
-  displayName: '1. Build Backend Container'
-  dependsOn: DevSecOpsScan
+  displayName: '2. Build Backend Container'
+  dependsOn: [DevSecOpsScan, AIEvalQualityGate]
   jobs:
   - job: BuildDockerImage
     displayName: 'Build & Push Docker Image'
@@ -122,13 +150,13 @@ stages:
           $(Build.BuildId)
           latest
 
-# ── STAGE 2: Deploy to AKS Cluster ──────────────────────────────────────────
+# ── STAGE 3: Deploy to AKS Cluster via Helm ─────────────────────────────────
 - stage: DeployAKS
-  displayName: '2. Deploy to AKS Cluster'
+  displayName: '3. Deploy to AKS Cluster (Helm)'
   dependsOn: BuildBackend
   jobs:
   - deployment: DeployKubernetes
-    displayName: 'Deploy Kubernetes Manifests'
+    displayName: 'Deploy via Helm Package'
     environment: 'bank-compliance-prod'
     strategy:
       runOnce:
@@ -137,32 +165,34 @@ stages:
           - checkout: self
 
           - task: AzureCLI@2
-            displayName: 'Set AKS Context & Deploy Manifests'
+            displayName: 'Set AKS Context & Deploy via Helm'
             inputs:
               azureSubscription: $(azureServiceConnection)
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 az aks get-credentials --resource-group $(resourceGroup) --name $(aksClusterName) --overwrite-existing
-                kubectl apply -f app/bank-compliance/k8s/namespace.yaml
-                kubectl apply -f app/bank-compliance/k8s/serviceaccount.yaml
-                kubectl apply -f app/bank-compliance/k8s/backend-configmap.yaml
+                
                 OPENAI_ENDPOINT=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-endpoint --query value -o tsv)
                 OPENAI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-api-key --query value -o tsv)
-                kubectl create secret generic litellm-secret \
-                  --from-literal=AZURE_OPENAI_ENDPOINT="$OPENAI_ENDPOINT" \
-                  --from-literal=AZURE_API_KEY="$OPENAI_KEY" \
-                  -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
-                kubectl create configmap litellm-config --from-file=config.yaml=app/bank-compliance/k8s/litellm/config.yaml -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
-                kubectl apply -f app/bank-compliance/k8s/litellm/deployment.yaml
-                kubectl apply -f app/bank-compliance/k8s/backend-deployment.yaml
+                
+                kubectl create namespace bank-compliance --dry-run=client -o yaml | kubectl apply -f -
+                
+                helm upgrade --install bank-compliance ./app/bank-compliance/chart \
+                  --namespace bank-compliance \
+                  --set backend.image.tag="$(Build.BuildId)" \
+                  --set secrets.openaiEndpoint="$OPENAI_ENDPOINT" \
+                  --set secrets.openaiKey="$OPENAI_KEY" \
+                  --wait \
+                  --timeout 5m
+                
                 chmod +x app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
                 ./app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
 
-# ── STAGE 3: Build & Deploy Frontend to Static Web App ──────────────────────
+# ── STAGE 4: Build & Deploy Frontend to Static Web App ──────────────────────
 - stage: DeployFrontend
-  displayName: '3. Deploy Frontend SPA to Azure Static Web App'
-  dependsOn: DevSecOpsScan
+  displayName: '4. Deploy Frontend SPA to Azure Static Web App'
+  dependsOn: [DevSecOpsScan, AIEvalQualityGate]
   jobs:
   - deployment: DeployFrontendSPA
     displayName: 'Deploy React SPA to SWA'

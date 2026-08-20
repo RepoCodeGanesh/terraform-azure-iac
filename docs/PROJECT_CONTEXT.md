@@ -48,11 +48,15 @@ Core outcomes:
 * **CI/CD:** `pipelines/azure-cicd-tax-advisor.yml` & `.github/workflows/workload-tax-advisor.yml`.
 
 ### Workload 2: BankCompliance AI (`workloads/bank-compliance-ai-aks` & `app/bank-compliance`)
+* **Industry Sector:** RegTech (Regulatory Technology / BFSI)
 * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
-* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway with Azure OpenAI `gpt-5.4-nano`, Qdrant Vector DB on 4GB CSI Managed Disk, DPDP PII Auto-Masking, Azure Static Web Apps).
+* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01` on `Standard_B4ms` 4 vCPUs, Helm Chart Package `app/bank-compliance/chart/`, LiteLLM Multi-Model Proxy Gateway with Azure OpenAI `gpt-5.4-nano` + Google Gemini 2.0 Flash, Qdrant Vector DB on 4GB CSI Managed Disk, Dedicated Workload Storage Account `sthtbankcpcin01` for raw RBI PDFs, Governed Semantic Vector Caching, DPDP PII Auto-Masking, Azure Static Web Apps).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
-* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Fully automated, zero-touch OIDC deployments).
+* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Atomic Helm deployments + automated GenAIOps Regression Quality Gate blocking PRs on hallucination regressions).
+* **Cost Optimizer:** Automated hourly auto-shutdown workflow (`.github/workflows/aks-auto-shutdown.yml`) reducing idle running cost to $0.00/hr.
+* **Storage Isolation Decision:** TaxBot India remains as-is (uses its existing `sthttaxbpcin01` and Azure AI Search); BankCompliance AI deploys its own dedicated `sthtbankcpcin01` in `rg-ht-bankc-p-cin-01` for complete workload lifecycle isolation.
+* **Next Strategic Roadmap:** Phase 10 Merged Enterprise RegTech Platform (Raw PDF Data Lake on Azure Blob, Gemini 2.0 Flash Multimodal layout-aware parsing, Split-Screen live PDF viewer, and Automated Ragas/TruLens CI/CD Quality Gates).
 
 ---
 
@@ -62,12 +66,12 @@ Core outcomes:
 Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
-- `platform/shared-services`: complete (Key Vault, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
+- `platform/shared-services`: complete (Key Vault with dynamic AI endpoint registry, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
 - `workloads/tax-advisor`: complete (Serverless Function App + Cosmos + AI Search + Cloudflare DNS `www.mytaxbot.site` automated).
-- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
+- `workloads/bank-compliance-ai-aks`: complete (AKS `Standard_B4ms` + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `app/bank-compliance`: complete (React SPA + FastAPI backend + LiteLLM + Qdrant Vector DB live).
-- `pipelines/`: active and verified across both GitHub Actions and Azure DevOps.
+- `pipelines/`: active and verified across both GitHub Actions and Azure DevOps with dedicated OIDC federated credentials.
 - `dns_automation`: 100% automated via Cloudflare Terraform provider across both workloads with 10s `time_sleep` buffer.
 
 ---

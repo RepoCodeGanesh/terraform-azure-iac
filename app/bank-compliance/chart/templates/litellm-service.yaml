@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: litellm
+    {{- include "bank-compliance.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.litellm.service.type }}
+  selector:
+    app: litellm-proxy
+  ports:
+    - port: {{ .Values.litellm.service.port }}
+      targetPort: {{ .Values.litellm.service.targetPort }}
