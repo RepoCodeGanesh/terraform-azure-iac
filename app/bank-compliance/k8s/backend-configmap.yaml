@@ -8,7 +8,7 @@ data:
 
   # Internal cluster DNS
   LITELLM_URL: "http://litellm:4000/v1"
-  OPENAI_MODEL: "gpt-5.4-nano"
+  OPENAI_MODEL: "gemini-2.0-flash"
   QDRANT_HOST: "qdrant"
   QDRANT_PORT: "6333"
   QDRANT_COLLECTION: "rbi_master_directions"

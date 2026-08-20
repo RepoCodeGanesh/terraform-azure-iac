@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     
     # AI Gateway / LiteLLM Proxy
     LITELLM_URL: str = os.getenv("LITELLM_URL", "http://litellm:4000/v1")
-    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-5.4-nano")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gemini-2.0-flash")
     
     # Qdrant Vector DB
     QDRANT_HOST: str = os.getenv("QDRANT_HOST", "qdrant")
