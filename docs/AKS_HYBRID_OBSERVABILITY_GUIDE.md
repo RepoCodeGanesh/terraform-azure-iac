@@ -112,7 +112,7 @@ KubePodInventory
 | where TimeGenerated > ago(24h)
 | where Namespace == "bank-compliance"
 | where PodStatus in ("Failed", "CrashLoopBackOff", "Terminating") or ContainerStatusReason == "OOMKilled"
-| summarize RestartCount = max(ContainerRestartCount) by PodName, ContainerStatusReason, bin(TimeGenerated, 1h)
+| summarize RestartCount = max(ContainerRestartCount) by PodName = Name, ContainerStatusReason, bin(TimeGenerated, 1h)
 | order by TimeGenerated desc
 ```
 
@@ -177,6 +177,7 @@ Once inside Grafana, click **Dashboards** $\rightarrow$ **Browse** to open pre-l
 
 | Dashboard Name | Purpose | Key Metrics |
 | :--- | :--- | :--- |
+| **🏦 BankCompliance AI Workload Dashboard** | **Dedicated AI & App Dashboard** | LiteLLM request rates, p95 LLM latency, Token consumption, FastAPI throughput & 5xx error rate, Pod RAM/CPU |
 | **Kubernetes / Compute Resources / Cluster** | Cluster-wide utilization | Total CPU/RAM committed vs capacity |
 | **Kubernetes / Compute Resources / Namespace (Pods)** | Resource consumption per namespace | Pod CPU limits, memory working sets, network I/O |
 | **Kubernetes / Compute Resources / Pod** | Single pod drill-down | Container restarts, throttling, memory RSS |
