@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankc-backend
+  namespace: bank-compliance
+  labels:
+    app: bankc-backend
+    app.kubernetes.io/name: bank-compliance-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bankc-backend
+  template:
+    metadata:
+      labels:
+        app: bankc-backend
+        azure.workload.identity/use: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: bankc-sa
+      containers:
+        - name: backend
+          image: ghcr.io/repocodeganesh/bank-compliance-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: bankc-backend-config
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankc-backend
+  namespace: bank-compliance
+  labels:
+    app: bankc-backend
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: "bankc-api-ht-cin"
+spec:
+  type: LoadBalancer
+  selector:
+    app: bankc-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+    - name: http-alt
+      port: 8000
+      targetPort: 8000

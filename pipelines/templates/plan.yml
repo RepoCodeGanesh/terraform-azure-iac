@@ -73,7 +73,7 @@ stages:
             -out=tfplan.binary
 
     - script: |
-        terraform show -json tfplan.binary > plan.json
+        terraform show -json "$(System.DefaultWorkingDirectory)/${{ parameters.workingDirectory }}/tfplan.binary" > plan.json
       displayName: Export JSON Plan
       workingDirectory: ${{ parameters.workingDirectory }}
 

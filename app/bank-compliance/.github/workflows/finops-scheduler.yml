@@ -1,0 +1,37 @@
+name: FinOps Cluster Lifecycle Scheduler
+
+on:
+  schedule:
+    - cron: '0 14 * * 1-5' # Auto-stop cluster at 7:30 PM IST on weekdays
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Cluster Action (start or stop)'
+        required: true
+        default: 'start'
+        type: choice
+        options:
+          - start
+          - stop
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  aks-lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Execute Cluster Lifecycle
+        run: |
+          ACTION="${{ inputs.action || 'stop' }}"
+          echo "Executing AKS $ACTION on cluster aks-ht-bankc-p-cin-01..."
+          az aks $ACTION --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01 --no-wait
+          echo "Cluster $ACTION command dispatched successfully!"

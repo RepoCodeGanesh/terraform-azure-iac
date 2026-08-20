@@ -2,6 +2,7 @@ import azure.functions as func
 import json
 import logging
 import os
+import re
 from datetime import datetime, timezone
 
 from azure.identity import DefaultAzureCredential
@@ -9,15 +10,31 @@ from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizedQuery
 from openai import AzureOpenAI
 
+# ── Azure Monitor OpenTelemetry Instrumentation (Safe Initialization) ─────────
+try:
+    from azure.monitor.opentelemetry import configure_azure_monitor
+    if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        configure_azure_monitor()
+except Exception as _telemetry_err:
+    logging.getLogger(__name__).debug("OpenTelemetry initialization skipped: %s", _telemetry_err)
+
+try:
+    from azure.ai.contentsafety import ContentSafetyClient
+    from azure.ai.contentsafety.models import AnalyzeTextOptions
+    HAS_CONTENT_SAFETY = True
+except ImportError:
+    HAS_CONTENT_SAFETY = False
+
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-OPENAI_ENDPOINT    = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
-OPENAI_MODEL       = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
-SEARCH_ENDPOINT    = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
-SEARCH_INDEX       = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
-APP_NAME           = os.environ.get("APP_NAME", "TaxBot India")
-APP_VERSION        = os.environ.get("APP_VERSION", "1.0.0")
+OPENAI_ENDPOINT         = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+OPENAI_MODEL            = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
+SEARCH_ENDPOINT         = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
+SEARCH_INDEX            = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
+CONTENT_SAFETY_ENDPOINT = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
+APP_NAME                = os.environ.get("APP_NAME", "TaxBot India")
+APP_VERSION             = os.environ.get("APP_VERSION", "1.0.0")
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -77,6 +94,55 @@ def extract_response_text(resp) -> str:
     except Exception as e:
         logging.error(f"Error extracting stream response text: {e}")
         return ""
+
+def sanitize_pii(text: str) -> str:
+    """Mask Indian PAN card numbers and Aadhaar numbers to enforce PII privacy."""
+    if not text:
+        return ""
+    # Mask PAN (5 letters, 4 digits, 1 letter)
+    text = re.sub(r'\b[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}\b', '[PAN-REDACTED]', text)
+    # Mask Aadhaar (12 digits, option spaces)
+    text = re.sub(r'\b[2-9]\d{3}\s?\d{4}\s?\d{4}\b', '[AADHAAR-REDACTED]', text)
+    return text
+
+def analyze_prompt_safety(text: str) -> dict:
+    """Analyze prompt for jailbreak patterns, system prompt overrides, and toxic content."""
+    # 1. Local heuristic check for prompt injection signatures
+    jailbreak_keywords = [
+        "ignore previous instructions", "ignore all instructions",
+        "system prompt", "developer mode", "jailbreak", "override rules", "disregard instructions"
+    ]
+    lowered = text.lower()
+    for kw in jailbreak_keywords:
+        if kw in lowered:
+            logging.warning(f"🛡️ Guardrail Alert: Prompt injection signature detected ('{kw}')")
+            return {
+                "safe": False,
+                "reason": f"Security Guardrail Violation: Prompt injection attempt detected ('{kw}'). Request blocked.",
+                "category": "Jailbreak"
+            }
+
+    # 2. Azure AI Content Safety Service API check if endpoint configured
+    if HAS_CONTENT_SAFETY and CONTENT_SAFETY_ENDPOINT:
+        try:
+            client = ContentSafetyClient(
+                endpoint=CONTENT_SAFETY_ENDPOINT,
+                credential=get_credential(),
+            )
+            request = AnalyzeTextOptions(text=text[:1000])
+            response = client.analyze_text(request)
+            for category_analysis in response.categories_analysis:
+                if category_analysis.severity > 2:
+                    logging.warning(f"🛡️ Azure Content Safety Violation: {category_analysis.category} (severity {category_analysis.severity})")
+                    return {
+                        "safe": False,
+                        "reason": f"Content Safety Violation: High risk content detected ({category_analysis.category}).",
+                        "category": str(category_analysis.category)
+                    }
+        except Exception as e:
+            logging.warning(f"Azure Content Safety inspection advisory note: {e}")
+
+    return {"safe": True, "reason": "Passed safety audit", "category": "None"}
 
 def get_search_client() -> SearchClient:
     return SearchClient(
@@ -204,16 +270,18 @@ def diagnostics(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
     checks = {
-        "AZURE_OPENAI_ENDPOINT":   bool(OPENAI_ENDPOINT),
-        "AZURE_OPENAI_MODEL":      bool(OPENAI_MODEL),
-        "AZURE_SEARCH_ENDPOINT":   bool(SEARCH_ENDPOINT),
-        "AZURE_SEARCH_INDEX":      bool(SEARCH_INDEX),
+        "AZURE_OPENAI_ENDPOINT":         bool(OPENAI_ENDPOINT),
+        "AZURE_OPENAI_MODEL":            bool(OPENAI_MODEL),
+        "AZURE_SEARCH_ENDPOINT":         bool(SEARCH_ENDPOINT),
+        "AZURE_SEARCH_INDEX":            bool(SEARCH_INDEX),
+        "AZURE_CONTENT_SAFETY_ENDPOINT": bool(CONTENT_SAFETY_ENDPOINT),
     }
-    all_ok = all(checks.values())
+    all_ok = all([checks["AZURE_OPENAI_ENDPOINT"], checks["AZURE_OPENAI_MODEL"], checks["AZURE_SEARCH_ENDPOINT"], checks["AZURE_SEARCH_INDEX"]])
     return cors_response(200 if all_ok else 500, {
         "status": "ok" if all_ok else "degraded",
         "checks": checks,
         "app": APP_NAME,
+        "content_safety_enabled": bool(CONTENT_SAFETY_ENDPOINT),
     })
 
 # ── Route: POST /chat ──────────────────────────────────────────────────────────
@@ -223,11 +291,23 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
     try:
         body = req.get_json()
-        message  = body.get("message", "").strip()
-        history  = body.get("history", [])   # list of {role, content}
+        raw_message = body.get("message", "").strip()
+        history     = body.get("history", [])   # list of {role, content}
 
-        if not message:
+        if not raw_message:
             return cors_response(400, {"error": "message is required"})
+
+        # 🛡️ 1. AI Security & Content Safety Inspection
+        safety_check = analyze_prompt_safety(raw_message)
+        if not safety_check["safe"]:
+            return cors_response(400, {
+                "error": safety_check["reason"],
+                "category": safety_check["category"],
+                "blocked": True
+            })
+
+        # 🔒 2. PII Sanitization & Masking (PAN / Aadhaar)
+        message = sanitize_pii(raw_message)
 
         # RAG search
         context = rag_search(message)
@@ -238,7 +318,8 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
         # Include recent history (last 6 turns)
         for h in history[-6:]:
             if h.get("role") in ("user", "assistant") and h.get("content"):
-                messages.append({"role": h["role"], "content": h["content"]})
+                sanitized_history = sanitize_pii(h["content"])
+                messages.append({"role": h["role"], "content": sanitized_history})
         messages.append({"role": "user", "content": message})
 
         client = get_openai_client()

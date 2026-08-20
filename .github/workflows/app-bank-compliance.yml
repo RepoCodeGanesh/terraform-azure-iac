@@ -1,0 +1,169 @@
+# ==============================================================================
+# Workflow: App - BankCompliance AI Application CI/CD
+# Provisions & Deploys:
+#   1. Backend Docker Container -> GHCR (ghcr.io)
+#   2. Kubernetes Pods -> AKS Cluster (aks-ht-bankc-p-cin-01)
+#   3. React SPA Frontend -> Azure Static Web App (stapp-ht-bankc-p-cin-01)
+# Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
+# ==============================================================================
+
+name: App - BankCompliance AI CI/CD
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'release/**', 'hotfix/**']
+    paths:
+      - 'app/bank-compliance/**'
+      - '.github/workflows/app-bank-compliance.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/bank-compliance/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/bank-compliance-backend
+  AKS_CLUSTER_NAME: aks-ht-bankc-p-cin-01
+  AKS_RESOURCE_GROUP: rg-ht-bankc-p-cin-01
+  SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+
+jobs:
+  # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Phase 1) ────────────────
+  devsecops-scan:
+    name: DevSecOps SAST & SCA Scan
+    uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
+    with:
+      working_directory: 'app/bank-compliance'
+      key_vault_name: 'kv-ht-ss-p-cin-01'
+      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+    secrets:
+      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  # ── JOB 1: Build & Push Backend Container to GHCR ─────────────────────────
+  build-and-push-backend:
+    name: Build & Push Backend Image
+    needs: devsecops-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Downcase Image Name
+        id: prep_tag
+        run: |
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=${IMAGE_LOWER}:latest" >> $GITHUB_OUTPUT
+          echo "image_sha_tag=${IMAGE_LOWER}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: app/bank-compliance/backend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ steps.prep_tag.outputs.image_tag }}
+            ${{ steps.prep_tag.outputs.image_sha_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── JOB 2: Deploy Kubernetes Manifests to AKS ─────────────────────────────
+  deploy-aks:
+    name: Deploy to AKS
+    needs: build-and-push-backend
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
+    runs-on: ubuntu-latest
+    environment: bank-compliance-prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+          resource-group: ${{ env.AKS_RESOURCE_GROUP }}
+
+      - name: Deploy Kubernetes Manifests
+        working-directory: app/bank-compliance/k8s
+        run: |
+          kubectl apply -f namespace.yaml
+          kubectl apply -f serviceaccount.yaml
+          kubectl apply -f backend-configmap.yaml
+          OPENAI_ENDPOINT=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-endpoint --query value -o tsv)
+          OPENAI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-api-key --query value -o tsv)
+          kubectl create secret generic litellm-secret \
+            --from-literal=AZURE_OPENAI_ENDPOINT="$OPENAI_ENDPOINT" \
+            --from-literal=AZURE_API_KEY="$OPENAI_KEY" \
+            -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create configmap litellm-config --from-file=config.yaml=litellm/config.yaml -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f litellm/deployment.yaml
+          kubectl apply -f backend-deployment.yaml
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          kubectl set image deployment/bankc-backend backend="${IMAGE_LOWER}:${{ github.sha }}" -n bank-compliance
+          kubectl rollout status deployment/bankc-backend -n bank-compliance
+          kubectl rollout status deployment/litellm-proxy -n bank-compliance
+
+      - name: Deploy Prometheus & Grafana Observability Stack
+        working-directory: app/bank-compliance/k8s/monitoring
+        run: |
+          chmod +x deploy-monitoring.sh
+          ./deploy-monitoring.sh
+
+  # ── JOB 3: Build & Deploy Frontend to Azure Static Web App ─────────────────
+  deploy-frontend:
+    name: Build & Deploy Frontend SPA
+    needs: devsecops-scan
+    runs-on: ubuntu-latest
+    environment: bank-compliance-prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure OIDC Login (Fetch SWA Token)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
+
+      - name: Get SWA Deployment Token from Azure CLI
+        id: swa_token
+        run: |
+          TOKEN=$(az staticwebapp secrets list --name stapp-ht-bankc-p-cin-01 --resource-group rg-ht-bankc-p-cin-01 --query "properties.apiKey" -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "SWA_TOKEN=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        env:
+          VITE_API_URL: "https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query"
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.SWA_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "app/bank-compliance/frontend"
+          output_location: "dist"

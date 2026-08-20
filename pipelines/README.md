@@ -14,6 +14,8 @@ pipelines/
 ├── azure-cicd-shared-ser.yml      # Pipeline for platform/shared-services
 ├── azure-cicd-tax-advisor.yml     # Pipeline for workloads/tax-advisor
 ├── azure-cicd-app-tax-advisor.yml # Pipeline for app/tax-advisor
+├── azure-cicd-bank-compliance-aks.yml # Pipeline for workloads/bank-compliance-ai-aks
+├── azure-cicd-app-bank-compliance.yml # Pipeline for app/bank-compliance (DevSecOps + AKS + SWA)
 └── templates/                     # Reusable pipeline stage templates
     ├── validate.yml               # Optional standalone validate stage
     ├── plan.yml                   # Format check, validation & speculative terraform plan
@@ -31,6 +33,8 @@ Pipelines are configured with **Path Filtering** (`paths: include/exclude`) to e
 * **Shared Services Changes** (`platform/shared-services/**`) ➔ Triggers `azure-cicd-shared-ser.yml`
 * **TaxBot Workload Changes** (`workloads/tax-advisor/**`) ➔ Triggers `azure-cicd-tax-advisor.yml`
 * **TaxBot Application Changes** (`app/tax-advisor/**`) ➔ Triggers `azure-cicd-app-tax-advisor.yml`
+* **BankCompliance Workload Changes** (`workloads/bank-compliance-ai-aks/**`) ➔ Triggers `azure-cicd-bank-compliance-aks.yml`
+* **BankCompliance Application Changes** (`app/bank-compliance/**`) ➔ Triggers `azure-cicd-app-bank-compliance.yml`
 * **Documentation Edits** (`**/*.md`) ➔ **Excluded** from triggering builds to preserve agent minutes.
 
 ---
@@ -45,6 +49,8 @@ Each pipeline uses **Azure Resource Manager** authentication via **Workload Iden
 | `hub-prod` | `azure-cicd-hub.yml` | `platform/hub` | `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`) |
 | `shared-services` | `azure-cicd-shared-ser.yml` | `platform/shared-services` | `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`) |
 | `app-prod` | `azure-cicd-tax-advisor.yml` | `workloads/tax-advisor` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
+| `app-prod` | `azure-cicd-bank-compliance-aks.yml` | `workloads/bank-compliance-ai-aks` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
+
 
 **Remote state backend:** All roots store state in the bootstrap storage account `sthtbootpcin01`. Every pipeline identity needs **Storage Blob Data** access on that account (or container) for `terraform init` / plan / apply, even when deploying into another subscription.
 

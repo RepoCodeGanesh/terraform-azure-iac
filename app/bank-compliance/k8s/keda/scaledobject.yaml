@@ -1,0 +1,16 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: bankc-backend-scaler
+  namespace: bank-compliance
+spec:
+  scaleTargetRef:
+    name: bankc-backend
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  cooldownPeriod: 300
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "70"

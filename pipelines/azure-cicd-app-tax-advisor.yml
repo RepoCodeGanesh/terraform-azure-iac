@@ -282,21 +282,24 @@ stages:
     # ─────────────────────────────────────────────────────────────────────────
     - task: AzureCLI@2
       displayName: 'Auto-Create Enterprise Git Release Tag (SemVer)'
-      condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/'))
+      condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/'))
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
           git fetch --tags
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
-          echo "Latest Git tag: $LATEST_TAG"
+          LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | grep -v "-" | sort -V | tail -n1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.4.0")
+          fi
+          echo "Latest clean Git tag: $LATEST_TAG"
           
-          # Clean version string (remove 'v' prefix and any hyphenated suffix like -release-1-0-0-0)
-          VERSION=$(echo "$LATEST_TAG" | sed -E 's/^v//; s/-.*//')
+          # Extract clean SemVer string (e.g. 1.4.0)
+          VERSION=$(echo "$LATEST_TAG" | sed -E 's/^v//; s/[-+].*//')
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           MAJOR=${MAJOR:-1}
-          MINOR=${MINOR:-0}
+          MINOR=${MINOR:-4}
           PATCH=${PATCH:-0}
           
           COMMIT_MSG=$(git log -1 --pretty=%B)
@@ -311,8 +314,21 @@ stages:
             PATCH=$((PATCH + 1))
           fi
           
-          TAG_NAME="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "🏷️ Automatically tagging ADO release: ${TAG_NAME}"
+          BRANCH_NAME="$(Build.SourceBranchName)"
+          IS_PRERELEASE="false"
+          MAKE_LATEST="true"
+          
+          if [ "$BRANCH_NAME" = "develop" ] || [[ "$BRANCH_NAME" == feature* ]]; then
+            TAG_NAME="v${MAJOR}.${MINOR}.${PATCH}-develop.0"
+            IS_PRERELEASE="true"
+            MAKE_LATEST="false"
+          else
+            TAG_NAME="v${MAJOR}.${MINOR}.${PATCH}"
+            IS_PRERELEASE="false"
+            MAKE_LATEST="true"
+          fi
+          
+          echo "🏷️ Tagging ADO release: ${TAG_NAME} (prerelease: ${IS_PRERELEASE}, make_latest: ${MAKE_LATEST})"
           git config user.name "azure-devops[bot]"
           git config user.email "azure-devops[bot]@users.noreply.github.com"
           git tag -a "${TAG_NAME}" -m "Automated ADO CI/CD Release ${TAG_NAME}"
@@ -324,7 +340,7 @@ stages:
               -H "Authorization: token ${GITHUB_TOKEN}" \
               -H "Accept: application/vnd.github.v3+json" \
               https://api.github.com/repos/RepoCodeGanesh/terraform-azure-iac/releases \
-              -d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"Release ${TAG_NAME}\",\"body\":\"Automated Enterprise Production Deployment ${TAG_NAME}\",\"draft\":false,\"prerelease\":false,\"generate_release_notes\":true}" || true
+              -d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"Release ${TAG_NAME}\",\"body\":\"Automated Enterprise Deployment ${TAG_NAME}\",\"draft\":false,\"prerelease\":${IS_PRERELEASE},\"make_latest\":\"${MAKE_LATEST}\",\"generate_release_notes\":true}" || true
           else
             echo "⚠️ GITHUB_TOKEN is not set in pipeline environment. Skipping GitHub Release API call."
           fi

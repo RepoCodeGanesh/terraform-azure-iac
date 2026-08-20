@@ -15,16 +15,16 @@ terraform-azure-iac/
 │   ├── hub/                      ── Layer 2: Hub VNet, Firewall & Bastion Subnets
 │   └── shared-services/          ── Layer 3: APIM Gateway, Log Analytics & Key Vault
 ├── workloads/                    ── Application Workload IaC Layers
-│   └── tax-advisor/              ── Layer 4: TaxBot India (OpenAI, Search, Cosmos, Function)
+│   ├── tax-advisor/              ── Layer 4: TaxBot India (OpenAI, Search, Cosmos, Function)
+│   └── bank-compliance-ai-aks/   ── Layer 5: BankCompliance AI (AKS, Content Safety, SWA)
 ├── modules/                      ── Reusable Subscription-Agnostic Modules
 │   ├── naming/                   ── CAF Resource Naming Helper Module
 │   ├── network/                  ── VNet & Subnet Wrapper Module
+│   ├── aks/                      ── AKS Cluster & Node Pool Module
 │   └── vnet_peering/             ── Cross-Subscription VNet Peering (Aliased Providers)
-└── app/                          ── Application Codebase & RAG Assets
-    └── tax-advisor/
-        ├── frontend/             ── React SPA UI (Vite, Tailwind, Custom Domain)
-        ├── backend/              ── Python 3.11 Azure Function (`function_app.py`)
-        └── documents/            ── 10 Master Statutory Tax RAG Documents (FY 2026-27)
+└── app/                          ── Application Codebase & Workloads
+    ├── tax-advisor/              ── TaxBot India (React SPA + Python Azure Function)
+    └── bank-compliance/          ── BankCompliance AI (React SPA + FastAPI + K8s Manifests)
 ```
 
 ---
@@ -94,6 +94,47 @@ flowchart TD
   * `module.function_app`: `func-ht-taxb-p-cin-01` (`Consumption Y1` SKU, Python 3.11)
   * `azurerm_static_web_app`: `stapp-ht-taxb-p-cin-01` (`Free` tier bound to custom domain **www.mytaxbot.site**)
   * `azapi_resource.apim_tax_advisor_api`: APIM API registration & rate-limiting policies
+
+### 5. Layer 5: Workloads — BankCompliance AI AKS (`workloads/bank-compliance-ai-aks`)
+* **Target Subscription**: `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`)
+* **Backend State Location**: `sthtbootpcin01/tfstate/workloads/bank-compliance-ai-aks/prod.tfstate`
+* **Provisioned Resources**:
+  * `azurerm_resource_group`: `rg-ht-bankc-p-cin-01`
+  * `module.bankc_vnet`: `vnet-ht-bankc-p-cin-01` (`10.42.0.0/16`)
+  * `module.aks`: `aks-ht-bankc-p-cin-01` (Free Tier System node pool with Azure CNI Overlay)
+  * `azurerm_user_assigned_identity`: Workload Identity for Kubernetes pods (OIDC federated credential)
+  * `azurerm_cognitive_account`: Content Safety (`cs-ht-bankc-p-cin-01`)
+  * `azurerm_static_web_app`: `stapp-ht-bankc-p-cin-01` (`Free` tier bound to custom domain **bank.mytaxbot.site**)
+
+---
+
+## 📁 Domain-Driven File Separation Architecture (Enterprise Standard)
+
+Inside each Terraform deployment root (e.g., `platform/shared-services/`, `workloads/tax-advisor/`), resources are strictly partitioned into **domain-specific `.tf` files** rather than maintained as a single monolithic `main.tf`.
+
+```
+platform/shared-services/
+├── main.tf              ── Resource Group foundation & CAF naming module invocations
+├── networking.tf        ── Spoke VNet, Subnets, NSGs & Hub VNet Peering
+├── security.tf          ── Key Vault, Access Policies & Managed Identities
+├── observability.tf     ── Log Analytics Workspace, App Insights & Diagnostic Settings
+├── api_management.tf    ── APIM Gateway instance & global API policies
+├── ai_services.tf       ── Cognitive Services / Shared AI endpoints
+├── locals.tf            ── Centralized tags, naming interpolation & local maps
+├── variables.tf         ── Strongly-typed input variables with validation rules
+├── outputs.tf           ── State outputs consumed by dependent workloads
+├── versions.tf          ── Provider requirements (azurerm, azuread) and Terraform version pins
+└── prod.tfvars          ── Environment-specific values
+```
+
+### Why Enterprises Enforce Domain File Separation
+
+| Enterprise Driver | Monolithic `main.tf` (Anti-Pattern) | Domain-Driven File Splitting (Enterprise Standard) |
+| :--- | :--- | :--- |
+| **Git Merge Conflicts** | High — every team member edits the same file. | **Zero Conflicts** — Network, Security, and App engineers edit separate files concurrently. |
+| **Code Review (PR) Focus** | Poor — reviewers must sift through 2,000+ lines. | **Atomic & Focused** — Security teams review `security.tf`, Network teams review `networking.tf`. |
+| **Cognitive Load** | High — difficult to navigate resource relationships. | **Low & Intuitive** — Clean single-responsibility separation per domain. |
+| **Execution Performance** | Identical | **Identical** — Terraform evaluates all `.tf` files in a folder into a single unified graph in memory. |
 
 ---
 

@@ -39,27 +39,36 @@ Core outcomes:
 
 ---
 
-## 🚀 Active Workload Target: TaxBot India (`tax-advisor`)
+## 🚀 Active Workload Portfolio
 
-Deploy and operate `workloads/tax-advisor` and `app/tax-advisor` through Azure DevOps using the `app-prod` service connection.
+### Workload 1: TaxBot India (`workloads/tax-advisor` & `app/tax-advisor`)
+* **Production Domain:** [https://www.mytaxbot.site](https://www.mytaxbot.site)
+* **Architecture:** Serverless PaaS (Python Function App `func-ht-taxb-p-cin-01`, Azure OpenAI `gpt-5.4-nano`, Azure AI Search, Cosmos DB).
+* **Resource Group:** `rg-ht-taxb-p-cin-01` (`Apps-prod`) with Spoke VNet `10.41.0.0/16`.
+* **CI/CD:** `pipelines/azure-cicd-tax-advisor.yml` & `.github/workflows/workload-tax-advisor.yml`.
 
-The workload provisions TaxBot India infrastructure:
-- Resource group `rg-ht-taxb-p-cin-01` and spoke VNet `vnet-ht-taxb-p-cin-01` in `Apps-prod`.
-- Hub-spoke peering to `vnet-ht-hub-p-cin-01` in `Hub-prod`.
-- Azure OpenAI account `oai-ht-taxb-p-eus-01` with `gpt-5.4-nano` deployment.
-- Azure AI Search `srch-ht-taxb-p-cin-01` for statutory RAG text retrieval.
-- Cosmos DB `cosmos-ht-taxb-p-cin-01` for conversation session state.
-- Python Function App `func-ht-taxb-p-cin-01` with system-assigned managed identity.
-- Static Web App `stapp-ht-taxb-p-cin-01` bound to custom domain **www.mytaxbot.site**.
-- APIM API `apim-ht-ss-p-cin-01` with rate limiting by IP (20 calls/min) and CORS protection.
+### Workload 2: BankCompliance AI (`workloads/bank-compliance-ai-aks` & `app/bank-compliance`)
+* **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
+* **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
+* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway with Azure OpenAI `gpt-5.4-nano`, Qdrant Vector DB on 4GB CSI Managed Disk, DPDP PII Auto-Masking, Azure Static Web Apps).
+* **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
+* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Fully automated, zero-touch OIDC deployments).
+
+---
+
+## 📚 Central Confluence Space
+* **HappyTechies Cloud & AI Platform:** [https://happytechies.atlassian.net/wiki/spaces/HT/overview](https://happytechies.atlassian.net/wiki/spaces/HT/overview)
 
 Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
-- `platform/shared-services`: complete.
-- `workloads/tax-advisor`: complete (IaC deployed & active).
+- `platform/shared-services`: complete (Key Vault, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
+- `workloads/tax-advisor`: complete (Serverless Function App + Cosmos + AI Search + Cloudflare DNS `www.mytaxbot.site` automated).
+- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
-- `pipelines/`: active and verified.
+- `app/bank-compliance`: complete (React SPA + FastAPI backend + LiteLLM + Qdrant Vector DB live).
+- `pipelines/`: active and verified across both GitHub Actions and Azure DevOps.
+- `dns_automation`: 100% automated via Cloudflare Terraform provider across both workloads with 10s `time_sleep` buffer.
 
 ---
 
@@ -67,12 +76,12 @@ Current status:
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
-| Scope | Subscription | Subscription ID | Azure DevOps Service Connection | GitHub Actions Secret | App Registration (Client ID) |
+| Scope | Subscription | Subscription ID | Azure DevOps Service Connection | GitHub Actions Secret | App Registration (Client ID & Object ID) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Bootstrap** | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | `BOOTSTRAP_CLIENT_ID` | `DevOpsUniverse-Terraform- bootstrap`<br>`934ab83b-2f61-475e-bdbc-85c9eaed83e6` |
-| **Hub Network** | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | `HUB_CLIENT_ID` | `DevOpsUniverse-Terraform- hub-prod`<br>`78960c14-26d2-4a0c-ab21-579c3030155e` |
-| **Shared Services** | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | `SHARED_CLIENT_ID` | `DevOpsUniverse-Terraform-shared-services`<br>`580ffcfd-51ee-4dc3-9204-d03cb438ff82` |
-| **Apps / AI Workloads** | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | `APP_CLIENT_ID` | `DevOpsUniverse-Terraform-app-prod`<br>`99ab7987-3989-46c3-bae9-92279be16608` |
+| **Bootstrap** | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | `BOOTSTRAP_CLIENT_ID` | `DevOpsUniverse-Terraform- bootstrap`<br>App ID: `934ab83b-2f61-475e-bdbc-85c9eaed83e6`<br>Obj ID: `f3a1b19b-11b8-4e13-8499-7f83ea39547a` |
+| **Hub Network** | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | `HUB_CLIENT_ID` | `DevOpsUniverse-Terraform- hub-prod`<br>App ID: `78960c14-26d2-4a0c-ab21-579c3030155e`<br>Obj ID: `14cfc7b4-c3a2-4994-9f5c-0ce4d8db0f57` |
+| **Shared Services** | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | `SHARED_CLIENT_ID` | `DevOpsUniverse-Terraform-shared-services`<br>App ID: `580ffcfd-51ee-4dc3-9204-d03cb438ff82`<br>Obj ID: `c5a24473-2bad-41a7-b0b1-b79b94621252` |
+| **Apps / AI Workloads** | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | `APP_CLIENT_ID` | `DevOpsUniverse-Terraform-app-prod`<br>App ID: `99ab7987-3989-46c3-bae9-92279be16608`<br>Obj ID: `9630f661-27e7-42f0-8377-5565ba7db7cd` |
 
 ---
 
@@ -96,6 +105,8 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 | **App Service Plan** | Function App Host | `F1` (Free) / `B1` | **$0 – $13 / month** |
 | **Log Analytics** | Application Insights & Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
 | **Storage Account** | Terraform `.tfstate` & Functions | `Standard_LRS` | Pennies / month |
+| **Cosmos DB** | Session Chat History Storage | Manual `400 RU/s` (Free Tier) | **$0 / month** |
+| **Azure AI Content Safety** | Jailbreak Shield & PII Sanitizer | `F0` (5,000 calls/mo Free) | **$0 / month** |
 | **Azure OpenAI** | LLM Inferences & Embeddings | Pay-As-You-Go (`S0` + `gpt-5.4-nano`) | Cap per token |
 
 ---
@@ -116,3 +127,15 @@ Keep Terraform roots separate. Do not merge state:
 - **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)
 - **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)
 - **Master Documentation Index:** [docs/README.md](README.md)
+- **Azure RAG Architectural Patterns Guide:** [docs/platform-guide/08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)
+- **Multi-Cloud AI Gateway & Fallback Guide:** [docs/platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md](platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md)
+- **AI Engineering Roadmap & Gap Analysis Guide:** [docs/platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)
+
+---
+
+## 🤖 Developer AI Tooling & Environment Context
+
+* **AI Subscription:** **Google AI Plus** (India tier)
+* **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context reasoning.
+* **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+

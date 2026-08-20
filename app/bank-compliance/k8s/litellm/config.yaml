@@ -1,0 +1,17 @@
+model_list:
+  - model_name: gpt-5.4-nano
+    litellm_params:
+      model: azure/gpt-5.4-nano
+      api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
+      api_key: "os.environ/AZURE_API_KEY"
+      api_version: "2024-06-01"
+
+general_settings:
+  enable_prompt_caching: true
+  cache_type: "in-memory"
+  cache_ttl: 7200
+
+router_settings:
+  routing_strategy: "latency-based-routing"
+  num_retries: 3
+  timeout: 30

@@ -37,6 +37,12 @@ variable "partition_key_path" {
   default     = "/sessionId"
 }
 
+variable "throughput" {
+  description = "Manual throughput (RU/s) for the container (400 RU/s is 100% free under Free Tier)."
+  type        = number
+  default     = 400
+}
+
 variable "tags" {
   description = "Tags to apply to resources."
   type        = map(string)

@@ -1,3 +1,8 @@
+# ==============================================================================
+# Platform: Hub Network Outputs
+# Formatted for immediate usability in spoke VNet peering & network topology
+# ==============================================================================
+
 output "resource_group_name" {
   description = "Hub resource group name."
   value       = azurerm_resource_group.hub.name

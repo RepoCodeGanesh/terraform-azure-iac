@@ -1,3 +1,8 @@
+# ==============================================================================
+# Workload: TaxBot India Outputs
+# Formatted for immediate usability in CI/CD pipelines, CLI, & developer tooling
+# ==============================================================================
+
 output "resource_group_name" {
   description = "Name of the TaxBot India workload resource group."
   value       = azurerm_resource_group.tax_advisor.name
@@ -14,13 +19,13 @@ output "vnet_name" {
 }
 
 output "openai_account_name" {
-  description = "Name of the Azure OpenAI account."
-  value       = module.openai.name
+  description = "Name of the shared Azure OpenAI account."
+  value       = data.azurerm_cognitive_account.openai.name
 }
 
 output "openai_endpoint" {
-  description = "Endpoint URL for Azure OpenAI."
-  value       = module.openai.endpoint
+  description = "Endpoint URL for the shared Azure OpenAI account."
+  value       = data.azurerm_cognitive_account.openai.endpoint
 }
 
 output "function_app_name" {
@@ -30,11 +35,11 @@ output "function_app_name" {
 
 output "function_app_default_hostname" {
   description = "Default hostname of the Function App."
-  value       = module.function_app.default_hostname
+  value       = "https://${module.function_app.default_hostname}"
 }
 
 output "function_app_system_identity_principal_id" {
-  description = "System-Assigned Managed Identity Principal ID."
+  description = "System-Assigned Managed Identity Principal ID (used for RBAC assignments)."
   value       = module.function_app.principal_id
   sensitive   = true
 }
@@ -67,21 +72,61 @@ output "search_service_endpoint" {
 
 output "static_web_app_name" {
   description = "Name of the Azure Static Web App."
-  value       = azurerm_static_web_app.frontend.name
+  value       = module.taxb_frontend.name
 }
 
 output "static_web_app_url" {
-  description = "Default hostname for the Static Web App."
-  value       = azurerm_static_web_app.frontend.default_host_name
+  description = "Default clickable URL for the Static Web App."
+  value       = "https://${module.taxb_frontend.default_host_name}"
+}
+
+output "custom_domain_url" {
+  description = "Live Production Custom Domain URL for TaxBot India."
+  value       = "https://${var.custom_domain_name}"
+}
+
+output "cloudflare_cname_record_id" {
+  description = "The Cloudflare DNS CNAME record ID for www.mytaxbot.site."
+  value       = cloudflare_record.taxb_cname.id
+}
+
+output "dns_and_custom_domain_summary" {
+  description = "Complete summary of automated DNS and custom domain configuration for TaxBot."
+  value       = <<-EOT
+    ================================================================================
+    🌐 CLOUDFLARE DNS & AZURE CUSTOM DOMAIN AUTOMATION COMPLETE!
+    ================================================================================
+    • Public App URL:       https://${var.custom_domain_name}
+    • DNS CNAME Record:     www.mytaxbot.site ➔ ${module.taxb_frontend.default_host_name}
+    • DNS Automation:       Cloudflare API (Record ID: ${cloudflare_record.taxb_cname.id})
+    • SSL Certificate:      Active (Auto-provisioned & Managed by Azure SWA)
+    • APIM Gateway URL:     ${startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/tax-advisor" : "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"}
+    ================================================================================
+  EOT
 }
 
 output "static_web_app_api_key" {
-  description = "Deployment token for Static Web App CI/CD."
-  value       = azurerm_static_web_app.frontend.api_key
+  description = "Deployment token for the Static Web App."
+  value       = module.taxb_frontend.api_key
   sensitive   = true
+}
+
+output "key_vault_secret_name" {
+  description = "The secret name in central Key Vault for the Static Web App deployment token."
+  value       = azurerm_key_vault_secret.taxb_swa_api_token.name
 }
 
 output "apim_base_url" {
   description = "APIM gateway base URL for TaxBot India API."
-  value       = "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
+  value       = startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/tax-advisor" : "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"
+}
+
+output "observability_agent_id" {
+  description = "Resource ID of the Azure Copilot Observability Agent."
+  value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].id : null
+}
+
+output "observability_agent_name" {
+  description = "Name of the Azure Copilot Observability Agent."
+  value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].name : null
 }
