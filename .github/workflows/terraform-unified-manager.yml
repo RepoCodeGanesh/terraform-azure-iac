@@ -44,7 +44,6 @@ jobs:
     outputs:
       sub_id: ${{ steps.resolve.outputs.sub_id }}
       env_name: ${{ steps.resolve.outputs.env_name }}
-      client_id: ${{ steps.resolve.outputs.client_id }}
     steps:
       - name: Validate Destroy Safety Confirmation
         if: inputs.action == 'destroy'
@@ -112,10 +111,28 @@ jobs:
         with:
           terraform_version: 1.15.8
 
+      - name: Resolve Client ID
+        id: auth_vars
+        run: |
+          case "${{ inputs.target }}" in
+            "workloads/bank-compliance-ai-aks"|"workloads/tax-advisor")
+              echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "platform/shared-services")
+              echo "client_id=${{ secrets.SHARED_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "platform/hub")
+              echo "client_id=${{ secrets.HUB_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+            "platform/bootstrap")
+              echo "client_id=${{ secrets.BOOTSTRAP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
       - name: Azure OIDC Login
         uses: azure/login@v2
         with:
-          client-id: ${{ needs.resolve-target.outputs.client_id }}
+          client-id: ${{ steps.auth_vars.outputs.client_id || secrets.APP_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ needs.resolve-target.outputs.sub_id }}
 
