@@ -113,7 +113,7 @@ jobs:
           kubectl apply -f namespace.yaml
           kubectl apply -f serviceaccount.yaml
           kubectl apply -f backend-configmap.yaml
-          OPENAI_KEY=$(az cognitiveservices account keys list --name oai-ht-taxb-p-eus-01 --resource-group rg-ht-taxb-p-cin-01 --query "key1" -o tsv)
+          OPENAI_KEY=$(az cognitiveservices account keys list --name oai-ht-ss-p-eus-01 --resource-group rg-ht-ss-p-cin-01 --subscription 859a785c-bd38-402d-b595-1f44f40fb9bf --query "key1" -o tsv)
           kubectl create secret generic litellm-secret --from-literal=AZURE_API_KEY="$OPENAI_KEY" -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
           kubectl create configmap litellm-config --from-file=config.yaml=litellm/config.yaml -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f litellm/deployment.yaml
