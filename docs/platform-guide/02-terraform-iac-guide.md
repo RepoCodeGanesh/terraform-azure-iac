@@ -101,7 +101,7 @@ flowchart TD
 * **Provisioned Resources**:
   * `azurerm_resource_group`: `rg-ht-bankc-p-cin-01`
   * `module.bankc_vnet`: `vnet-ht-bankc-p-cin-01` (`10.42.0.0/16`)
-  * `module.aks`: `aks-ht-bankc-p-cin-01` (Free Tier System node pool with Azure CNI Overlay)
+  * `module.aks`: `aks-ht-bankc-p-cin-01` (Free Tier cluster node pool with Azure CNI Overlay)
   * `azurerm_user_assigned_identity`: Workload Identity for Kubernetes pods (OIDC federated credential)
   * `azurerm_cognitive_account`: Content Safety (`cs-ht-bankc-p-cin-01`)
   * `azurerm_static_web_app`: `stapp-ht-bankc-p-cin-01` (`Free` tier bound to custom domain **bank.mytaxbot.site**)

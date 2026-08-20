@@ -44,13 +44,13 @@ flowchart LR
 
 ## 💡 Enterprise Exceptions: Where Human-Understandable Display Names MUST Be Used
 
-In enterprise Cloud Adoption Framework setups, **UI display layers, user-facing endpoints, and operational alerts SHOULD NOT use cryptic system abbreviations**. They MUST use clear, human-understandable display names:
+In enterprise Cloud Adoption Framework setups, **UI display layers, user-facing endpoints, and operational alerts SHOULD NOT use cryptic resource abbreviations**. They MUST use clear, human-understandable display names:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       System Naming vs. Display Naming                      │
+│                 Resource / ARM Naming vs. Display Naming                    │
 ├──────────────────────────────────────┬──────────────────────────────────────┤
-│ ⚙️ System Name (IaC / Azure ARM)     │ 👤 Display Name (Human-Understandable)│
+│ ⚙️ Resource Name (IaC / Azure ARM)   │ 👤 Display Name (Human-Understandable)│
 │ (Mandatory for Automation & Syntax)  │ (Mandatory for UI, Alerts & End-Users)│
 ├──────────────────────────────────────┼──────────────────────────────────────┤
 │ dash-ht-taxb-p-cin-01                │ TaxBot India - Telemetry Dashboard   │

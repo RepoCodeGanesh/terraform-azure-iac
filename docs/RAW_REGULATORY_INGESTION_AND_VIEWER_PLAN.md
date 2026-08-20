@@ -144,7 +144,7 @@ Cached / Direct RAG  Re-rank + Draft    Full CRAG + Drafter + Critic +
 (< 400ms)            (~ 1.2s)           Deterministic Page Auditor (~ 2.2s)
 ```
 
-* **Abstain / Escalate Policy:** If evidence is insufficient or conflicting across circulars, the system does not guess — it explicitly outputs: *"I cannot establish this from the available regulatory documents. Escalated to Human Compliance Officer."*
+* **Abstain / Escalate Policy:** If evidence is insufficient or conflicting across circulars, the compliance copilot does not guess — it explicitly outputs: *"I cannot establish this from the available regulatory documents. Escalated to Human Compliance Officer."*
 
 ---
 
