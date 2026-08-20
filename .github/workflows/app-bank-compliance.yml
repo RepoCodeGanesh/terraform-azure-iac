@@ -135,25 +135,23 @@ jobs:
           cluster-name: ${{ env.AKS_CLUSTER_NAME }}
           resource-group: ${{ env.AKS_RESOURCE_GROUP }}
 
-      - name: Deploy Kubernetes Manifests
-        working-directory: app/bank-compliance/k8s
+      - name: Deploy BankCompliance AI via Helm
         run: |
-          kubectl apply -f namespace.yaml
-          kubectl apply -f serviceaccount.yaml
-          kubectl apply -f backend-configmap.yaml
           OPENAI_ENDPOINT=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-endpoint --query value -o tsv)
           OPENAI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-api-key --query value -o tsv)
-          kubectl create secret generic litellm-secret \
-            --from-literal=AZURE_OPENAI_ENDPOINT="$OPENAI_ENDPOINT" \
-            --from-literal=AZURE_API_KEY="$OPENAI_KEY" \
-            -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
-          kubectl create configmap litellm-config --from-file=config.yaml=litellm/config.yaml -n bank-compliance --dry-run=client -o yaml | kubectl apply -f -
-          kubectl apply -f litellm/deployment.yaml
-          kubectl apply -f backend-deployment.yaml
+          
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          kubectl set image deployment/bankc-backend backend="${IMAGE_LOWER}:${{ github.sha }}" -n bank-compliance
-          kubectl rollout status deployment/bankc-backend -n bank-compliance
-          kubectl rollout status deployment/litellm-proxy -n bank-compliance
+          
+          kubectl create namespace bank-compliance --dry-run=client -o yaml | kubectl apply -f -
+          
+          helm upgrade --install bank-compliance ./app/bank-compliance/chart \
+            --namespace bank-compliance \
+            --set backend.image.repository="${IMAGE_LOWER}" \
+            --set backend.image.tag="${{ github.sha }}" \
+            --set secrets.openaiEndpoint="$OPENAI_ENDPOINT" \
+            --set secrets.openaiKey="$OPENAI_KEY" \
+            --wait \
+            --timeout 5m
 
       - name: Deploy Prometheus & Grafana Observability Stack
         working-directory: app/bank-compliance/k8s/monitoring
