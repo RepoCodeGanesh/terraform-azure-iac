@@ -161,37 +161,17 @@ jobs:
           chmod +x deploy-monitoring.sh
           ./deploy-monitoring.sh
 
-  # ── JOB 4: Build & Deploy Frontend to Azure Static Web App ─────────────────
+  # ── JOB 4: Build & Deploy Frontend to Azure Static Web App (Reusable Called) ─
   deploy-frontend:
     name: Build & Deploy Frontend SPA
     needs: [devsecops-scan, ai-eval-quality-gate]
-    runs-on: ubuntu-latest
-    environment: bank-compliance-prod
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Azure OIDC Login (Fetch SWA Token)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.SUBSCRIPTION_ID }}
-
-      - name: Get SWA Deployment Token from Azure CLI
-        id: swa_token
-        run: |
-          TOKEN=$(az staticwebapp secrets list --name stapp-ht-bankc-p-cin-01 --resource-group rg-ht-bankc-p-cin-01 --query "properties.apiKey" -o tsv)
-          echo "::add-mask::$TOKEN"
-          echo "SWA_TOKEN=$TOKEN" >> $GITHUB_OUTPUT
-
-      - name: Deploy to Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
-        env:
-          VITE_API_URL: "https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query"
-        with:
-          azure_static_web_apps_api_token: ${{ steps.swa_token.outputs.SWA_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "app/bank-compliance/frontend"
-          output_location: "dist"
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
+    with:
+      static_web_app_name: 'stapp-ht-bankc-p-cin-01'
+      working_directory: 'app/bank-compliance/frontend'
+      key_vault_name: 'kv-ht-ss-p-cin-01'
+      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+    secrets:
+      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
