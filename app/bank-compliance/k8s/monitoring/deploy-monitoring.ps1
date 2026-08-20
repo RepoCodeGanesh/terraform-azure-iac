@@ -32,9 +32,10 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-# 3. Apply ServiceMonitors for BankCompliance & LiteLLM
-Write-Host "`n[3/4] Applying ServiceMonitors for AI apps in 'bank-compliance' namespace..." -ForegroundColor Yellow
+# 3. Apply ServiceMonitors and Pre-built Dashboards
+Write-Host "`n[3/4] Applying ServiceMonitors and Dashboards in '$Namespace' & 'bank-compliance'..." -ForegroundColor Yellow
 kubectl apply -f "$PSScriptRoot\service-monitors.yaml"
+kubectl apply -f "$PSScriptRoot\bank-compliance-dashboard.yaml"
 
 # 4. Success Summary & Instructions
 Write-Host "`n[4/4] Observability Stack Successfully Deployed!" -ForegroundColor Green
