@@ -67,3 +67,39 @@ resource "azurerm_role_assignment" "app_prod_rg_contributor" {
 
   depends_on = [azurerm_resource_group.shared_services]
 }
+
+# ─── Platform Registry: Shared AI Endpoints & Keys in Central Key Vault ──────
+
+data "azurerm_cognitive_account" "shared_openai" {
+  name                = module.shared_openai.name
+  resource_group_name = azurerm_resource_group.shared_services.name
+
+  depends_on = [module.shared_openai]
+}
+
+resource "azurerm_key_vault_secret" "openai_endpoint" {
+  name         = "openai-endpoint"
+  value        = module.shared_openai.endpoint
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, module.shared_openai]
+}
+
+resource "azurerm_key_vault_secret" "openai_api_key" {
+  name         = "openai-api-key"
+  value        = data.azurerm_cognitive_account.shared_openai.primary_access_key
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, data.azurerm_cognitive_account.shared_openai]
+}
+
+resource "azurerm_key_vault_secret" "content_safety_endpoint" {
+  name         = "content-safety-endpoint"
+  value        = module.shared_content_safety.endpoint
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, module.shared_content_safety]
+}
