@@ -205,4 +205,18 @@ variable "observability_agent_location_short" {
   default     = "eus"
 }
 
+# ── Custom Domain & Cloudflare DNS Configurations ───────────────────────────
+
+variable "custom_domain_name" {
+  description = "Custom domain for the TaxBot India frontend."
+  type        = string
+  default     = "www.mytaxbot.site"
+}
+
+variable "cloudflare_zone_id" {
+  description = "The Cloudflare Zone ID for mytaxbot.site DNS management."
+  type        = string
+  default     = "45acc43e2f88066e0406eca94edffc53"
+}
+
 

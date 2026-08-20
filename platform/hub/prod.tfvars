@@ -25,3 +25,6 @@ firewall_subnet_prefix   = "10.0.0.0/26"
 bastion_subnet_prefix    = "10.0.0.64/27"
 gateway_subnet_prefix    = "10.0.0.96/27"
 management_subnet_prefix = "10.0.1.0/24"
+
+# ── Cross-Subscription Workload SPN Delegation ──────────────────────────────
+app_prod_sp_object_id = "9630f661-27e7-42f0-8377-5565ba7db7cd"

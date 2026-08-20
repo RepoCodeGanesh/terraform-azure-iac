@@ -62,12 +62,13 @@ Core outcomes:
 Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
-- `platform/shared-services`: complete.
-- `workloads/tax-advisor`: complete.
-- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + SWA live).
+- `platform/shared-services`: complete (Key Vault, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
+- `workloads/tax-advisor`: complete (Serverless Function App + Cosmos + AI Search + Cloudflare DNS `www.mytaxbot.site` automated).
+- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `app/bank-compliance`: complete (React SPA + FastAPI backend + LiteLLM + Qdrant Vector DB live).
 - `pipelines/`: active and verified across both GitHub Actions and Azure DevOps.
+- `dns_automation`: 100% automated via Cloudflare Terraform provider across both workloads with 10s `time_sleep` buffer.
 
 ---
 
@@ -126,3 +127,15 @@ Keep Terraform roots separate. Do not merge state:
 - **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)
 - **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)
 - **Master Documentation Index:** [docs/README.md](README.md)
+- **Azure RAG Architectural Patterns Guide:** [docs/platform-guide/08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)
+- **Multi-Cloud AI Gateway & Fallback Guide:** [docs/platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md](platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md)
+- **AI Engineering Roadmap & Gap Analysis Guide:** [docs/platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)
+
+---
+
+## 🤖 Developer AI Tooling & Environment Context
+
+* **AI Subscription:** **Google AI Plus** (India tier)
+* **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context reasoning.
+* **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+

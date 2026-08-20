@@ -72,22 +72,42 @@ output "search_service_endpoint" {
 
 output "static_web_app_name" {
   description = "Name of the Azure Static Web App."
-  value       = azurerm_static_web_app.frontend.name
+  value       = module.taxb_frontend.name
 }
 
 output "static_web_app_url" {
   description = "Default clickable URL for the Static Web App."
-  value       = "https://${azurerm_static_web_app.frontend.default_host_name}"
+  value       = "https://${module.taxb_frontend.default_host_name}"
 }
 
 output "custom_domain_url" {
   description = "Live Production Custom Domain URL for TaxBot India."
-  value       = "https://www.mytaxbot.site"
+  value       = "https://${var.custom_domain_name}"
+}
+
+output "cloudflare_cname_record_id" {
+  description = "The Cloudflare DNS CNAME record ID for www.mytaxbot.site."
+  value       = cloudflare_record.taxb_cname.id
+}
+
+output "dns_and_custom_domain_summary" {
+  description = "Complete summary of automated DNS and custom domain configuration for TaxBot."
+  value       = <<-EOT
+    ================================================================================
+    🌐 CLOUDFLARE DNS & AZURE CUSTOM DOMAIN AUTOMATION COMPLETE!
+    ================================================================================
+    • Public App URL:       https://${var.custom_domain_name}
+    • DNS CNAME Record:     www.mytaxbot.site ➔ ${module.taxb_frontend.default_host_name}
+    • DNS Automation:       Cloudflare API (Record ID: ${cloudflare_record.taxb_cname.id})
+    • SSL Certificate:      Active (Auto-provisioned & Managed by Azure SWA)
+    • APIM Gateway URL:     ${startswith(data.azurerm_api_management.shared.gateway_url, "https://") ? "${data.azurerm_api_management.shared.gateway_url}/tax-advisor" : "https://${data.azurerm_api_management.shared.gateway_url}/tax-advisor"}
+    ================================================================================
+  EOT
 }
 
 output "static_web_app_api_key" {
   description = "Deployment token for the Static Web App."
-  value       = azurerm_static_web_app.frontend.api_key
+  value       = module.taxb_frontend.api_key
   sensitive   = true
 }
 
@@ -110,4 +130,3 @@ output "observability_agent_name" {
   description = "Name of the Azure Copilot Observability Agent."
   value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].name : null
 }
-

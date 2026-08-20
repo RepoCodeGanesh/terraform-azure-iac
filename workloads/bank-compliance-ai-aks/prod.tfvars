@@ -45,9 +45,10 @@ aks_node_count      = 1
 aks_os_disk_size_gb = 30
 enable_azure_policy = true
 
-# ── Custom Domain Configuration ─────────────────────────────────────────────
+# ── Custom Domain & Cloudflare DNS ───────────────────────────────────────────
 custom_domain_name   = "bank.mytaxbot.site"
-enable_custom_domain = true
+cloudflare_zone_id   = "45acc43e2f88066e0406eca94edffc53"
+enable_custom_domain = false
 
 # ── RBAC Role Assignments ───────────────────────────────────────────────────
 enable_role_assignments = true

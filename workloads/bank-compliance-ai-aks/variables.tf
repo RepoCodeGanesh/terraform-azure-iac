@@ -195,6 +195,12 @@ variable "custom_domain_name" {
   default     = "bank.mytaxbot.site"
 }
 
+variable "cloudflare_zone_id" {
+  description = "The Cloudflare Zone ID for mytaxbot.site DNS management."
+  type        = string
+  default     = "45acc43e2f88066e0406eca94edffc53"
+}
+
 variable "enable_custom_domain" {
   description = "Whether to bind the custom domain to the Static Web App (set to true after CNAME DNS record is added at registrar)."
   type        = bool

@@ -28,3 +28,11 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 5. **Central Called Workflows**: App deployments delegate execution to central reusable templates in `RepoCodeGanesh/.github` across 4 parallelized phases.
 6. **WIF OIDC Claim Rule**: GitHub Actions workflows using Entra ID identity `DevOpsUniverse-Terraform-app-prod` must specify `environment: tax-advisor-prod` to match federated credential claims.
 7. **Observability**: Stream logs from Azure OpenAI, AI Search, Cosmos DB, and Functions into central Log Analytics `law-ht-ss-p-cin-01` via `azurerm_monitor_diagnostic_setting`.
+
+---
+
+## 🤖 Developer AI Tooling & Environment Context
+- **AI Subscription:** **Google AI Plus** (India tier)
+- **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context capabilities.
+- **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+

@@ -12,3 +12,8 @@ output "subnet_ids" {
   description = "List of subnet resource IDs."
   value       = module.hub_vnet.vnet_subnets
 }
+
+output "vnet_subnets_name_id" {
+  description = "Map of subnet name to subnet ID."
+  value       = module.hub_vnet.vnet_subnets_name_id
+}

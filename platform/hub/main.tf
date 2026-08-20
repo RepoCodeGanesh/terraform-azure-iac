@@ -1,4 +1,13 @@
+# ==============================================================================
+# Platform: Hub Network — Core & Hub Virtual Network
+# Subscription: Hub-prod (3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b)
+# Purpose: Central Hub Virtual Network for shared routing, firewall & transit
+# Cost:    $0.00 base cost (VNet and subnets without active gateways)
+# ==============================================================================
+
 data "azurerm_client_config" "current" {}
+
+# ─── CAF Resource Naming Modules ──────────────────────────────────────────────
 
 module "hub_rg_name" {
   source = "../../modules/naming"
@@ -22,11 +31,15 @@ module "hub_vnet_name" {
   instance       = var.instance
 }
 
+# ─── Hub Resource Group ───────────────────────────────────────────────────────
+
 resource "azurerm_resource_group" "hub" {
   name     = module.hub_rg_name.name
   location = var.location
   tags     = local.tags
 }
+
+# ─── Hub Virtual Network & Subnets ────────────────────────────────────────────
 
 module "hub_vnet" {
   source = "../../modules/network"
@@ -35,17 +48,20 @@ module "hub_vnet" {
   location            = azurerm_resource_group.hub.location
   vnet_name           = module.hub_vnet_name.name
   address_space       = var.vnet_address_space
+
   subnet_names = [
     "AzureFirewallSubnet",
     "AzureBastionSubnet",
     "GatewaySubnet",
     "Management"
   ]
+
   subnet_prefixes = [
     var.firewall_subnet_prefix,
     var.bastion_subnet_prefix,
     var.gateway_subnet_prefix,
     var.management_subnet_prefix
   ]
+
   tags = local.tags
 }

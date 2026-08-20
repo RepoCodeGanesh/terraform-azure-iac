@@ -37,14 +37,16 @@ permissions:
   contents: read
 
 jobs:
-  execute-terraform:
-    name: Terraform ${{ inputs.action }} on ${{ inputs.target }}
+  # ── STAGE 1: Dynamically Resolve Target Subscription & Environment ─────────
+  resolve-target:
+    name: Resolve Target Configuration
     runs-on: ubuntu-latest
-    env:
-      ARM_PROVIDER_RETRY_MAX: "10"
-      ARM_CLIENT_TIMEOUT: "600"
+    outputs:
+      sub_id: ${{ steps.resolve.outputs.sub_id }}
+      env_name: ${{ steps.resolve.outputs.env_name }}
+      client_id: ${{ steps.resolve.outputs.client_id }}
     steps:
-      - name: Validate Destroy Confirmation
+      - name: Validate Destroy Safety Confirmation
         if: inputs.action == 'destroy'
         run: |
           if [ "${{ inputs.confirm_destroy }}" != "DESTROY" ]; then
@@ -52,10 +54,7 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Resolve Target Azure Configuration
+      - name: Resolve Azure Target & OIDC Environment
         id: resolve
         run: |
           TARGET="${{ inputs.target }}"
@@ -65,22 +64,27 @@ jobs:
           case "$TARGET" in
             "workloads/bank-compliance-ai-aks")
               echo "sub_id=f4ffefe1-d689-4059-969c-ccc73e2a11d4" >> $GITHUB_OUTPUT
+              echo "env_name=tax-advisor-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             "workloads/tax-advisor")
               echo "sub_id=f4ffefe1-d689-4059-969c-ccc73e2a11d4" >> $GITHUB_OUTPUT
+              echo "env_name=tax-advisor-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             "platform/shared-services")
               echo "sub_id=859a785c-bd38-402d-b595-1f44f40fb9bf" >> $GITHUB_OUTPUT
+              echo "env_name=shared-services-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.SHARED_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             "platform/hub")
               echo "sub_id=3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b" >> $GITHUB_OUTPUT
+              echo "env_name=hub-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.HUB_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             "platform/bootstrap")
               echo "sub_id=7689ad81-71ba-481b-a17c-e1b6be61bab1" >> $GITHUB_OUTPUT
+              echo "env_name=bootstrap-prod" >> $GITHUB_OUTPUT
               echo "client_id=${{ secrets.BOOTSTRAP_CLIENT_ID }}" >> $GITHUB_OUTPUT
               ;;
             *)
@@ -89,22 +93,51 @@ jobs:
               ;;
           esac
 
-      - name: Azure OIDC Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ steps.resolve.outputs.client_id }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ steps.resolve.outputs.sub_id }}
+  # ── STAGE 2: Execute Terraform with Correct Entra ID Federated Context ────
+  execute-terraform:
+    name: Terraform ${{ inputs.action }} on ${{ inputs.target }}
+    needs: resolve-target
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-target.outputs.env_name }}
+    env:
+      ARM_PROVIDER_RETRY_MAX: "10"
+      ARM_CLIENT_TIMEOUT: "600"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.15.8
 
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.resolve-target.outputs.client_id }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ needs.resolve-target.outputs.sub_id }}
+
+      - name: Configure Terraform Plugin Cache
+        run: |
+          mkdir -p ~/.terraform.d/plugin-cache
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
+
+      - name: Cache Terraform Providers
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: terraform-plugins-${{ runner.os }}-${{ hashFiles(format('{0}/.terraform.lock.hcl', inputs.target)) }}
+          restore-keys: |
+            terraform-plugins-${{ runner.os }}-
+
       - name: Terraform Init
         working-directory: ${{ inputs.target }}
         run: |
-          terraform init -backend-config=backend.hcl -input=false
+          terraform init \
+            -reconfigure \
+            -backend-config=backend.hcl \
+            -input=false
 
       - name: Terraform Plan
         if: inputs.action == 'plan'

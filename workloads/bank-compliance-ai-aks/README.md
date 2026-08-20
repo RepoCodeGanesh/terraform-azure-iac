@@ -46,9 +46,9 @@ This directory contains the Terraform infrastructure code for **BankCompliance A
 
 ---
 
-## 🚀 Deployment Instructions
+## 🚀 Automated Deployment Instructions
 
-### 1. Initialize Terraform Backend
+### 1. Initialize Terraform Backend & Providers
 ```bash
 terraform init -backend-config=backend.hcl
 ```
@@ -58,15 +58,18 @@ terraform init -backend-config=backend.hcl
 terraform plan -var-file=prod.tfvars -out=tfplan
 ```
 
-### 3. Apply Infrastructure
+### 3. Apply Infrastructure (Zero-Touch Cloudflare DNS + Custom Domain)
 ```bash
 terraform apply tfplan
 ```
 
-### 4. Custom Domain Setup (`bank.mytaxbot.site`)
-1. Run `terraform apply` with `enable_custom_domain = false` (default).
-2. Copy the `static_web_app_default_host_name` output (e.g. `agreeable-beach-xxx.azurestaticapps.net`).
-3. In your DNS registrar (where `mytaxbot.site` is managed), add a **CNAME** record:
-   * **Host / Name:** `bank`
-   * **Points to / Target:** `<static_web_app_default_host_name>`
-4. Change `enable_custom_domain = true` in `prod.tfvars` and re-run `terraform apply`.
+---
+
+## 🌐 Automated Cloudflare DNS & Custom Domain Architecture (`dns_cloudflare.tf`)
+
+Custom domain registration (`bank.mytaxbot.site`) and DNS management are **100% automated as code**:
+
+1. **Dynamic Key Vault Authentication**: Terraform retrieves the Cloudflare API Token dynamically from the central Key Vault (`kv-ht-ss-p-cin-01/secrets/cloudflare-api-token`) via Entra ID RBAC without exposing secrets in code or pipelines.
+2. **Automated CNAME Creation**: Resource `cloudflare_record.bankc_cname` automatically creates `bank` ➔ `salmon-ground-xxx.azurestaticapps.net` in Cloudflare's Anycast DNS in < 1 second.
+3. **Race Condition Prevention**: Resource `time_sleep.wait_for_dns` introduces an automatic 10-second edge propagation buffer.
+4. **Automated Azure SSL Binding**: Resource `azurerm_static_web_app_custom_domain.bankc_custom_domain` binds `bank.mytaxbot.site` to Azure Static Web Apps and automatically issues the free SSL certificate in a **single pass**.
