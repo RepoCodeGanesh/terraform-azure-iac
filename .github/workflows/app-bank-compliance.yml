@@ -89,7 +89,7 @@ jobs:
     needs: build-and-push-backend
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
     runs-on: ubuntu-latest
-    environment: tax-advisor-prod
+    environment: bank-compliance-prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -134,7 +134,7 @@ jobs:
     name: Build & Deploy Frontend SPA
     needs: devsecops-scan
     runs-on: ubuntu-latest
-    environment: tax-advisor-prod
+    environment: bank-compliance-prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
