@@ -88,7 +88,8 @@ router_settings:
 ## 📋 4 Core Engineering Modules
 
 ### Module 1: Raw Regulatory Data Lake & AI Ingestion
-* **Storage Account Container:** `rbi-raw-pdfs` on Azure Blob Storage.
+* **Storage Architecture:** Dedicated Workload Storage Account **`sthtbankcpcin01`** in resource group **`rg-ht-bankc-p-cin-01`** (`Apps-prod` sub) for 100% workload isolation and independent lifecycle. (TaxBot remains unchanged as-is).
+* **Blob Container:** **`rbi-raw-pdfs`** with CORS policy configured for `https://bank.mytaxbot.site` to enable zero-latency direct browser PDF streaming.
 * **Crawler & Deduplication:** Python ingestion worker with SHA-256 integrity checksums.
 * **Layout Parsing:** Gemini 2.0 Flash extracts complex banking tables, circular amendments, and page-level section bounding boxes.
 
