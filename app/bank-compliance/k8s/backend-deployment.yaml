@@ -34,8 +34,8 @@ spec:
                 name: bankc-backend-config
           resources:
             requests:
-              cpu: "10m"
-              memory: "64Mi"
+              cpu: "1m"
+              memory: "32Mi"
             limits:
               cpu: "500m"
               memory: "512Mi"
