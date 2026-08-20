@@ -26,9 +26,10 @@ on:
         options:
           - 'plan'
           - 'apply'
+          - 'plan-destroy'
           - 'destroy'
       confirm_destroy:
-        description: 'If destroying, type "DESTROY" to confirm (leave empty for plan/apply):'
+        description: 'If destroying, type "DESTROY" to confirm (leave empty for plan/apply/plan-destroy):'
         required: false
         default: ''
 
@@ -152,7 +153,7 @@ jobs:
             -backend-config=backend.hcl \
             -input=false
 
-      - name: 🔍 Terraform Plan
+      - name: 🔍 Terraform Plan (Create / Update Preview)
         if: inputs.action == 'plan'
         working-directory: ${{ inputs.target }}
         run: |
@@ -170,6 +171,16 @@ jobs:
             terraform apply -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
           else
             terraform apply -auto-approve -input=false -parallelism=10
+          fi
+
+      - name: 🔍 Terraform Plan (Destroy Preview)
+        if: inputs.action == 'destroy' || inputs.action == 'plan-destroy'
+        working-directory: ${{ inputs.target }}
+        run: |
+          if [ -f "prod.tfvars" ]; then
+            terraform plan -destroy -input=false -var-file=prod.tfvars -parallelism=10
+          else
+            terraform plan -destroy -input=false -parallelism=10
           fi
 
       - name: 💥 Terraform Destroy
