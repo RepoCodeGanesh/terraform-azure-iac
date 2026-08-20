@@ -11,5 +11,6 @@ spec:
   selector:
     app: litellm-proxy
   ports:
-    - port: {{ .Values.litellm.service.port }}
+    - name: http
+      port: {{ .Values.litellm.service.port }}
       targetPort: {{ .Values.litellm.service.targetPort }}

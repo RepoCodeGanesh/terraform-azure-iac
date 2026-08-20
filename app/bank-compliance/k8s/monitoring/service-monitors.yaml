@@ -23,14 +23,13 @@ metadata:
   namespace: bank-compliance
   labels:
     release: monitoring
-    app: litellm-proxy
+    app: litellm
 spec:
   selector:
     matchLabels:
-      app: litellm-proxy
+      app: litellm
   endpoints:
     - port: http
-      targetPort: 4000
       path: /metrics
       interval: 30s
       scrapeTimeout: 10s
