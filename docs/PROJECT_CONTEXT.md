@@ -51,9 +51,9 @@ Core outcomes:
 * **Industry Sector:** RegTech (Regulatory Technology / BFSI)
 * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
-* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01` on `Standard_B4ms` 4 vCPUs, LiteLLM Multi-Model Proxy Gateway with Azure OpenAI `gpt-5.4-nano` + Google Gemini 2.0 Flash, Qdrant Vector DB on 4GB CSI Managed Disk, Dedicated Workload Storage Account `sthtbankcpcin01` for raw RBI PDFs, DPDP PII Auto-Masking, Azure Static Web Apps).
+* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01` on `Standard_B4ms` 4 vCPUs, Helm Chart Package `app/bank-compliance/chart/`, LiteLLM Multi-Model Proxy Gateway with Azure OpenAI `gpt-5.4-nano` + Google Gemini 2.0 Flash, Qdrant Vector DB on 4GB CSI Managed Disk, Dedicated Workload Storage Account `sthtbankcpcin01` for raw RBI PDFs, Governed Semantic Vector Caching, DPDP PII Auto-Masking, Azure Static Web Apps).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
-* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Dedicated `bank-compliance-prod` OIDC environment).
+* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Atomic Helm deployments + automated GenAIOps Regression Quality Gate blocking PRs on hallucination regressions).
 * **Cost Optimizer:** Automated hourly auto-shutdown workflow (`.github/workflows/aks-auto-shutdown.yml`) reducing idle running cost to $0.00/hr.
 * **Storage Isolation Decision:** TaxBot India remains as-is (uses its existing `sthttaxbpcin01` and Azure AI Search); BankCompliance AI deploys its own dedicated `sthtbankcpcin01` in `rg-ht-bankc-p-cin-01` for complete workload lifecycle isolation.
 * **Next Strategic Roadmap:** Phase 10 Merged Enterprise RegTech Platform (Raw PDF Data Lake on Azure Blob, Gemini 2.0 Flash Multimodal layout-aware parsing, Split-Screen live PDF viewer, and Automated Ragas/TruLens CI/CD Quality Gates).
