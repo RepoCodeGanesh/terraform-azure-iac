@@ -9,7 +9,7 @@ This platform bridges raw, signed regulatory PDFs issued by the Reserve Bank of 
 
 ---
 
-## 🏛️ End-to-End System Architecture
+## 🏛️ End-to-End Platform Architecture
 
 ```mermaid
 graph TD
