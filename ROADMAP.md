@@ -80,7 +80,10 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 ## 🏦 Phase 9: Banking Regulatory Compliance AI Copilot on AKS (`workloads/bank-compliance-ai-aks`)
 * [x] Provision AKS Free Tier Cluster (`aks-ht-bankc-p-cin-01`, `sku_tier = "Free"`) in `workloads/bank-compliance-ai-aks`.
 * [x] Deploy Qdrant Vector Database on AKS with 4GB Persistent CSI Disk (`managed-csi`) for RBI Master Direction HNSW indexing.
-* [x] Configure LiteLLM proxy gateway with dynamic environment variable expansion & Azure OpenAI (`gpt-5.4-nano`).
+* [x] Package application as an atomic **Helm Chart** (`app/bank-compliance/chart/`) with Workload Identity, ConfigMaps, and LiteLLM secrets.
+* [x] Implement **Continuous AI Evaluation & CI/CD Regression Quality Gate** (`evaluate.py` + `golden_dataset.jsonl`) blocking PRs on hallucination regressions.
+* [x] Implement **Governed Semantic Vector Cache** in Qdrant with `corpus_version` invalidation & temporal/clause bypass (<10ms latency, $0 token cost).
+* [x] Configure LiteLLM proxy gateway with dynamic environment variable expansion & Azure OpenAI (`gpt-5.4-nano`) + Google Gemini 2.0 Flash fallback.
 * [x] Build and deploy React SPA frontend (`bank.mytaxbot.site`) on Azure Static Web Apps with Cloudflare DNS automation.
 * [x] Integrate Prometheus & Grafana in-cluster monitoring stack (`monitoring` namespace) with ServiceMonitors.
 * [x] Integrate Dual CI/CD (GitHub Actions + Azure DevOps) with DevSecOps SonarCloud SAST/SCA security scans.
