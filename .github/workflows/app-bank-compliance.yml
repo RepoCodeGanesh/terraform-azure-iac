@@ -169,6 +169,7 @@ jobs:
       working_directory: 'app/bank-compliance/frontend'
       key_vault_name: 'kv-ht-ss-p-cin-01'
       shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+      swa_token_secret_name: 'bankc-swa-deployment-token'
     secrets:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
