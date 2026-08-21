@@ -15,6 +15,46 @@ data:
       "id": null,
       "links": [],
       "liveNow": false,
+      "templating": {
+        "list": [
+          {
+            "current": { "selected": true, "text": "All", "value": ".*" },
+            "hide": 0,
+            "includeAll": true,
+            "label": "AI Model",
+            "multi": true,
+            "name": "model",
+            "options": [
+              { "selected": true, "text": "All", "value": ".*" },
+              { "selected": false, "text": "gpt-4o-mini", "value": "gpt-4o-mini" },
+              { "selected": false, "text": "gemini-2.0-flash", "value": "gemini-2.0-flash" },
+              { "selected": false, "text": "gpt-4o", "value": "gpt-4o" },
+              { "selected": false, "text": "claude-3-5-sonnet", "value": "claude-3-5-sonnet" }
+            ],
+            "query": "All,gpt-4o-mini,gemini-2.0-flash,gpt-4o,claude-3-5-sonnet",
+            "type": "custom"
+          },
+          {
+            "current": { "selected": true, "text": "All", "value": ".*" },
+            "hide": 0,
+            "includeAll": true,
+            "label": "Department / Domain",
+            "multi": true,
+            "name": "department",
+            "options": [
+              { "selected": true, "text": "All", "value": ".*" },
+              { "selected": false, "text": "compliance", "value": "compliance" },
+              { "selected": false, "text": "kyc_aml", "value": "kyc_aml" },
+              { "selected": false, "text": "digital_lending", "value": "digital_lending" },
+              { "selected": false, "text": "it_governance", "value": "it_governance" },
+              { "selected": false, "text": "cards", "value": "cards" },
+              { "selected": false, "text": "payment_security", "value": "payment_security" }
+            ],
+            "query": "All,compliance,kyc_aml,digital_lending,it_governance,cards,payment_security",
+            "type": "custom"
+          }
+        ]
+      },
       "panels": [
         {
           "collapsed": false,
@@ -101,7 +141,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "(sum(rate(litellm_requests_metric_total{status=~\"429\"}[5m])) / sum(rate(litellm_requests_metric_total[5m]))) or vector(0)",
+              "expr": "(sum(rate(litellm_requests_metric_total{status=~\"429\", model=~\"$model\"}[5m])) / sum(rate(litellm_requests_metric_total{model=~\"$model\"}[5m]))) or vector(0)",
               "legendFormat": "429 Rate"
             }
           ]
@@ -136,7 +176,7 @@ data:
           "collapsed": false,
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
           "id": 101,
-          "title": "🎯 2. GenAI Quality Score & Hallucination Metrics",
+          "title": "🎯 2. GenAI Quality Score & Hallucination Metrics (With Visual Threshold Bands)",
           "type": "row"
         },
         {
@@ -144,25 +184,43 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
-              "min": 1,
-              "max": 5,
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "thresholdsStyle": {
+                  "mode": "area"
+                }
+              },
+              "min": 1.0,
+              "max": 5.0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "rgba(245, 54, 92, 0.15)", "value": null },
+                  { "color": "rgba(251, 175, 62, 0.15)", "value": 3.5 },
+                  { "color": "rgba(45, 206, 137, 0.20)", "value": 4.0 }
+                ]
+              },
               "unit": "none"
             }
           },
-          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
           "id": 20,
           "title": "Groundedness & Citation Integrity Trend (Target >= 4.0 / 5.0)",
+          "description": "Green Area (>= 4.0): Approved Statutory Compliance | Yellow Area (3.5-4.0): Audit Alert | Red Area (< 3.5): Hallucination Risk",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "avg(genai_eval_groundedness_score{namespace=\"bank-compliance\"}) or vector(4.68)",
+              "expr": "avg(genai_eval_groundedness_score{namespace=\"bank-compliance\", model=~\"$model\"}) or vector(4.68)",
               "legendFormat": "Groundedness Score (1-5)"
             },
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "avg(genai_eval_citation_integrity_score{namespace=\"bank-compliance\"}) or vector(4.92)",
+              "expr": "avg(genai_eval_citation_integrity_score{namespace=\"bank-compliance\", model=~\"$model\"}) or vector(4.92)",
               "legendFormat": "Citation Integrity Score (1-5)"
             }
           ]
@@ -176,7 +234,7 @@ data:
               "unit": "percentunit"
             }
           },
-          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
           "id": 21,
           "title": "Regulatory Abstention & Jailbreak Defense Pass Rate",
           "type": "timeseries",
@@ -195,7 +253,7 @@ data:
         },
         {
           "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
           "id": 102,
           "title": "⏱️ 3. Latency Breakdown (P50, P95, P99 & Component Spans)",
           "type": "row"
@@ -209,7 +267,7 @@ data:
               "unit": "s"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
           "id": 30,
           "title": "End-to-End Latency Percentiles (P50, P95, P99)",
           "type": "timeseries",
@@ -240,7 +298,7 @@ data:
               "unit": "ms"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
           "id": 31,
           "title": "Span Latency Decomposition (Vector DB vs LLM vs Middleware)",
           "type": "timeseries",
@@ -264,7 +322,7 @@ data:
         },
         {
           "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
           "id": 103,
           "title": "🪙 4. Token Consumption & AI FinOps (Spend & Savings)",
           "type": "row"
@@ -278,14 +336,14 @@ data:
               "unit": "short"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 23 },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
           "id": 40,
           "title": "Token Consumption Velocity (Tokens / sec by Model)",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(litellm_total_tokens_total[5m])) by (model)",
+              "expr": "sum(rate(litellm_total_tokens_total{model=~\"$model\"}[5m])) by (model)",
               "legendFormat": "Tokens/s ({{model}})"
             }
           ]
@@ -299,14 +357,14 @@ data:
               "unit": "currencyUSD"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 23 },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
           "id": 41,
           "title": "Cumulative LLM Spend ($ USD by Model)",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(litellm_spend_metric_total) by (model)",
+              "expr": "sum(litellm_spend_metric_total{model=~\"$model\"}) by (model)",
               "legendFormat": "Spend ${{model}}"
             }
           ]
@@ -320,7 +378,7 @@ data:
               "unit": "currencyUSD"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 23 },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
           "id": 42,
           "title": "FinOps Cost Saved via Semantic Cache ($)",
           "type": "timeseries",
@@ -343,5 +401,5 @@ data:
       "timezone": "browser",
       "title": "🏦 BankCompliance AI — Enterprise 5-Pillar Observability Dashboard",
       "uid": "bank-compliance-ai-5pillar",
-      "version": 2
+      "version": 3
     }
