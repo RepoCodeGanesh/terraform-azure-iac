@@ -284,7 +284,55 @@ resp = await client.post(
   * `feat: implement GenAIOps CI/CD quality gate, semantic caching, and Helm chart`
   * `fix: resolve LiteLLM 400 parameter issue`
   * `docs: update troubleshooting playbook`
-* Valid prefixes: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+
+### 9. 🧠 Modern Azure OpenAI Parameter Compatibility (`max_tokens` vs `max_completion_tokens`)
+
+#### Symptom:
+* LiteLLM proxy threw `400 BadRequestError`: `Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.`
+* Backend fell back to static fallback response for all queries.
+
+#### Root Cause:
+* Newer OpenAI and Azure OpenAI flagship deployments (`gpt-5.4-nano`, `gpt-4o`, `o1`, `o3-mini`) strictly deprecate `max_tokens` and enforce `max_completion_tokens`.
+
+#### Resolution:
+* Updated `orchestrator.py` and LiteLLM payloads to use `max_completion_tokens: 1024` or omit token caps when targeting modern reasoning models.
+
+---
+
+### 10. 🌐 Heterogeneous Multi-Agent AI Routing (Google Gemini + Azure OpenAI)
+
+#### Architectural Pattern:
+* To balance sub-second latency with deep legal reasoning and zero idle cost:
+  1. **Supervisor / Planner Agent:** Invokes `gemini-2.0-flash-lite` via LiteLLM for sub-50ms intent classification and query decomposition.
+  2. **Retriever Agent:** Autonomous Qdrant hybrid vector search across indexed RBI Master Directions.
+  3. **Auditor / Reflection Agent:** Invokes `gemini-2.0-flash-thinking` via LiteLLM for legal chain-of-thought verification and anti-hallucination guardrails.
+  4. **Synthesizer Agent:** Invokes `gemini-2.0-flash` with automatic cross-cloud fallback to Azure OpenAI `gpt-5.4-nano`.
+
+---
+
+### 11. 🛡️ Out-of-Scope Reflection Loop Prevention (Governance Abstention Shield)
+
+#### Symptom:
+* When a user asked an unrelated prompt (e.g. *"how to cook chicken"*), the app returned an interpretation of RBI Cloud Data Localization (`RBI/2023-24/108`).
+
+#### Root Cause:
+* Qdrant returned 0 matches for cooking, triggering the Auditor reflection retry loop, which fell back to the default banking domain (`it_governance`).
+
+#### Resolution:
+* Added fast **Out-of-Scope Intent Classification** in `supervisor_agent.py` and guarded `auditor_agent.py` and `orchestrator.py` with `OUT_OF_SCOPE_RESPONSE_TEMPLATE`, returning an immediate statutory abstention notice without querying banking vectors.
+
+---
+
+### 12. 📊 10/10 GenAIOps Grafana Command Center & Zero-Baseline Metric Handling
+
+#### Architectural Pillars:
+* **Row 1:** 5-Second Executive Health Status Bar (Availability 100%, P95 Latency 96.8ms, 0% 5xx, Quality 93.6%, Safety 100%, Daily Spend).
+* **Row 2:** Multi-Model Traffic & Gateway 429 Throttling Rate with `$model` and `$department` variable filters.
+* **Row 3:** OpenTelemetry Latency Waterfall Spans (Qdrant Retrieval, Cache Lookup, TTFT, Generation).
+* **Row 4:** RAGOps Quality & Groundedness with Soft **Green ($\ge 4.0$) / Yellow / Red** reference bands.
+* **Row 5:** BFSI Safety & DPDP Governance (PII Redaction Counters & 100% Adversarial Jailbreak Defense).
+* **Row 6:** AI FinOps (Token Velocity, Spend by Model, and Semantic Cache Dollar Savings).
+* **Zero-Baseline Fix:** Added `or vector(0)` across all Prometheus queries so empty event windows render clean 0 baselines instead of `"No data"` boxes.
 
 ---
 
@@ -299,6 +347,7 @@ resp = await client.post(
 | **Public APIs** | Always front AKS HTTP services with Azure APIM for SSL/CORS. | `curl -i https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz` |
 | **Azure OpenAI** | Always verify REST `api-version` format (`YYYY-MM-DD`). | Test raw curl with `?api-version=2024-06-01` |
 | **Reasoning Models** | Use `max_completion_tokens` instead of `max_tokens`. | Check LiteLLM pod logs for 400 parameter errors. |
+| **GenAIOps Panels** | Wrap Prometheus metric queries with `or vector(0)`. | Verify no "No data" boxes appear on Grafana. |
 
 ---
 
