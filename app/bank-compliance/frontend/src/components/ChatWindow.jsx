@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Send, Bot, User, Shield, Sparkles, Download, ArrowRight } from 'lucide-react'
 import PIIBanner from './PIIBanner'
 import CitationCard from './CitationCard'
+import MarkdownRenderer from './MarkdownRenderer'
 
 const INITIAL_SUGGESTIONS = [
   "What documents are acceptable for NRI KYC video verification?",
@@ -178,7 +179,7 @@ Approved for CCO / Internal Audit Review.`
                 </div>
               )}
 
-              {m.text}
+              {m.role === 'user' ? m.text : <MarkdownRenderer content={m.text} />}
               
               {/* Citation Cards */}
               {m.citations && m.citations.length > 0 && (

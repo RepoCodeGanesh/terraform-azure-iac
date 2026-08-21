@@ -1,5 +1,6 @@
 import React from 'react'
 import { BookOpen } from 'lucide-react'
+import MarkdownRenderer from './MarkdownRenderer'
 
 export default function CitationCard({ citation }) {
   return (
@@ -18,8 +19,8 @@ export default function CitationCard({ citation }) {
       <div style={{ fontWeight: 500, color: '#e5e7eb', marginTop: '4px' }}>
         {citation.clause}
       </div>
-      <div style={{ color: '#9ca3af', marginTop: '4px', fontSize: '0.8rem', lineHeight: '1.4' }}>
-        {citation.text}
+      <div style={{ color: '#9ca3af', marginTop: '4px', fontSize: '0.85rem', lineHeight: '1.4' }}>
+        <MarkdownRenderer content={citation.text} />
       </div>
     </div>
   )
