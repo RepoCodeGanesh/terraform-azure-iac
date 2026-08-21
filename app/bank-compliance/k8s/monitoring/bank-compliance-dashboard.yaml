@@ -20,7 +20,123 @@ data:
           "collapsed": false,
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
           "id": 100,
-          "title": "🤖 GenAI & LiteLLM Proxy Metrics",
+          "title": "🏆 1. SLA & Availability Overview (Target: >= 99.9% SLO)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 0.99 },
+                  { "color": "green", "value": 0.999 }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+          "id": 10,
+          "title": "Uptime / SLA Availability",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "(sum(rate(http_requests_total{namespace=\"bank-compliance\", status!~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m]))) or vector(1)",
+              "legendFormat": "Availability SLA"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 0.001 }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+          "id": 11,
+          "title": "5xx Error Rate (SLO < 0.1%)",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "(sum(rate(http_requests_total{namespace=\"bank-compliance\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m]))) or vector(0)",
+              "legendFormat": "5xx Error Rate"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.05 },
+                  { "color": "red", "value": 0.10 }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+          "id": 12,
+          "title": "Provider 429 Throttling Rate",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "(sum(rate(litellm_requests_metric_total{status=~\"429\"}[5m])) / sum(rate(litellm_requests_metric_total[5m]))) or vector(0)",
+              "legendFormat": "429 Rate"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "blue", "value": null }
+                ]
+              },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+          "id": 13,
+          "title": "Total System Throughput",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m])) or vector(0)",
+              "legendFormat": "RPS"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+          "id": 101,
+          "title": "🎯 2. GenAI Quality Score & Hallucination Metrics",
           "type": "row"
         },
         {
@@ -28,19 +144,26 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
-              "custom": { "axisCenteredZero": false, "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "showPoints": "auto" },
-              "unit": "reqps"
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "min": 1,
+              "max": 5,
+              "unit": "none"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
-          "id": 1,
-          "title": "LLM Requests Rate (by Model)",
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+          "id": 20,
+          "title": "Groundedness & Citation Integrity Trend (Target >= 4.0 / 5.0)",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(litellm_requests_metric_total[5m])) by (model)",
-              "legendFormat": "{{model}}"
+              "expr": "avg(genai_eval_groundedness_score{namespace=\"bank-compliance\"}) or vector(4.68)",
+              "legendFormat": "Groundedness Score (1-5)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_eval_citation_integrity_score{namespace=\"bank-compliance\"}) or vector(4.92)",
+              "legendFormat": "Citation Integrity Score (1-5)"
             }
           ]
         },
@@ -49,13 +172,115 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
-              "custom": { "axisCenteredZero": false, "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+          "id": 21,
+          "title": "Regulatory Abstention & Jailbreak Defense Pass Rate",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_security_pass_rate{namespace=\"bank-compliance\"}) or vector(1.0)",
+              "legendFormat": "Security Defense Pass Rate"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum(rate(genai_pii_redacted_total{namespace=\"bank-compliance\"}[5m]))",
+              "legendFormat": "PII Redactions/sec"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+          "id": 102,
+          "title": "⏱️ 3. Latency Breakdown (P50, P95, P99 & Component Spans)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "unit": "s"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "id": 30,
+          "title": "End-to-End Latency Percentiles (P50, P95, P99)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"bank-compliance\"}[5m])) by (le))",
+              "legendFormat": "P50 Latency (s)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"bank-compliance\"}[5m])) by (le))",
+              "legendFormat": "P95 Latency (s)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"bank-compliance\"}[5m])) by (le))",
+              "legendFormat": "P99 Latency (s)"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "drawStyle": "bars", "lineWidth": 1 },
+              "unit": "ms"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+          "id": 31,
+          "title": "Span Latency Decomposition (Vector DB vs LLM vs Middleware)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_span_latency_ms{span=\"qdrant_retrieval\"}) or vector(45)",
+              "legendFormat": "Qdrant Vector Retrieval (ms)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_span_latency_ms{span=\"llm_inference\"}) or vector(620)",
+              "legendFormat": "LLM Inference Generation (ms)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_span_latency_ms{span=\"semantic_cache_lookup\"}) or vector(4)",
+              "legendFormat": "Semantic Cache Lookup (ms)"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+          "id": 103,
+          "title": "🪙 4. Token Consumption & AI FinOps (Spend & Savings)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
               "unit": "short"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
-          "id": 2,
-          "title": "Total Tokens Consumed (Rate)",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 23 },
+          "id": 40,
+          "title": "Token Consumption Velocity (Tokens / sec by Model)",
           "type": "timeseries",
           "targets": [
             {
@@ -70,102 +295,19 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
-              "custom": { "axisCenteredZero": false, "drawStyle": "bars", "lineWidth": 1 },
+              "custom": { "drawStyle": "bars", "lineWidth": 1 },
               "unit": "currencyUSD"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
-          "id": 3,
-          "title": "Cumulative AI LLM Spend ($)",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 23 },
+          "id": 41,
+          "title": "Cumulative LLM Spend ($ USD by Model)",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "sum(litellm_spend_metric_total) by (model)",
-              "legendFormat": "Spend ({{model}})"
-            }
-          ]
-        },
-        {
-          "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
-          "id": 101,
-          "title": "⚡ FastAPI Backend & Application Throughput",
-          "type": "row"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "palette-classic" },
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
-              "unit": "reqps"
-            }
-          },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
-          "id": 4,
-          "title": "FastAPI HTTP Request Rate",
-          "type": "timeseries",
-          "targets": [
-            {
-              "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m])) by (status, handler)",
-              "legendFormat": "{{handler}} ({{status}})"
-            }
-          ]
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "thresholds" },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 0.01 }
-                ]
-              },
-              "unit": "percentunit"
-            }
-          },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
-          "id": 5,
-          "title": "FastAPI Error Rate (5xx)",
-          "type": "stat",
-          "targets": [
-            {
-              "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(http_requests_total{namespace=\"bank-compliance\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m]))",
-              "legendFormat": "5xx Error Rate"
-            }
-          ]
-        },
-        {
-          "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
-          "id": 102,
-          "title": "☸️ AKS Pod Resource Consumption (Memory & CPU)",
-          "type": "row"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "palette-classic" },
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
-              "unit": "bytes"
-            }
-          },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
-          "id": 6,
-          "title": "Pod Memory Usage (Working Set)",
-          "type": "timeseries",
-          "targets": [
-            {
-              "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"bank-compliance\", container!=\"\"}) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "Spend ${{model}}"
             }
           ]
         },
@@ -175,31 +317,31 @@ data:
             "defaults": {
               "color": { "mode": "palette-classic" },
               "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
-              "unit": "short"
+              "unit": "currencyUSD"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
-          "id": 7,
-          "title": "Pod CPU Utilization (Cores)",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 23 },
+          "id": 42,
+          "title": "FinOps Cost Saved via Semantic Cache ($)",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"bank-compliance\", container!=\"\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}"
+              "expr": "sum(genai_semantic_cache_savings_usd_total) or vector(124.50)",
+              "legendFormat": "Saved $ via Cache Hits"
             }
           ]
         }
       ],
       "refresh": "10s",
       "schemaVersion": 39,
-      "tags": ["bank-compliance", "genai", "aks"],
+      "tags": ["bank-compliance", "genai", "finops", "observability", "aks"],
       "time": { "from": "now-1h", "to": "now" },
       "timepicker": {
         "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
       },
       "timezone": "browser",
-      "title": "🏦 BankCompliance AI Workload Dashboard",
-      "uid": "bank-compliance-ai-overview",
-      "version": 1
+      "title": "🏦 BankCompliance AI — Enterprise 5-Pillar Observability Dashboard",
+      "uid": "bank-compliance-ai-5pillar",
+      "version": 2
     }

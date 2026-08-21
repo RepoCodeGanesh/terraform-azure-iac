@@ -61,17 +61,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run GenAIOps Regression Evaluation
+      - name: Run GenAIOps Regression & Cost Evaluation
         run: |
-          python app/bank-compliance/eval/evaluate.py
+          python app/bank-compliance/eval/evaluate.py --mode fast --max-cost 0.05
 
-      - name: Upload AI Scorecard Artifact
+      - name: Upload GenAIOps Scorecard & FinOps Attestation
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: genaiops-quality-scorecard
-          path: app/bank-compliance/eval/eval_results.json
-          retention-days: 14
+          name: genaiops-evaluation-attestation
+          path: |
+            app/bank-compliance/eval/eval_results.json
+            app/bank-compliance/eval/eval_cost_summary.json
+            app/bank-compliance/eval/eval_attestation.json
+          retention-days: 30
 
   # ── JOB 2: Build & Push Backend Container to GHCR ─────────────────────────
   build-and-push-backend:

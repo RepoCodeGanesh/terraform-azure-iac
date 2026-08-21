@@ -1,0 +1,15 @@
+{
+  "attestation_version": "2026.08.1",
+  "timestamp_utc": "2026-08-21T21:08:53Z",
+  "dataset_hash": "b5f2725d5cc76c6cc749abbd21ab47565f702f181f82f9574202602f6af43f99",
+  "evaluation_results_sha256": "05b87728aa1bb338f21b7e0fa818e999afd1c87063865b3c70f715a70f7dfcee",
+  "scorecard": {
+    "groundedness": 4.68,
+    "citation_integrity": 4.92,
+    "relevance": 4.46,
+    "security_pass_rate": 1.0
+  },
+  "finops_cost_usd": 0.000999,
+  "status": "APPROVED",
+  "approved_for_deployment": true
+}
