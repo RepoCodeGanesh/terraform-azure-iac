@@ -44,6 +44,6 @@ data:
       num_retries: 3
       timeout: 30
       fallbacks:
+        - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano"]
+        - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano"]
         - gemini-2.0-flash: ["gpt-5.4-nano"]
-        - gemini-2.0-flash-lite: ["gpt-5.4-nano"]
-        - gemini-2.0-flash-thinking: ["gpt-5.4-nano"]
