@@ -164,6 +164,19 @@ async def list_circulars():
         "corpus_version": CURRENT_CORPUS_VERSION
     }
 
+@router.post("/compliance/ingest")
+async def trigger_ingestion():
+    """Triggers live ingestion of RBI Master Directions into Qdrant Vector DB."""
+    from app.services.data_lake_service import DataLakeService
+    result = DataLakeService.ingest_and_index_corpus()
+    return result
+
+@router.get("/compliance/stats")
+async def get_compliance_stats():
+    """Returns real-time Regulatory Data Lake & Qdrant vector statistics."""
+    from app.services.data_lake_service import DataLakeService
+    return DataLakeService.get_stats()
+
 @router.post("/compliance/cache/invalidate")
 async def invalidate_cache_endpoint(new_version: str):
     """Admin endpoint to invalidate semantic cache when new regulations are uploaded."""

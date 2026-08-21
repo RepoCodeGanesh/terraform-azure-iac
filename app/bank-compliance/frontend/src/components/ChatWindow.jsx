@@ -70,6 +70,9 @@ export default function ChatWindow({ selectedCircular }) {
         text: data.answer,
         citations: data.citations || [],
         pii: data.pii_redacted || [],
+        cached: data.cached || false,
+        latency_ms: data.latency_ms || 0,
+        model_used: data.model_used || 'gemini-2.0-flash',
         suggested_queries: newSuggestions
       }])
     } catch (err) {
@@ -143,6 +146,38 @@ Approved for CCO / Internal Audit Review.`
               whiteSpace: 'pre-line'
             }}>
               <PIIBanner piiList={m.pii} />
+
+              {/* Cache Hit / Multi-Agent Latency Badge */}
+              {m.role === 'assistant' && (m.cached || m.latency_ms > 0) && (
+                <div style={{ marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {m.cached ? (
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid #10b981',
+                      color: '#10b981',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      ⚡ Semantic Cache Hit ({m.latency_ms}ms • $0.00 Cost)
+                    </span>
+                  ) : (
+                    <span style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '1px solid #3b82f6',
+                      color: '#60a5fa',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      🤖 Multi-Agent Synthesis ({m.latency_ms}ms)
+                    </span>
+                  )}
+                </div>
+              )}
+
               {m.text}
               
               {/* Citation Cards */}

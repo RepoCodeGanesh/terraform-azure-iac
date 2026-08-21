@@ -110,3 +110,18 @@ output "app_insights_instrumentation_key" {
   value       = module.bank_compliance_appi.instrumentation_key
   sensitive   = true
 }
+
+output "storage_account_name" {
+  description = "The name of the dedicated Regulatory Data Lake storage account."
+  value       = module.bankc_storage.name
+}
+
+output "storage_container_name" {
+  description = "The name of the Regulatory Data Lake container for raw RBI circulars."
+  value       = "rbi-raw-pdfs"
+}
+
+output "storage_account_primary_blob_endpoint" {
+  description = "The primary blob endpoint for the Regulatory Data Lake storage account."
+  value       = module.bankc_storage.primary_blob_endpoint
+}
