@@ -51,12 +51,66 @@ Core outcomes:
 * **Industry Sector:** RegTech (Regulatory Technology / BFSI)
 * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
-* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01` on `Standard_B4ms` 4 vCPUs, Helm Chart Package `app/bank-compliance/chart/`, LiteLLM Multi-Model Proxy Gateway with Azure OpenAI `gpt-5.4-nano` + Google Gemini 2.0 Flash, Qdrant Vector DB on 4GB CSI Managed Disk, Dedicated Workload Storage Account `sthtbankcpcin01` for raw RBI PDFs, Governed Semantic Vector Caching, DPDP PII Auto-Masking, Azure Static Web Apps).
+* **Architecture Stack:**
+  * **Frontend:** React Vite SPA with Split-Screen Regulatory Clause Viewer & Citation Chips.
+  * **API Gateway:** Azure API Management (`apim-ht-ss-p-cin-01`) Consumption Tier for SSL offloading & CORS.
+  * **Compute:** Azure Kubernetes Service (AKS Free Tier `aks-ht-bankc-p-cin-01` on `Standard_B4ms` 4 vCPUs).
+  * **Multi-Agent State Graph Orchestrator:**
+    * 🎯 **Supervisor / Planner:** `gemini-2.0-flash-lite` (Intent classification & query decomposition)
+    * 🔍 **Retriever Agent:** Autonomous Qdrant hybrid vector search
+    * 🧠 **Auditor / Reflection Agent:** `gemini-2.0-flash-thinking` (Chain-of-Thought statutory verification & anti-hallucination)
+    * ✍️ **Synthesizer Agent:** `gemini-2.0-flash` with automatic cross-cloud failover to Azure OpenAI `gpt-5.4-nano`
+  * **Vector Database:** Qdrant Vector DB on 4GB CSI Azure Managed Disk with Governed Semantic Caching.
+  * **Governance & Safety:** DPDP Act PII Sanitizer & Statutory Abstention Shield for out-of-scope queries.
+  * **GenAIOps Command Center:** Prometheus & Grafana 6-Pillar Operational Dashboard (UID: `bank-compliance-ai-overview`).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
-* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Atomic Helm deployments + automated GenAIOps Regression Quality Gate blocking PRs on hallucination regressions).
-* **Cost Optimizer:** Automated hourly auto-shutdown workflow (`.github/workflows/aks-auto-shutdown.yml`) reducing idle running cost to $0.00/hr.
-* **Storage Isolation Decision:** TaxBot India remains as-is (uses its existing `sthttaxbpcin01` and Azure AI Search); BankCompliance AI deploys its own dedicated `sthtbankcpcin01` in `rg-ht-bankc-p-cin-01` for complete workload lifecycle isolation.
-* **Next Strategic Roadmap:** Phase 10 Merged Enterprise RegTech Platform (Raw PDF Data Lake on Azure Blob, Gemini 2.0 Flash Multimodal layout-aware parsing, Split-Screen live PDF viewer, and Automated Ragas/TruLens CI/CD Quality Gates).
+* **CI/CD:** Dual CI/CD Pipelines (`pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml`).
+
+```mermaid
+flowchart TD
+    User([Compliance User / Auditor]) -->|HTTPS| Frontend["bank.mytaxbot.site (React SPA)"]
+    Frontend -->|POST /api/v1/compliance/query| APIM["Azure APIM Gateway<br/>(apim-ht-ss-p-cin-01)"]
+    APIM -->|LoadBalanced HTTP| Backend["FastAPI Backend Pod<br/>(bankc-backend:8000)"]
+
+    subgraph MultiAgentStateGraph ["🧠 Multi-Agent State Graph Orchestrator"]
+        PII["🛡️ DPDP PII Shield & Out-of-Scope Filter"]
+        Cache{"⚡ Semantic Vector Cache"}
+        Supervisor["🎯 Supervisor Agent<br/>(gemini-2.0-flash-lite)"]
+        Retriever["🔍 Retriever Agent"]
+        Auditor["🧠 Auditor / Reflection Agent<br/>(gemini-2.0-flash-thinking)"]
+        Synthesizer["✍️ Synthesizer Agent<br/>(gemini-2.0-flash)"]
+    end
+
+    Backend --> PII
+    PII --> Cache
+    Cache -->|Cache Miss| Supervisor
+    Supervisor --> Retriever
+    Retriever -->|Tool Query| Qdrant[("Qdrant Vector DB<br/>4GB CSI Disk")]
+    Qdrant --> Auditor
+    Auditor -->|Reflection / Self-Correction| Retriever
+    Auditor -->|Evidence Verified| Synthesizer
+    
+    subgraph AIGateway ["🌐 LiteLLM Multi-Model Gateway Proxy"]
+        LiteLLM["LiteLLM Pod (:4000)"]
+        GeminiFleet["Google Cloud Fleet<br/>(flash / flash-lite / thinking)"]
+        AzureFailover["Azure OpenAI Service<br/>(gpt-5.4-nano)"]
+    end
+
+    Synthesizer --> LiteLLM
+    Supervisor -.-> LiteLLM
+    Auditor -.-> LiteLLM
+    LiteLLM -->|Primary Tier| GeminiFleet
+    LiteLLM -.->|Cross-Cloud DR Fallback| AzureFailover
+
+    subgraph Observability ["📊 10/10 GenAIOps Command Center"]
+        Prometheus["Prometheus Server"]
+        Grafana["Grafana Dashboard<br/>(bank-compliance-ai-overview)"]
+    end
+
+    Backend -->|/metrics (Custom PII & RAGOps)| Prometheus
+    LiteLLM -->|/metrics (Tokens, Spend, 429s)| Prometheus
+    Prometheus --> Grafana
+```
 
 ---
 
