@@ -58,17 +58,23 @@ class MultiAgentOrchestrator:
             "model_used": "gemini-2.0-flash"
         }
 
-        # Step 1: Supervisor / Planner Agent
+        # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ─────────
+        # Decomposes compound regulatory questions into discrete sub-intents
         state = SupervisorAgent.plan(state)
 
-        # Step 2 & 3: Retrieval + Auditor Reflection Loop (Max 2 iterations)
+        # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────
+        # Runs Qdrant Vector Retrieval and passes candidate evidence to Auditor Agent.
+        # If the Auditor detects missing evidence or hallucinations, it triggers
+        # a self-correction loop (max 2 iterations) to re-search with refined terms.
         for _ in range(2):
             state = await RetrieverAgent.retrieve(state)
             state = AuditorAgent.audit(state)
             if state.get("audit_passed", True):
                 break
 
-        # Step 4: Check if query requires escalation/abstention
+        # ── Step 4: Governance Abstention & Out-of-Scope Shield ─────────────────
+        # If query is unrelated to banking regulations (e.g. aviation/jailbreak),
+        # safely abstain with deterministic template to prevent hallucination.
         if should_abstain_query(sanitized_query, state.get("retrieved_evidence", [])):
             return {
                 "answer": ABSTAIN_RESPONSE_TEMPLATE,
@@ -76,7 +82,8 @@ class MultiAgentOrchestrator:
                 "model_used": "deterministic-policy"
             }
 
-        # Step 5: Synthesizer Agent (Primary Gemini 2.0 Flash -> Fallback Azure OpenAI gpt-5.4-nano)
+        # ── Step 5: Synthesizer Agent (Gemini 2.0 Flash with Azure OpenAI Fallback)
+        # Formats the verified regulatory context and generates CCO defense memo
         context_str = "\n\n---\n\n".join([
             f"**Circular:** {c.get('circular_no')}\n**Title:** {c.get('title')}\n**Clause:** {c.get('clause')}\n**Text:** {c.get('text')}"
             for c in state.get("citations", [])

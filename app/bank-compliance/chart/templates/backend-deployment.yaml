@@ -1,3 +1,10 @@
+# ==============================================================================
+# BankCompliance AI Backend Deployment (FastAPI Application)
+# Key Features:
+#   - Azure Workload Identity: Passwordless Entra ID auth to Key Vault & Azure OpenAI
+#   - Prometheus Scraping: Auto-scraped on port 8000 (/metrics) for Grafana dashboards
+#   - Zero-Downtime Probes: Liveness and Readiness probes against /healthz
+# ==============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,8 +23,10 @@ spec:
     metadata:
       labels:
         app: bankc-backend
+        # Injects Azure federated identity tokens into pod env
         azure.workload.identity/use: "true"
       annotations:
+        # Automated Prometheus telemetry scraping
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
         prometheus.io/path: "/metrics"
@@ -35,12 +44,14 @@ spec:
                 name: bankc-backend-config
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+          # Liveness Probe: Restarts container if deadlock occurs
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 20
+          # Readiness Probe: Routes traffic only after model corpus is loaded
           readinessProbe:
             httpGet:
               path: /healthz
