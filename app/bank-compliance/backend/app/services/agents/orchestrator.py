@@ -81,8 +81,8 @@ class MultiAgentOrchestrator:
             "model_used": "gpt-5.4-nano"
         }
 
-        # ── Step 1: Supervisor / Planner Agent ────────────────────────────────
-        state = SupervisorAgent.plan(state)
+        # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ────────
+        state = await SupervisorAgent.plan(state)
 
         # ── Fast Path: Conversational Greeting Intent ──────────────────────────
         if state.get("intent") == "greeting":
@@ -96,7 +96,7 @@ class MultiAgentOrchestrator:
         # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────
         for _ in range(2):
             state = await RetrieverAgent.retrieve(state)
-            state = AuditorAgent.audit(state)
+            state = await AuditorAgent.audit(state)
             if state.get("audit_passed", True):
                 break
 
