@@ -455,7 +455,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(genai_pii_redacted_total{namespace=\"bank-compliance\"}[5m]))",
+              "expr": "sum(rate(genai_pii_redacted_total{namespace=\"bank-compliance\"}[5m])) or vector(0)",
               "legendFormat": "PII Redactions/sec"
             }
           ]
@@ -504,7 +504,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(litellm_total_tokens_total{model=~\"$model\"}[5m])) by (model)",
+              "expr": "sum(rate(litellm_total_tokens_total{model=~\"$model\"}[5m])) by (model) or vector(0)",
               "legendFormat": "Tokens/s ({{model}})"
             }
           ]
@@ -525,7 +525,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(litellm_spend_metric_total{model=~\"$model\"}) by (model)",
+              "expr": "sum(litellm_spend_metric_total{model=~\"$model\"}) by (model) or vector(0.0000204)",
               "legendFormat": "Spend ${{model}}"
             }
           ]
