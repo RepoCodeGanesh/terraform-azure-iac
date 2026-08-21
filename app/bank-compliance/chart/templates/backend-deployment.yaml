@@ -1,10 +1,7 @@
-# ==============================================================================
-# BankCompliance AI Backend Deployment (FastAPI Application)
-# Key Features:
-#   - Azure Workload Identity: Passwordless Entra ID auth to Key Vault & Azure OpenAI
-#   - Prometheus Scraping: Auto-scraped on port 8000 (/metrics) for Grafana dashboards
-#   - Zero-Downtime Probes: Liveness and Readiness probes against /healthz
-# ==============================================================================
+{{/*
+BankCompliance AI Backend Deployment (FastAPI Application)
+Features: Azure Workload Identity, Prometheus Scraping (:8000/metrics), Liveness/Readiness Probes
+*/}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
