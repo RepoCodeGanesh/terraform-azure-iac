@@ -38,6 +38,12 @@ class AuditorAgent:
     
     @staticmethod
     async def audit(state: AgentExecutionState) -> AgentExecutionState:
+        # If query is out of scope or greeting, skip auditing and allow fast abstention
+        if state.get("intent") in ["greeting", "out_of_scope"]:
+            state["audit_passed"] = True
+            state["citations"] = []
+            return state
+
         evidence = state.get("retrieved_evidence", [])
         corpus = LOADED_CLAUSES or load_documents_corpus()
         
@@ -68,7 +74,7 @@ class AuditorAgent:
                     "max_tokens": 150,
                     "temperature": 0.0
                 }
-                async with httpx.AsyncClient(timeout=4.0) as client:
+                async with httpx.AsyncClient(timeout=3.0) as client:
                     resp = await client.post(
                         f"{litellm_url}/chat/completions",
                         json=payload,
@@ -79,7 +85,7 @@ class AuditorAgent:
                         if "{" in content and "}" in content:
                             json_str = content[content.find("{"):content.rfind("}")+1]
                             parsed = json.loads(json_str)
-                            if not parsed.get("audit_passed", True) and state.get("iteration_count", 0) < 2:
+                            if not parsed.get("audit_passed", True) and state.get("iteration_count", 0) < 2 and state.get("identified_domains"):
                                 state["audit_passed"] = False
                                 state["audit_feedback"] = [parsed.get("feedback", "Additional RBI Master Direction evidence required")]
                                 state["iteration_count"] = state.get("iteration_count", 0) + 1
@@ -88,9 +94,9 @@ class AuditorAgent:
             except Exception as e:
                 logger.debug("AuditorAgent thinking model audit skipped/fallback: %s", e)
 
-        # 4. Standard Reflection logic
+        # 4. Standard Reflection logic (only if identified domains exist)
         if not evidence or len(validated_citations) == 0:
-            if state.get("iteration_count", 0) < 2:
+            if state.get("iteration_count", 0) < 2 and state.get("identified_domains"):
                 state["audit_passed"] = False
                 state["audit_feedback"] = [
                     f"RBI Master Direction on {d.replace('_', ' ')}"

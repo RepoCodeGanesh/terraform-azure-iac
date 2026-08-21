@@ -16,7 +16,8 @@ from app.services.agents.retriever_agent import RetrieverAgent
 from app.services.agents.auditor_agent import AuditorAgent
 from app.services.citation_validator import (
     should_abstain_query,
-    ABSTAIN_RESPONSE_TEMPLATE
+    ABSTAIN_RESPONSE_TEMPLATE,
+    OUT_OF_SCOPE_RESPONSE_TEMPLATE
 )
 
 try:
@@ -91,6 +92,15 @@ class MultiAgentOrchestrator:
                 "citations": [],
                 "suggested_queries": state.get("suggested_followups", []),
                 "model_used": "conversational-intent-router"
+            }
+
+        # ── Fast Path: Out of Scope Intent ─────────────────────────────────────
+        if state.get("intent") == "out_of_scope":
+            return {
+                "answer": OUT_OF_SCOPE_RESPONSE_TEMPLATE,
+                "citations": [],
+                "suggested_queries": state.get("suggested_followups", []),
+                "model_used": "governance-abstention-shield"
             }
 
         # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────

@@ -26,12 +26,19 @@ GREETING_PATTERNS = [
 ]
 
 DOMAIN_KEYWORDS = {
-    "kyc": ["kyc", "nri", "v-cip", "video kyc", "ovd", "passport", "customer identification", "aadhaar", "pan"],
-    "it_governance": ["cloud", "data localization", "cybersecurity", "meity", "disaster recovery", "dr site", "data residue", "bcp"],
-    "outsourcing": ["outsourcing", "vendor", "fintech", "ciso", "sub-contracting", "core management", "soc-2", "third-party"],
-    "digital_payments": ["tokenisation", "tokenization", "card", "coft", "cvv", "payment", "tsp", "merchant", "checkout"],
-    "digital_lending": ["lending", "loan", "disbursement", "cooling-off", "lps", "dlr", "recovery agent"]
+    "kyc": ["kyc", "nri", "v-cip", "video kyc", "ovd", "passport", "customer identification", "aadhaar", "pan", "re-kyc", "pep", "aml", "cft", "ckyc"],
+    "it_governance": ["cloud", "data localization", "cybersecurity", "meity", "disaster recovery", "dr site", "data residue", "bcp", "incident", "soc"],
+    "outsourcing": ["outsourcing", "vendor", "fintech", "ciso", "sub-contracting", "core management", "soc-2", "third-party", "sas-70"],
+    "digital_payments": ["tokenisation", "tokenization", "card", "coft", "cvv", "payment", "tsp", "merchant", "checkout", "pos", "upi", "credit card", "debit card"],
+    "digital_lending": ["lending", "loan", "disbursement", "cooling-off", "lps", "dlr", "recovery agent", "fldg", "first loss default guarantee"]
 }
+
+# Broad Banking and Financial Keywords
+GENERAL_BANKING_KEYWORDS = [
+    "bank", "rbi", "reserve bank", "account", "transaction", "circular", "master direction", "compliance",
+    "statutory", "audit", "deposit", "interest", "penalty", "mandate", "regulator", "financial", "fraud",
+    "customer", "borrower", "lender", "nbfc", "fintech", "license", "authorization", "kyc", "pan", "aadhaar"
+]
 
 DOMAIN_SUGGESTIONS = {
     "kyc": [
@@ -68,9 +75,9 @@ DOMAIN_SUGGESTIONS = {
 }
 
 PLANNER_SYSTEM_PROMPT = """You are the Supervisor Planning Agent for an Indian Banking Regulatory Copilot.
-Analyze the user's compliance query and output a JSON object with:
-1. "intent": "greeting" or "compliance_query"
-2. "domains": list of matching RBI domains from ["kyc", "it_governance", "outsourcing", "digital_payments", "digital_lending"]
+Analyze the user's query and output a JSON object:
+1. "intent": "greeting" (if hello/help), "out_of_scope" (if query is NOT related to banking/finance/compliance, like cooking/sports/movies), or "compliance_query" (if banking/RBI/finance related).
+2. "domains": list of matching RBI domains from ["kyc", "it_governance", "outsourcing", "digital_payments", "digital_lending"] or empty if out of scope.
 3. "sub_tasks": list of concise sub-search queries for vector retrieval.
 Output ONLY valid JSON.
 """
@@ -91,8 +98,6 @@ class SupervisorAgent:
                 state["identified_domains"] = ["greeting"]
                 state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
                 return state
-                
-        state["intent"] = "compliance_query"
 
         # ── 2. Multi-Turn History Resolution ──────────────────────────────────
         resolved_query = raw_query
@@ -119,7 +124,7 @@ class SupervisorAgent:
                     "max_tokens": 150,
                     "temperature": 0.0
                 }
-                async with httpx.AsyncClient(timeout=4.0) as client:
+                async with httpx.AsyncClient(timeout=3.0) as client:
                     resp = await client.post(
                         f"{litellm_url}/chat/completions",
                         json=payload,
@@ -127,26 +132,35 @@ class SupervisorAgent:
                     )
                     if resp.status_code == 200:
                         content = resp.json()["choices"][0]["message"]["content"].strip()
-                        # Extract JSON object
                         if "{" in content and "}" in content:
                             json_str = content[content.find("{"):content.rfind("}")+1]
                             parsed = json.loads(json_str)
                             state["intent"] = parsed.get("intent", "compliance_query")
-                            state["identified_domains"] = parsed.get("domains", ["general"])
+                            state["identified_domains"] = parsed.get("domains", [])
                             state["sub_tasks"] = parsed.get("sub_tasks", [resolved_query])
                             planned_via_llm = True
-                            logger.info("SupervisorAgent successfully planned via gemini-2.0-flash-lite: %s", state["identified_domains"])
             except Exception as e:
                 logger.debug("SupervisorAgent LLM call fell back to local taxonomy: %s", e)
 
-        # ── 4. Deterministic Fallback if LLM Call Skipped ─────────────────────
+        # ── 4. Deterministic Out-of-Scope & Domain Classification ─────────────
         if not planned_via_llm:
-            sub_tasks: List[str] = []
             identified_domains: List[str] = []
             for domain, keywords in DOMAIN_KEYWORDS.items():
                 if any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in keywords):
                     identified_domains.append(domain)
                     
+            has_general_banking = any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in GENERAL_BANKING_KEYWORDS)
+            
+            if not identified_domains and not has_general_banking:
+                # Query has zero banking/regulatory relevance (e.g. "how to cook chicken", "weather")
+                state["intent"] = "out_of_scope"
+                state["sub_tasks"] = []
+                state["identified_domains"] = []
+                state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
+                return state
+                
+            state["intent"] = "compliance_query"
+            sub_tasks: List[str] = []
             if len(identified_domains) > 1:
                 for domain in identified_domains:
                     clean_name = domain.replace('_', ' ').title()
