@@ -152,7 +152,21 @@ jobs:
             --set secrets.openaiKey="$OPENAI_KEY" \
             --set secrets.geminiApiKey="$GEMINI_KEY" \
             --wait \
-            --timeout 5m
+            --timeout 10m
+
+      - name: Collect AKS Diagnostic Logs on Failure
+        if: failure()
+        run: |
+          echo "=== Pods in bank-compliance ==="
+          kubectl get pods -n bank-compliance -o wide
+          echo "=== Services in bank-compliance ==="
+          kubectl get svc -n bank-compliance
+          echo "=== Pod Events & Description ==="
+          kubectl describe pods -n bank-compliance
+          echo "=== Backend Logs ==="
+          kubectl logs -n bank-compliance -l app=bankc-backend --tail=100 || true
+          echo "=== LiteLLM Logs ==="
+          kubectl logs -n bank-compliance -l app=litellm-proxy --tail=100 || true
 
       - name: Deploy Prometheus & Grafana Observability Stack
         working-directory: app/bank-compliance/k8s/monitoring
