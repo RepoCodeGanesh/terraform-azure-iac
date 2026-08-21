@@ -39,6 +39,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: bankc-backend-config
+            - secretRef:
+                name: litellm-secret
+                optional: true
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
           # Liveness Probe: Restarts container if deadlock occurs

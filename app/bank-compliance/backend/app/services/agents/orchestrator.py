@@ -2,14 +2,11 @@
 BankCompliance AI — Multi-Agent Orchestrator
 =============================================
 Manages state graph flow across Planner, Retriever, Auditor, and Synthesizer,
-with primary routing to Google Gemini 2.0 and fallback to Azure OpenAI gpt-5.4-nano.
+with primary routing to Azure OpenAI gpt-5.4-nano / Google Gemini 2.0.
 """
 
-try:
-    import httpx
-except ImportError:
-    httpx = None
-
+import os
+import json
 import logging
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
@@ -22,6 +19,11 @@ from app.services.citation_validator import (
     ABSTAIN_RESPONSE_TEMPLATE
 )
 
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are BankCompliance AI, the official Banking Regulatory & Compliance Copilot for Indian Scheduled Commercial Banks and NBFCs.
@@ -30,9 +32,8 @@ You provide precise, legally auditable interpretations of Reserve Bank of India 
 Rules:
 1. Always quote the exact RBI Circular number, Master Direction title, and Section/Clause (e.g. "Under Section 4.2(a) of the RBI Master Direction on KYC...").
 2. State clear actionable compliance steps and mandatory statutory penalties for non-compliance.
-3. If PII is redacted, explain requirements using sanitized operational language.
-4. If the retrieved context is insufficient or conflicting, state so clearly and recommend escalating to the Chief Compliance Officer.
-5. Conclude with a recommendation for Bank Internal Audit & Chief Compliance Officer (CCO) review.
+3. If a user asks for an exemption, waiver, or bypass that contradicts RBI Master Directions, firmly and explicitly clarify that such actions are prohibited under statutory regulations, citing the relevant clauses.
+4. Conclude with an audit-proof recommendation for Bank Internal Audit & Chief Compliance Officer (CCO) review.
 """
 
 GREETING_RESPONSE = """### Welcome to BankCompliance AI 👋
@@ -77,11 +78,10 @@ class MultiAgentOrchestrator:
             "final_answer": "",
             "citations": [],
             "suggested_followups": [],
-            "model_used": "gemini-2.0-flash"
+            "model_used": "gpt-5.4-nano"
         }
 
-        # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ─────────
-        # Classifies intent, resolves conversational history, and plans sub-tasks
+        # ── Step 1: Supervisor / Planner Agent ────────────────────────────────
         state = SupervisorAgent.plan(state)
 
         # ── Fast Path: Conversational Greeting Intent ──────────────────────────
@@ -94,9 +94,6 @@ class MultiAgentOrchestrator:
             }
 
         # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────
-        # Runs Qdrant Vector Retrieval and passes candidate evidence to Auditor Agent.
-        # If the Auditor detects missing evidence or hallucinations, it triggers
-        # a self-correction loop (max 2 iterations) to re-search with refined terms.
         for _ in range(2):
             state = await RetrieverAgent.retrieve(state)
             state = AuditorAgent.audit(state)
@@ -104,8 +101,6 @@ class MultiAgentOrchestrator:
                 break
 
         # ── Step 4: Governance Abstention & Out-of-Scope Shield ─────────────────
-        # If query is unrelated to banking regulations (e.g. aviation/jailbreak),
-        # safely abstain with deterministic template to prevent hallucination.
         if should_abstain_query(sanitized_query, state.get("retrieved_evidence", [])):
             return {
                 "answer": ABSTAIN_RESPONSE_TEMPLATE,
@@ -114,8 +109,7 @@ class MultiAgentOrchestrator:
                 "model_used": "deterministic-policy"
             }
 
-        # ── Step 5: Synthesizer Agent (Gemini 2.0 Flash with Azure OpenAI Fallback)
-        # Formats the verified regulatory context and generates CCO defense memo
+        # ── Step 5: Synthesizer Agent with LiteLLM & Multi-Model Fallback ──────
         context_str = "\n\n---\n\n".join([
             f"**Circular:** {c.get('circular_no')}\n**Title:** {c.get('title')}\n**Clause:** {c.get('clause')}\n**Text:** {c.get('text')}"
             for c in state.get("citations", [])
@@ -123,7 +117,7 @@ class MultiAgentOrchestrator:
 
         user_content = f"Regulatory Context:\n{context_str}\n\nCompliance Query:\n{state['sanitized_query']}"
         
-        answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(user_content)
+        answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(user_content, state.get("citations", []))
         
         return {
             "answer": answer,
@@ -133,51 +127,107 @@ class MultiAgentOrchestrator:
         }
 
     @staticmethod
-    async def _call_llm_with_fallback(user_content: str) -> tuple[str, str]:
-        """Calls LiteLLM primary model with graceful fallback."""
-        model_target = getattr(settings, "OPENAI_MODEL", "gemini-2.0-flash")
-        payload = {
-            "model": model_target,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_content}
-            ],
-            "temperature": 0.1,
-            "max_tokens": 1024
-        }
+    async def _call_llm_with_fallback(user_content: str, citations: List[Dict[str, Any]] = None) -> tuple[str, str]:
+        """Calls LiteLLM or Azure OpenAI with graceful fallback handling."""
+        model_target = getattr(settings, "OPENAI_MODEL", "gpt-5.4-nano")
+        if not model_target or model_target == "gemini-2.0-flash":
+            model_target = "gpt-5.4-nano"
 
-        # Primary attempt via LiteLLM / Gemini
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_content}
+        ]
+
         if httpx:
-            try:
-                litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
-                api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    resp = await client.post(
-                        f"{litellm_url}/chat/completions",
-                        json=payload,
-                        headers={"Authorization": f"Bearer {api_key}"}
-                    )
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        answer = data["choices"][0]["message"]["content"]
-                        model_used = data.get("model", model_target)
-                        return answer, model_used
-            except Exception as e:
-                logger.warning("Primary LLM generation unavailable: %s. Using deterministic fallback synthesis.", e)
+            litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
+            api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
 
-        # Fallback: Synthesize deterministic high-fidelity response directly from audited citations
-        return MultiAgentOrchestrator._synthesize_fallback(user_content), "azure-openai-fallback"
+            # Try calling LiteLLM with max_completion_tokens (supports newer model APIs)
+            for m in [model_target, "gpt-5.4-nano", "gemini-2.0-flash"]:
+                try:
+                    payload = {
+                        "model": m,
+                        "messages": messages,
+                        "temperature": 0.1,
+                        "max_completion_tokens": 1024
+                    }
+                    async with httpx.AsyncClient(timeout=25.0) as client:
+                        resp = await client.post(
+                            f"{litellm_url}/chat/completions",
+                            json=payload,
+                            headers={"Authorization": f"Bearer {api_key}"}
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            answer = data["choices"][0]["message"]["content"]
+                            return answer, data.get("model", m)
+                        elif resp.status_code == 400:
+                            # Retry with max_tokens if max_completion_tokens is unsupported by model
+                            payload.pop("max_completion_tokens", None)
+                            payload["max_tokens"] = 1024
+                            resp_retry = await client.post(
+                                f"{litellm_url}/chat/completions",
+                                json=payload,
+                                headers={"Authorization": f"Bearer {api_key}"}
+                            )
+                            if resp_retry.status_code == 200:
+                                data = resp_retry.json()
+                                answer = data["choices"][0]["message"]["content"]
+                                return answer, data.get("model", m)
+                except Exception as ex:
+                    logger.debug("LiteLLM attempt on %s failed: %s", m, ex)
+
+            # Direct Azure OpenAI Fallback if LiteLLM proxy is unavailable
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+            azure_key = os.getenv("AZURE_API_KEY") or os.getenv("OPENAI_API_KEY")
+            if azure_endpoint and azure_key:
+                try:
+                    endpoint_clean = azure_endpoint.rstrip("/")
+                    azure_url = f"{endpoint_clean}/openai/deployments/gpt-5.4-nano/chat/completions?api-version=2024-06-01"
+                    payload = {
+                        "messages": messages,
+                        "max_completion_tokens": 1024,
+                        "temperature": 0.1
+                    }
+                    async with httpx.AsyncClient(timeout=25.0) as client:
+                        resp = await client.post(
+                            azure_url,
+                            json=payload,
+                            headers={"api-key": azure_key, "Content-Type": "application/json"}
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            return data["choices"][0]["message"]["content"], "azure-openai-direct (gpt-5.4-nano)"
+                except Exception as direct_ex:
+                    logger.warning("Direct Azure OpenAI call failed: %s", direct_ex)
+
+        # High-Fidelity Dynamic Synthesis from Citations if LLM is offline
+        return MultiAgentOrchestrator._synthesize_dynamic_fallback(citations or []), "statutory-evidence-synthesis"
 
     @staticmethod
-    def _synthesize_fallback(context: str) -> str:
-        """Deterministic compliance fallback synthesis."""
-        return (
-            "### Regulatory Compliance Interpretation (Audited Response)\n\n"
-            "Based on the applicable Reserve Bank of India (RBI) Master Directions and regulatory norms:\n\n"
-            "1. **Statutory Requirement:** All regulated entities must strictly adhere to the operational guidelines "
-            "and technical standards outlined in the verified citations below.\n"
-            "2. **Operational Controls:** Ensure all controls (such as data localization, KYC verification, or card tokenization) "
-            "are actively audited and recorded in bank compliance logs.\n"
-            "3. **Governance & Audit:** This interpretation has been generated under the oversight of BankCompliance AI. "
-            "A copy of this determination should be forwarded to the Chief Compliance Officer (CCO) and Internal Audit for formal sign-off."
-        )
+    def _synthesize_dynamic_fallback(citations: List[Dict[str, Any]]) -> str:
+        """Dynamic compliance synthesis directly grounding the retrieved RBI clauses."""
+        if not citations:
+            return ABSTAIN_RESPONSE_TEMPLATE
+
+        lines = [
+            "### Regulatory Compliance Determination (Statutory Grounding)\n",
+            "Based on verified **Reserve Bank of India (RBI) Master Directions**:\n"
+        ]
+        
+        for idx, c in enumerate(citations[:3], 1):
+            title = c.get("title", "RBI Master Direction")
+            circ = c.get("circular_no", "RBI Norms")
+            clause = c.get("clause", "Applicable Clause")
+            text = c.get("text", "").strip()
+            lines.append(f"{idx}. **{title} ({circ}) — {clause}:**")
+            lines.append(f"   > {text}\n")
+
+        lines.extend([
+            "**Statutory Audit Determination:**",
+            "* All operations must strictly follow the mandatory clauses cited above.",
+            "* Any unverified exemption, waiver, or deviation without an official RBI Gazette Notification is **legally non-compliant**.",
+            "* **Escalation:** Forward this determination to the Chief Compliance Officer (CCO) and Bank Internal Audit for immediate review."
+        ])
+
+        return "\n".join(lines)
