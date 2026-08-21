@@ -1,5 +1,13 @@
 import os
-from pydantic_settings import BaseSettings
+
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    try:
+        from pydantic import BaseSettings
+    except ImportError:
+        class BaseSettings:
+            pass
 
 class Settings(BaseSettings):
     APP_NAME: str = "BankCompliance AI"

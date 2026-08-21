@@ -5,9 +5,13 @@ Manages state graph flow across Planner, Retriever, Auditor, and Synthesizer,
 with primary routing to Google Gemini 2.0 and fallback to Azure OpenAI gpt-5.4-nano.
 """
 
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from app.core.config import settings
 from app.services.agents.agent_state import AgentExecutionState
 from app.services.agents.supervisor_agent import SupervisorAgent
@@ -31,6 +35,20 @@ Rules:
 5. Conclude with a recommendation for Bank Internal Audit & Chief Compliance Officer (CCO) review.
 """
 
+GREETING_RESPONSE = """### Welcome to BankCompliance AI 👋
+
+I am your **Reserve Bank of India (RBI) Regulatory & Compliance Copilot** for Scheduled Commercial Banks and NBFCs.
+
+I provide legally auditable, citation-backed interpretations across:
+* 📄 **KYC & Customer Onboarding** — Officially Valid Documents (OVDs), Video KYC (V-CIP), CKYCR Registry
+* ☁️ **IT Governance & Cybersecurity** — Data Localization, MeitY Cloud Policy, 6-Hour Incident Reporting
+* 🤝 **IT Outsourcing & Vendor Risk** — CISO Non-Outsourcing mandates, Core Banking FinTech restrictions
+* 💳 **Payment Tokenization & Cards** — CoFT Tokenization, Card-on-File storage bans, Unsolicited card penalties
+* 📱 **Digital Lending Guidelines** — First Loss Default Guarantees (FLDG), Cooling-off periods, DLAs
+
+Ask a specific regulatory question below or select from the suggested compliance topics!
+"""
+
 class MultiAgentOrchestrator:
     """State Graph Runner coordinating all micro-agents."""
 
@@ -38,7 +56,8 @@ class MultiAgentOrchestrator:
     async def run(
         sanitized_query: str,
         department: str = "compliance",
-        session_id: str = "default-session"
+        session_id: str = "default-session",
+        history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
         
         # Initialize Agent Execution State
@@ -47,6 +66,8 @@ class MultiAgentOrchestrator:
             "sanitized_query": sanitized_query,
             "department": department,
             "session_id": session_id,
+            "history": history or [],
+            "intent": "compliance_query",
             "sub_tasks": [],
             "identified_domains": [],
             "retrieved_evidence": [],
@@ -55,12 +76,22 @@ class MultiAgentOrchestrator:
             "iteration_count": 0,
             "final_answer": "",
             "citations": [],
+            "suggested_followups": [],
             "model_used": "gemini-2.0-flash"
         }
 
         # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ─────────
-        # Decomposes compound regulatory questions into discrete sub-intents
+        # Classifies intent, resolves conversational history, and plans sub-tasks
         state = SupervisorAgent.plan(state)
+
+        # ── Fast Path: Conversational Greeting Intent ──────────────────────────
+        if state.get("intent") == "greeting":
+            return {
+                "answer": GREETING_RESPONSE,
+                "citations": [],
+                "suggested_queries": state.get("suggested_followups", []),
+                "model_used": "conversational-intent-router"
+            }
 
         # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────
         # Runs Qdrant Vector Retrieval and passes candidate evidence to Auditor Agent.
@@ -79,6 +110,7 @@ class MultiAgentOrchestrator:
             return {
                 "answer": ABSTAIN_RESPONSE_TEMPLATE,
                 "citations": state.get("citations", []),
+                "suggested_queries": state.get("suggested_followups", []),
                 "model_used": "deterministic-policy"
             }
 
@@ -89,21 +121,23 @@ class MultiAgentOrchestrator:
             for c in state.get("citations", [])
         ])
 
-        user_content = f"Regulatory Context:\n{context_str}\n\nCompliance Query:\n{sanitized_query}"
+        user_content = f"Regulatory Context:\n{context_str}\n\nCompliance Query:\n{state['sanitized_query']}"
         
         answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(user_content)
         
         return {
             "answer": answer,
             "citations": state.get("citations", []),
+            "suggested_queries": state.get("suggested_followups", []),
             "model_used": model_used
         }
 
     @staticmethod
     async def _call_llm_with_fallback(user_content: str) -> tuple[str, str]:
         """Calls LiteLLM primary model with graceful fallback."""
+        model_target = getattr(settings, "OPENAI_MODEL", "gemini-2.0-flash")
         payload = {
-            "model": settings.LITELLM_MODEL,
+            "model": model_target,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_content}
@@ -113,20 +147,23 @@ class MultiAgentOrchestrator:
         }
 
         # Primary attempt via LiteLLM / Gemini
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(
-                    f"{settings.LITELLM_URL}/chat/completions",
-                    json=payload,
-                    headers={"Authorization": f"Bearer {settings.LITELLM_API_KEY}"}
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    answer = data["choices"][0]["message"]["content"]
-                    model_used = data.get("model", settings.LITELLM_MODEL)
-                    return answer, model_used
-        except Exception as e:
-            logger.warning("Primary LLM generation unavailable: %s. Using deterministic synthesized synthesis.", e)
+        if httpx:
+            try:
+                litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
+                api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(
+                        f"{litellm_url}/chat/completions",
+                        json=payload,
+                        headers={"Authorization": f"Bearer {api_key}"}
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        answer = data["choices"][0]["message"]["content"]
+                        model_used = data.get("model", model_target)
+                        return answer, model_used
+            except Exception as e:
+                logger.warning("Primary LLM generation unavailable: %s. Using deterministic fallback synthesis.", e)
 
         # Fallback: Synthesize deterministic high-fidelity response directly from audited citations
         return MultiAgentOrchestrator._synthesize_fallback(user_content), "azure-openai-fallback"

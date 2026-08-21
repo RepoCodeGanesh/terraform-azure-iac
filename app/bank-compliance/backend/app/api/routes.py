@@ -30,6 +30,7 @@ class QueryRequest(BaseModel):
     department: Optional[str] = "compliance"
     session_id: Optional[str] = "default-session"
     circular: Optional[str] = None
+    history: Optional[List[Dict[str, Any]]] = None
 
 class Citation(BaseModel):
     circular_no: str
@@ -43,6 +44,7 @@ class Citation(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     citations: List[Citation]
+    suggested_queries: Optional[List[str]] = []
     pii_redacted: List[str]
     model_used: str
     cached: bool = False
@@ -90,12 +92,14 @@ async def query_compliance(request: QueryRequest):
     agent_output = await MultiAgentOrchestrator.run(
         sanitized_query=sanitized_prompt,
         department=request.department or "compliance",
-        session_id=request.session_id or "default-session"
+        session_id=request.session_id or "default-session",
+        history=request.history
     )
 
     answer = agent_output["answer"]
     model_used = agent_output["model_used"]
     raw_citations = agent_output["citations"]
+    suggested_queries = agent_output.get("suggested_queries", [])
 
     formatted_citations = [
         Citation(
@@ -110,22 +114,24 @@ async def query_compliance(request: QueryRequest):
         for c in raw_citations
     ]
 
-    # 4. Store in Semantic Cache for Future Instant Retrieval
-    store_semantic_cache(
-        query=sanitized_prompt,
-        answer=answer,
-        citations=[c.model_dump() for c in formatted_citations],
-        pii_redacted=pii_detected,
-        model_used=model_used,
-        department=request.department or "compliance",
-        corpus_version=CURRENT_CORPUS_VERSION
-    )
+    # 4. Store in Semantic Cache for Future Instant Retrieval (Only for valid compliance answers)
+    if raw_citations:
+        store_semantic_cache(
+            query=sanitized_prompt,
+            answer=answer,
+            citations=[c.model_dump() for c in formatted_citations],
+            pii_redacted=pii_detected,
+            model_used=model_used,
+            department=request.department or "compliance",
+            corpus_version=CURRENT_CORPUS_VERSION
+        )
 
     latency = round((time.time() - start_time) * 1000, 2)
 
     return QueryResponse(
         answer=answer,
         citations=formatted_citations,
+        suggested_queries=suggested_queries,
         pii_redacted=pii_detected,
         model_used=model_used,
         cached=False,

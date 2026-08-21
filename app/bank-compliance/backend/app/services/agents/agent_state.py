@@ -21,6 +21,10 @@ class AgentExecutionState(TypedDict):
     sanitized_query: str
     department: str
     session_id: str
+    history: Optional[List[Dict[str, str]]]
+    
+    # Intent Classification ("greeting", "help", "compliance_query")
+    intent: str
     
     # Planner outputs (Gemini 2.0 Flash-Lite)
     sub_tasks: List[str]
@@ -37,4 +41,5 @@ class AgentExecutionState(TypedDict):
     # Final Synthesizer output (Gemini 2.0 Flash / Azure OpenAI Fallback)
     final_answer: str
     citations: List[Dict[str, Any]]
+    suggested_followups: List[str]
     model_used: str
