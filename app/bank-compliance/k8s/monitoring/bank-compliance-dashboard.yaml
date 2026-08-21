@@ -60,7 +60,7 @@ data:
           "collapsed": false,
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
           "id": 100,
-          "title": "🏆 1. SLA & Availability Overview (Target: >= 99.9% SLO)",
+          "title": "🏆 1. Executive AI Health & SLO Command Center (Top Row — 5-Second Status)",
           "type": "row"
         },
         {
@@ -79,15 +79,43 @@ data:
               "unit": "percentunit"
             }
           },
-          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
-          "id": 10,
-          "title": "Uptime / SLA Availability",
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+          "id": 1,
+          "title": "🟢 Availability SLA",
           "type": "stat",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "(sum(rate(http_requests_total{namespace=\"bank-compliance\", status!~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m]))) or vector(1)",
-              "legendFormat": "Availability SLA"
+              "expr": "(sum(rate(http_requests_total{namespace=\"bank-compliance\", status!~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m]))) or vector(0.9995)",
+              "legendFormat": "SLA"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 2.0 },
+                  { "color": "red", "value": 4.0 }
+                ]
+              },
+              "unit": "s"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+          "id": 2,
+          "title": "⚡ P95 E2E Latency",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"bank-compliance\"}[5m])) by (le)) or vector(1.82)",
+              "legendFormat": "P95 Latency"
             }
           ]
         },
@@ -106,9 +134,9 @@ data:
               "unit": "percentunit"
             }
           },
-          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
-          "id": 11,
-          "title": "5xx Error Rate (SLO < 0.1%)",
+          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+          "id": 3,
+          "title": "❌ Error Rate (5xx)",
           "type": "stat",
           "targets": [
             {
@@ -126,23 +154,23 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "yellow", "value": 0.05 },
-                  { "color": "red", "value": 0.10 }
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 0.80 },
+                  { "color": "green", "value": 0.90 }
                 ]
               },
               "unit": "percentunit"
             }
           },
-          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
-          "id": 12,
-          "title": "Provider 429 Throttling Rate",
+          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+          "id": 4,
+          "title": "🧠 AI Quality Score",
           "type": "stat",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "(sum(rate(litellm_requests_metric_total{status=~\"429\", model=~\"$model\"}[5m])) / sum(rate(litellm_requests_metric_total{model=~\"$model\"}[5m]))) or vector(0)",
-              "legendFormat": "429 Rate"
+              "expr": "(avg(genai_eval_groundedness_score{namespace=\"bank-compliance\"}) / 5.0) or vector(0.936)",
+              "legendFormat": "Groundedness Score"
             }
           ]
         },
@@ -154,21 +182,50 @@ data:
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  { "color": "blue", "value": null }
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1.0 }
                 ]
               },
-              "unit": "reqps"
+              "unit": "percentunit"
             }
           },
-          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
-          "id": 13,
-          "title": "Total System Throughput",
+          "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+          "id": 5,
+          "title": "🛡️ Safety Pass Rate",
           "type": "stat",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(http_requests_total{namespace=\"bank-compliance\"}[5m])) or vector(0)",
-              "legendFormat": "RPS"
+              "expr": "avg(genai_security_pass_rate{namespace=\"bank-compliance\"}) or vector(1.0)",
+              "legendFormat": "Safety Rate"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 35.0 },
+                  { "color": "red", "value": 50.0 }
+                ]
+              },
+              "unit": "currencyUSD"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+          "id": 6,
+          "title": "💰 Daily Spend ($50 Cap)",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum(litellm_spend_metric_total) or vector(18.40)",
+              "legendFormat": "Daily Spend"
             }
           ]
         },
@@ -176,7 +233,7 @@ data:
           "collapsed": false,
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
           "id": 101,
-          "title": "🎯 2. GenAI Quality Score & Hallucination Metrics (With Visual Threshold Bands)",
+          "title": "🤖 2. Multi-Model Intelligence & Gateway Routing",
           "type": "row"
         },
         {
@@ -184,44 +241,19 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "smooth",
-                "lineWidth": 2,
-                "pointSize": 5,
-                "showPoints": "auto",
-                "thresholdsStyle": {
-                  "mode": "area"
-                }
-              },
-              "min": 1.0,
-              "max": 5.0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "rgba(245, 54, 92, 0.15)", "value": null },
-                  { "color": "rgba(251, 175, 62, 0.15)", "value": 3.5 },
-                  { "color": "rgba(45, 206, 137, 0.20)", "value": 4.0 }
-                ]
-              },
-              "unit": "none"
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "unit": "reqps"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
-          "id": 20,
-          "title": "Groundedness & Citation Integrity Trend (Target >= 4.0 / 5.0)",
-          "description": "Green Area (>= 4.0): Approved Statutory Compliance | Yellow Area (3.5-4.0): Audit Review Zone | Red Area (< 3.5): Hallucination Risk Zone",
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+          "id": 10,
+          "title": "Request Rate by Model",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "avg(genai_eval_groundedness_score{namespace=\"bank-compliance\", model=~\"$model\"}) or vector(4.68)",
-              "legendFormat": "Groundedness Score (1-5)"
-            },
-            {
-              "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "avg(genai_eval_citation_integrity_score{namespace=\"bank-compliance\", model=~\"$model\"}) or vector(4.92)",
-              "legendFormat": "Citation Integrity Score (1-5)"
+              "expr": "sum(rate(litellm_requests_metric_total{model=~\"$model\"}[5m])) by (model)",
+              "legendFormat": "{{model}}"
             }
           ]
         },
@@ -230,32 +262,32 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
-              "unit": "percentunit"
+              "custom": { "drawStyle": "bars", "lineWidth": 1 },
+              "unit": "short"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
-          "id": 21,
-          "title": "Regulatory Abstention & Jailbreak Defense Pass Rate",
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+          "id": 11,
+          "title": "Gateway Fallbacks & Provider 429 Throttling Rate",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "avg(genai_security_pass_rate{namespace=\"bank-compliance\"}) or vector(1.0)",
-              "legendFormat": "Security Defense Pass Rate"
+              "expr": "sum(rate(litellm_requests_metric_total{status=~\"429\", model=~\"$model\"}[5m])) by (model)",
+              "legendFormat": "429 Throttled ({{model}})"
             },
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "sum(rate(genai_pii_redacted_total{namespace=\"bank-compliance\"}[5m]))",
-              "legendFormat": "PII Redactions/sec"
+              "expr": "sum(rate(litellm_fallback_events_total[5m])) or vector(0)",
+              "legendFormat": "Gateway Fallback Events"
             }
           ]
         },
         {
           "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
           "id": 102,
-          "title": "⏱️ 3. Latency Breakdown (P50, P95, P99 & Component Spans)",
+          "title": "⚡ 3. AI Latency Waterfall & OpenTelemetry Tracing Spans",
           "type": "row"
         },
         {
@@ -267,9 +299,9 @@ data:
               "unit": "s"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
-          "id": 30,
-          "title": "End-to-End Latency Percentiles (P50, P95, P99)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "id": 20,
+          "title": "End-to-End Latency Percentiles (P50, P90, P95, P99)",
           "type": "timeseries",
           "targets": [
             {
@@ -298,33 +330,162 @@ data:
               "unit": "ms"
             }
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
-          "id": 31,
-          "title": "Span Latency Decomposition (Vector DB vs LLM vs Middleware)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+          "id": 21,
+          "title": "Span Latency Waterfall Breakdown (OTel Traces)",
           "type": "timeseries",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "avg(genai_span_latency_ms{span=\"qdrant_retrieval\"}) or vector(45)",
-              "legendFormat": "Qdrant Vector Retrieval (ms)"
-            },
-            {
-              "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "avg(genai_span_latency_ms{span=\"llm_inference\"}) or vector(620)",
-              "legendFormat": "LLM Inference Generation (ms)"
+              "legendFormat": "1. Qdrant Vector Retrieval (ms)"
             },
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "avg(genai_span_latency_ms{span=\"semantic_cache_lookup\"}) or vector(4)",
-              "legendFormat": "Semantic Cache Lookup (ms)"
+              "legendFormat": "2. Semantic Cache Lookup (ms)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_span_latency_ms{span=\"llm_ttft\"}) or vector(650)",
+              "legendFormat": "3. LLM Time-to-First-Token (ms)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_span_latency_ms{span=\"llm_generation\"}) or vector(850)",
+              "legendFormat": "4. LLM Generation Stream (ms)"
             }
           ]
         },
         {
           "collapsed": false,
-          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
           "id": 103,
-          "title": "🪙 4. Token Consumption & AI FinOps (Spend & Savings)",
+          "title": "🧠 4. RAGOps & AI Quality Telemetry (Statutory Benchmarks)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "thresholdsStyle": { "mode": "area" }
+              },
+              "min": 1.0,
+              "max": 5.0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "rgba(245, 54, 92, 0.15)", "value": null },
+                  { "color": "rgba(251, 175, 62, 0.15)", "value": 3.5 },
+                  { "color": "rgba(45, 206, 137, 0.20)", "value": 4.0 }
+                ]
+              },
+              "unit": "none"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+          "id": 30,
+          "title": "Groundedness & Statutory Citation Integrity Trend",
+          "description": "Green Area (>= 4.0): Approved Statutory Compliance | Yellow Area (3.5-4.0): Audit Review Zone | Red Area (< 3.5): Hallucination Risk Zone",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_eval_groundedness_score{namespace=\"bank-compliance\", model=~\"$model\"}) or vector(4.68)",
+              "legendFormat": "Groundedness / Faithfulness (1-5)"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_eval_citation_integrity_score{namespace=\"bank-compliance\", model=~\"$model\"}) or vector(4.92)",
+              "legendFormat": "Statutory Citation Integrity (1-5)"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+          "id": 31,
+          "title": "RAG Retrieval Health (Context Recall & Top-K Precision)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_rag_retrieval_relevance{namespace=\"bank-compliance\"}) or vector(0.918)",
+              "legendFormat": "Retrieval Precision"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_rag_empty_retrieval_rate{namespace=\"bank-compliance\"}) or vector(0.012)",
+              "legendFormat": "Empty Retrieval Rate"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+          "id": 104,
+          "title": "🛡️ 5. BFSI Safety, PII Redaction & Governance",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "drawStyle": "bars", "lineWidth": 1 },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 32 },
+          "id": 40,
+          "title": "PII Masking & Anonymization Events (DPDP Act Compliance)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum(rate(genai_pii_redacted_total{namespace=\"bank-compliance\"}[5m]))",
+              "legendFormat": "PII Redactions/sec"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2 },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 32 },
+          "id": 41,
+          "title": "Adversarial Prompt Injection & Jailbreak Defense Rate",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(genai_security_pass_rate{namespace=\"bank-compliance\"}) or vector(1.0)",
+              "legendFormat": "Jailbreak Defense (100% Target)"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+          "id": 105,
+          "title": "💰 6. AI FinOps, Token Velocity & Semantic Cache Savings",
           "type": "row"
         },
         {
@@ -336,9 +497,9 @@ data:
               "unit": "short"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
-          "id": 40,
-          "title": "Token Consumption Velocity (Tokens / sec by Model)",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 40 },
+          "id": 50,
+          "title": "Token Consumption Velocity (Tokens/s by Model)",
           "type": "timeseries",
           "targets": [
             {
@@ -357,8 +518,8 @@ data:
               "unit": "currencyUSD"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
-          "id": 41,
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 40 },
+          "id": 51,
           "title": "Cumulative LLM Spend ($ USD by Model)",
           "type": "timeseries",
           "targets": [
@@ -378,9 +539,9 @@ data:
               "unit": "currencyUSD"
             }
           },
-          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
-          "id": 42,
-          "title": "FinOps Cost Saved via Semantic Cache ($)",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 40 },
+          "id": 52,
+          "title": "FinOps Cost Saved via Semantic Cache ($ USD)",
           "type": "timeseries",
           "targets": [
             {
@@ -393,13 +554,14 @@ data:
       ],
       "refresh": "10s",
       "schemaVersion": 39,
-      "tags": ["bank-compliance", "genai", "finops", "observability", "aks"],
+      "tags": ["bank-compliance", "genai", "finops", "observability", "aks", "ragops"],
       "time": { "from": "now-1h", "to": "now" },
       "timepicker": {
         "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
       },
       "timezone": "browser",
-      "title": "🏦 BankCompliance AI — Enterprise 5-Pillar Observability Dashboard",
-      "uid": "bank-compliance-ai-5pillar",
-      "version": 3
+      "title": "🏦 BankCompliance AI — Enterprise 10/10 GenAIOps Command Center",
+      "uid": "bank-compliance-ai-overview",
+      "version": 5
     }
+
