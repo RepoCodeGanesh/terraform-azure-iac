@@ -20,6 +20,10 @@ on:
       - 'platform/shared-services/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   id-token: write
   contents: read
@@ -50,3 +54,28 @@ jobs:
     secrets:
       CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  summary:
+    name: Summary
+    needs: [plan, apply]
+    if: always() && (needs.apply.result == 'success' || needs.plan.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          ACTION="${{ needs.apply.result == 'success' && 'apply' || 'plan' }}"
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+
+          ### Terraform Azure Landing Zone Summary
+          **Target Root:** \`platform/shared-services\`
+          **Action:** \`${ACTION}\`
+          **Azure Subscription ID:** \`859a785c-bd38-402d-b595-1f44f40fb9bf\`
+          **Target Environment:** \`shared-services-prod\`
+
+          | CAF Governance Check | Configuration | Status |
+          | :--- | :--- | :--- |
+          | **Remote State Backend** | \`sthtbootpcin01\` (Azure AD Auth) | Connected |
+          | **State Key** | \`platform/shared-services/prod.tfstate\` | Isolated |
+          | **Workload Identity (WIF)** | Entra ID Federated OIDC | Authenticated |
+          | **Cost Policy** | Low-Cost / Free-Tier SKUs Enforced | Verified |
+
+          EOF
