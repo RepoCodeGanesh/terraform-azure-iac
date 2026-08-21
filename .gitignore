@@ -142,3 +142,9 @@ docs/resume/
 *resume*
 *Resume*
 *.docx
+
+###############################################################################
+# 9. Binary Documents & Raw PDF Lake (Store in Azure Blob Storage instead)
+###############################################################################
+*.pdf
+**/raw_pdfs/

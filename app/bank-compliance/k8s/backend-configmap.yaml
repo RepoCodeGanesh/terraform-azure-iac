@@ -1,20 +1,27 @@
+# ==============================================================================
+# BankCompliance AI — Kubernetes Backend ConfigMap
+# Stores non-sensitive runtime configurations, internal cluster DNS endpoints,
+# Qdrant vector database parameters, and CORS domain whitelists.
+# ==============================================================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: bankc-backend-config
   namespace: bank-compliance
 data:
+  # Azure AI Content Safety Service Endpoint in Shared-Services subscription
   CONTENT_SAFETY_ENDPOINT: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
 
-  # Internal cluster DNS
+  # Internal Kubernetes Cluster DNS (Zero Egress Costs)
   LITELLM_URL: "http://litellm:4000/v1"
   OPENAI_MODEL: "gemini-2.0-flash"
   QDRANT_HOST: "qdrant"
   QDRANT_PORT: "6333"
   QDRANT_COLLECTION: "rbi_master_directions"
 
-  # CORS: includes both default Azure SWA domain, optional custom domain, and local dev
+  # CORS Origins: Azure Static Web Apps (SWA) + Custom Domain + Local Dev
   ALLOWED_ORIGINS: "https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
 
+  # Telemetry & Runtime Environment
   APPLICATIONINSIGHTS_CONNECTION_STRING: ""
   ENVIRONMENT: "production"

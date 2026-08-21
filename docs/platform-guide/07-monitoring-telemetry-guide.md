@@ -45,66 +45,89 @@ flowchart TD
 
 ---
 
-## 🔎 Essential KQL Query Cheat Sheet
+## 🔎 5-Pillar Enterprise GenAI Dashboard KQL Playbook
 
-### 1. Function App Latency & Request Throughput
-Tracks HTTP request volume, average duration, P95 latency, and failure counts:
+This playbook powers both **Azure Monitor Workbooks** and **Central Log Analytics (`law-ht-ss-p-cin-01`)** dashboards:
 
+```
+Application
+   ├── 1. Token Consumption (Prompt vs Completion vs Cached Tokens)
+   ├── 2. Cost ($ USD Spend by Model & FinOps Savings)
+   ├── 3. Latency (P50, P95, P99 & Span Breakdown)
+   ├── 4. Quality Score (Groundedness, Citation Integrity & Hallucination Index)
+   └── 5. SLA (Availability %, 5xx Error Rate, Throttling Rate)
+```
+
+### 1. Token Consumption (Prompt vs Completion by Model)
+```kql
+AzureDiagnostics
+| where ResourceType == "COGNITIVESERVICES"
+| extend Model = tostring(properties_s.model)
+| extend PromptTokens = toint(properties_s.prompt_tokens)
+| extend CompletionTokens = toint(properties_s.completion_tokens)
+| summarize 
+    TotalPromptTokens = sum(PromptTokens),
+    TotalCompletionTokens = sum(CompletionTokens),
+    TotalTokens = sum(PromptTokens + CompletionTokens)
+    by bin(TimeGenerated, 1h), Model
+| render timechart
+```
+
+### 2. AI FinOps Cost Tracking & Semantic Cache Savings ($ USD)
+```kql
+AzureDiagnostics
+| where ResourceType == "COGNITIVESERVICES"
+| extend Model = tostring(properties_s.model)
+| extend PromptTokens = toint(properties_s.prompt_tokens)
+| extend CompletionTokens = toint(properties_s.completion_tokens)
+| extend CostUSD = case(
+    Model has "gpt-4o-mini", (PromptTokens * 0.00000015) + (CompletionTokens * 0.00000060),
+    Model has "gpt-4o", (PromptTokens * 0.00000250) + (CompletionTokens * 0.00001000),
+    0.0
+)
+| summarize CumulativeSpendUSD = sum(CostUSD) by bin(TimeGenerated, 1d), Model
+| render barchart
+```
+
+### 3. Latency Percentiles (P50, P95, P99 & Time-to-First-Token)
 ```kql
 requests
 | where timestamp > ago(24h)
 | summarize 
+    P50_DurationMs = percentile(duration, 50),
+    P90_DurationMs = percentile(duration, 90),
+    P95_DurationMs = percentile(duration, 95),
+    P99_DurationMs = percentile(duration, 99)
+    by bin(timestamp, 15m)
+| render timechart
+```
+
+### 4. GenAI Quality Score & Hallucination Metrics
+```kql
+AppEvents
+| where Name == "GenAIOps_Evaluation_Score"
+| extend Groundedness = todouble(Properties["groundedness"])
+| extend CitationScore = todouble(Properties["citation_integrity"])
+| extend Relevance = todouble(Properties["relevance"])
+| summarize 
+    AvgGroundedness = avg(Groundedness),
+    AvgCitationScore = avg(CitationScore),
+    AvgRelevance = avg(Relevance)
+    by bin(TimeGenerated, 1d)
+| render timechart
+```
+
+### 5. Application SLA & Uptime Availability (%)
+```kql
+requests
+| where timestamp > ago(30d)
+| summarize 
     TotalRequests = count(),
-    AvgDurationMs = avg(duration),
-    P95DurationMs = percentiles(duration, 95),
-    Failures = countif(success == false) 
-    by name
-| order by TotalRequests desc
-```
-
-### 2. Backend Exceptions & Exception Stack Traces
-Captures unhandled Python exceptions and problem IDs:
-
-```kql
-exceptions
-| where timestamp > ago(24h)
-| project timestamp, problemId, type, outerMessage, innermostMessage, operation_Name
-| order by timestamp desc
-```
-
-### 3. APIM Gateway HTTP 429 Rate-Limit Throttling
-Monitors client IPs being rate-limited by APIM policies (20 calls/min):
-
-```kql
-ApiManagementGatewayLogs
-| where ResponseCode == 429
-| summarize ThrottledRequests = count() by ClientTime, CallerIpAddress, ApiId
-| order by ClientTime desc
-```
-
-### 4. Azure OpenAI Token Consumption & Latency
-Tracks token usage (`prompt_tokens`, `completion_tokens`, `total_tokens`) across deployments:
-
-```kql
-AzureDiagnostics
-| where ResourceType == "COGNITIVESERVICES"
-| summarize 
-    TotalTokens = sum(toint(properties_s.total_tokens)),
-    Requests = count() 
-    by Resource, Model_s = tostring(properties_s.model)
-```
-
-### 5. Cosmos DB Request Unit (RU) Consumption & Latency
-Tracks RU consumption per query operation:
-
-```kql
-AzureDiagnostics
-| where ResourceType == "DOCUMENTDBS"
-| summarize 
-    TotalRU = sum(todouble(requestCharge_s)),
-    AvgDurationMs = avg(todouble(duration_s)),
-    Requests = count()
-    by CollectionName_s, OperationName
+    SuccessfulRequests = countif(success == true),
+    FailedRequests = countif(success == false)
+| extend AvailabilitySLA = (todouble(SuccessfulRequests) / todouble(TotalRequests)) * 100.0
+| extend ErrorRate5xx = (todouble(FailedRequests) / todouble(TotalRequests)) * 100.0
+| project TotalRequests, AvailabilitySLA, ErrorRate5xx
 ```
 
 ---
@@ -115,3 +138,4 @@ AzureDiagnostics
 | :--- | :--- | :--- | :--- | :--- |
 | **`alert-func-high-5xx-errors`** | `func-ht-taxb-p-cin-01` | `Http5xx` | Count > 5 over 5-minute window | `ag-taxb-ops-p-cin-01` |
 | **`alert-openai-throttled-429`** | `oai-ht-taxb-p-eus-01` | `BlockedCalls` | Count > 1 over 5-minute window | `ag-taxb-ops-p-cin-01` |
+

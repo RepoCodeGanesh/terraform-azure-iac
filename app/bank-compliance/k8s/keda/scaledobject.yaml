@@ -1,3 +1,10 @@
+# ==============================================================================
+# KEDA (Kubernetes Event-driven Autoscaling) — FinOps Autoscaler
+# Features:
+#   - Scale-To-Zero: Automatically scales pods to 0 replicas when idle (saving cluster memory/CPU)
+#   - Burst Scaling: Automatically spins up to 5 pods when CPU utilization crosses 70%
+#   - Cooldown: Waits 300 seconds (5 mins) after traffic stops before scaling down to 0
+# ==============================================================================
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:

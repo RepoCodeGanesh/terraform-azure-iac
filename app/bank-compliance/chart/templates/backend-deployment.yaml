@@ -1,3 +1,7 @@
+{{/*
+BankCompliance AI Backend Deployment (FastAPI Application)
+Features: Azure Workload Identity, Prometheus Scraping (:8000/metrics), Liveness/Readiness Probes
+*/}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,8 +20,10 @@ spec:
     metadata:
       labels:
         app: bankc-backend
+        # Injects Azure federated identity tokens into pod env
         azure.workload.identity/use: "true"
       annotations:
+        # Automated Prometheus telemetry scraping
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
         prometheus.io/path: "/metrics"
@@ -33,14 +39,19 @@ spec:
           envFrom:
             - configMapRef:
                 name: bankc-backend-config
+            - secretRef:
+                name: litellm-secret
+                optional: true
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+          # Liveness Probe: Restarts container if deadlock occurs
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 20
+          # Readiness Probe: Routes traffic only after model corpus is loaded
           readinessProbe:
             httpGet:
               path: /healthz

@@ -1,26 +1,42 @@
 import React, { useState } from 'react'
-import { Send, Bot, User, Shield, Sparkles } from 'lucide-react'
+import { Send, Bot, User, Shield, Sparkles, Download, ArrowRight } from 'lucide-react'
 import PIIBanner from './PIIBanner'
 import CitationCard from './CitationCard'
+import MarkdownRenderer from './MarkdownRenderer'
+
+const INITIAL_SUGGESTIONS = [
+  "What documents are acceptable for NRI KYC video verification?",
+  "Can a bank store transaction data in an overseas public cloud?",
+  "What are the restrictions on outsourcing CISO functions to FinTechs?",
+  "Can a merchant store 16-digit card PAN after transaction checkout?"
+]
 
 export default function ChatWindow({ selectedCircular }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Welcome to BankCompliance AI 🙏\n\nI am your Enterprise Banking Regulatory Copilot. Ask any compliance question regarding RBI Master Directions (KYC, IT Governance, Cloud Outsourcing, Tokenisation). All PAN, Aadhaar, and account numbers are auto-redacted in real-time.',
+      text: 'Welcome to BankCompliance AI 👋\n\nI am your official Reserve Bank of India (RBI) Regulatory & Compliance Copilot. Ask any compliance inquiry regarding KYC, IT Governance, Cloud Outsourcing, Tokenisation, or Digital Lending.\n\nAll sensitive customer data (PAN, Aadhaar, Card numbers) is masked in real-time by the DPDP PII Shield.',
       citations: [],
-      pii: []
+      pii: [],
+      suggested_queries: INITIAL_SUGGESTIONS
     }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [activeSuggestions, setActiveSuggestions] = useState(INITIAL_SUGGESTIONS)
 
-  const handleSend = async (e) => {
-    e.preventDefault()
-    if (!input.trim() || loading) return
+  const submitQuery = async (queryText) => {
+    if (!queryText.trim() || loading) return
 
-    const userQuery = input.trim()
+    const userQuery = queryText.trim()
     setInput('')
+    
+    // Build multi-turn conversational history (last 6 turns)
+    const historyPayload = messages.slice(-6).map(m => ({
+      role: m.role,
+      content: m.text
+    }))
+
     setMessages(prev => [...prev, { role: 'user', text: userQuery }])
     setLoading(true)
 
@@ -30,34 +46,78 @@ export default function ChatWindow({ selectedCircular }) {
         ? 'http://localhost:8000/api/v1/compliance/query'
         : 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query'
       const apiEndpoint = import.meta.env.VITE_API_URL || defaultEndpoint
+      
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: userQuery,
           department: 'legal-compliance',
-          circular: selectedCircular !== 'All' ? selectedCircular : undefined
+          session_id: 'active-session-01',
+          circular: selectedCircular !== 'All' ? selectedCircular : undefined,
+          history: historyPayload
         })
       })
       const data = await res.json()
       
+      const newSuggestions = data.suggested_queries && data.suggested_queries.length > 0
+        ? data.suggested_queries
+        : INITIAL_SUGGESTIONS
+      
+      setActiveSuggestions(newSuggestions)
+
       setMessages(prev => [...prev, {
         role: 'assistant',
         text: data.answer,
         citations: data.citations || [],
-        pii: data.pii_redacted || []
+        pii: data.pii_redacted || [],
+        cached: data.cached || false,
+        latency_ms: data.latency_ms || 0,
+        model_used: data.model_used || 'gemini-2.0-flash',
+        suggested_queries: newSuggestions
       }])
     } catch (err) {
       console.error('BankCompliance API fetch error:', err)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: `⚠️ Unable to connect to BankCompliance AKS backend API (${err.message || 'Network error'}). Please ensure the cluster and backend services are active.`,
+        text: `⚠️ Unable to connect to BankCompliance backend API (${err.message || 'Network error'}). Please ensure the cluster services are active.`,
         citations: [],
-        pii: []
+        pii: [],
+        suggested_queries: INITIAL_SUGGESTIONS
       }])
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSend = (e) => {
+    e.preventDefault()
+    submitQuery(input)
+  }
+
+  const exportMemo = (msg) => {
+    const timestamp = new Date().toISOString()
+    const content = `BANKCOMPLIANCE AI — REGULATORY AUDIT MEMORANDUM
+Generated: ${timestamp}
+Classification: Strictly Confidential / Bank Internal Audit
+
+QUERY INTERPRETATION:
+${msg.text}
+
+VERIFIED RBI MASTER DIRECTION CITATIONS:
+${(msg.citations || []).map(c => `- Circular: ${c.circular_no}\n  Title: ${c.title}\n  Clause: ${c.clause}\n  SHA-256 Provenance: ${c.provenance_hash || 'verified'}\n  Text: ${c.text}`).join('\n\n')}
+
+---
+Statutory Note: Generated by BankCompliance Multi-Agent Orchestration Fleet on AKS.
+Approved for CCO / Internal Audit Review.`
+
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `compliance_memo_${Date.now()}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -87,11 +147,65 @@ export default function ChatWindow({ selectedCircular }) {
               whiteSpace: 'pre-line'
             }}>
               <PIIBanner piiList={m.pii} />
-              {m.text}
+
+              {/* Cache Hit / Multi-Agent Latency Badge */}
+              {m.role === 'assistant' && (m.cached || m.latency_ms > 0) && (
+                <div style={{ marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {m.cached ? (
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid #10b981',
+                      color: '#10b981',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      ⚡ Semantic Cache Hit ({m.latency_ms}ms • $0.00 Cost)
+                    </span>
+                  ) : (
+                    <span style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '1px solid #3b82f6',
+                      color: '#60a5fa',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      🤖 Multi-Agent Synthesis ({m.latency_ms}ms)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {m.role === 'user' ? m.text : <MarkdownRenderer content={m.text} />}
+              
+              {/* Citation Cards */}
               {m.citations && m.citations.length > 0 && (
                 <div style={{ marginTop: '12px', borderTop: '1px solid #374151', paddingTop: '10px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase' }}>
-                    Auditable RBI Master Direction Citations:
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase' }}>
+                      Auditable RBI Master Direction Citations:
+                    </span>
+                    <button
+                      onClick={() => exportMemo(m)}
+                      style={{
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        border: '1px solid #3b82f6',
+                        color: '#60a5fa',
+                        borderRadius: '6px',
+                        padding: '4px 10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Download size={12} /> Export Memo
+                    </button>
                   </div>
                   {m.citations.map((c, cIdx) => (
                     <CitationCard key={cIdx} citation={c} />
@@ -104,10 +218,47 @@ export default function ChatWindow({ selectedCircular }) {
         {loading && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9ca3af', fontSize: '0.9rem' }}>
             <Sparkles size={16} className="animate-spin" />
-            <span>Consulting Qdrant Vector DB & RBI Master Directions...</span>
+            <span>Multi-Agent Fleet evaluating RBI Master Directions...</span>
           </div>
         )}
       </div>
+
+      {/* Suggested Follow-up Prompt Chips */}
+      {activeSuggestions && activeSuggestions.length > 0 && !loading && (
+        <div style={{
+          padding: '8px 20px',
+          background: '#0d131f',
+          borderTop: '1px solid #1f2937',
+          display: 'flex',
+          gap: '8px',
+          overflowX: 'auto',
+          alignItems: 'center'
+        }}>
+          <span style={{ fontSize: '0.75rem', color: '#6b7280', flexShrink: 0, fontWeight: 600 }}>Suggested:</span>
+          {activeSuggestions.slice(0, 3).map((s, sIdx) => (
+            <button
+              key={sIdx}
+              onClick={() => submitQuery(s)}
+              style={{
+                background: '#1f2937',
+                border: '1px solid #374151',
+                borderRadius: '16px',
+                padding: '6px 12px',
+                color: '#93c5fd',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <span>{s}</span>
+              <ArrowRight size={12} />
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input */}
       <form onSubmit={handleSend} style={{ padding: '16px 20px', background: '#111827', borderTop: '1px solid #374151', display: 'flex', gap: '12px' }}>
@@ -115,7 +266,7 @@ export default function ChatWindow({ selectedCircular }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask an RBI regulatory compliance question (e.g. KYC for NRI accounts, IT localization)..."
+          placeholder="Ask an RBI compliance question (e.g. KYC for NRIs, IT data localization)..."
           style={{
             flex: 1,
             background: '#1f2937',

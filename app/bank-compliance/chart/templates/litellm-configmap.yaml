@@ -7,12 +7,32 @@ metadata:
     {{- include "bank-compliance.labels" . | nindent 4 }}
 data:
   config.yaml: |
+    # ==============================================================================
+    # LiteLLM Multi-Model & Multi-Vendor Routing Configuration
+    # Architecture:
+    #   - Primary Fleet: Google Gemini 2.0 (Google AI Plus tier - $0.00 idle cost)
+    #   - Enterprise Fallback: Microsoft Azure OpenAI Service (gpt-5.4-nano)
+    # ==============================================================================
     model_list:
+      # ── 1. Primary Model for General Synthesis & Chat (Google Cloud) ───────────
       - model_name: gemini-2.0-flash
         litellm_params:
           model: gemini/gemini-2.0-flash
           api_key: "os.environ/GEMINI_API_KEY"
 
+      # ── 2. Specialist Model: Planner & Intent Classifier (Fast Sub-50ms) ──────
+      - model_name: gemini-2.0-flash-lite
+        litellm_params:
+          model: gemini/gemini-2.0-flash-lite
+          api_key: "os.environ/GEMINI_API_KEY"
+
+      # ── 3. Specialist Model: Legal & Hallucination Auditor (Chain-of-Thought) ─
+      - model_name: gemini-2.0-flash-thinking
+        litellm_params:
+          model: gemini/gemini-2.0-flash-thinking-exp
+          api_key: "os.environ/GEMINI_API_KEY"
+
+      # ── 4. Cross-Cloud Enterprise Fallback (Microsoft Azure OpenAI) ───────────
       - model_name: gpt-5.4-nano
         litellm_params:
           model: azure/gpt-5.4-nano
@@ -20,18 +40,26 @@ data:
           api_key: "os.environ/AZURE_API_KEY"
           api_version: "2024-06-01"
 
+    # ── KV Prompt Caching for Latency & Token Optimization ───────────────────────
     general_settings:
       enable_prompt_caching: true
       cache_type: "in-memory"
       cache_ttl: 7200
 
+    # ── Prometheus Telemetry Integration for Live Grafana Dashboards ────────────
     litellm_settings:
       success_callback: ["prometheus"]
       failure_callback: ["prometheus"]
 
+    # ── Intelligent Multi-Tier Routing & Circuit Breaking ────────────────────────
     router_settings:
       routing_strategy: "latency-based-routing"
       num_retries: 3
       timeout: 30
       fallbacks:
+        # Tier 1: If Thinking model fails/times out -> Try Flash ($0) -> Failover to Azure
+        - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano"]
+        # Tier 2: If Flash-Lite fails -> Try Flash ($0) -> Failover to Azure
+        - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano"]
+        # Tier 3: If Flash fails -> Direct Failover to Azure OpenAI
         - gemini-2.0-flash: ["gpt-5.4-nano"]

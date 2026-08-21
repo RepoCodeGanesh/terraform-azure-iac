@@ -1,11 +1,29 @@
+# ==============================================================================
+# LiteLLM Multi-Model & Multi-Vendor Routing Configuration
+# Architecture:
+#   - Primary Fleet: Google Gemini 2.0 (Google AI Plus - $0.00 idle cost)
+#   - Enterprise Fallback: Microsoft Azure OpenAI Service (gpt-5.4-nano)
+# ==============================================================================
 model_list:
-  # 🥇 PRIMARY LLM: Google Gemini 2.0 Flash (Sub-second Latency & 1M Context)
+  # ── 1. Primary Model for General Synthesis & Chat (Google Cloud) ───────────
   - model_name: gemini-2.0-flash
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: "os.environ/GEMINI_API_KEY"
 
-  # 🥈 SECONDARY / FALLBACK LLM: Azure OpenAI GPT-5.4-nano
+  # ── 2. Specialist Model: Planner & Intent Classifier (Fast Sub-50ms) ──────
+  - model_name: gemini-2.0-flash-lite
+    litellm_params:
+      model: gemini/gemini-2.0-flash-lite
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # ── 3. Specialist Model: Legal & Hallucination Auditor (Chain-of-Thought) ─
+  - model_name: gemini-2.0-flash-thinking
+    litellm_params:
+      model: gemini/gemini-2.0-flash-thinking-exp
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # ── 4. Cross-Cloud Enterprise Fallback (Microsoft Azure OpenAI) ───────────
   - model_name: gpt-5.4-nano
     litellm_params:
       model: azure/gpt-5.4-nano
@@ -13,18 +31,23 @@ model_list:
       api_key: "os.environ/AZURE_API_KEY"
       api_version: "2024-06-01"
 
+# ── KV Prompt Caching for Latency & Token Optimization ───────────────────────
 general_settings:
   enable_prompt_caching: true
   cache_type: "in-memory"
   cache_ttl: 7200
 
+# ── Prometheus Telemetry Integration for Live Grafana Dashboards ────────────
 litellm_settings:
   success_callback: ["prometheus"]
   failure_callback: ["prometheus"]
 
+# ── Intelligent Multi-Tier Routing & Circuit Breaking ────────────────────────
 router_settings:
   routing_strategy: "latency-based-routing"
   num_retries: 3
   timeout: 30
   fallbacks:
+    - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano"]
+    - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano"]
     - gemini-2.0-flash: ["gpt-5.4-nano"]

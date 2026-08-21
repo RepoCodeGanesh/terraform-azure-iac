@@ -99,6 +99,16 @@ module "bankc_appi_name" {
   instance       = var.instance
 }
 
+module "bankc_st_name" {
+  source         = "../../modules/naming"
+  resource_type  = "st"
+  project        = var.project
+  workload       = var.workload
+  environment    = var.environment
+  location_short = var.location_short
+  instance       = var.instance
+}
+
 # ─── Workload Resource Group ──────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "bank_compliance" {
