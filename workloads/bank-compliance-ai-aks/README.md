@@ -2,9 +2,10 @@
 
 This directory contains the Terraform infrastructure code for **BankCompliance AI** — an Enterprise Cloud-Native Banking Regulatory & Compliance Copilot provisioned on **Azure Kubernetes Service (AKS)** following Microsoft Cloud Adoption Framework (CAF) patterns.
 
-* **Infrastructure Repository:** [`terraform-azure-iac`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac) (`workloads/bank-compliance-ai-aks`)
-* **Application Repository:** [`bank-compliance-ai-app`](file:///c:/Users/RichT/OneDrive/Documents/Repos/bank-compliance-ai-app) (`https://github.com/RepoCodeGanesh/bank-compliance-ai-app`)
-* **Standalone Architecture Guide:** [docs/BANK_COMPLIANCE_APP_STANDALONE_GUIDE.md](file:///c:/Users/RichT/OneDrive/Documents/Repos/migrate/terraform-azure-iac/docs/BANK_COMPLIANCE_APP_STANDALONE_GUIDE.md)
+* **Workload Infrastructure:** `workloads/bank-compliance-ai-aks`
+* **Application Code:** [`app/bank-compliance`](../../app/bank-compliance/) (React Vite SPA + FastAPI + Helm + Eval Harness)
+* **Live Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
+* **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
 
 ---
 

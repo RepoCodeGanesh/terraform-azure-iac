@@ -68,8 +68,8 @@ sequenceDiagram
 * **Symptom:** React frontend displays *"Unable to connect to BankCompliance AKS backend API"*.
 * **Root Cause:** Cluster was auto-stopped by the FinOps scheduler.
 * **Resolution:**
-  1. Open GitHub Actions in `bank-compliance-ai-app`.
-  2. Navigate to **FinOps Cluster Lifecycle Scheduler** $\rightarrow$ **Run workflow** $\rightarrow$ select action `start`.
+  1. Open GitHub Actions in the repository.
+  2. Navigate to **FinOps Cluster Lifecycle Scheduler** (`.github/workflows/aks-auto-shutdown.yml`) $\rightarrow$ **Run workflow** $\rightarrow$ select action `start`.
   3. Or run Azure CLI:
      ```bash
      az aks start --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01
@@ -82,3 +82,13 @@ sequenceDiagram
   * **Host:** `bank`
   * **Points to:** `agreeable-beach-xxx.azurestaticapps.net`
 * **Step 4:** Set `enable_custom_domain = true` in `prod.tfvars` and run `terraform apply`.
+
+### Scenario 4: Terraform Configuration Drift Alert
+* **Workflow:** `.github/workflows/terraform-drift-detection.yml`
+* **Frequency:** Scheduled daily at `02:00 UTC` (`07:30 IST`).
+* **Alert Target:** `ganesank@mytaxbot.site` + Automated GitHub Issue.
+* **Resolution:**
+  1. Inspect the drift plan snippet attached to the email / GitHub Issue.
+  2. If the out-of-band change was unintentional, trigger the corresponding workflow to apply and self-heal.
+  3. If the out-of-band change was intentional, backport the change into the `.tf` code and commit to `main`.
+

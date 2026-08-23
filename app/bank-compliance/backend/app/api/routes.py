@@ -196,6 +196,51 @@ async def list_circulars():
         "corpus_version": CURRENT_CORPUS_VERSION
     }
 
+@router.get("/compliance/documents")
+async def list_all_documents():
+    """Lists all available RBI Master Directions with metadata and clause counts."""
+    from app.services.pdf_ingest_service import PDFIngestService
+    from app.services.data_lake_service import DataLakeService
+
+    docs_dir = DataLakeService.get_documents_dir()
+    documents = []
+
+    if docs_dir.exists():
+        for file_path in sorted(docs_dir.glob("*.md")):
+            try:
+                doc_info = PDFIngestService.parse_markdown_document(file_path)
+                documents.append({
+                    "document_id": doc_info["document_id"],
+                    "filename": doc_info["filename"],
+                    "title": doc_info["title"],
+                    "category": doc_info["category"],
+                    "provenance_hash": doc_info["provenance_hash"],
+                    "total_sections": doc_info["total_sections"],
+                    "source_url": doc_info["source_url"]
+                })
+            except Exception as e:
+                logger.error("Failed parsing metadata for %s: %s", file_path.name, e)
+
+    return {
+        "total_documents": len(documents),
+        "documents": documents,
+        "corpus_version": CURRENT_CORPUS_VERSION
+    }
+
+@router.get("/compliance/document/{document_id}")
+async def get_document_content(document_id: str):
+    """Retrieves full parsed document content and clause hierarchy for the interactive Split-Screen Viewer."""
+    from app.services.pdf_ingest_service import PDFIngestService
+    from app.services.data_lake_service import DataLakeService
+
+    docs_dir = DataLakeService.get_documents_dir()
+    doc_data = PDFIngestService.get_document_by_id(document_id, docs_dir)
+
+    if not doc_data:
+        raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found in Regulatory Data Lake.")
+
+    return doc_data
+
 @router.post("/compliance/ingest")
 async def trigger_ingestion():
     """Triggers live ingestion of RBI Master Directions into Qdrant Vector DB."""
@@ -218,3 +263,4 @@ async def invalidate_cache_endpoint(new_version: str):
         "new_corpus_version": new_version,
         "purged_entries": purged
     }
+

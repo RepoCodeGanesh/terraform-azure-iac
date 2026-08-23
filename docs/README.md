@@ -1,6 +1,6 @@
 # 📚 Azure AI Landing Zone Documentation Hub
 
-Welcome to the **Azure AI Landing Zone & TaxBot India** documentation repository. This directory contains architectural specifications, subscription maps, CI/CD branching & SemVer guides, and step-by-step operational runbooks.
+Welcome to the **Enterprise Azure AI Landing Zone** documentation repository. This directory contains architectural specifications, subscription maps, CI/CD branching & SemVer guides, and operational runbooks for **TaxBot India** and **BankCompliance AI**.
 
 ---
 
@@ -8,14 +8,18 @@ Welcome to the **Azure AI Landing Zone & TaxBot India** documentation repository
 
 ### 1. 🏗️ Architecture & Single Source of Truth
 * **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)**: **The primary repository source of truth**. Contains subscription IDs, Entra ID app registrations, dual CI/CD auth mappings (WIF), network CIDR subnets, cost optimization matrix, and multi-root Terraform state rules.
+* **[ROADMAP.md](../ROADMAP.md)**: Master 10-phase delivery roadmap (Phases 1–9 Complete, Phase 10 In-Progress).
+* **[Confluence Documentation Suite](confluence/README.md)**: Published enterprise documentation suite on [HappyTechies Atlassian Confluence](https://happytechies.atlassian.net/wiki/spaces/HT/overview).
 
 ---
 
 ### 2. 🔄 CI/CD, Governance & Workflow Guides
 * **[BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md)**: Git branching strategy (`main`, `develop`, `feature/*`, `release/*`, `hotfix/*`), pull request merge requirements, and environment deployments.
-* **[AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)**: Automated Semantic Versioning (SemVer) guide. Explains how Conventional Commit PR titles (`feat:`, `fix:`, `BREAKING CHANGE:`) drive automatic release tagging (`v1.0.0` $\rightarrow$ `v1.1.0`).
-* **[REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)**: Enterprise Caller/Called Reusable Workflow Pattern guide for GitHub Actions applications. Explains parameterization and integration with central templates in `RepoCodeGanesh/.github`.
+* **[AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)**: Automated Semantic Versioning (SemVer) guide via Conventional Commits.
+* **[REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)**: Enterprise Caller/Called Reusable Workflow Pattern guide for GitHub Actions applications.
 * **[BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md](BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md)**: Comprehensive engineering learnings, root causes, and solutions for AKS, APIM, LiteLLM, and Static Web Apps.
+* **[RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md](RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)**: **Phase 10 Execution Blueprint** (Raw Regulatory Lake, Split-Screen PDF Viewer, and Automated PR RAG Quality Gates).
+* **[AKS_HYBRID_OBSERVABILITY_GUIDE.md](AKS_HYBRID_OBSERVABILITY_GUIDE.md)**: Prometheus & Grafana 6-pillar GenAIOps observability guide.
 
 ---
 
@@ -41,5 +45,8 @@ Detailed step-by-step operational guides for provisioning and operating the Azur
 ### 4. 🧱 Component-Level Technical Documentation
 
 * **[Platform Infrastructure README](../platform/README.md)**: `platform/bootstrap`, `platform/hub`, and `platform/shared-services` Terraform roots.
-* **[Workload Infrastructure README](../workloads/README.md)**: `workloads/tax-advisor` TaxBot India infrastructure specification.
+* **[Workloads Infrastructure README](../workloads/README.md)**: `workloads/tax-advisor` & `workloads/bank-compliance-ai-aks` specifications.
+* **[TaxBot Application README](../app/tax-advisor/README.md)**: TaxBot India React SPA + Python Functions.
+* **[BankCompliance Application README](../app/bank-compliance/README.md)**: BankCompliance AI React SPA + FastAPI + Helm + Eval Harness.
 * **[Azure DevOps Pipelines README](../pipelines/README.md)**: Azure DevOps pipeline YAML specifications.
+

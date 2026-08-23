@@ -20,6 +20,17 @@ ABSTAIN_RESPONSE_TEMPLATE = (
     "**Recommended Action:** Escalate to the Chief Compliance Officer (CCO) / Legal Department for manual circular interpretation before taking operational action."
 )
 
+OUT_OF_SCOPE_RESPONSE_TEMPLATE = (
+    "⚠️ **Out of Regulatory Scope**\n\n"
+    "I am **BankCompliance AI**, specialized exclusively in Indian Banking Regulations, RBI Master Directions, KYC norms, IT Governance, and Digital Payments.\n\n"
+    "I cannot answer questions unrelated to banking operations, financial compliance, or statutory regulations.\n\n"
+    "**Suggested Compliance Inquiries:**\n"
+    "• *What are the mandatory V-CIP video verification rules for NRIs?*\n"
+    "• *Can bank transaction data reside in an overseas public cloud?*\n"
+    "• *What are the RBI restrictions on outsourcing CISO functions?*\n"
+    "• *What are the CoFT tokenisation rules for payment aggregators?*"
+)
+
 def validate_citations_deterministically(
     retrieved_clauses: List[Dict[str, Any]],
     corpus: List[Dict[str, Any]]
@@ -72,7 +83,6 @@ def should_abstain_query(
     if not retrieved_clauses:
         return True
         
-    # If top score is below minimum confidence threshold (0.65)
     top_score = max(c.get("score", 0.0) for c in retrieved_clauses)
     if top_score < 0.65:
         return True

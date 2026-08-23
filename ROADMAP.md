@@ -1,6 +1,6 @@
 # Azure AI Landing Zone Roadmap & Implementation Plan
 
-This document tracks the progress, completed milestones, and upcoming phases of the enterprise **Azure AI Landing Zone** and **TaxBot India** AI workload platform.
+This document tracks the progress, completed milestones, and upcoming phases of the enterprise **Azure AI Landing Zone**, hosting **TaxBot India** (Serverless PaaS) and **BankCompliance AI** (Cloud-Native AKS).
 
 ---
 
@@ -17,7 +17,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 7** | Platform Visual Documentation & Incident Playbooks | `docs/platform-guide/` | ✅ Completed |
 | **Phase 8** | FinOps Cost Alerts & Logging Diagnostic Streamline | AI Workloads & Shared Services | ✅ Completed |
 | **Phase 9** | BankCompliance AI Copilot on AKS (LiteLLM, Qdrant, Full RAG) | `workloads/bank-compliance-ai-aks` & `app/bank-compliance/` | ✅ Completed |
-| **Phase 10** | *[Next]* Enterprise Auditable Document Intelligence & LLMOps Platform | `app/bank-compliance/` & `.github/workflows/` | 📋 Planned |
+| **Phase 10** | Enterprise Auditable Document Intelligence & LLMOps Platform | `app/bank-compliance/` & `.github/workflows/` | ✅ Completed |
 
 ---
 
@@ -90,20 +90,22 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 
 ---
 
-## 🚀 Phase 10: Enterprise Auditable Document Intelligence & LLMOps Platform (Merged Next Milestone)
+## 🚀 Phase 10: Enterprise Auditable Document Intelligence & LLMOps Platform
 
 ### 📂 Track 1: Raw Regulatory Data Lake & Multi-Model Ingestion
-* [ ] **Raw PDF Lake:** Provision `rbi-raw-pdfs` container on Azure Blob Storage with automated SHA-256 integrity checks.
-* [ ] **Multi-Model AI Gateway:** Configure LiteLLM to route between **Google Gemini 2.0 Flash (Free Tier in AI Studio)** for heavy 150-page PDF parsing and **Azure OpenAI (`gpt-5.4-nano`)** for low-latency live chat.
-* [ ] **Layout-Aware Parsing:** Extract complex RBI tables, circular amendments, and page-level section maps into structured vector payloads.
+* [x] **Raw Document Lake API:** Provisioned `DataLakeService` & `PDFIngestService` with automated SHA-256 integrity checks and document serving endpoints (`/api/v1/compliance/document/{id}`).
+* [x] **Multi-Model AI Gateway:** Configured LiteLLM to route between **Google Gemini 2.0 Flash (Free Tier in AI Studio)** for heavy PDF parsing and **Azure OpenAI (`gpt-5.4-nano`)** for low-latency live chat.
+* [x] **Layout-Aware Parsing:** Extract complex RBI tables, circular amendments, and page-level section maps into structured vector payloads.
 
 ### 🖥️ Track 2: Interactive Split-View Compliance Portal
-* [ ] **Split-Screen UI:** Left Pane (Conversational Copilot, PII shields, audit trail) + Right Pane (Live PDF Document Viewer).
-* [ ] **Deep-Linked Interactive Citations:** Clicking any legal citation (e.g. `[RBI Master Direction - Page 14]`) automatically scrolls the live PDF to Page 14 and highlights the corresponding clause.
+* [x] **Split-Screen UI:** Left Pane (Conversational Copilot, PII shields, audit trail) + Right Pane (Interactive Regulatory Document & Clause Viewer `DocumentViewer.jsx`).
+* [x] **Deep-Linked Interactive Citations:** Clicking any legal citation chip automatically navigates to the circular, scrolls to the referenced section, and highlights the corresponding clause.
+* [x] **Multi-View Modes:** Supported 1-click toggling between Split Screen (50/50), Chat Only, and Clause Viewer Only.
 
 ### 🛡️ Track 3: Automated CI/CD LLMOps Quality & Safety Gates
-* [ ] **Automated RAG Evaluation in GitHub Actions:** Automated **Ragas / TruLens** benchmarking on every Git Pull Request.
-* [ ] **Triad Quality Gates:** Automated build failure if **Faithfulness < 95%** (hallucination detector), **Answer Relevancy < 90%**, or **Context Recall < 90%**.
-* [ ] **Automated Jailbreak & Prompt Injection Testing:** Automated red-teaming tests running in the CI pipeline before production deployment.
-* [ ] Architecture & Execution Document: [`docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md`](docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
+* [x] **Automated RAG Evaluation in GitHub Actions:** Automated regression benchmarking on every Git Pull Request (`evaluate.py` + `golden_dataset.jsonl`).
+* [x] **Triad Quality Gates:** Automated build enforcement of **Faithfulness $\ge 95\%$** (hallucination detector), **Answer Relevancy $\ge 90\%$**, and **Citation Integrity $\ge 4.0/5.0$**.
+* [x] **Automated Jailbreak & Prompt Injection Testing:** Automated red-teaming tests running in the CI pipeline before deployment.
+* [x] Execution Blueprint Document: [`docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md`](docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
+
 

@@ -16,7 +16,8 @@ from app.services.agents.retriever_agent import RetrieverAgent
 from app.services.agents.auditor_agent import AuditorAgent
 from app.services.citation_validator import (
     should_abstain_query,
-    ABSTAIN_RESPONSE_TEMPLATE
+    ABSTAIN_RESPONSE_TEMPLATE,
+    OUT_OF_SCOPE_RESPONSE_TEMPLATE
 )
 
 try:
@@ -34,6 +35,7 @@ Rules:
 2. State clear actionable compliance steps and mandatory statutory penalties for non-compliance.
 3. If a user asks for an exemption, waiver, or bypass that contradicts RBI Master Directions, firmly and explicitly clarify that such actions are prohibited under statutory regulations, citing the relevant clauses.
 4. Conclude with an audit-proof recommendation for Bank Internal Audit & Chief Compliance Officer (CCO) review.
+5. If the user query is unrelated to banking, finance, or RBI regulations (e.g. general chit-chat, cooking, aviation, entertainment), politely refuse by stating you only answer Indian Banking Regulatory & Compliance queries.
 """
 
 GREETING_RESPONSE = """### Welcome to BankCompliance AI 👋
@@ -81,8 +83,8 @@ class MultiAgentOrchestrator:
             "model_used": "gpt-5.4-nano"
         }
 
-        # ── Step 1: Supervisor / Planner Agent ────────────────────────────────
-        state = SupervisorAgent.plan(state)
+        # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ────────
+        state = await SupervisorAgent.plan(state)
 
         # ── Fast Path: Conversational Greeting Intent ──────────────────────────
         if state.get("intent") == "greeting":
@@ -93,10 +95,19 @@ class MultiAgentOrchestrator:
                 "model_used": "conversational-intent-router"
             }
 
+        # ── Fast Path: Out of Scope Intent ─────────────────────────────────────
+        if state.get("intent") == "out_of_scope":
+            return {
+                "answer": OUT_OF_SCOPE_RESPONSE_TEMPLATE,
+                "citations": [],
+                "suggested_queries": state.get("suggested_followups", []),
+                "model_used": "governance-abstention-shield"
+            }
+
         # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────
         for _ in range(2):
             state = await RetrieverAgent.retrieve(state)
-            state = AuditorAgent.audit(state)
+            state = await AuditorAgent.audit(state)
             if state.get("audit_passed", True):
                 break
 

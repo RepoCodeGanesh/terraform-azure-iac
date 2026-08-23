@@ -13,13 +13,13 @@ This document outlines the phased learning and implementation roadmap for our **
 
 ```mermaid
 graph TD
-    P1["<b>Phase 1: Active Foundation (Current Focus)</b><br>• Multi-Subscription CAF Landing Zone<br>• Dual CI/CD Pipelines (WIF OIDC)<br>• Greenfield AKS & APIM Deployment<br>• Cost: <b>$0.00 / month</b>"]
+    P1["<b>Phase 1: Active Foundation</b> [✅ COMPLETED]<br>• Multi-Subscription CAF Landing Zone<br>• Dual CI/CD Pipelines (WIF OIDC)<br>• Greenfield AKS & APIM Deployment<br>• Cost: <b>$0.00 / month</b>"]
     
-    P2["<b>Phase 2: Core AI Operations (Next Plan)</b><br>• Automated Vector Ingestion Pipeline (Qdrant & AI Search)<br>• Live Azure AI Content Safety Prompt Shields<br>• Automated Ragas / G-Eval Quality Gate in CI/CD<br>• Cost: <b>$0.00 / month</b>"]
+    P2["<b>Phase 2: Core AI Operations</b> [✅ COMPLETED]<br>• Automated Vector Ingestion (Qdrant & AI Search)<br>• Live Azure AI Content Safety & DPDP PII Shield<br>• Automated Regression Quality Gate in CI/CD<br>• Cost: <b>$0.00 / month</b>"]
     
-    P3["<b>Phase 3: Advanced Intelligence (Next-Next Plan)</b><br>• Multi-Agent Orchestration (LangGraph / AutoGen)<br>• OpenTelemetry GenAI Tracing & Token Dashboards<br>• Multi-Cloud Resilient Fallback (Gemini + Azure OpenAI)<br>• Cost: <b>$0.00 / month</b>"]
+    P3["<b>Phase 3: Multi-Agent Intelligence & Document Portal</b> [✅ COMPLETED]<br>• Multi-Agent Orchestration (Supervisor, Retriever, Auditor, Synthesizer)<br>• Interactive Split-Screen Regulatory Document & Clause Viewer<br>• Multi-Cloud Resilient Fallback (Gemini + Azure OpenAI)<br>• Cost: <b>$0.00 / month</b>"]
     
-    P4["<b>Phase 4: Zero-Trust Enterprise Lockdown (Next-Next-Next Plan - Cost Sensitive)</b><br>• Private Endpoints for OpenAI, AI Search & Storage<br>• Egress Lockdown via Azure Firewall / NAT Gateway<br>• Private DNS Zone Resolution across Spokes<br>• Cost: <b>$$$ (Hourly Azure Private Link & Firewall Fees)</b>"]
+    P4["<b>Phase 4: Zero-Trust Enterprise Lockdown</b> [⏸️ DEFERRED FOR FINOPS]<br>• Private Endpoints for OpenAI, AI Search & Storage<br>• Egress Lockdown via Azure Firewall / NAT Gateway<br>• Private DNS Zone Resolution across Spokes<br>• Cost: <b>$$$ (Hourly Azure Private Link & Firewall Fees)</b>"]
 
     P1 --> P2 --> P3 --> P4
 ```
@@ -28,7 +28,7 @@ graph TD
 
 ## 📋 Detailed Phased Breakdown
 
-### 🟢 Phase 1: Core Foundation (Active Milestone)
+### 🟢 Phase 1: Core Foundation (Status: ✅ Completed)
 * **Objective:** Establish cloud foundation, zero-trust identity, and greenfield workload deployments.
 * **Cost:** **$0.00 / month** (Free tier SKUs).
 * **Deliverables:**
@@ -39,33 +39,35 @@ graph TD
 
 ---
 
-### 🟡 Phase 2: Core AI Operations (Immediate Next Plan)
-* **Objective:** Replace manual document processing and local regex with automated, cloud-integrated AI tooling.
+### 🟢 Phase 2: Core AI Operations (Status: ✅ Completed)
+* **Objective:** Automated vector ingestion, real-time safety guardrails, and deterministic evaluation.
 * **Cost:** **$0.00 / month** (Using free tier APIs and existing compute).
 * **Deliverables:**
-  1. **Automated Vector Ingestion Pipeline:** Implement `ingest_pipeline.py` and `k8s/ingest-job.yaml` to chunk, embed, and upsert RBI circulars into Qdrant StatefulSet on AKS.
-  2. **Live Content Safety Integration:** Connect FastAPI and Function App to `cs-ht-ss-p-sea-01` for real-time prompt injection detection, jailbreak blocking, and toxicity filtering.
-  3. **Automated Evals in CI/CD:** Wire `eval/evaluate.py` into `.github/workflows/` to block PR merges if Groundedness or Relevance scores drop below 4.0.
+  1. **Automated Vector Ingestion Pipeline:** Implemented `DataLakeService` & `qdrant_service.py` to chunk, embed, and upsert RBI circulars into Qdrant on AKS.
+  2. **Live Content Safety & DPDP PII Shield:** Integrated `cs-ht-ss-p-sea-01` (`F0`) with Indian PAN/Aadhaar/Account masking in `pii_shield.py`.
+  3. **Automated Evals in CI/CD:** Wired `eval/evaluate.py` into GitHub Actions (`.github/workflows/app-bank-compliance.yml`).
 
 ---
 
-### 🔵 Phase 3: Advanced Intelligence (Next-Next Plan)
-* **Objective:** Upgrade single-hop RAG to autonomous multi-agent reasoning and observability.
-* **Cost:** **$0.00 / month** (Leveraging Gemini Free Tier & Log Analytics free ingest).
+### 🟢 Phase 3: Multi-Agent Intelligence & Split-Screen Portal (Status: ✅ Completed)
+* **Objective:** Multi-agent reasoning loops, interactive split-screen document viewer, and multi-cloud gateway.
+* **Cost:** **$0.00 / month** (Leveraging Gemini Free Tier & Qdrant 4GB CSI disk).
 * **Deliverables:**
-  1. **Multi-Agent Orchestration (LangGraph):** Build Supervisor, Retriever, and Auditor agent loops passing state across banking queries.
-  2. **OpenTelemetry GenAI Tracing:** Instrument FastAPI and Function App with OpenTelemetry SDK to stream prompt tokens, completion latency, and user sentiment to Log Analytics (`law-ht-ss-p-cin-01`).
-  3. **Multi-Cloud Gateway Routing:** Activate LiteLLM dual-routing with Gemini Primary ($0) and Azure OpenAI Standby Fallback.
+  1. **Multi-Agent State Graph:** Supervisor (`gemini-2.0-flash-lite`), Retriever (Qdrant), Auditor (`gemini-2.0-flash-thinking`), and Synthesizer (`gemini-2.0-flash`).
+  2. **Interactive Split-Screen Compliance Portal:** React SPA with side-by-side Chat Copilot and Live Document Viewer (`DocumentViewer.jsx`) with deep-linked citation scrolling.
+  3. **Governed Semantic Vector Cache:** Qdrant similarity cache serving repeat queries in <10ms at $0 token spend with `corpus_version` invalidation.
+  4. **Multi-Cloud Gateway Routing:** LiteLLM proxy with Gemini 2.0 Flash Primary ($0) and Azure OpenAI `gpt-5.4-nano` Standby DR Fallback.
+  5. **GenAIOps Dashboard:** Prometheus & Grafana 6-Pillar operational dashboard on AKS.
 
 ---
 
-### 🔴 Phase 4: Zero-Trust Enterprise Lockdown (Next-Next-Next Plan — Cost Sensitive)
+### 🔴 Phase 4: Zero-Trust Enterprise Lockdown (Status: ⏸️ Deferred for FinOps)
 * **Objective:** Complete perimeter isolation for high-security banking workloads.
 * **Cost:** **$$$ Cost-Sensitive (Hourly Private Link & Firewall Charges)**.
 * **Why Deferred to Phase 4:**
   * Azure Private Endpoints incur a continuous hourly rate per endpoint (~$7.30/month per endpoint $\times$ 5 endpoints $\approx$ $36.50/month).
   * Azure Firewall compute costs ~$1.25/hour (~$900/month if left running).
-  * *Policy:* We keep `public_network_access_enabled = true` (protected by Entra ID RBAC) during development and learn Private Endpoint architectures in Phase 4.
+  * *Policy:* We keep `public_network_access_enabled = true` (protected by Entra ID RBAC) during development and maintain a strict $0.00/month idle cost policy.
 * **Future Deliverables:**
   1. Disable public network access on Azure OpenAI, AI Search, and Storage accounts.
   2. Provision `azurerm_private_endpoint` inside `snet-private-endpoints` (`10.41.2.0/24` and `10.42.2.0/24`).
@@ -76,15 +78,16 @@ graph TD
 
 ## 📊 Summary Comparison: Effort vs. Cost
 
-| Capability | Target Phase | Implementation Effort | Monthly Running Cost | Learning Impact |
+| Capability | Target Phase | Implementation Status | Monthly Running Cost | Learning Impact |
 | :--- | :---: | :---: | :---: | :---: |
-| **Landing Zone & Greenfield AKS** | **Phase 1 (Active)** | High | **$0.00** | ⭐⭐⭐⭐⭐ (Foundational) |
-| **Automated Ingestion Pipeline** | **Phase 2 (Next)** | Medium | **$0.00** | ⭐⭐⭐⭐⭐ (Core Data Engineering) |
-| **Live Content Safety Guardrails** | **Phase 2 (Next)** | Low | **$0.00** | ⭐⭐⭐⭐ (DevSecOps) |
-| **CI/CD Quality Evals Gate** | **Phase 2 (Next)** | Medium | **$0.00** | ⭐⭐⭐⭐⭐ (LLMOps) |
-| **Multi-Agent LangGraph Loops** | **Phase 3 (Next-Next)** | High | **$0.00** | ⭐⭐⭐⭐⭐ (Frontier AI) |
-| **OpenTelemetry GenAI Tracing** | **Phase 3 (Next-Next)** | Medium | **$0.00** | ⭐⭐⭐⭐ (Observability) |
-| **Zero-Trust Private Endpoints** | **Phase 4 (Deferred)** | High | **$$$ Costly** | ⭐⭐⭐⭐ (Network Security) |
+| **Landing Zone & Greenfield AKS** | **Phase 1** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Foundational) |
+| **Automated Ingestion Pipeline** | **Phase 2** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Core Data Engineering) |
+| **Live Content Safety Guardrails** | **Phase 2** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐ (DevSecOps) |
+| **CI/CD Quality Evals Gate** | **Phase 2** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (LLMOps) |
+| **Multi-Agent Orchestration & Split-Screen UI** | **Phase 3 / 10** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Frontier AI) |
+| **Prometheus & Grafana GenAIOps** | **Phase 3** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐ (Observability) |
+| **Zero-Trust Private Endpoints** | **Phase 4** | ⏸️ **Deferred (FinOps)** | **$$$ Costly** | ⭐⭐⭐⭐ (Network Security) |
+
 
 ---
 
