@@ -1,0 +1,47 @@
+# ==============================================================================
+# Pipeline: Azure DevOps - AKS Nightly Auto-Shutdown (FinOps)
+# Schedule: Runs daily at 14:30 UTC (20:00 IST)
+# Purpose: Stops the AKS cluster to ensure near-zero ($0.00) idle compute cost
+# Service Connection: app-prod
+# ==============================================================================
+
+name: $(Date:yyyyMMdd)$(Rev:.r)-aks-auto-shutdown
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "30 14 * * *"
+    displayName: "Daily Nightly 20:00 IST Shutdown"
+    branches:
+      include:
+        - main
+    always: true
+
+variables:
+  CLUSTER_NAME: "aks-ht-bankc-p-cin-01"
+  RESOURCE_GROUP: "rg-ht-bankc-p-cin-01"
+
+jobs:
+  - job: StopAKSCluster
+    displayName: "Stop AKS Cluster for FinOps Savings"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: "app-prod"
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          inlineScript: |
+            echo "Checking current AKS cluster power state..."
+            POWER_STATE=$(az aks show --name "$(CLUSTER_NAME)" --resource-group "$(RESOURCE_GROUP)" --query "powerState.code" -o tsv)
+            echo "Current Power State: $POWER_STATE"
+            if [ "$POWER_STATE" == "Running" ]; then
+              echo "Stopping AKS cluster $(CLUSTER_NAME)..."
+              az aks stop --name "$(CLUSTER_NAME)" --resource-group "$(RESOURCE_GROUP)" --no-wait
+              echo "AKS cluster stop initiated successfully."
+            else
+              echo "AKS cluster is already in stopped state ($POWER_STATE). No action required."
+            fi
+        displayName: "Execute az aks stop"

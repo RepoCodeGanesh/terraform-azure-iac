@@ -10,6 +10,7 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
+from app.core.telemetry import trace_agent_span
 from app.services.agents.agent_state import AgentExecutionState
 from app.services.agents.supervisor_agent import SupervisorAgent
 from app.services.agents.retriever_agent import RetrieverAgent
@@ -84,7 +85,9 @@ class MultiAgentOrchestrator:
         }
 
         # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ────────
-        state = await SupervisorAgent.plan(state)
+        with trace_agent_span("intent_decomposition", "SupervisorAgent", "gemini-2.0-flash-lite") as span:
+            state = await SupervisorAgent.plan(state)
+            span.set_attribute("gen_ai.intent", state.get("intent", "compliance_query"))
 
         # ── Fast Path: Conversational Greeting Intent ──────────────────────────
         if state.get("intent") == "greeting":
@@ -105,9 +108,15 @@ class MultiAgentOrchestrator:
             }
 
         # ── Step 2 & 3: Parallel Tool Retrieval & Auditor Reflection Loop ───────
-        for _ in range(2):
-            state = await RetrieverAgent.retrieve(state)
-            state = await AuditorAgent.audit(state)
+        for iter_num in range(2):
+            with trace_agent_span(f"qdrant_vector_retrieval_iter_{iter_num+1}", "RetrieverAgent") as r_span:
+                state = await RetrieverAgent.retrieve(state)
+                r_span.set_attribute("gen_ai.retrieved_count", len(state.get("retrieved_evidence", [])))
+
+            with trace_agent_span(f"statutory_reflection_iter_{iter_num+1}", "AuditorAgent", "gemini-2.0-flash-thinking") as a_span:
+                state = await AuditorAgent.audit(state)
+                a_span.set_attribute("gen_ai.audit_passed", state.get("audit_passed", True))
+
             if state.get("audit_passed", True):
                 break
 
@@ -128,7 +137,9 @@ class MultiAgentOrchestrator:
 
         user_content = f"Regulatory Context:\n{context_str}\n\nCompliance Query:\n{state['sanitized_query']}"
         
-        answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(user_content, state.get("citations", []))
+        with trace_agent_span("synthesizer_generation", "SynthesizerAgent", "gemini-2.0-flash") as s_span:
+            answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(user_content, state.get("citations", []))
+            s_span.set_attribute("gen_ai.final_model_selected", model_used)
         
         return {
             "answer": answer,

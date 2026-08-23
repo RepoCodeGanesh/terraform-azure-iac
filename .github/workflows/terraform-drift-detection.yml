@@ -48,20 +48,15 @@ jobs:
           TARGET="${{ github.event.inputs.target_root || 'all' }}"
           EVENT="${{ github.event_name }}"
 
-          ALL_TARGETS='[
-            {"name":"Platform - Bootstrap","root":"platform/bootstrap","client_id":"934ab83b-2f61-475e-bdbc-85c9eaed83e6","sub_id":"7689ad81-71ba-481b-a17c-e1b6be61bab1"},
-            {"name":"Platform - Hub Network","root":"platform/hub","client_id":"78960c14-26d2-4a0c-ab21-579c3030155e","sub_id":"3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b"},
-            {"name":"Platform - Shared Services","root":"platform/shared-services","client_id":"580ffcfd-51ee-4dc3-9204-d03cb438ff82","sub_id":"859a785c-bd38-402d-b595-1f44f40fb9bf"},
-            {"name":"Workload - TaxBot PaaS","root":"workloads/tax-advisor","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4"},
-            {"name":"Workload - BankCompliance AKS","root":"workloads/bank-compliance-ai-aks","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4"}
-          ]'
+          ALL_TARGETS='[{"name":"Platform - Bootstrap","root":"platform/bootstrap","client_id":"934ab83b-2f61-475e-bdbc-85c9eaed83e6","sub_id":"7689ad81-71ba-481b-a17c-e1b6be61bab1"},{"name":"Platform - Hub Network","root":"platform/hub","client_id":"78960c14-26d2-4a0c-ab21-579c3030155e","sub_id":"3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b"},{"name":"Platform - Shared Services","root":"platform/shared-services","client_id":"580ffcfd-51ee-4dc3-9204-d03cb438ff82","sub_id":"859a785c-bd38-402d-b595-1f44f40fb9bf"},{"name":"Workload - TaxBot PaaS","root":"workloads/tax-advisor","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4"},{"name":"Workload - BankCompliance AKS","root":"workloads/bank-compliance-ai-aks","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4"}]'
 
           if [ "$EVENT" = "schedule" ] || [ "$TARGET" = "all" ] || [ -z "$TARGET" ]; then
-            echo "matrix=$ALL_TARGETS" >> $GITHUB_OUTPUT
+            SELECTED="$ALL_TARGETS"
           else
-            FILTERED=$(echo "$ALL_TARGETS" | jq -c --arg target "$TARGET" '[.[] | select(.root == $target)]')
-            echo "matrix=$FILTERED" >> $GITHUB_OUTPUT
+            SELECTED=$(echo "$ALL_TARGETS" | jq -c --arg target "$TARGET" '[.[] | select(.root == $target)]')
           fi
+
+          echo "matrix=$SELECTED" >> $GITHUB_OUTPUT
 
   # ─── STAGE 2: Matrix Scan Across Selected Roots ─────────────────────────────
   detect-drift:

@@ -46,30 +46,39 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
 ---
 
-## 🌐 3. Hub-and-Spoke Network Topology
+## 🌐 3. Hub-and-Spoke Network Topology & Peering Matrix
 
-```mermaid
-graph TD
-    Hub["Hub Network (10.0.0.0/16)<br>vnet-ht-hub-p-cin-01"]
-    Spoke1["Spoke 1: TaxBot India (10.41.0.0/16)<br>vnet-ht-taxb-p-cin-01"]
-    Spoke2["Spoke 2: BankCompliance AI (10.42.0.0/16)<br>vnet-ht-bankc-p-cin-01"]
-    Shared["Shared Services VNet (10.0.0.0/16)<br>APIM Gateway & Log Analytics"]
-    
-    Hub <-->|VNet Peering| Spoke1
-    Hub <-->|VNet Peering| Spoke2
-    Hub <-->|VNet Peering| Shared
+```text
+                               ┌─────────────────────────────────────────┐
+                               │  CENTRAL HUB NETWORK (10.0.0.0/16)      │
+                               │  vnet-ht-hub-p-cin-01 (Hub-prod)        │
+                               │  • AzureFirewallSubnet: 10.0.1.0/26     │
+                               │  • AzureBastionSubnet:  10.0.2.0/26     │
+                               │  • GatewaySubnet:       10.0.3.0/27     │
+                               └────────────────────┬────────────────────┘
+                                                    │
+                   ┌────────────────────────────────┼────────────────────────────────┐
+                   │ (Two-Way VNet Peering)         │ (Two-Way VNet Peering)         │ (Two-Way VNet Peering)
+                   ▼                                ▼                                ▼
+┌──────────────────────────────────────┐ ┌──────────────────────────────────────┐ ┌──────────────────────────────────────┐
+│ SPOKE 1: TAXBOT PAAS (10.41.0.0/16)  │ │ SPOKE 2: BANKCOMPLIANCE (10.42.0.0/16)│ │ SHARED SERVICES VNET (10.43.0.0/16)  │
+│ vnet-ht-taxb-p-cin-01 (Apps-prod)    │ │ vnet-ht-bankc-p-cin-01 (Apps-prod)   │ │ vnet-ht-ss-p-cin-01 (Shared-svcs)    │
+│ • snet-taxb-app: 10.41.1.0/24        │ │ • snet-bankc-aks-nodes: 10.42.1.0/24 │ │ • snet-apim: 10.43.1.0/24            │
+│ • snet-taxb-pe:  10.41.2.0/24        │ │ • snet-bankc-pe:        10.42.2.0/24 │ │ • snet-law:  10.43.2.0/24            │
+│ • Private Link: Cosmos DB, AI Search │ │ • Pod Overlay CIDR:   192.168.0.0/16 │ │ • APIM Gateway (apim-ht-ss-p-cin-01) │
+└──────────────────────────────────────┘ └──────────────────────────────────────┘ └──────────────────────────────────────┘
 ```
 
 * **Hub Network (`10.0.0.0/16`)**:
-  * `AzureFirewallSubnet`: `10.0.0.0/26`
-  * `AzureBastionSubnet`: `10.0.0.64/27`
-  * `GatewaySubnet`: `10.0.0.96/27`
+  * `AzureFirewallSubnet`: `10.0.1.0/26` (Azure Firewall Premium/Standard)
+  * `AzureBastionSubnet`: `10.0.2.0/26` (Azure Bastion Host for secure RDP/SSH)
+  * `GatewaySubnet`: `10.0.3.0/27` (VPN / ExpressRoute Gateway)
 * **Spoke 1 - TaxBot India (`10.41.0.0/16`)**:
-  * `snet-app-integration`: `10.41.1.0/24` (Function App VNet Integration)
-  * `PrivateEndpoints`: `10.41.2.0/24` (Private Link for AI services)
+  * `snet-taxb-app`: `10.41.1.0/24` (Function App VNet Integration)
+  * `snet-taxb-pe`: `10.41.2.0/24` (Private Link for AI Search, OpenAI & Cosmos DB)
 * **Spoke 2 - BankCompliance AI (`10.42.0.0/16`)**:
-  * `snet-aks-p-cin-01`: `10.42.1.0/24` (AKS Node Pool)
-  * `snet-pe-p-cin-01`: `10.42.2.0/24` (Private Endpoints)
+  * `snet-bankc-aks-nodes`: `10.42.1.0/24` (AKS Node Pool NICs on `Standard_B4ms`)
+  * `snet-bankc-pe`: `10.42.2.0/24` (Private Endpoints for Key Vault & Storage)
   * `Pod Overlay CIDR`: `192.168.0.0/16` (Azure CNI Overlay — preserves private VNet IPs)
 
 ---

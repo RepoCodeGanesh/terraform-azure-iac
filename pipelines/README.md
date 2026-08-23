@@ -8,18 +8,21 @@ This directory contains the Azure DevOps YAML pipeline workflows and reusable st
 
 ```
 pipelines/
-├── README.md                      # This documentation file
-├── azure-cicd-bootstrap.yml       # Pipeline for platform/bootstrap
-├── azure-cicd-hub.yml             # Pipeline for platform/hub
-├── azure-cicd-shared-ser.yml      # Pipeline for platform/shared-services
-├── azure-cicd-tax-advisor.yml     # Pipeline for workloads/tax-advisor
-├── azure-cicd-app-tax-advisor.yml # Pipeline for app/tax-advisor
+├── README.md                          # This documentation file
+├── azure-cicd-bootstrap.yml           # Pipeline for platform/bootstrap
+├── azure-cicd-hub.yml                 # Pipeline for platform/hub
+├── azure-cicd-shared-ser.yml          # Pipeline for platform/shared-services
+├── azure-cicd-tax-advisor.yml         # Pipeline for workloads/tax-advisor
+├── azure-cicd-app-tax-advisor.yml     # Pipeline for app/tax-advisor
 ├── azure-cicd-bank-compliance-aks.yml # Pipeline for workloads/bank-compliance-ai-aks
 ├── azure-cicd-app-bank-compliance.yml # Pipeline for app/bank-compliance (DevSecOps + AKS + SWA)
-└── templates/                     # Reusable pipeline stage templates
-    ├── validate.yml               # Optional standalone validate stage
-    ├── plan.yml                   # Format check, validation & speculative terraform plan
-    └── apply.yml                  # Terraform apply with environment approvals
+├── azure-cicd-mlops-lora-training.yml # Pipeline for decoupled LoRA/PEFT Fine-Tuning & Evaluation
+├── azure-cicd-terraform-drift-detection.yml # Pipeline for automated daily multi-root drift detection
+├── azure-cicd-aks-auto-shutdown.yml   # Pipeline for nightly AKS auto-shutdown (FinOps $0.00)
+└── templates/                         # Reusable pipeline stage templates
+    ├── validate.yml                   # Optional standalone validate stage
+    ├── plan.yml                       # Format check, validation & speculative terraform plan
+    └── apply.yml                      # Terraform apply with environment approvals
 ```
 
 ---

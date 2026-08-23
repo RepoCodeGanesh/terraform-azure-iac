@@ -97,16 +97,80 @@ State files are path-keyed — **git repo location does not affect state**.
 
 ## Agent Rules
 
-1. When working on `app/bank-compliance/`, always cross-check `workloads/bank-compliance-ai-aks/outputs.tf` for resource names and endpoints that must be wired into k8s ConfigMaps.
-2. Never hardcode subscription IDs — use `${{ secrets.AZURE_SUBSCRIPTION_ID }}` in GHA and `var.subscription_id` in Terraform.
-3. Terraform roots are independent — do not merge state files or add cross-root `terraform_remote_state` without explicit instruction.
-4. The ADO environment for BankCompliance infra approvals is `bank-compliance-prod`. Do not use `tax-advisor-prod`.
-5. LiteLLM image must be pinned to a specific version tag — never use `:main-latest`.
+1. **Continuous Documentation Maintenance:** Always proactively update project documentation (`AGENTS.md`, READMEs, architecture runbooks, and roadmap docs) whenever code, infrastructure, workflows, or policies change.
+2. When working on `app/bank-compliance/`, always cross-check `workloads/bank-compliance-ai-aks/outputs.tf` for resource names and endpoints that must be wired into k8s ConfigMaps.
+3. Never hardcode subscription IDs — use `${{ secrets.AZURE_SUBSCRIPTION_ID }}` in GHA and `var.subscription_id` in Terraform.
+4. Terraform roots are independent — do not merge state files or add cross-root `terraform_remote_state` without explicit instruction.
+5. The ADO environment for BankCompliance infra approvals is `bank-compliance-prod`. Do not use `tax-advisor-prod`.
+6. LiteLLM image must be pinned to a specific version tag — never use `:main-latest`.
+7. **Document All Incident Learnings:** Whenever a bug, workflow failure, or edge-case is resolved, immediately add the root cause and remediation steps to the Troubleshooting section below.
+8. **Visual Presentation Standard:** Prefer clean ASCII box diagrams, Unicode structured flowcharts, and comparative Markdown tables over raw Mermaid blocks to guarantee 100% reliable rendering across all chat interfaces, IDE panels, and web viewers.
+9. **Frequent Documentation & Confluence Maintenance:** Proactively update local markdown docs (`docs/confluence/`, `README.md`, `PROJECT_CONTEXT.md`) and keep live Atlassian Confluence (`HT` space) synchronized whenever code, infrastructure, or policies evolve.
+
+---
+
+## 🛠️ Operational Troubleshooting & Engineering Learnings
+
+### 1. GitHub Actions: `Unrecognized named-value: 'matrix'` at Job Level
+* **Symptom:** Workflow fails parsing with `Unrecognized named-value: 'matrix' @[L43]`.
+* **Root Cause:** Job-level `if:` conditions (`jobs.<job>.if`) evaluate *before* `strategy.matrix` is expanded. The `matrix` context is not available at the job root.
+* **Resolution:** Implement a preliminary `resolve-targets` setup job that evaluates the target input and outputs a dynamically filtered matrix JSON array (`include: ${{ fromJson(needs.resolve-targets.outputs.matrix) }}`).
+
+### 2. GitHub Actions: Multiline `$GITHUB_OUTPUT` Parse Failure
+* **Symptom:** Runner error: `##[error]Unable to process file command 'output' successfully. Invalid format '  {"name":...'`.
+* **Root Cause:** GitHub Actions `$GITHUB_OUTPUT` expects single-line `key=value` pairs. Unescaped multiline strings break parsing on line 2.
+* **Resolution:** Format matrix JSON as a compact single-line string (`ALL_TARGETS='[{"name":"..."},...]'`) or use EOF delimiter syntax (`echo "matrix<<EOF" >> $GITHUB_OUTPUT`).
+
+### 3. Dynamic Secret Indexing is Unsupported in GitHub Actions
+* **Symptom:** `${{ secrets[matrix.secret_name] }}` evaluates to empty/null or fails.
+* **Root Cause:** GitHub Actions does not support dynamic bracket dereferencing on the `secrets` context.
+* **Resolution:** Pass public Entra ID Client IDs directly inside the matrix objects (`client_id: '934ab83b-...'`) rather than indexing secrets.
+
+### 4. Multi-Agent Semantic Drift & Hallucination Loop on Off-Topic Queries
+* **Symptom:** Asking `"how to fly in sky"` caused the AI to synthesize a detailed answer on NRI KYC V-CIP.
+* **Root Cause:** When initial vector search returned 0 results, the Auditor Agent reflection loop injected a generic domain search query (`"RBI Master Direction on kyc"`), pulling unrelated documents into context and forcing synthesis.
+* **Resolution:** Enforce a deterministic out-of-scope guardrail in `SupervisorAgent` to immediately reject non-banking queries in `<10ms` before entering vector retrieval or reflection loops.
+
+### 5. Grafana ClusterIP & Public HTTPS Mixed Content
+* **Symptom:** Embedded Grafana iframe fails to load or appears empty on `https://bank.mytaxbot.site`.
+* **Root Cause:** Web browsers block embedding local/HTTP services (`http://localhost:3000`) inside secure HTTPS origins. Furthermore, Grafana is intentionally kept as internal `ClusterIP` in the `monitoring` namespace for security & zero egress cost.
+* **Resolution:** Render native React telemetry panels on the website. To access full Grafana UI, use secure local port-forwarding: `kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring`.
+
+### 6. Terraform Backend Partial Configuration
+* **Symptom:** `terraform init` fails with backend configuration missing errors.
+* **Root Cause:** Monorepo uses partial backend definitions with empty `backend "azurerm" {}` in `versions.tf`.
+* **Resolution:** Always initialize Terraform with `-reconfigure -backend-config=backend.hcl -input=false` and set `ARM_USE_OIDC: "true"`.
+
+---
+
+## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
+
+### 1. 🏗️ AI Platform Engineering (Azure CAF & Zero-Trust Cloud)
+* **Topology:** 4-Subscription CAF Enterprise Landing Zone (`bootstrap`, `hub`, `shared-services`, `apps-prod`).
+* **Identity & Security:** Entra ID Workload Identity Federation (WIF) OIDC authentication for GitHub Actions & Azure DevOps. Zero static secrets.
+* **FinOps Discipline:** $0.00 idle compute profile using AKS Free Tier, Ephemeral OS, SWA Free Tier, and Consumption Serverless.
+
+### 2. ⚡ GenAIOps & Multi-Agent RAG Orchestration
+* **Architecture:** 4-Microagent State Graph (Supervisor Router ➔ Retriever ➔ Auditor Reflection Critic ➔ Synthesizer).
+* **FinOps & Speed:** Sub-10ms Governed Semantic Vector Cache with 94.2% hit rate ($0.0035/query cost reduction).
+* **High Availability:** Multi-Cloud AI Gateway (LiteLLM) routing to Google Gemini 2.0 Flash with automated failover to Azure OpenAI `gpt-5.4-nano` on HTTP 429.
+
+### 3. 🔍 LLMOps & Quality Guardrails
+* **Continuous Evaluation:** Automated CI/CD evaluation gate with Ragas Triad metrics (Groundedness 4.68/5.0, Citation Integrity 4.92/5.0, Answer Relevance 4.46/5.0).
+* **Data Protection:** Real-time DPDP Act PII Sanitization (PAN, Aadhaar, Card numbers auto-masked).
+* **Safety Shields:** Deterministic domain out-of-scope interceptor (<10ms) to prevent hallucination / semantic drift loops.
+
+### 4. 📊 DataOps & Regulatory Data Lake
+* **Ingestion:** Automated PDF layout-aware chunking pipeline with SHA-256 cryptographic provenance hashing for auditable citations.
+* **Vector Store:** Qdrant Vector Store on AKS with 4GB Managed CSI Persistent Disk and HNSW indexing.
 
 ---
 
 ## 🤖 Developer AI Tooling & Environment Context
-- **AI Subscription:** **Google AI Plus** (India tier)
-- **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context capabilities.
-- **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+- **Primary Focus:** Enterprise AI Platform Engineering, GenAIOps, LLMOps, and Cloud-Native DataOps.
+- **AI Ecosystem:** Google AI Plus (Gemini Pro long-context analysis), Antigravity IDE, NotebookLM (regulatory PDF analysis), Azure AI Services.
+- **Atlassian Confluence Space:** `HappyTechies Cloud & AI Platform` (`HT`) at `https://happytechies.atlassian.net/wiki/spaces/HT/overview`.
+  - **Account Email:** `richtextforganesh@outlook.com`
+  - **Secret Location:** Azure Key Vault `kv-ht-ss-p-cin-01` (secret: `confluence-api-token` in Shared Services sub `859a785c-bd38-402d-b595-1f44f40fb9bf`).
+  - **Auto-Sync Script:** `scripts/sync_to_confluence.py` (converts markdown to storage XHTML and updates Space `HT` via REST API).
 

@@ -1,0 +1,221 @@
+# ==============================================================================
+# Pipeline: Azure DevOps - Multi-Root Terraform Drift Detection
+# Schedule: Runs daily at 02:00 UTC (07:30 IST) or on manual run
+# Target Roots:
+#   1. platform/bootstrap (Service Connection: bootstrap)
+#   2. platform/hub (Service Connection: hub-prod)
+#   3. platform/shared-services (Service Connection: shared-services)
+#   4. workloads/tax-advisor (Service Connection: app-prod)
+#   5. workloads/bank-compliance-ai-aks (Service Connection: app-prod)
+# ==============================================================================
+
+name: $(Date:yyyyMMdd)$(Rev:.r)-terraform-drift-detection
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "0 2 * * *"
+    displayName: "Daily 02:00 UTC Drift Detection"
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: targetRoot
+    displayName: "Target Terraform Root"
+    type: string
+    default: "all"
+    values:
+      - "all"
+      - "platform/bootstrap"
+      - "platform/hub"
+      - "platform/shared-services"
+      - "workloads/tax-advisor"
+      - "workloads/bank-compliance-ai-aks"
+
+variables:
+  TERRAFORM_VERSION: "1.7.5"
+  VM_IMAGE: "ubuntu-latest"
+
+stages:
+  # ── 1. Bootstrap Root ────────────────────────────────────────────────────────
+  - stage: DriftBootstrap
+    displayName: "1. Drift Check: platform/bootstrap"
+    condition: or(eq('${{ parameters.targetRoot }}', 'all'), eq('${{ parameters.targetRoot }}', 'platform/bootstrap'))
+    jobs:
+      - job: CheckBootstrapDrift
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(TERRAFORM_VERSION)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: "bootstrap"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                cd platform/bootstrap
+                export ARM_USE_OIDC=true
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_TENANT_ID=$tenantId
+                export ARM_ID_TOKEN=$idToken
+                terraform init -reconfigure -backend-config=backend.hcl -input=false
+                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
+                if [ "$EXIT_CODE" -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in platform/bootstrap"
+                elif [ "$EXIT_CODE" -eq 1 ]; then
+                  echo "##vso[task.logissue type=error]Terraform plan error in platform/bootstrap"
+                  exit 1
+                else
+                  echo "No drift detected in platform/bootstrap."
+                fi
+            displayName: "Run Terraform Plan (Drift Check)"
+
+  # ── 2. Hub-prod Root ─────────────────────────────────────────────────────────
+  - stage: DriftHub
+    displayName: "2. Drift Check: platform/hub"
+    condition: or(eq('${{ parameters.targetRoot }}', 'all'), eq('${{ parameters.targetRoot }}', 'platform/hub'))
+    jobs:
+      - job: CheckHubDrift
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(TERRAFORM_VERSION)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: "hub-prod"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                cd platform/hub
+                export ARM_USE_OIDC=true
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_TENANT_ID=$tenantId
+                export ARM_ID_TOKEN=$idToken
+                terraform init -reconfigure -backend-config=backend.hcl -input=false
+                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
+                if [ "$EXIT_CODE" -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in platform/hub"
+                elif [ "$EXIT_CODE" -eq 1 ]; then
+                  echo "##vso[task.logissue type=error]Terraform plan error in platform/hub"
+                  exit 1
+                else
+                  echo "No drift detected in platform/hub."
+                fi
+            displayName: "Run Terraform Plan (Drift Check)"
+
+  # ── 3. Shared Services Root ──────────────────────────────────────────────────
+  - stage: DriftSharedServices
+    displayName: "3. Drift Check: platform/shared-services"
+    condition: or(eq('${{ parameters.targetRoot }}', 'all'), eq('${{ parameters.targetRoot }}', 'platform/shared-services'))
+    jobs:
+      - job: CheckSharedServicesDrift
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(TERRAFORM_VERSION)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: "shared-services"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                cd platform/shared-services
+                export ARM_USE_OIDC=true
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_TENANT_ID=$tenantId
+                export ARM_ID_TOKEN=$idToken
+                terraform init -reconfigure -backend-config=backend.hcl -input=false
+                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
+                if [ "$EXIT_CODE" -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in platform/shared-services"
+                elif [ "$EXIT_CODE" -eq 1 ]; then
+                  echo "##vso[task.logissue type=error]Terraform plan error in platform/shared-services"
+                  exit 1
+                else
+                  echo "No drift detected in platform/shared-services."
+                fi
+            displayName: "Run Terraform Plan (Drift Check)"
+
+  # ── 4. TaxBot Workload Root ──────────────────────────────────────────────────
+  - stage: DriftTaxBot
+    displayName: "4. Drift Check: workloads/tax-advisor"
+    condition: or(eq('${{ parameters.targetRoot }}', 'all'), eq('${{ parameters.targetRoot }}', 'workloads/tax-advisor'))
+    jobs:
+      - job: CheckTaxBotDrift
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(TERRAFORM_VERSION)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: "app-prod"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                cd workloads/tax-advisor
+                export ARM_USE_OIDC=true
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_TENANT_ID=$tenantId
+                export ARM_ID_TOKEN=$idToken
+                terraform init -reconfigure -backend-config=backend.hcl -input=false
+                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
+                if [ "$EXIT_CODE" -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in workloads/tax-advisor"
+                elif [ "$EXIT_CODE" -eq 1 ]; then
+                  echo "##vso[task.logissue type=error]Terraform plan error in workloads/tax-advisor"
+                  exit 1
+                else
+                  echo "No drift detected in workloads/tax-advisor."
+                fi
+            displayName: "Run Terraform Plan (Drift Check)"
+
+  # ── 5. BankCompliance Workload Root ──────────────────────────────────────────
+  - stage: DriftBankCompliance
+    displayName: "5. Drift Check: workloads/bank-compliance-ai-aks"
+    condition: or(eq('${{ parameters.targetRoot }}', 'all'), eq('${{ parameters.targetRoot }}', 'workloads/bank-compliance-ai-aks'))
+    jobs:
+      - job: CheckBankComplianceDrift
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(TERRAFORM_VERSION)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: "app-prod"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                cd workloads/bank-compliance-ai-aks
+                export ARM_USE_OIDC=true
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_TENANT_ID=$tenantId
+                export ARM_ID_TOKEN=$idToken
+                terraform init -reconfigure -backend-config=backend.hcl -input=false
+                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
+                if [ "$EXIT_CODE" -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in workloads/bank-compliance-ai-aks"
+                elif [ "$EXIT_CODE" -eq 1 ]; then
+                  echo "##vso[task.logissue type=error]Terraform plan error in workloads/bank-compliance-ai-aks"
+                  exit 1
+                else
+                  echo "No drift detected in workloads/bank-compliance-ai-aks."
+                fi
+            displayName: "Run Terraform Plan (Drift Check)"

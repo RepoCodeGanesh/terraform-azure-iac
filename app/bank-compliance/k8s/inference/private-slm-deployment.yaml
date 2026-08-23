@@ -1,0 +1,74 @@
+# ==============================================================================
+# In-Cluster Private Sovereign SLM Inference Tier (Kubernetes Deployment)
+# Workload: BankCompliance AI — High-Security In-Cluster Fallback
+# SKU: Lightweight CPU-optimized (Qwen-2.5-0.5B / Phi-3.5-mini)
+# FinOps Profile: $0.00 Idle Cost (Runs on existing AKS Free-Tier Node Pool)
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: private-slm-inference
+  namespace: bank-compliance
+  labels:
+    app.kubernetes.io/name: private-slm-inference
+    app.kubernetes.io/part-of: bank-compliance-ai
+    app.kubernetes.io/component: in-cluster-inference
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: private-slm-inference
+  template:
+    metadata:
+      labels:
+        app: private-slm-inference
+        azure.workload.identity/use: "true"
+    spec:
+      containers:
+        - name: slm-engine
+          image: ollama/ollama:0.1.32
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0:11434"
+            - name: OLLAMA_MODELS
+              value: "/root/.ollama/models"
+            - name: OLLAMA_NUM_PARALLEL
+              value: "2"
+          ports:
+            - name: http-inference
+              containerPort: 11434
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1536Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/tags
+              port: 11434
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/tags
+              port: 11434
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: slm-model-storage
+              mountPath: /root/.ollama
+      volumes:
+        - name: slm-model-storage
+          emptyDir:
+            sizeLimit: 2Gi
