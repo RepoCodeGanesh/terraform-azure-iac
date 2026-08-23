@@ -29,7 +29,7 @@ PAGE_ATTACHMENTS = [
     },
     {
         "page_id": "10420225",
-        "file": "05-decoupled-dual-cicd-mlops-flow.svg"
+        "file": "05-decoupled-dual-cicd-mlops-flow.png"
     }
 ]
 
@@ -41,6 +41,7 @@ def update_attachment(page_id: str, file_path: Path):
     auth = get_auth_header()
     filename = file_path.name
     file_bytes = file_path.read_bytes()
+    mime_type = "image/png" if filename.endswith(".png") else "image/svg+xml"
 
     att_url = f"https://{CONFLUENCE_DOMAIN}/wiki/rest/api/content/{page_id}/child/attachment?filename={filename}"
     req = urllib.request.Request(att_url, headers={"Authorization": auth, "Accept": "application/json"})
@@ -52,7 +53,7 @@ def update_attachment(page_id: str, file_path: Path):
     body = (
         f"--{boundary}\r\n"
         f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
-        f"Content-Type: image/svg+xml\r\n\r\n"
+        f"Content-Type: {mime_type}\r\n\r\n"
     ).encode("utf-8") + file_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
 
     if att_data.get("results"):

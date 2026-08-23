@@ -35,7 +35,7 @@ The HappyTechies Platform implements an **Enterprise 3-Tier Decoupled CI/CD Patt
 
 ## 📐 2. Visual Architecture Diagram: Decoupled CI/CD & MLOps Lifecycle
 
-![Enterprise Decoupled Dual CI/CD & MLOps Flow](../images/05-decoupled-dual-cicd-mlops-flow.svg)
+![Enterprise Decoupled Dual CI/CD & MLOps Flow](../images/05-decoupled-dual-cicd-mlops-flow.png)
 
 ---
 
