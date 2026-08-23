@@ -66,6 +66,9 @@ jobs:
     environment: ${{ matrix.env_name }}
     env:
       ARM_USE_OIDC: "true"
+      ARM_CLIENT_ID: ${{ matrix.client_id }}
+      ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ matrix.sub_id }}
       ARM_PROVIDER_RETRY_MAX: "10"
     strategy:
       fail-fast: false
@@ -95,21 +98,27 @@ jobs:
         run: |
           echo "Initializing Terraform backend for ${{ matrix.root }}..."
           
-          if [ -f "backend.hcl" ]; then
-            terraform init -reconfigure -backend-config=backend.hcl -input=false
-          else
-            terraform init -input=false
-          fi
-
           VAR_ARG=""
           if [ -f "prod.tfvars" ]; then
             VAR_ARG="-var-file=prod.tfvars"
           fi
 
-          echo "Executing terraform plan with -detailed-exitcode..."
           set +e
-          terraform plan -detailed-exitcode -no-color -out=drift.tfplan $VAR_ARG > plan_output.txt 2>&1
-          EXIT_CODE=$?
+          if [ -f "backend.hcl" ]; then
+            terraform init -reconfigure -backend-config=backend.hcl -input=false > plan_output.txt 2>&1
+          else
+            terraform init -input=false > plan_output.txt 2>&1
+          fi
+          INIT_EXIT_CODE=$?
+
+          if [ $INIT_EXIT_CODE -ne 0 ]; then
+            EXIT_CODE=1
+            echo "Terraform init failed with exit code $INIT_EXIT_CODE"
+          else
+            echo "Executing terraform plan with -detailed-exitcode..."
+            terraform plan -detailed-exitcode -no-color -out=drift.tfplan $VAR_ARG > plan_output.txt 2>&1
+            EXIT_CODE=$?
+          fi
           set -e
 
           if [ $EXIT_CODE -eq 0 ]; then
@@ -123,7 +132,7 @@ jobs:
           else
             STATUS="ERROR"
             BADGE="🔴 EXECUTION ERROR"
-            SUMMARY="Terraform plan execution failed."
+            SUMMARY="Terraform execution failed."
           fi
 
           echo "status=$STATUS" >> $GITHUB_OUTPUT
