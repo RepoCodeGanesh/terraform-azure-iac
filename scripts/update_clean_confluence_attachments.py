@@ -26,6 +26,10 @@ PAGE_ATTACHMENTS = [
     {
         "page_id": "7700481",
         "file": "03-bank-compliance-aks-architecture.svg"
+    },
+    {
+        "page_id": "10420225",
+        "file": "05-decoupled-dual-cicd-mlops-flow.svg"
     }
 ]
 

@@ -99,8 +99,6 @@ def markdown_to_confluence_xhtml(md_text: str) -> str:
         elif "[!NOTE]" in content:
             macro_type = "info"
             title = "Note"
-            content = re.sub(r'\[!NOTE\]', '', content)
-
         return (
             f'<ac:structured-macro ac:name="{macro_type}">'
             f'<ac:parameter ac:name="title">{title}</ac:parameter>'
@@ -108,6 +106,12 @@ def markdown_to_confluence_xhtml(md_text: str) -> str:
             f'</ac:structured-macro>'
         )
 
+    def replace_image(match):
+        img_src = match.group(2)
+        filename = Path(img_src).name
+        return f'<p style="text-align: center;"><ac:image ac:align="center" ac:layout="center"><ri:attachment ri:filename="{filename}" /></ac:image></p>'
+
+    html = re.sub(r'!\[(.*?)\]\((.*?)\)', replace_image, html)
     html = re.sub(r'<blockquote>\s*<p>(.*?)</p>\s*</blockquote>', replace_callout, html, flags=re.DOTALL)
     return html
 

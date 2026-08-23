@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="100%" height="100%" style="background:#FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="106%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0284C7"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#16A34A"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#9333EA"/>
+    </marker>
+  </defs>
+
+  <!-- TITLE HEADER -->
+  <rect x="40" y="25" width="1120" height="50" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="60" y="56" fill="#0F172A" font-size="18" font-weight="700" letter-spacing="-0.3">Enterprise Decoupled Dual CI/CD &amp; MLOps Architecture Lifecycle</text>
+  <rect x="940" y="37" width="200" height="26" rx="13" fill="#E0F2FE" stroke="#0284C7" stroke-width="1"/>
+  <text x="1040" y="54" fill="#0369A1" font-size="11" font-weight="700" text-anchor="middle">Non-Identical Workflows</text>
+
+  <!-- ========================================================================= -->
+  <!-- TIER 1: FAST-LANE APP CI/CD (GITHUB ACTIONS) -->
+  <!-- ========================================================================= -->
+  <rect x="40" y="95" width="1120" height="180" rx="8" fill="#FFFFFF" stroke="#0284C7" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="40" y="95" width="1120" height="32" rx="8" fill="#F0F9FF"/>
+  <text x="60" y="117" fill="#0369A1" font-size="13" font-weight="700">TIER 1: FAST-LANE APPLICATION CI/CD (GitHub Actions — Active Continuous Driver)</text>
+  <rect x="1000" y="100" width="140" height="22" rx="4" fill="#E0F2FE"/>
+  <text x="1070" y="115" fill="#0369A1" font-size="10.5" font-weight="700" text-anchor="middle">SLA: &lt; 3 Minutes</text>
+
+  <!-- Box 1.1: Trigger -->
+  <rect x="60" y="145" width="180" height="105" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="150" y="172" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">Code Commit / PR</text>
+  <text x="150" y="195" fill="#64748B" font-size="10.5" text-anchor="middle">Triggers on push to:</text>
+  <text x="150" y="213" fill="#0284C7" font-size="10.5" font-weight="600" text-anchor="middle">app/bank-compliance/**</text>
+  <text x="150" y="231" fill="#64748B" font-size="10" text-anchor="middle">Path filtering enabled</text>
+
+  <!-- Connector 1.1 -> 1.2 -->
+  <line x1="240" y1="197" x2="280" y2="197" stroke="#0284C7" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 1.2: DevSecOps Scan -->
+  <rect x="280" y="145" width="200" height="105" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="380" y="172" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">DevSecOps SAST / SCA</text>
+  <text x="380" y="195" fill="#334155" font-size="10.5" text-anchor="middle">• Bandit SAST (Python AST)</text>
+  <text x="380" y="213" fill="#334155" font-size="10.5" text-anchor="middle">• pip-audit &amp; npm audit</text>
+  <text x="380" y="231" fill="#16A34A" font-size="10" font-weight="600" text-anchor="middle">Zero Critical CVE Gate</text>
+
+  <!-- Connector 1.2 -> 1.3 -->
+  <line x1="480" y1="197" x2="520" y2="197" stroke="#0284C7" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 1.3: Container Build -->
+  <rect x="520" y="145" width="220" height="105" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="630" y="172" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">Container Build &amp; Push</text>
+  <text x="630" y="195" fill="#334155" font-size="10.5" text-anchor="middle">• Multi-stage Docker build</text>
+  <text x="630" y="213" fill="#334155" font-size="10.5" text-anchor="middle">• Pushed to GHCR Container Reg</text>
+  <text x="630" y="231" fill="#0284C7" font-size="10" font-weight="600" text-anchor="middle">ghcr.io/.../bank-backend</text>
+
+  <!-- Connector 1.3 -> 1.4 -->
+  <line x1="740" y1="197" x2="780" y2="197" stroke="#0284C7" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Box 1.4: Deployment Targets -->
+  <rect x="780" y="145" width="360" height="105" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.2"/>
+  <text x="960" y="172" fill="#1E3A8A" font-size="12" font-weight="700" text-anchor="middle">Continuous Zero-Downtime Deployment</text>
+  <text x="960" y="195" fill="#1E40AF" font-size="10.5" text-anchor="middle">• Backend: AKS Helm Release upgrade (bank-compliance namespace)</text>
+  <text x="960" y="213" fill="#1E40AF" font-size="10.5" text-anchor="middle">• Frontend: Vite React SPA deployed to Azure Static Web Apps</text>
+  <text x="960" y="233" fill="#15803D" font-size="10.5" font-weight="700" text-anchor="middle">LIVE: https://bank.mytaxbot.site</text>
+
+  <!-- ========================================================================= -->
+  <!-- TIER 2: IAC GOVERNANCE & AUDIT PIPELINE (AZURE DEVOPS) -->
+  <!-- ========================================================================= -->
+  <rect x="40" y="295" width="1120" height="180" rx="8" fill="#FFFFFF" stroke="#16A34A" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="40" y="295" width="1120" height="32" rx="8" fill="#F0FDF4"/>
+  <text x="60" y="317" fill="#15803D" font-size="13" font-weight="700">TIER 2: ENTERPRISE IAC GOVERNANCE &amp; DRIFT AUDIT (Azure DevOps — Standby / Governance Driver)</text>
+  <rect x="1000" y="300" width="140" height="22" rx="4" fill="#DCFCE7"/>
+  <text x="1070" y="315" fill="#15803D" font-size="10.5" font-weight="700" text-anchor="middle">Trigger: Manual / Cron</text>
+
+  <!-- Box 2.1: Trigger -->
+  <rect x="60" y="345" width="180" height="105" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="150" y="372" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">Trigger: trigger: none</text>
+  <text x="150" y="395" fill="#64748B" font-size="10.5" text-anchor="middle">Manual Operator Run</text>
+  <text x="150" y="413" fill="#64748B" font-size="10.5" text-anchor="middle">or Daily 02:00 UTC Cron</text>
+  <text x="150" y="431" fill="#15803D" font-size="10" font-weight="600" text-anchor="middle">Zero Race Conditions</text>
+
+  <!-- Connector 2.1 -> 2.2 -->
+  <line x1="240" y1="397" x2="280" y2="397" stroke="#16A34A" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- Box 2.2: WIF OIDC Auth -->
+  <rect x="280" y="345" width="200" height="105" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="380" y="372" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">Entra ID WIF OIDC Auth</text>
+  <text x="380" y="395" fill="#334155" font-size="10.5" text-anchor="middle">• Service Connection: app-prod</text>
+  <text x="380" y="413" fill="#334155" font-size="10.5" text-anchor="middle">• Remote State on sthtbootpcin01</text>
+  <text x="380" y="431" fill="#15803D" font-size="10" font-weight="600" text-anchor="middle">Passwordless Security</text>
+
+  <!-- Connector 2.2 -> 2.3 -->
+  <line x1="480" y1="397" x2="520" y2="397" stroke="#16A34A" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- Box 2.3: Multi-Stage Approval Gate -->
+  <rect x="520" y="345" width="220" height="105" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="630" y="372" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">Plan &amp; Approval Gate</text>
+  <text x="630" y="395" fill="#334155" font-size="10.5" text-anchor="middle">• Speculative terraform plan</text>
+  <text x="630" y="413" fill="#334155" font-size="10.5" text-anchor="middle">• ADO Environment Approval:</text>
+  <text x="630" y="431" fill="#DC2626" font-size="10" font-weight="700" text-anchor="middle">bank-compliance-prod Gate</text>
+
+  <!-- Connector 2.3 -> 2.4 -->
+  <line x1="740" y1="397" x2="780" y2="397" stroke="#16A34A" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- Box 2.4: Apply & Drift Detection -->
+  <rect x="780" y="345" width="360" height="105" rx="6" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.2"/>
+  <text x="960" y="372" fill="#166534" font-size="12" font-weight="700" text-anchor="middle">IaC Apply &amp; Scheduled Drift Detection</text>
+  <text x="960" y="395" fill="#14532D" font-size="10.5" text-anchor="middle">• Provisions AKS, Key Vault, LiteLLM, Qdrant Disk</text>
+  <text x="960" y="413" fill="#14532D" font-size="10.5" text-anchor="middle">• Scheduled Drift Detection runs terraform plan across all 5 roots</text>
+  <text x="960" y="433" fill="#15803D" font-size="10.5" font-weight="700" text-anchor="middle">Target Subscription: Apps-prod (f4ffefe1)</text>
+
+  <!-- ========================================================================= -->
+  <!-- TIER 3: DECOUPLED MLOPS TRAINING PIPELINE -->
+  <!-- ========================================================================= -->
+  <rect x="40" y="495" width="1120" height="195" rx="8" fill="#FFFFFF" stroke="#9333EA" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="40" y="495" width="1120" height="32" rx="8" fill="#FAF5FF"/>
+  <text x="60" y="517" fill="#7E22CE" font-size="13" font-weight="700">TIER 3: DECOUPLED MLOPS FINE-TUNING &amp; SOVEREIGN SLM PIPELINE (On-Demand Specialized AI Engine)</text>
+  <rect x="1000" y="500" width="140" height="22" rx="4" fill="#F3E8FF"/>
+  <text x="1070" y="515" fill="#7E22CE" font-size="10.5" font-weight="700" text-anchor="middle">On-Demand Dispatch</text>
+
+  <!-- Box 3.1: Trigger -->
+  <rect x="60" y="545" width="180" height="120" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="150" y="572" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">Parameterized Trigger</text>
+  <text x="150" y="593" fill="#64748B" font-size="10" text-anchor="middle">• Model: Qwen-2.5 / Phi-3.5</text>
+  <text x="150" y="611" fill="#64748B" font-size="10" text-anchor="middle">• LoRA Rank: r=16, alpha=32</text>
+  <text x="150" y="629" fill="#64748B" font-size="10" text-anchor="middle">• Epochs: 3 | dry_run: true/false</text>
+  <text x="150" y="649" fill="#9333EA" font-size="10" font-weight="700" text-anchor="middle">Zero App Interference</text>
+
+  <!-- Connector 3.1 -> 3.2 -->
+  <line x1="240" y1="605" x2="280" y2="605" stroke="#9333EA" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+  <!-- Box 3.2: DataOps Generation -->
+  <rect x="280" y="545" width="200" height="120" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="380" y="572" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">DataOps Synthesis</text>
+  <text x="380" y="593" fill="#334155" font-size="10" text-anchor="middle">• synthetic_dataset_generator.py</text>
+  <text x="380" y="611" fill="#334155" font-size="10" text-anchor="middle">• 1,915 Alpaca &amp; ShareGPT pairs</text>
+  <text x="380" y="629" fill="#334155" font-size="10" text-anchor="middle">• Real-time DPDP PII Masking</text>
+  <text x="380" y="649" fill="#15803D" font-size="10" font-weight="600" text-anchor="middle">Artifact: rbi-sft-datasets</text>
+
+  <!-- Connector 3.2 -> 3.3 -->
+  <line x1="480" y1="605" x2="520" y2="605" stroke="#9333EA" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+  <!-- Box 3.3: PyTorch LoRA Training -->
+  <rect x="520" y="545" width="220" height="120" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="630" y="572" fill="#0F172A" font-size="12" font-weight="700" text-anchor="middle">PyTorch LoRA SFT Training</text>
+  <text x="630" y="593" fill="#334155" font-size="10" text-anchor="middle">• train_lora.py (PEFT / TRL)</text>
+  <text x="630" y="611" fill="#334155" font-size="10" text-anchor="middle">• Freezes base (W0), trains B · A</text>
+  <text x="630" y="629" fill="#334155" font-size="10" text-anchor="middle">• export_adapter.py (W = W0 + BA)</text>
+  <text x="630" y="649" fill="#9333EA" font-size="10" font-weight="600" text-anchor="middle">LoRA Weights Checkpoint</text>
+
+  <!-- Connector 3.3 -> 3.4 -->
+  <line x1="740" y1="605" x2="780" y2="605" stroke="#9333EA" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+  <!-- Box 3.4: Eval Gate & In-Cluster SLM Serving -->
+  <rect x="780" y="545" width="360" height="120" rx="6" fill="#FAF5FF" stroke="#D8B4FE" stroke-width="1.2"/>
+  <text x="960" y="572" fill="#581C87" font-size="12" font-weight="700" text-anchor="middle">Groundedness Gate &amp; In-Cluster SLM</text>
+  <text x="960" y="593" fill="#6B21A8" font-size="10" text-anchor="middle">• eval_fine_tuned.py: 97.2% Groundedness (+34.25% lift)</text>
+  <text x="960" y="611" fill="#6B21A8" font-size="10" text-anchor="middle">• Publishes benchmark_evaluation_report.json artifact</text>
+  <text x="960" y="629" fill="#6B21A8" font-size="10" text-anchor="middle">• Deploys merged weights to In-Cluster private-slm pod</text>
+  <text x="960" y="649" fill="#15803D" font-size="10.5" font-weight="700" text-anchor="middle">Zero External Egress • $0.00 Token Cost</text>
+</svg>
