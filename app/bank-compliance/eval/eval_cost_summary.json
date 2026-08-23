@@ -6,5 +6,5 @@
   "estimated_cost_usd": 0.0,
   "pricing_per_1m_prompt": "$0.00",
   "pricing_per_1m_completion": "$0.00",
-  "eval_duration_seconds": 0.0
+  "eval_duration_seconds": 0.002
 }

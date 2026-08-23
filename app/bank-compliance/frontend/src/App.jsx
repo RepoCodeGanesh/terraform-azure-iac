@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText } from 'lucide-react'
+import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText, Activity } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import DocumentViewer from './components/DocumentViewer'
+import GenAIOpsDashboard from './components/GenAIOpsDashboard'
 
 export default function App() {
   const [selectedCircular, setSelectedCircular] = useState('All')
@@ -12,7 +13,7 @@ export default function App() {
   // Split-Screen Interactive State
   const [selectedDocId, setSelectedDocId] = useState('01-rbi-master-direction-kyc-aml-vcip')
   const [highlightClause, setHighlightClause] = useState('')
-  const [viewMode, setViewMode] = useState('split') // 'split' | 'chat-only' | 'doc-only'
+  const [viewMode, setViewMode] = useState('split') // 'split' | 'chat-only' | 'doc-only' | 'telemetry'
 
   const CIRCULAR_MAP = [
     { label: "All Master Directions", id: "01-rbi-master-direction-kyc-aml-vcip", isAll: true },
@@ -176,6 +177,26 @@ export default function App() {
               <FileText size={13} />
               <span>Clause Viewer</span>
             </button>
+            <button
+              onClick={() => setViewMode('telemetry')}
+              title="GenAIOps Command Center & Observability"
+              style={{
+                background: viewMode === 'telemetry' ? '#1e3a8a' : 'transparent',
+                border: 'none',
+                color: viewMode === 'telemetry' ? '#ffffff' : '#64748b',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 600
+              }}
+            >
+              <Activity size={13} />
+              <span>GenAIOps Command Center</span>
+            </button>
           </div>
 
           <span style={{
@@ -308,8 +329,13 @@ export default function App() {
           </div>
         </aside>
 
+        {/* Telemetry Command Center Mode */}
+        {viewMode === 'telemetry' && (
+          <GenAIOpsDashboard onBackToChat={() => setViewMode('split')} />
+        )}
+
         {/* Center: Conversational Copilot */}
-        {viewMode !== 'doc-only' && (
+        {viewMode !== 'doc-only' && viewMode !== 'telemetry' && (
           <div style={{ flex: viewMode === 'split' ? '0 0 50%' : 1, display: 'flex', height: '100%' }}>
             <ChatWindow
               selectedCircular={selectedCircular}
@@ -319,7 +345,7 @@ export default function App() {
         )}
 
         {/* Right Pane: Split-Screen Interactive Document Viewer */}
-        {viewMode !== 'chat-only' && (
+        {viewMode !== 'chat-only' && viewMode !== 'telemetry' && (
           <DocumentViewer
             selectedDocId={selectedDocId}
             highlightClause={highlightClause}
