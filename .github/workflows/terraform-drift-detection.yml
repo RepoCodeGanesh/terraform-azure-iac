@@ -199,30 +199,6 @@ jobs:
               labels: ['drift-detected', 'iac-governance', 'security']
             });
 
-      # ─── Alerting: Send Direct Email Notification ───────────────────────────
-      - name: Send Email Alert to richtextforganesh@outlook.com
-        if: steps.drift_check.outputs.status == 'DRIFTED'
-        uses: dawidd6/action-send-mail@v3
-        continue-on-error: true
-        with:
-          server_address: ${{ secrets.SMTP_SERVER || 'smtp-mail.outlook.com' }}
-          server_port: ${{ secrets.SMTP_PORT || 587 }}
-          username: ${{ secrets.SMTP_USERNAME || 'richtextforganesh@outlook.com' }}
-          password: ${{ secrets.SMTP_PASSWORD || '' }}
-          subject: '⚠️ [Terraform Drift Alert] Inconsistency detected in ${{ matrix.name }}'
-          to: ${{ env.NOTIFICATION_EMAIL }}
-          from: 'Terraform IaC Governance <richtextforganesh@outlook.com>'
-          body: |
-            Terraform Configuration Drift Alert
-            ==================================
-            Target Root     : ${{ matrix.root }}
-            Scope Name      : ${{ matrix.name }}
-            Subscription ID : ${{ matrix.sub_id }}
-            Trigger Event   : ${{ github.event_name }}
-            Commit SHA      : ${{ github.sha }}
-            Run URL         : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          attachments: ${{ matrix.root }}/plan_output.txt
-
   # ─── Consolidated Dynamic Governance Summary ────────────────────────────────
   governance-summary:
     name: 📊 Real-Time Drift Governance Dashboard
