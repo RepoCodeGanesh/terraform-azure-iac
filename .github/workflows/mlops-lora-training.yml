@@ -59,7 +59,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Generate Synthetic RBI Instruction Pairs
         run: |
@@ -87,6 +86,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'app/bank-compliance/training/requirements-train.txt'
 
       - name: Download Synthetic Datasets
         uses: actions/download-artifact@v4
