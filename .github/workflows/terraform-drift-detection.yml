@@ -1,5 +1,5 @@
 # ==============================================================================
-# Workflow: Automated Multi-Root Terraform Drift Detection & Email Alerting
+# Workflow: Automated Multi-Root Terraform Drift Detection & Governance Engine
 # Monorepo: HappyTechies Enterprise Azure Landing Zone
 # Target Email: ganesank@mytaxbot.site
 # Schedule: Daily at 02:00 UTC (07:30 IST) + On-Demand Manual Trigger
@@ -48,7 +48,7 @@ jobs:
           TARGET="${{ github.event.inputs.target_root || 'all' }}"
           EVENT="${{ github.event_name }}"
 
-          ALL_TARGETS='[{"name":"Platform - Bootstrap","root":"platform/bootstrap","client_id":"934ab83b-2f61-475e-bdbc-85c9eaed83e6","sub_id":"7689ad81-71ba-481b-a17c-e1b6be61bab1"},{"name":"Platform - Hub Network","root":"platform/hub","client_id":"78960c14-26d2-4a0c-ab21-579c3030155e","sub_id":"3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b"},{"name":"Platform - Shared Services","root":"platform/shared-services","client_id":"580ffcfd-51ee-4dc3-9204-d03cb438ff82","sub_id":"859a785c-bd38-402d-b595-1f44f40fb9bf"},{"name":"Workload - TaxBot PaaS","root":"workloads/tax-advisor","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4"},{"name":"Workload - BankCompliance AKS","root":"workloads/bank-compliance-ai-aks","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4"}]'
+          ALL_TARGETS='[{"name":"Platform - Bootstrap","root":"platform/bootstrap","client_id":"934ab83b-2f61-475e-bdbc-85c9eaed83e6","sub_id":"7689ad81-71ba-481b-a17c-e1b6be61bab1","env_name":"bootstrap-prod"},{"name":"Platform - Hub Network","root":"platform/hub","client_id":"78960c14-26d2-4a0c-ab21-579c3030155e","sub_id":"3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b","env_name":"hub-prod"},{"name":"Platform - Shared Services","root":"platform/shared-services","client_id":"580ffcfd-51ee-4dc3-9204-d03cb438ff82","sub_id":"859a785c-bd38-402d-b595-1f44f40fb9bf","env_name":"shared-services-prod"},{"name":"Workload - TaxBot PaaS","root":"workloads/tax-advisor","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4","env_name":"tax-advisor-prod"},{"name":"Workload - BankCompliance AKS","root":"workloads/bank-compliance-ai-aks","client_id":"99ab7987-3989-46c3-bae9-92279be16608","sub_id":"f4ffefe1-d689-4059-969c-ccc73e2a11d4","env_name":"bank-compliance-prod"}]'
 
           if [ "$EVENT" = "schedule" ] || [ "$TARGET" = "all" ] || [ -z "$TARGET" ]; then
             SELECTED="$ALL_TARGETS"
@@ -63,6 +63,7 @@ jobs:
     name: Scan ${{ matrix.name }}
     needs: resolve-targets
     runs-on: ubuntu-latest
+    environment: ${{ matrix.env_name }}
     env:
       ARM_USE_OIDC: "true"
       ARM_PROVIDER_RETRY_MAX: "10"
@@ -70,11 +71,6 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.resolve-targets.outputs.matrix) }}
-
-    outputs:
-      status: ${{ steps.drift_check.outputs.drift_status }}
-      diff: ${{ steps.drift_check.outputs.drift_summary }}
-      timestamp: ${{ steps.drift_check.outputs.timestamp }}
 
     steps:
       - name: Checkout Monorepo Code
@@ -84,7 +80,7 @@ jobs:
         uses: azure/login@v2
         with:
           client-id: ${{ matrix.client_id }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID || env.AZURE_TENANT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ matrix.sub_id }}
 
       - name: Setup Terraform
@@ -97,7 +93,6 @@ jobs:
         id: drift_check
         working-directory: ${{ matrix.root }}
         run: |
-          echo "timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
           echo "Initializing Terraform backend for ${{ matrix.root }}..."
           
           if [ -f "backend.hcl" ]; then
@@ -106,48 +101,74 @@ jobs:
             terraform init -input=false
           fi
 
+          VAR_ARG=""
+          if [ -f "prod.tfvars" ]; then
+            VAR_ARG="-var-file=prod.tfvars"
+          fi
+
           echo "Executing terraform plan with -detailed-exitcode..."
           set +e
-          if [ -f "prod.tfvars" ]; then
-            terraform plan -detailed-exitcode -no-color -out=drift.tfplan -var-file=prod.tfvars > plan_output.txt 2>&1
-          else
-            terraform plan -detailed-exitcode -no-color -out=drift.tfplan > plan_output.txt 2>&1
-          fi
+          terraform plan -detailed-exitcode -no-color -out=drift.tfplan $VAR_ARG > plan_output.txt 2>&1
           EXIT_CODE=$?
           set -e
 
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-
           if [ $EXIT_CODE -eq 0 ]; then
-            echo "drift_status=CLEAN" >> $GITHUB_OUTPUT
-            echo "drift_summary=No configuration drift detected." >> $GITHUB_OUTPUT
-            echo "### ✅ ${{ matrix.name }}: In Sync (No Drift)" >> $GITHUB_STEP_SUMMARY
+            STATUS="IN_SYNC"
+            BADGE="🟢 IN SYNC"
+            SUMMARY="No configuration drift detected."
           elif [ $EXIT_CODE -eq 2 ]; then
-            echo "drift_status=DRIFTED" >> $GITHUB_OUTPUT
-            echo "drift_summary=Infrastructure drift detected against committed code." >> $GITHUB_OUTPUT
-            echo "### ⚠️ ${{ matrix.name }}: DRIFT DETECTED" >> $GITHUB_STEP_SUMMARY
-            echo '```terraform' >> $GITHUB_STEP_SUMMARY
-            tail -n 40 plan_output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            STATUS="DRIFTED"
+            BADGE="🟡 DRIFT DETECTED"
+            SUMMARY="Infrastructure drift detected against committed code."
           else
-            echo "drift_status=ERROR" >> $GITHUB_OUTPUT
-            echo "drift_summary=Terraform execution error." >> $GITHUB_OUTPUT
-            echo "### ❌ ${{ matrix.name }}: Terraform Plan Error" >> $GITHUB_STEP_SUMMARY
-            cat plan_output.txt >> $GITHUB_STEP_SUMMARY
-            exit 1
+            STATUS="ERROR"
+            BADGE="🔴 EXECUTION ERROR"
+            SUMMARY="Terraform plan execution failed."
           fi
 
-      - name: Upload Drift Plan Artifact
-        if: steps.drift_check.outputs.drift_status == 'DRIFTED'
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+          # Save structured JSON for dynamic aggregator
+          cat << EOF > status.json
+          {
+            "name": "${{ matrix.name }}",
+            "root": "${{ matrix.root }}",
+            "sub_id": "${{ matrix.sub_id }}",
+            "status": "$STATUS",
+            "badge": "$BADGE",
+            "summary": "$SUMMARY",
+            "exit_code": $EXIT_CODE,
+            "timestamp": "$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          }
+          EOF
+
+          echo "### $BADGE: ${{ matrix.name }}" >> $GITHUB_STEP_SUMMARY
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo '```terraform' >> $GITHUB_STEP_SUMMARY
+            tail -n 30 plan_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Status Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: drift-plan-${{ strategy.job-index }}
+          name: status-${{ matrix.env_name }}
+          path: ${{ matrix.root }}/status.json
+          retention-days: 7
+
+      - name: Upload Drift Plan Artifact
+        if: steps.drift_check.outputs.status == 'DRIFTED'
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-plan-${{ matrix.env_name }}
           path: ${{ matrix.root }}/plan_output.txt
           retention-days: 7
 
       # ─── Alerting: Open GitHub Issue on Drift ───────────────────────────────
       - name: Create GitHub Issue on Drift
-        if: steps.drift_check.outputs.drift_status == 'DRIFTED'
+        if: steps.drift_check.outputs.status == 'DRIFTED'
         uses: actions/github-script@v7
         with:
           script: |
@@ -180,9 +201,9 @@ jobs:
 
       # ─── Alerting: Send Direct Email Notification ───────────────────────────
       - name: Send Email Alert to ganesank@mytaxbot.site
-        if: steps.drift_check.outputs.drift_status == 'DRIFTED'
+        if: steps.drift_check.outputs.status == 'DRIFTED'
         uses: dawidd6/action-send-mail@v3
-        continue-on-error: true # Ensure workflow completes gracefully even if SMTP secrets are not yet populated
+        continue-on-error: true
         with:
           server_address: ${{ secrets.SMTP_SERVER || 'smtp.sendgrid.net' }}
           server_port: ${{ secrets.SMTP_PORT || 587 }}
@@ -194,56 +215,86 @@ jobs:
           body: |
             Terraform Configuration Drift Alert
             ==================================
-
             Target Root     : ${{ matrix.root }}
             Scope Name      : ${{ matrix.name }}
             Subscription ID : ${{ matrix.sub_id }}
             Trigger Event   : ${{ github.event_name }}
-            Detected At     : ${{ steps.drift_check.outputs.timestamp }}
             Commit SHA      : ${{ github.sha }}
             Run URL         : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            Action Required:
-            A discrepancy was detected between your live Azure infrastructure and the committed Terraform code in GitHub.
-            Please review the attached GitHub run and reconcile the state.
-
-            HappyTechies Cloud & AI Platform Governance
           attachments: ${{ matrix.root }}/plan_output.txt
 
-  # ─── Consolidated Governance Summary ────────────────────────────────────────
+  # ─── Consolidated Dynamic Governance Summary ────────────────────────────────
   governance-summary:
-    name: 📊 Drift Governance Summary Dashboard
+    name: 📊 Real-Time Drift Governance Dashboard
     needs: [resolve-targets, detect-drift]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Generate Executive Drift Governance Dashboard
+      - name: Download All Status Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-statuses
+          pattern: status-*
+          merge-multiple: true
+
+      - name: Generate Dynamic Executive Dashboard
         run: |
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          # 🛡️ Enterprise Terraform Drift Governance Report
+          python3 -c "
+          import json, glob, os
 
-          > **Monorepo:** `HappyTechies Cloud & AI Platform` | **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
-          > **Scanned Roots:** `5 CAF Roots` | **Alert Notification:** `ganesank@mytaxbot.site`
+          files = glob.glob('all-statuses/**/status.json', recursive=True) + glob.glob('all-statuses/*.json')
+          results = []
+          for f in files:
+              try:
+                  with open(f, 'r') as fp:
+                      results.append(json.load(fp))
+              except Exception:
+                  pass
 
-          ---
+          has_drift = any(r.get('status') == 'DRIFTED' for r in results)
+          has_error = any(r.get('status') == 'ERROR' for r in results)
 
-          ### 📋 Multi-Root Infrastructure Status Matrix
+          if has_error:
+              overall_status = '🔴 EXECUTION FAILED'
+          elif has_drift:
+              overall_status = '🟡 DRIFT DETECTED'
+          else:
+              overall_status = '🟢 100% IN SYNC (ZERO DRIFT)'
 
-          | Infrastructure Scope | Terraform State Root | Subscription ID | Governance Status |
-          |---|---|---|:---:|
-          | **Platform - Bootstrap** | `platform/bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `🟢 EVALUATED` |
-          | **Platform - Hub Network** | `platform/hub` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `🟢 EVALUATED` |
-          | **Platform - Shared Services** | `platform/shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `🟢 EVALUATED` |
-          | **Workload - TaxBot PaaS** | `workloads/tax-advisor` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `🟢 EVALUATED` |
-          | **Workload - BankCompliance AKS** | `workloads/bank-compliance-ai-aks` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `🟢 EVALUATED` |
+          md = []
+          md.append('# 🛡️ Enterprise Terraform Drift Governance Report')
+          md.append('')
+          md.append(f'> **Overall Health:** `{overall_status}` | **Scanned Roots:** `{len(results)} CAF Roots`')
+          md.append(f'> **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99` | **Alert Notification:** `{os.environ.get(\"NOTIFICATION_EMAIL\", \"ganesank@mytaxbot.site\")}`')
+          md.append('')
+          md.append('---')
+          md.append('')
+          md.append('### 📋 Real-Time Infrastructure Status Matrix')
+          md.append('')
+          md.append('| Infrastructure Scope | Terraform State Root | Subscription ID | Live Governance Status |')
+          md.append('|---|---|---|:---:|')
 
-          ---
+          for r in sorted(results, key=lambda x: x.get('root', '')):
+              name = r.get('name')
+              root = r.get('root')
+              sub_id = r.get('sub_id')
+              badge = r.get('badge', 'UNKNOWN')
+              md.append(f'| **{name}** | `{root}` | `{sub_id}` | {badge} |')
 
-          ### 🛠️ Self-Healing & Drift Reconciliation Runbook:
-          * **If Status is In Sync (`CLEAN`):** Zero action required. Cloud resources match committed Git IaC.
-          * **If Status is Drifted (`DRIFTED`):**
-            1. An automated GitHub Issue has been created with the full `terraform plan` delta diff.
-            2. An email alert has been dispatched to `ganesank@mytaxbot.site`.
-            3. To reconcile unintended drift: Trigger the corresponding workload IaC workflow to apply and self-heal.
-            4. To reconcile intended drift (emergency Azure Portal changes): Update your Terraform `.tf` files in `main` to match live state.
-          EOF
+          md.append('')
+          md.append('---')
+          md.append('')
+          md.append('### 🛠️ Self-Healing & Drift Reconciliation Runbook:')
+          md.append('* **If Status is 🟢 IN SYNC:** Zero action required. Cloud resources match committed Git IaC.')
+          md.append('* **If Status is 🟡 DRIFT DETECTED:**')
+          md.append('  1. An automated GitHub Issue has been created with the full `terraform plan` delta diff.')
+          md.append('  2. An email alert has been dispatched.')
+          md.append('  3. **Unintended Drift:** Trigger the corresponding workload IaC workflow with approval to self-heal.')
+          md.append('  4. **Intended Drift:** Update your Terraform `.tf` files in `main` to match live state.')
+          md.append('* **If Status is 🔴 EXECUTION ERROR:** Review authentication / variable configuration in the failed stage.')
+
+          summary_content = '\n'.join(md)
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as s:
+              s.write(summary_content + '\n')
+          "
