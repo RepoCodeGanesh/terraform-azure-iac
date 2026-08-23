@@ -1,6 +1,6 @@
 # 🏦 Workload 2: BankCompliance AI (Cloud-Native AKS Banking Copilot)
 
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `Workloads`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Workloads`
 * **Live Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **Workload Code:** `bankc` (Resource Group: `rg-ht-bankc-p-cin-01`)
 * **Infrastructure Root:** [`workloads/bank-compliance-ai-aks`](https://github.com/RepoCodeGanesh/terraform-azure-iac/tree/main/workloads/bank-compliance-ai-aks)
@@ -82,8 +82,8 @@ Financial institutions process thousands of pages of central bank circulars, reg
 | **Compute Engine** | **AKS Free Tier (`Standard_B4ms`)** | 4 vCPUs, 16GB RAM, Ephemeral OS Disk. Zero control-plane management fee. |
 | **Vector Storage** | **4GB Managed Disk (`managed-csi`)** | `StandardSSD_LRS` mounted to `/qdrant/data`. Preserves embeddings across cluster stops (~$0.15/mo). |
 | **State Graph** | **4-Microagent Architecture** | Decoupled cognitive nodes with deterministic out-of-scope interceptor (<10ms) and 2-iteration reflection loop. |
-| **Semantic Cache** | **Governed Vector Cache** | In-memory + Qdrant similarity match ($\text{Cosine} \ge 0.90$). Serves repeat queries in **8.4ms at $0.00 spend**. |
-| **Fine-Tuning Engine**| **LoRA / PEFT Pipeline** | PyTorch + HuggingFace PEFT ($r=16, \alpha=32$). Specialized on 1,915 synthetic RBI instruction pairs (+34.25% groundedness lift). |
+| **Semantic Cache** | **Governed Vector Cache** | In-memory + Qdrant similarity match (Cosine >= 0.90). Serves repeat queries in **8.4ms at $0.00 spend**. |
+| **Fine-Tuning Engine**| **LoRA / PEFT Pipeline** | PyTorch + HuggingFace PEFT (r=16, alpha=32). Specialized on 1,915 synthetic RBI instruction pairs (+34.25% groundedness lift). |
 | **Sovereign Inference**| **In-Cluster SLM Tier** | Local `ollama` pod hosting `qwen2.5:0.5b` on CPU. Zero external token egress for ultra-sensitive banking data. |
 | **Telemetry & SRE** | **OpenTelemetry GenAI (v1.26+)** | Emits standard `gen_ai.system`, `gen_ai.usage.tokens`, and span latency breakdown across all micro-agents. |
 | **Security & Privacy** | **DPDP Act PII Sanitizer** | Real-time regex + NER redacting PAN, Aadhaar, and credit card numbers prior to LLM processing. |

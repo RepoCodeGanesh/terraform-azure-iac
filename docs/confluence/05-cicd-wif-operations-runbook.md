@@ -1,6 +1,6 @@
 # 🛠️ Dual CI/CD, Workload Identity & Decoupled MLOps Runbook
 
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `DevSecOps & Operations`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `DevSecOps & Operations`
 * **Target Audience:** DevOps Engineers, Platform Engineers, ML Engineers, SREs
 * **Status:** `ACTIVE`
 

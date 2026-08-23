@@ -44,11 +44,11 @@ Best Use Case        Foundational language base  Output style, JSON schemas    S
 ## 3. Mathematical & Engineering Foundation of LoRA (PEFT)
 
 ### The Rank Decomposition Formula
-During standard full fine-tuning, the model updates full weight matrix $W_0 \in \mathbb{R}^{d \times k}$:
-$$W = W_0 + \Delta W$$
+During standard full fine-tuning, the model updates full weight matrix W0 matrix (d x k):
+`W = W0 + Delta_W`
 
-In **Low-Rank Adaptation (LoRA)**, $\Delta W$ is decomposed into two low-rank matrices $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$, where rank $r \ll \min(d, k)$:
-$$\Delta W = B \cdot A$$
+In **Low-Rank Adaptation (LoRA)**, Delta_W is decomposed into two low-rank matrices B matrix (d x r) and A matrix (r x k), where rank r << min(d, k):
+`Delta_W = B * A`
 
 ```text
        Input x (d-dim)
@@ -73,8 +73,8 @@ $$\Delta W = B \cdot A$$
       Output h (k-dim)
 ```
 
-* **Parameters Optimized:** Only $\sim 0.2\%$ of total model weights.
-* **Adapter Size:** $\sim 20\text{ MB}$ `.safetensors` file instead of $15\text{ GB}$ base checkpoint.
+* **Parameters Optimized:** Only ~0.2% of total model weights.
+* **Adapter Size:** ~20 MB `.safetensors` file instead of 15 GB base checkpoint.
 * **Training Time:** < 15 minutes on single T4 GPU / lightweight CPU runner.
 
 ---

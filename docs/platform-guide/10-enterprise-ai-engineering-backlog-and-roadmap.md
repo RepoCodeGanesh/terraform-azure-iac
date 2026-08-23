@@ -65,7 +65,7 @@ graph TD
 * **Objective:** Complete perimeter isolation for high-security banking workloads.
 * **Cost:** **$$$ Cost-Sensitive (Hourly Private Link & Firewall Charges)**.
 * **Why Deferred to Phase 4:**
-  * Azure Private Endpoints incur a continuous hourly rate per endpoint (~$7.30/month per endpoint $\times$ 5 endpoints $\approx$ $36.50/month).
+  * Azure Private Endpoints incur a continuous hourly rate per endpoint (~$7.30/month per endpoint $\times$ 5 endpoints ~ $36.50/month).
   * Azure Firewall compute costs ~$1.25/hour (~$900/month if left running).
   * *Policy:* We keep `public_network_access_enabled = true` (protected by Entra ID RBAC) during development and maintain a strict $0.00/month idle cost policy.
 * **Future Deliverables:**
