@@ -1,16 +1,16 @@
 output "id" {
   description = "ID of the Azure OpenAI Cognitive Account."
-  value       = module.cognitive_account.resource_id
+  value       = azurerm_cognitive_account.this.id
 }
 
 output "name" {
   description = "Name of the Azure OpenAI Cognitive Account."
-  value       = var.name
+  value       = azurerm_cognitive_account.this.name
 }
 
 output "endpoint" {
   description = "Endpoint URL of the Azure OpenAI Cognitive Account."
-  value       = module.cognitive_account.endpoint
+  value       = azurerm_cognitive_account.this.endpoint
 }
 
 output "deployments" {

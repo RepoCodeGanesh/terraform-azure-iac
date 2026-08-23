@@ -1,16 +1,7 @@
-##############################################################
-# Wrapper module for Azure OpenAI (Cognitive Services Account)
-# Source: Azure/avm-res-cognitiveservices-account/azurerm v0.11.1
-# Azure Verified Module (AVM) - fully azurerm 4.x compatible
-##############################################################
-
-module "cognitive_account" {
-  source  = "Azure/avm-res-cognitiveservices-account/azurerm"
-  version = "0.11.1"
-
+resource "azurerm_cognitive_account" "this" {
   name                          = var.name
   location                      = var.location
-  parent_id                     = var.resource_group_id
+  resource_group_name           = split("/", var.resource_group_id)[4]
   kind                          = "OpenAI"
   sku_name                      = var.sku_name
   custom_subdomain_name         = coalesce(var.custom_subdomain_name, var.name)
@@ -21,7 +12,7 @@ module "cognitive_account" {
 resource "azurerm_cognitive_deployment" "this" {
   for_each             = var.deployments
   name                 = each.key
-  cognitive_account_id = module.cognitive_account.resource_id
+  cognitive_account_id = azurerm_cognitive_account.this.id
 
   model {
     format  = each.value.model_format
@@ -38,7 +29,7 @@ resource "azurerm_cognitive_deployment" "this" {
 resource "azurerm_monitor_diagnostic_setting" "this" {
   count                      = var.log_analytics_workspace_id != null ? 1 : 0
   name                       = "ds-${var.name}-telemetry"
-  target_resource_id         = module.cognitive_account.resource_id
+  target_resource_id         = azurerm_cognitive_account.this.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   enabled_log {
