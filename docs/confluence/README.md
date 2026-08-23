@@ -1,30 +1,39 @@
-# 📚 HappyTechies Confluence Documentation Suite
+# 📚 HappyTechies Confluence Enterprise Technical Documentation Suite
 
-The documentation suite in your Atlassian Confluence Space: **`HappyTechies Cloud & AI Platform` (`HT`)** at [https://happytechies.atlassian.net/wiki/spaces/HT/overview](https://happytechies.atlassian.net/wiki/spaces/HT/overview) is organized into **two distinct enterprise sections**:
-
----
-
-## 🏛️ Section 1: Cloud Platform & IaC Infrastructure
-*Master Hub for Azure Multi-Subscription Foundation, Multi-Root Terraform IaC, Security Governance, Naming Standards, FinOps, and the 10-Year Interview Masterclass.*
-
-| Page # | Published Page Title | Focus & Domain | Live Confluence Link |
-| :---: | :--- | :--- | :--- |
-| **01** | **01. Azure AI Landing Zone & Enterprise Copilots Overview** | CAF Multi-Subscription Map, Hub-Spoke Network Topology | [Open Page 01](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7667713/01.+Azure+AI+Landing+Zone+Enterprise+Copilots+Overview) |
-| **02** | **08. Cloud & AI Platform Technical Strategy** | Multi-Subscription CAF, Multi-Root State, Hybrid Runtime | [Open Page 08](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7864321/08.+Cloud+AI+Platform+Technical+Strategy) |
-| **03** | **06. Enterprise Naming & Tagging Standards Specification** | CAF Naming Dictionaries, Hyphenated & Compact Rules, Tags | [Open Page 06](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7798786/06.+Enterprise+Naming+Tagging+Standards+Specification) |
-| **04** | **07. Enterprise Security, Zero-Trust Architecture & Governance** | DPDP PII Redaction, AI Content Safety F0, OPA Gatekeeper | [Open Page 07](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7503874/07.+Enterprise+Security+Zero-Trust+Architecture+Governance) |
-| **05** | **05. Dual CI/CD, Workload Identity & Operations Runbook** | Dual CI/CD (GHA & ADO), WIF OIDC federation, Playbooks | [Open Page 05](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7766017/05.+Dual+CI+CD+Workload+Identity+Operations+Runbook) |
-| **06** | **04. FinOps & Near-Zero Idle Cost Strategy** | Master Cost Matrix ($0.25/mo), KEDA Scale-to-Zero | [Open Page 04](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7733249/04.+FinOps+Near-Zero+Idle+Cost+Strategy) |
-| **07** | **09. 10-Yr AI Platform Masterclass (Part 1: 30 Basic to Medium Q&A)** | Core Terraform, CNI Overlay, Ephemeral OS, LiteLLM, Qdrant | [Open Masterclass Part 1](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7569410/09.+10-Yr+AI+Platform+Masterclass+Part+1+-+30+Basic+to+Medium+Q+and+A) |
-| **08** | **10. 10-Yr AI Platform Masterclass (Part 2: 30 Hard Scenarios)** | Split-Brain State, OOM Vector Recovery, ZDR Audits, DR SLAs | [Open Masterclass Part 2](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7798803/10.+10-Yr+AI+Platform+Masterclass+Part+2+-+30+Hard+Scenario+Dilemmas) |
-| **09** | **11. BankCompliance AI: Engineering Learnings & Troubleshooting** | AKS Networking, APIM Gateway, UTF-8 BOM, LiteLLM & Azure OpenAI | [Open Runbook 11](11-bank-compliance-troubleshooting-learnings.md) |
+The documentation suite in your Atlassian Confluence Space: **`HappyTechies Cloud & AI Platform` (`HT`)** at [https://happytechies.atlassian.net/wiki/spaces/HT/overview](https://happytechies.atlassian.net/wiki/spaces/HT/overview) is organized into **three distinct company-level engineering domains**:
 
 ---
 
-## 🤖 Section 2: Enterprise AI Applications (Workloads)
-*Business Copilot Workloads deployed on the HappyTechies Cloud Platform.*
+## 🏛️ Section 1: Enterprise Cloud, Network & Security Foundation
+*Multi-Subscription Landing Zone, Network Traffic Ingress/Egress, Zero-Trust Identity, and Governance Standards.*
 
-| Page # | Published Page Title | Compute & Vector DB | Live Confluence Link |
-| :---: | :--- | :--- | :--- |
-| **01** | **02. Workload 1: TaxBot India (Serverless PaaS Architecture)** | Function App Y1 + OpenAI + AI Search on [www.mytaxbot.site](https://www.mytaxbot.site) | [Open TaxBot India](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7602371/02.+Workload+1+TaxBot+India+Serverless+PaaS+Architecture) |
-| **02** | **03. Workload 2: BankCompliance AI (Cloud-Native AKS Copilot)** | AKS Free Tier + Qdrant 4GB CSI + LiteLLM on [bank.mytaxbot.site](https://bank.mytaxbot.site) | [Open BankCompliance AI](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7700481/03.+Workload+2+BankCompliance+AI+Cloud-Native+AKS+Copilot) |
+| Page # | Specification Document | Domain & Architecture | Link |
+|:---:|:---|:---|:---:|
+| **01** | **[01. Azure AI Landing Zone & Enterprise Copilots Overview](01-space-overview-architecture.md)** | 4-Subscription CAF Model, Management Groups, Remote State Map | [Open Page 01](01-space-overview-architecture.md) |
+| **02** | **[08. Cloud & AI Platform Technical Strategy](08-cloud-platform-technical-strategy.md)** | Multi-Root Terraform Architecture, Monorepo State Isolation | [Open Page 08](08-cloud-platform-technical-strategy.md) |
+| **03** | **[09. Enterprise Network Topology, Packet Routing & DNS Spec](09-enterprise-network-and-traffic-flow.md)** | Cloudflare Full SSL, APIM Ingress, Azure CNI Overlay, ClusterIP Zero-Egress | [Open Page 09](09-enterprise-network-and-traffic-flow.md) |
+| **04** | **[06. Enterprise Naming & Tagging Standards Specification](06-enterprise-naming-and-tagging-standards.md)** | CAF Naming Dictionaries, Hyphenated/Compact Rules, Tag Initiatives | [Open Page 06](06-enterprise-naming-and-tagging-standards.md) |
+| **05** | **[07. Enterprise Security, Zero-Trust Architecture & Governance](07-security-governance-zero-trust.md)** | DPDP Act PII Sanitizer, Azure AI Content Safety, OPA Gatekeeper | [Open Page 07](07-security-governance-zero-trust.md) |
+
+---
+
+## ⚙️ Section 2: Enterprise CI/CD, FinOps & SRE Post-Mortems
+*Zero-Trust WIF OIDC Authentication, 3-Tier Decoupled CI/CD, FinOps Scale-to-Zero, and Master RCA Post-Mortems.*
+
+| Page # | Specification Document | Domain & Architecture | Link |
+|:---:|:---|:---|:---:|
+| **06** | **[05. Dual CI/CD, Workload Identity (WIF) & Operations Runbook](05-cicd-wif-operations-runbook.md)** | Entra ID WIF OIDC Exchange, 3-Tier Decoupled CI/CD, Caller/Called Pattern | [Open Page 05](05-cicd-wif-operations-runbook.md) |
+| **07** | **[04. FinOps & Near-Zero Idle Cost Strategy](04-finops-and-zero-cost-strategy.md)** | Master Cost Matrix ($0.00 Idle), Ephemeral OS, KEDA Scale-to-Zero | [Open Page 04](04-finops-and-zero-cost-strategy.md) |
+| **08** | **[10. Master Incident Post-Mortems & Root Cause Analysis (RCA)](10-incident-post-mortems-and-rca-knowledge-base.md)** | 12+ Production SRE Incident Post-Mortems (5-Whys, Diffs, KQL Queries) | [Open Page 10](10-incident-post-mortems-and-rca-knowledge-base.md) |
+| **09** | **[11. BankCompliance AI: Engineering Learnings & Troubleshooting](11-bank-compliance-troubleshooting-learnings.md)** | AKS Pod Troubleshooting, APIM URL Rewriting, CSI Volume Locks | [Open Page 11](11-bank-compliance-troubleshooting-learnings.md) |
+
+---
+
+## 🤖 Section 3: Enterprise AI Workloads, MLOps & Sovereign Inference
+*Production Copilots, 4-Microagent State Machine, LoRA Fine-Tuning Engine, and In-Cluster Sovereign SLM.*
+
+| Page # | Specification Document | Domain & Architecture | Link |
+|:---:|:---|:---|:---:|
+| **10** | **[02. Workload 1: TaxBot India (Serverless PaaS Architecture)](02-workload-taxbot-india.md)** | Function App Y1 + OpenAI `gpt-5.4-nano` + AI Search + Cosmos DB on [mytaxbot.site](https://www.mytaxbot.site) | [Open Page 02](02-workload-taxbot-india.md) |
+| **11** | **[03. Workload 2: BankCompliance AI (Cloud-Native AKS Copilot)](03-workload-bank-compliance-aks.md)** | AKS Free Tier + Qdrant 4GB CSI + LiteLLM Gateway on [bank.mytaxbot.site](https://bank.mytaxbot.site) | [Open Page 03](03-workload-bank-compliance-aks.md) |
+| **12** | **[12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps](12-fine-tuning-and-private-slm-guide.md)** | LoRA SFT Training Engine, In-Cluster Sovereign SLM (CPU), RAG vs LoRA Matrix | [Open Page 12](12-fine-tuning-and-private-slm-guide.md) |
