@@ -43,7 +43,7 @@ flowchart LR
         direction TB
         A_ID["ID: f4ffefe1-d689-4059-969c-ccc73e2a11d4"]
         A_SC["ADO Service Connection: app-prod"]
-        A_RES["rg-ht-taxb-p-cin-01 (TaxBot RG)<br>oai-ht-taxb-p-eus-01 (OpenAI)<br>srch-ht-taxb-p-cin-01 (AI Search)<br>func-ht-taxb-p-cin-01 (Function)<br>stapp-ht-taxb-p-cin-01 (SWA UI)"]
+        A_RES["rg-ht-taxb-p-cin-01 (TaxBot RG)<br>rg-ht-bankc-p-cin-01 (Bankc RG)<br>oai-ht-taxb-p-eus-01 (OpenAI)<br>aks-ht-bankc-p-cin-01 (AKS)<br>func-ht-taxb-p-cin-01 (Function)<br>stapp-ht-*-p-cin-01 (SWA Frontends)"]
     end
 ```
 
@@ -54,13 +54,13 @@ flowchart LR
 | **bootstrap** | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `bootstrap` | `934ab83b-2f61-475e-bdbc-85c9eaed83e6` | Remote Terraform `.tfstate` storage backend & bootstrap Key Vault |
 | **Hub-prod** | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `hub-prod` | `78960c14-26d2-4a0c-ab21-579c3030155e` | Central Hub VNet, routing, firewall, bastion management |
 | **Shared-services** | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `shared-services` | `580ffcfd-51ee-4dc3-9204-d03cb438ff82` | Log Analytics workspace, APIM gateway, Shared Key Vault |
-| **Apps-prod** | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | `99ab7987-3989-46c3-bae9-92279be16608` | AI Workloads — TaxBot India (`workloads/tax-advisor` & `app/tax-advisor`) |
+| **Apps-prod** | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `app-prod` | `99ab7987-3989-46c3-bae9-92279be16608` | AI Workloads — TaxBot India (`workloads/tax-advisor`) & BankCompliance AI (`workloads/bank-compliance-ai-aks`) |
 
 ---
 
 ## 🌐 Hub-and-Spoke Network Architecture
 
-The network layout enforces strict micro-segmentation with bi-directional VNet peering between the Hub and Workload Spokes.
+The network layout enforces strict micro-segmentation with bi-directional VNet peering between the Hub and both Workload Spokes.
 
 ```mermaid
 graph TD
@@ -70,12 +70,18 @@ graph TD
         GW["GatewaySubnet<br>10.0.0.96/27"]
     end
 
-    subgraph SpokeVNet ["TaxBot Spoke Network (vnet-ht-taxb-p-cin-01) — 10.41.0.0/16"]
+    subgraph SpokeTax ["Spoke 1: TaxBot (vnet-ht-taxb-p-cin-01) — 10.41.0.0/16"]
         SNET_APP["snet-app-integration<br>10.41.1.0/24<br><i>(Function App VNet Integration)</i>"]
         SNET_PE["PrivateEndpoints<br>10.41.2.0/24<br><i>(Private Link: OpenAI, Storage, Search)</i>"]
     end
 
-    HubVNet <== "Bi-Directional VNet Peering<br>(module.taxb_to_hub_peering)" ==> SpokeVNet
+    subgraph SpokeBank ["Spoke 2: BankCompliance (vnet-ht-bankc-p-cin-01) — 10.42.0.0/16"]
+        SNET_AKS["snet-aks-nodes<br>10.42.1.0/24<br><i>(AKS Nodes + Overlay Pod CIDR)</i>"]
+        SNET_ING["snet-ingress<br>10.42.2.0/24<br><i>(Ingress LoadBalancer)</i>"]
+    end
+
+    HubVNet <== "VNet Peering" ==> SpokeTax
+    HubVNet <== "VNet Peering" ==> SpokeBank
 ```
 
 ### Network Subnet Reference
@@ -87,6 +93,8 @@ graph TD
 | | | `GatewaySubnet` | `10.0.0.96/27` | ExpressRoute / S2S VPN gateway |
 | `vnet-ht-taxb-p-cin-01` | `10.41.0.0/16` | `snet-app-integration` | `10.41.1.0/24` | Swift VNet Integration for Python Function App |
 | | | `PrivateEndpoints` | `10.41.2.0/24` | Private Endpoints for OpenAI, Storage, Search & Cosmos DB |
+| `vnet-ht-bankc-p-cin-01` | `10.42.0.0/16` | `snet-aks-nodes` | `10.42.1.0/24` | AKS Node Pool subnet (Azure CNI Overlay `192.168.0.0/16`) |
+| | | `snet-ingress` | `10.42.2.0/24` | Ingress LoadBalancer subnet |
 
 ---
 

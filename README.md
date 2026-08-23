@@ -31,10 +31,10 @@ Deploy roots independently and in this order:
 
 Do not merge these roots into one Terraform state.
 
-## Decoupled Applications
+## 🚀 Production Applications (Monorepo)
 
-* **TaxBot India App:** Located in `app/tax-advisor` (React SPA + Python Functions).
-* **BankCompliance AI App:** Standalone external repository [`bank-compliance-ai-app`](https://github.com/RepoCodeGanesh/bank-compliance-ai-app) (FastAPI + React SPA + Qdrant 4GB CSI + LiteLLM Gateway). See [Standalone App Guide](docs/BANK_COMPLIANCE_APP_STANDALONE_GUIDE.md).
+* **TaxBot India App:** Located in [`app/tax-advisor`](app/tax-advisor/) (React SPA + Python Function App on [www.mytaxbot.site](https://www.mytaxbot.site)).
+* **BankCompliance AI App:** Located in [`app/bank-compliance`](app/bank-compliance/) (React SPA + FastAPI + Qdrant Vector DB on 4GB CSI + LiteLLM Multi-Model Gateway on AKS [bank.mytaxbot.site](https://bank.mytaxbot.site)).
 
 ## Validate Locally
 

@@ -1,18 +1,19 @@
 # Project Context & Architecture
 
-This is the compact source of truth for the Azure AI Landing Zone & TaxBot India application repository.
+This is the canonical source of truth for the **Enterprise Azure AI Landing Zone Monorepo**, hosting infrastructure and application code for **TaxBot India** (Serverless PaaS) and **BankCompliance AI** (Cloud-Native AKS).
 
 ---
 
 ## 🎯 Repository Goal
 
-Provision an enterprise-style Azure AI Landing Zone using Terraform and Azure DevOps CI/CD, following Microsoft Cloud Adoption Framework patterns while keeping idle cost as close to zero as practical.
+Provision an enterprise-style Azure AI Landing Zone using Terraform and Dual CI/CD (Azure DevOps & GitHub Actions), following Microsoft Cloud Adoption Framework (CAF) patterns while maintaining low running costs with serverless and scale-to-zero architectures.
 
 Core outcomes:
-- Build hands-on Azure DevOps and Terraform IaC practice.
-- Create a reusable AI platform foundation for Azure OpenAI, APIM gateway security, telemetry, private networking, and AI Search RAG workloads.
-- Host **TaxBot India (AI Income Tax Advisor)** for FY 2026-27 (AY 2027-28).
-- Use low-cost SKUs by default: APIM `Consumption`, Functions `Consumption Y1`, Log Analytics `PerGB2018`, Storage `Standard_LRS`, Key Vault `Standard`, Azure OpenAI `S0` with `gpt-5.4-nano`, and Cosmos DB `Serverless`.
+- Build enterprise-grade Azure DevOps and Terraform IaC practices.
+- Provide a resilient, multi-subscription AI platform for Azure OpenAI, LiteLLM Multi-Model Gateway, APIM security, private networking, and AI Search / Qdrant RAG workloads.
+- Host **TaxBot India (AI Income Tax Advisor)** on Serverless PaaS ([www.mytaxbot.site](https://www.mytaxbot.site)).
+- Host **BankCompliance AI Copilot** on AKS Free Tier ([bank.mytaxbot.site](https://bank.mytaxbot.site)).
+- Maintain near-zero idle cost using low-cost SKUs: APIM `Consumption_0`, Functions `Consumption Y1`, AKS Free Tier on Ephemeral OS with auto-shutdown, Qdrant on 4GB CSI disk, and Cosmos DB Serverless Free Tier.
 
 ---
 
@@ -20,7 +21,7 @@ Core outcomes:
 
 ```
                   ┌─────────────────────────────────────────┐
-                  │          Azure DevOps Pipelines         │
+                  │       Dual CI/CD (ADO & GHA WIF)        │
                   └────────────────────┬────────────────────┘
                                        │ (Workload Identity Federation)
                                        ▼
@@ -30,10 +31,12 @@ Core outcomes:
  │     Bootstrap     │     Hub-prod      │  Shared-services  │   Apps-prod   │
  │   7689ad81-...    │   3eb8cc01-...    │   859a785c-...    │  f4ffefe1-... │
  ├───────────────────┼───────────────────┼───────────────────┼───────────────┤
- │ • Remote state    │ • Hub VNet        │ • Log Analytics   │ • Spoke VNet  │
- │   Storage Account │ • Azure Firewall  │ • APIM Gateway    │ • OpenAI API  │
- │   (sthtbootpcin01)│   Subnet          │   (Consumption)   │ • AI Search   │
- │ • Key Vault       │ • Bastion Subnet  │ • Key Vault       │ • Function App│
+ │ • Remote state    │ • Hub VNet        │ • Log Analytics   │ • Spoke 1:    │
+ │   Storage Account │   (10.0.0.0/16)   │   (law-ht-ss...)  │   TaxBot PaaS │
+ │   (sthtbootpcin01)│ • Azure Firewall  │ • APIM Gateway    │   (10.41.0/16)│
+ │ • Key Vault       │   Subnet          │   (Consumption)   │ • Spoke 2:    │
+ │   (kv-ht-boot...) │ • Bastion Subnet  │ • Shared Key Vault│   Bankc AKS   │
+ │                   │ • Gateway Subnet  │   (kv-ht-ss...)   │   (10.42.0/16)│
  └───────────────────┴───────────────────┴───────────────────┴───────────────┘
 ```
 
@@ -149,9 +152,12 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
   * `AzureFirewallSubnet`: `10.0.0.0/26`
   * `AzureBastionSubnet`: `10.0.0.64/27`
   * `GatewaySubnet`: `10.0.0.96/27`
-* **Spoke Network**: `10.41.0.0/16` (`workloads/tax-advisor`)
+* **Spoke 1 (TaxBot PaaS)**: `10.41.0.0/16` (`workloads/tax-advisor`)
   * `snet-app-integration`: `10.41.1.0/24` (Subnet delegation for Function App VNet integration)
   * `PrivateEndpoints`: `10.41.2.0/24` (Private Link endpoints for OpenAI & Storage)
+* **Spoke 2 (BankCompliance AKS)**: `10.42.0.0/16` (`workloads/bank-compliance-ai-aks`)
+  * `snet-aks-nodes`: `10.42.1.0/24` (AKS Node Pool subnet with Azure CNI Overlay `192.168.0.0/16`)
+  * `snet-ingress`: `10.42.2.0/24` (Internal/External Ingress LoadBalancer)
 
 ---
 
@@ -161,7 +167,9 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 | :--- | :--- | :--- | :--- |
 | **API Management** | AI Prompt Gateway & Rate Limiting | `Consumption_0` | **$0 / month** |
 | **App Service Plan** | Function App Host | `F1` (Free) / `B1` | **$0 – $13 / month** |
-| **Log Analytics** | Application Insights & Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
+| **AKS Cluster** | BankCompliance Multi-Agent Host | `Free` tier (`Standard_B4ms` Ephemeral OS) | **$0 idle** (~₹25/day active) |
+| **Container Storage** | Qdrant Vector DB Persistent Disk | Azure Managed Disk CSI (`4Gi`) | **~$0.15 / month** (₹12/mo) |
+| **Log Analytics** | Central Application Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
 | **Storage Account** | Terraform `.tfstate` & Functions | `Standard_LRS` | Pennies / month |
 | **Cosmos DB** | Session Chat History Storage | Manual `400 RU/s` (Free Tier) | **$0 / month** |
 | **Azure AI Content Safety** | Jailbreak Shield & PII Sanitizer | `F0` (5,000 calls/mo Free) | **$0 / month** |
@@ -172,19 +180,23 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 ## 🔒 Terraform Multi-Root State Rules
 
 Keep Terraform roots separate. Do not merge state:
-- `platform/bootstrap`       → `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
-- `platform/hub`             → `sthtbootpcin01/tfstate/hub/prod.tfstate`
-- `platform/shared-services` → `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
-- `workloads/tax-advisor`    → `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
+- `platform/bootstrap`              → `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
+- `platform/hub`                    → `sthtbootpcin01/tfstate/hub/prod.tfstate`
+- `platform/shared-services`        → `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
+- `workloads/tax-advisor`           → `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
+- `workloads/bank-compliance-ai-aks` → `sthtbootpcin01/tfstate/workloads/bank-compliance-ai-aks/prod.tfstate`
 
 ---
 
 ## 📚 CI/CD & Governance Guides
 
+- **Master Documentation Index:** [docs/README.md](README.md)
 - **Git Branching Strategy:** [docs/BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md)
 - **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)
 - **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)
-- **Master Documentation Index:** [docs/README.md](README.md)
+- **BankCompliance Troubleshooting & Learnings:** [docs/BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md](BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md)
+- **Raw Regulatory Lake & Split-Screen Plan (Phase 10):** [docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md](RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
+- **AKS Hybrid Observability Guide:** [docs/AKS_HYBRID_OBSERVABILITY_GUIDE.md](AKS_HYBRID_OBSERVABILITY_GUIDE.md)
 - **Azure RAG Architectural Patterns Guide:** [docs/platform-guide/08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)
 - **Multi-Cloud AI Gateway & Fallback Guide:** [docs/platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md](platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md)
 - **AI Engineering Roadmap & Gap Analysis Guide:** [docs/platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)
@@ -196,4 +208,5 @@ Keep Terraform roots separate. Do not merge state:
 * **AI Subscription:** **Google AI Plus** (India tier)
 * **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context reasoning.
 * **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+
 

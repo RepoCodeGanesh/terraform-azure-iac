@@ -2,7 +2,7 @@
 
 [← Back to Master Documentation Hub](../README.md)
 
-Welcome to the **Platform Guide Documentation Suite** for the enterprise-grade **Azure AI Landing Zone** and **TaxBot India** AI workload platform.
+Welcome to the **Platform Guide Documentation Suite** for the enterprise-grade **Azure AI Landing Zone**, hosting **TaxBot India** (Serverless PaaS) and **BankCompliance AI** (Cloud-Native AKS).
 
 This suite provides interactive diagrams, architectural specs, deployment blueprints, troubleshooting playbooks, and operational standards following the **Microsoft Cloud Adoption Framework (CAF)**.
 
@@ -18,38 +18,48 @@ flowchart TD
     end
 
     subgraph Subscriptions ["Azure Subscription Hierarchy (Workload Identity Federation)"]
-        subgraph Sub_Boot ["1. Bootstrap Subscription"]
+        subgraph Sub_Boot ["1. Bootstrap Subscription (7689ad81)"]
             ST_BOOT["sthtbootpcin01<br>(Remote TF State)"]
             KV_BOOT["kv-ht-boot-p-cin-01<br>(Boot Secrets)"]
         end
 
-        subgraph Sub_Hub ["2. Hub-prod Subscription"]
+        subgraph Sub_Hub ["2. Hub-prod Subscription (3eb8cc01)"]
             VNET_HUB["vnet-ht-hub-p-cin-01<br>(10.0.0.0/16)"]
             FW_SUB["AzureFirewallSubnet<br>(10.0.0.0/26)"]
             BAS_SUB["AzureBastionSubnet<br>(10.0.0.64/27)"]
         end
 
-        subgraph Sub_SS ["3. Shared-services Subscription"]
+        subgraph Sub_SS ["3. Shared-services Subscription (859a785c)"]
             LAW["law-ht-ss-p-cin-01<br>(Log Analytics)"]
             APIM["apim-ht-ss-p-cin-01<br>(Consumption Gateway)"]
             KV_SS["kv-ht-ss-p-cin-01<br>(Shared Key Vault)"]
         end
 
-        subgraph Sub_Apps ["4. Apps-prod Subscription"]
-            VNET_SPOKE["vnet-ht-taxb-p-cin-01<br>(10.41.0.0/16)"]
-            OAI["oai-ht-taxb-p-eus-01<br>(gpt-5.4-nano)"]
-            SRCH["srch-ht-taxb-p-cin-01<br>(AI Search RAG)"]
-            COSMOS["cosmos-ht-taxb-p-cin-01<br>(Serverless State)"]
-            FUNC["func-ht-taxb-p-cin-01<br>(Python Backend)"]
-            SWA["stapp-ht-taxb-p-cin-01<br>(www.mytaxbot.site)"]
+        subgraph Sub_Apps ["4. Apps-prod Subscription (f4ffefe1)"]
+            subgraph Spoke_Tax ["Spoke 1: TaxBot India (10.41.0.0/16)"]
+                FUNC["func-ht-taxb-p-cin-01<br>(Python Backend)"]
+                OAI["oai-ht-taxb-p-eus-01<br>(gpt-5.4-nano)"]
+                SRCH["srch-ht-taxb-p-cin-01<br>(AI Search RAG)"]
+                COSMOS["cosmos-ht-taxb-p-cin-01<br>(Serverless State)"]
+                SWA_TAX["stapp-ht-taxb-p-cin-01<br>(www.mytaxbot.site)"]
+            end
+
+            subgraph Spoke_Bank ["Spoke 2: BankCompliance AI (10.42.0.0/16)"]
+                AKS["aks-ht-bankc-p-cin-01<br>(Standard_B4ms Free Tier)"]
+                QDRANT["Qdrant Vector DB<br>(4GB CSI Disk)"]
+                LITELLM["LiteLLM AI Gateway<br>(Gemini + Azure DR)"]
+                SWA_BANK["stapp-ht-bankc-p-cin-01<br>(bank.mytaxbot.site)"]
+            end
         end
     end
 
     DevOps -->|"WIF (OIDC)"| Subscriptions
-    VNET_HUB <== "Bi-Directional VNet Peering" ==> VNET_SPOKE
-    APIM -->|"Secure Proxy & Rate Limit"| FUNC
-    SWA -->|"React SPA UI"| APIM
+    VNET_HUB <== "Peering" ==> Spoke_Tax
+    VNET_HUB <== "Peering" ==> Spoke_Bank
+    SWA_TAX -->|"React SPA"| APIM -->|"Rate Limited Proxy"| FUNC
+    SWA_BANK -->|"React SPA"| APIM -->|"SSL Offload"| AKS
     FUNC --> OAI & SRCH & COSMOS
+    AKS --> QDRANT & LITELLM
     Sub_Apps -.->|"Diagnostics & Telemetry"| LAW
 ```
 
@@ -84,7 +94,8 @@ sequenceDiagram
     participant Hub as 2. Hub Network
     participant SS as 3. Shared Services
     participant Taxb as 4. TaxBot IaC
-    participant App as 5. TaxBot App
+    participant Bankc as 5. BankCompliance IaC
+    participant Apps as 6. App Deployments
 
     Dev->>Boot: terraform apply (platform/bootstrap)
     Note over Boot: Provisions State Storage Account & Key Vault
@@ -93,7 +104,9 @@ sequenceDiagram
     Dev->>SS: terraform apply (platform/shared-services)
     Note over SS: Provisions APIM, Log Analytics & Shared Key Vault
     Dev->>Taxb: terraform apply (workloads/tax-advisor)
-    Note over Taxb: Provisions Spoke VNet, OpenAI, AI Search, Cosmos, Function
-    Dev->>App: CI/CD Pipeline (app/tax-advisor)
-    Note over App: Deploys Python ZipDeploy + RAG Blob Sync + React SPA
+    Note over Taxb: Provisions Spoke VNet (10.41.0.0/16), OpenAI, AI Search, Cosmos, Function
+    Dev->>Bankc: terraform apply (workloads/bank-compliance-ai-aks)
+    Note over Bankc: Provisions Spoke VNet (10.42.0.0/16), AKS Free Tier & Content Safety
+    Dev->>Apps: CI/CD Pipelines (app/tax-advisor & app/bank-compliance)
+    Note over Apps: Deploys Functions, Helm Chart to AKS & React SPAs to SWA
 ```

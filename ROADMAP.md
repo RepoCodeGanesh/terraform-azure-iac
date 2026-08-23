@@ -1,6 +1,6 @@
 # Azure AI Landing Zone Roadmap & Implementation Plan
 
-This document tracks the progress, completed milestones, and upcoming phases of the enterprise **Azure AI Landing Zone** and **TaxBot India** AI workload platform.
+This document tracks the progress, completed milestones, and upcoming phases of the enterprise **Azure AI Landing Zone**, hosting **TaxBot India** (Serverless PaaS) and **BankCompliance AI** (Cloud-Native AKS).
 
 ---
 

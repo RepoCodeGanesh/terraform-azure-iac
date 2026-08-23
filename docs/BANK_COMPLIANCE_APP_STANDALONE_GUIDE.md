@@ -1,6 +1,9 @@
 # 🏦 Standalone Application Repository Guide: `bank-compliance-ai-app`
 
-This guide provides the complete architecture, directory structure, Docker container configurations, Kubernetes manifests, Helm chart parameters, and GitHub Actions CI/CD pipelines for the standalone **`bank-compliance-ai-app`** repository.
+> [!NOTE]
+> **Monorepo Migration Notice:**
+> The `bank-compliance-ai-app` codebase has been integrated directly into this monorepo under [`app/bank-compliance/`](../app/bank-compliance/).
+> Please refer to [`app/bank-compliance/README.md`](../app/bank-compliance/README.md) and [`docs/PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) for the active production architecture. This document is retained for historical decoupling and architectural reference.
 
 ---
 

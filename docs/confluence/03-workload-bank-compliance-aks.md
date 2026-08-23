@@ -3,8 +3,8 @@
 * **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `Workloads`
 * **Live Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **Workload Code:** `bankc` (Resource Group: `rg-ht-bankc-p-cin-01`)
-* **Infrastructure Repo:** [`terraform-azure-iac`](https://github.com/RepoCodeGanesh/terraform-azure-iac) $\rightarrow$ `workloads/bank-compliance-ai-aks`
-* **Application Repo:** [`bank-compliance-ai-app`](https://github.com/RepoCodeGanesh/bank-compliance-ai-app)
+* **Infrastructure Root:** [`workloads/bank-compliance-ai-aks`](https://github.com/RepoCodeGanesh/terraform-azure-iac/tree/main/workloads/bank-compliance-ai-aks)
+* **Application Path:** [`app/bank-compliance`](https://github.com/RepoCodeGanesh/terraform-azure-iac/tree/main/app/bank-compliance)
 * **Status:** `ACTIVE / PROVISIONED`
 
 ---
