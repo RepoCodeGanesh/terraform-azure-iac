@@ -56,26 +56,31 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
   summary:
-    name: Summary
+    name: 📊 Infrastructure Release Summary
     needs: [plan, apply]
-    if: always() && (needs.apply.result == 'success' || needs.plan.result == 'success')
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - run: |
-          ACTION="${{ needs.apply.result == 'success' && 'apply' || 'plan' }}"
+          PLAN_RES="${{ needs.plan.result == 'success' && '🟢 SUCCESS' || (needs.plan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          APPLY_RES="${{ needs.apply.result == 'success' && '🟢 APPLIED' || (needs.apply.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED (PR Mode)') }}"
+          OVERALL="🟢 INFRASTRUCTURE READY"
+          if [ "${{ needs.plan.result }}" = "failure" ] || [ "${{ needs.apply.result }}" = "failure" ]; then
+            OVERALL="🔴 PIPELINE FAILED"
+          fi
+
           cat << EOF >> $GITHUB_STEP_SUMMARY
+          # 🏛️ Platform - Hub Network IaC Summary
 
-          ### Terraform Azure Landing Zone Summary
-          **Target Root:** \`platform/hub\`
-          **Action:** \`${ACTION}\`
-          **Azure Subscription ID:** \`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b\`
-          **Target Environment:** \`hub-prod\`
+          > **Overall Outcome:** \`${OVERALL}\`
+          > **Target Subscription:** \`Hub-prod (3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b)\`
+          > **State Key:** \`sthtbootpcin01/tfstate/hub/prod.tfstate\`
 
-          | CAF Governance Check | Configuration | Status |
-          | :--- | :--- | :--- |
-          | **Remote State Backend** | \`sthtbootpcin01\` (Azure AD Auth) | Connected |
-          | **State Key** | \`platform/hub/prod.tfstate\` | Isolated |
-          | **Workload Identity (WIF)** | Entra ID Federated OIDC | Authenticated |
-          | **Cost Policy** | Low-Cost / Free-Tier SKUs Enforced | Verified |
+          ---
 
+          ### 📋 Pipeline Execution Matrix
+          | Stage | Result |
+          |---|:---:|
+          | **1. Terraform Plan** | ${PLAN_RES} |
+          | **2. Terraform Apply** | ${APPLY_RES} |
           EOF

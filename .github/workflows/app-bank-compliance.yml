@@ -212,3 +212,47 @@ jobs:
     secrets:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  # ── JOB 5: Consolidated Dynamic Release Governance Summary ──────────────────
+  summary:
+    name: 📊 Release Governance Summary
+    needs: [devsecops-scan, ai-eval-quality-gate, deploy-backend-aks, deploy-frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate True Release Summary
+        run: |
+          SAST_STATUS="${{ needs.devsecops-scan.result == 'success' && '🟢 PASSED' || (needs.devsecops-scan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          EVAL_STATUS="${{ needs.ai-eval-quality-gate.result == 'success' && '🟢 PASSED' || (needs.ai-eval-quality-gate.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          BACKEND_STATUS="${{ needs.deploy-backend-aks.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-backend-aks.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          FRONTEND_STATUS="${{ needs.deploy-frontend.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-frontend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+
+          OVERALL="🟢 RELEASE SUCCESSFUL"
+          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.deploy-backend-aks.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ]; then
+            OVERALL="🔴 PIPELINE FAILED"
+          fi
+
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          # 🚀 BankCompliance AI — Production Pipeline Release Summary
+
+          > **Overall Outcome:** \`${OVERALL}\`
+          > **Target Environment:** \`bank-compliance-prod\` (Apps-prod Subscription)
+          > **Commit SHA:** \`${{ github.sha }}\` | **Trigger:** \`${{ github.event_name }}\`
+
+          ---
+
+          ### 📋 Multi-Stage Pipeline Execution Matrix
+
+          | Pipeline Stage | Responsibilities | Execution Result |
+          |---|---|:---:|
+          | **1. DevSecOps Security Scan** | Bandit Python SAST + pip-audit & npm audit | ${SAST_STATUS} |
+          | **2. GenAIOps Quality Gate** | Ragas Triad Groundedness & Citation Evaluation | ${EVAL_STATUS} |
+          | **3. Backend AKS Release** | Multi-stage Docker build + Helm upgrade to AKS | ${BACKEND_STATUS} |
+          | **4. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
+
+          ---
+
+          ### 🌐 Live Production Endpoints:
+          * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
+          * **APIM Gateway Endpoint:** \`https://apim-ht-ss-p-cin-01.azure-api.net/bankc\`
+          EOF
