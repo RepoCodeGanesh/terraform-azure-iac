@@ -1,10 +1,10 @@
 {
-  "model_used": "gpt-4o-mini",
-  "total_prompt_tokens": 4633,
-  "total_completion_tokens": 507,
-  "total_tokens": 5140,
-  "estimated_cost_usd": 0.000999,
-  "pricing_per_1m_prompt": "$0.15",
-  "pricing_per_1m_completion": "$0.60",
-  "eval_duration_seconds": 0.017
+  "model_used": "fast-heuristic",
+  "total_prompt_tokens": 1076,
+  "total_completion_tokens": 1629,
+  "total_tokens": 2705,
+  "estimated_cost_usd": 0.0,
+  "pricing_per_1m_prompt": "$0.00",
+  "pricing_per_1m_completion": "$0.00",
+  "eval_duration_seconds": 0.0
 }

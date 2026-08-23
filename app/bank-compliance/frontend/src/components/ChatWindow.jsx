@@ -11,11 +11,11 @@ const INITIAL_SUGGESTIONS = [
   "Can a merchant store 16-digit card PAN after transaction checkout?"
 ]
 
-export default function ChatWindow({ selectedCircular }) {
+export default function ChatWindow({ selectedCircular, onSelectCitation }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Welcome to BankCompliance AI 👋\n\nI am your official Reserve Bank of India (RBI) Regulatory & Compliance Copilot. Ask any compliance inquiry regarding KYC, IT Governance, Cloud Outsourcing, Tokenisation, or Digital Lending.\n\nAll sensitive customer data (PAN, Aadhaar, Card numbers) is masked in real-time by the DPDP PII Shield.',
+      text: 'Welcome to BankCompliance AI 👋\n\nI am your official Reserve Bank of India (RBI) Regulatory & Compliance Copilot. Ask any compliance inquiry regarding KYC, IT Governance, Cloud Outsourcing, Tokenisation, or Digital Lending.\n\nAll sensitive customer data (PAN, Aadhaar, Card numbers) is masked in real-time by the DPDP PII Shield. Click on any citation to inspect the underlying legal clause in the Split-Screen Document Viewer.',
       citations: [],
       pii: [],
       suggested_queries: INITIAL_SUGGESTIONS
@@ -208,7 +208,11 @@ Approved for CCO / Internal Audit Review.`
                     </button>
                   </div>
                   {m.citations.map((c, cIdx) => (
-                    <CitationCard key={cIdx} citation={c} />
+                    <CitationCard
+                      key={cIdx}
+                      citation={c}
+                      onSelectCitation={onSelectCitation}
+                    />
                   ))}
                 </div>
               )}
