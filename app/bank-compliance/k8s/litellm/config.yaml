@@ -31,6 +31,13 @@ model_list:
       api_key: "os.environ/AZURE_API_KEY"
       api_version: "2024-06-01"
 
+  # ── 5. In-Cluster Private Sovereign SLM (Zero-Egress AKS ClusterIP) ────────
+  - model_name: private-slm
+    litellm_params:
+      model: openai/qwen2.5:0.5b
+      api_base: "http://private-slm-inference.bank-compliance.svc.cluster.local:11434/v1"
+      api_key: "na"
+
 # ── KV Prompt Caching for Latency & Token Optimization ───────────────────────
 general_settings:
   enable_prompt_caching: true
@@ -48,6 +55,7 @@ router_settings:
   num_retries: 3
   timeout: 30
   fallbacks:
-    - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano"]
-    - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano"]
-    - gemini-2.0-flash: ["gpt-5.4-nano"]
+    - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
+    - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
+    - gemini-2.0-flash: ["gpt-5.4-nano", "private-slm"]
+    - gpt-5.4-nano: ["private-slm"]

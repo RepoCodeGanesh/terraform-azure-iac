@@ -1,0 +1,127 @@
+# ==============================================================================
+# Workflow: MLOps - BankCompliance LoRA Fine-Tuning & Evaluation Pipeline
+# Architecture:
+#   1. Synthetic Instruction Dataset Generation (DataOps)
+#   2. Parameter-Efficient LoRA/QLoRA Fine-Tuning (SFTTrainer)
+#   3. Model Benchmark Evaluation (Base vs. Fine-Tuned Groundedness)
+#   4. Checkpoint & Report Artifact Publication
+# Trigger: Manual on-demand (workflow_dispatch) to avoid app pipeline congestion
+# ==============================================================================
+
+name: MLOps - LoRA Fine-Tuning & Model Ops
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_model:
+        description: 'Base HuggingFace Model Identifier'
+        required: true
+        default: 'Qwen/Qwen2.5-0.5B-Instruct'
+        type: choice
+        options:
+          - 'Qwen/Qwen2.5-0.5B-Instruct'
+          - 'meta-llama/Llama-3.2-1B-Instruct'
+          - 'microsoft/Phi-3.5-mini-instruct'
+      lora_rank:
+        description: 'LoRA Rank (r)'
+        required: true
+        default: '16'
+        type: string
+      epochs:
+        description: 'Training Epochs'
+        required: true
+        default: '3'
+        type: string
+      dry_run:
+        description: 'Dry Run Validation Mode (Zero Compute Cost)'
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ── STAGE 1: Synthetic Dataset Ingestion & Validation (DataOps) ─────────────
+  dataops-dataset-generation:
+    name: 📊 DataOps Dataset Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Monorepo
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Generate Synthetic RBI Instruction Pairs
+        run: |
+          python app/bank-compliance/training/synthetic_dataset_generator.py
+
+      - name: Upload Synthetic Datasets
+        uses: actions/upload-artifact@v4
+        with:
+          name: rbi-compliance-sft-datasets
+          path: |
+            app/bank-compliance/training/rbi_compliance_sft_alpaca.json
+            app/bank-compliance/training/rbi_compliance_sft_sharegpt.json
+          retention-days: 14
+
+  # ── STAGE 2: LoRA Fine-Tuning & Adapter Optimization ───────────────────────
+  train-lora-adapter:
+    name: 🧠 LoRA Fine-Tuning Execution
+    needs: dataops-dataset-generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Monorepo
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download Synthetic Datasets
+        uses: actions/download-artifact@v4
+        with:
+          name: rbi-compliance-sft-datasets
+          path: app/bank-compliance/training
+
+      - name: Install Training Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r app/bank-compliance/training/requirements-train.txt
+
+      - name: Execute LoRA Fine-Tuning Loop
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry_run"
+          fi
+          
+          python app/bank-compliance/training/train_lora.py \
+            --base_model "${{ github.event.inputs.base_model }}" \
+            --lora_rank ${{ github.event.inputs.lora_rank }} \
+            --epochs ${{ github.event.inputs.epochs }} \
+            $DRY_RUN_FLAG
+
+      - name: Run Benchmark Evaluation Suite
+        run: |
+          python app/bank-compliance/training/eval_fine_tuned.py
+
+      - name: Upload LoRA Checkpoints & Benchmark Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lora-training-checkpoints-and-eval
+          path: |
+            app/bank-compliance/training/benchmark_evaluation_report.json
+            app/bank-compliance/training/lora_checkpoints/
+          retention-days: 30
