@@ -16,6 +16,7 @@ pipelines/
 ├── azure-cicd-app-tax-advisor.yml # Pipeline for app/tax-advisor
 ├── azure-cicd-bank-compliance-aks.yml # Pipeline for workloads/bank-compliance-ai-aks
 ├── azure-cicd-app-bank-compliance.yml # Pipeline for app/bank-compliance (DevSecOps + AKS + SWA)
+├── azure-cicd-mlops-lora-training.yml # Pipeline for decoupled LoRA/PEFT Fine-Tuning & Evaluation
 └── templates/                     # Reusable pipeline stage templates
     ├── validate.yml               # Optional standalone validate stage
     ├── plan.yml                   # Format check, validation & speculative terraform plan
