@@ -105,6 +105,7 @@ State files are path-keyed — **git repo location does not affect state**.
 6. LiteLLM image must be pinned to a specific version tag — never use `:main-latest`.
 7. **Document All Incident Learnings:** Whenever a bug, workflow failure, or edge-case is resolved, immediately add the root cause and remediation steps to the Troubleshooting section below.
 8. **Visual Presentation Standard:** Prefer clean ASCII box diagrams, Unicode structured flowcharts, and comparative Markdown tables over raw Mermaid blocks to guarantee 100% reliable rendering across all chat interfaces, IDE panels, and web viewers.
+9. **Frequent Documentation & Confluence Maintenance:** Proactively update local markdown docs (`docs/confluence/`, `README.md`, `PROJECT_CONTEXT.md`) and keep live Atlassian Confluence (`HT` space) synchronized whenever code, infrastructure, or policies evolve.
 
 ---
 
@@ -168,4 +169,8 @@ State files are path-keyed — **git repo location does not affect state**.
 ## 🤖 Developer AI Tooling & Environment Context
 - **Primary Focus:** Enterprise AI Platform Engineering, GenAIOps, LLMOps, and Cloud-Native DataOps.
 - **AI Ecosystem:** Google AI Plus (Gemini Pro long-context analysis), Antigravity IDE, NotebookLM (regulatory PDF analysis), Azure AI Services.
+- **Atlassian Confluence Space:** `HappyTechies Cloud & AI Platform` (`HT`) at `https://happytechies.atlassian.net/wiki/spaces/HT/overview`.
+  - **Account Email:** `richtextforganesh@outlook.com`
+  - **Secret Location:** Azure Key Vault `kv-ht-ss-p-cin-01` (secret: `confluence-api-token` in Shared Services sub `859a785c-bd38-402d-b595-1f44f40fb9bf`).
+  - **Auto-Sync Script:** `scripts/sync_to_confluence.py` (converts markdown to storage XHTML and updates Space `HT` via REST API).
 
