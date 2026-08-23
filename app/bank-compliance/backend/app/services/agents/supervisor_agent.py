@@ -142,23 +142,23 @@ class SupervisorAgent:
             except Exception as e:
                 logger.debug("SupervisorAgent LLM call fell back to local taxonomy: %s", e)
 
-        # ── 4. Deterministic Out-of-Scope & Domain Classification ─────────────
-        if not planned_via_llm:
-            identified_domains: List[str] = []
-            for domain, keywords in DOMAIN_KEYWORDS.items():
-                if any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in keywords):
-                    identified_domains.append(domain)
-                    
-            has_general_banking = any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in GENERAL_BANKING_KEYWORDS)
-            
-            if not identified_domains and not has_general_banking:
-                # Query has zero banking/regulatory relevance (e.g. "how to cook chicken", "weather")
-                state["intent"] = "out_of_scope"
-                state["sub_tasks"] = []
-                state["identified_domains"] = []
-                state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
-                return state
+        # ── 4. Deterministic Out-of-Scope & Domain Classification Guardrail ───
+        identified_domains: List[str] = []
+        for domain, keywords in DOMAIN_KEYWORDS.items():
+            if any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in keywords):
+                identified_domains.append(domain)
                 
+        has_general_banking = any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in GENERAL_BANKING_KEYWORDS)
+        
+        # If query has zero banking/regulatory relevance, immediately reject as out of scope
+        if not identified_domains and not has_general_banking:
+            state["intent"] = "out_of_scope"
+            state["sub_tasks"] = []
+            state["identified_domains"] = []
+            state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
+            return state
+            
+        if not planned_via_llm or state.get("intent") != "compliance_query":
             state["intent"] = "compliance_query"
             sub_tasks: List[str] = []
             if len(identified_domains) > 1:
@@ -174,7 +174,7 @@ class SupervisorAgent:
             state["identified_domains"] = identified_domains
 
         # ── 5. Generate Contextual Follow-up Chips ─────────────────────────────
-        primary_domain = state["identified_domains"][0] if state["identified_domains"] else "general"
+        primary_domain = state["identified_domains"][0] if state.get("identified_domains") else "general"
         state["suggested_followups"] = DOMAIN_SUGGESTIONS.get(primary_domain, DOMAIN_SUGGESTIONS["general"])
         
         return state

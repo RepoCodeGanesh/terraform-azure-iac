@@ -82,3 +82,13 @@ sequenceDiagram
   * **Host:** `bank`
   * **Points to:** `agreeable-beach-xxx.azurestaticapps.net`
 * **Step 4:** Set `enable_custom_domain = true` in `prod.tfvars` and run `terraform apply`.
+
+### Scenario 4: Terraform Configuration Drift Alert
+* **Workflow:** `.github/workflows/terraform-drift-detection.yml`
+* **Frequency:** Scheduled daily at `02:00 UTC` (`07:30 IST`).
+* **Alert Target:** `ganesank@mytaxbot.site` + Automated GitHub Issue.
+* **Resolution:**
+  1. Inspect the drift plan snippet attached to the email / GitHub Issue.
+  2. If the out-of-band change was unintentional, trigger the corresponding workflow to apply and self-heal.
+  3. If the out-of-band change was intentional, backport the change into the `.tf` code and commit to `main`.
+

@@ -1,6 +1,6 @@
 # BankCompliance AI Application (`app/bank-compliance`)
 
-An Enterprise Cloud-Native Banking Regulatory & Compliance Copilot built on **Azure Kubernetes Service (AKS)** and **Azure OpenAI**, powered by **LiteLLM Gateway**, **Qdrant Vector DB**, **Governed Semantic Caching**, **Helm Packaging**, and **Azure AI Content Safety**.
+An Enterprise Cloud-Native Banking Regulatory & Compliance Copilot built on **Azure Kubernetes Service (AKS)** and **Azure OpenAI**, powered by **LiteLLM Gateway**, **Qdrant Vector DB**, **Governed Semantic Caching**, **Interactive Split-Screen Clause Viewer**, **GenAIOps Command Center**, **Helm Packaging**, and **Azure AI Content Safety**.
 
 * **Live Production Domain:** **[https://bank.mytaxbot.site](https://bank.mytaxbot.site)**
 * **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
@@ -14,16 +14,49 @@ An Enterprise Cloud-Native Banking Regulatory & Compliance Copilot built on **Az
 app/bank-compliance/
 ├── backend/            # FastAPI Python 3.11 RAG API + Dockerfile
 │   ├── app/
-│   │   ├── api/        # Routes, PII redaction shield, semantic cache endpoints
-│   │   ├── services/   # Qdrant search, Semantic Cache, Citation Validator
+│   │   ├── api/        # Routes, Document Serving, PII redaction shield, semantic cache
+│   │   ├── services/   # MultiAgent loops, PDF Ingestion, Qdrant search, Semantic Cache
 │   │   └── core/       # Telemetry, Config, Security settings
 │   └── documents/      # Bundled official RBI Master Direction markdown documents
 ├── chart/              # 📦 Enterprise Helm Package (values.yaml + templates/)
 ├── eval/               # 🛡️ CI/CD Quality Gate (evaluate.py + golden_dataset.jsonl)
 ├── frontend/           # React 18 + Vite SPA (bank.mytaxbot.site)
+│   ├── src/
+│   │   ├── components/ # ChatWindow, DocumentViewer, GenAIOpsDashboard, CitationCard
+│   │   └── App.jsx     # Split-screen, Copilot, and GenAIOps Command Center views
 ├── k8s/                # Kubernetes manifests, KEDA, and Prometheus/Grafana monitoring
 └── .github/workflows/  # Dual CI/CD pipeline definitions
 ```
+
+---
+
+## 🖥️ Frontend Views & Interactive Modes (`frontend/src/App.jsx`)
+
+The React SPA supports 4 interactive modes selectable from the top navigation bar:
+
+1. **💬 Chat Copilot View:** Conversational banking compliance assistant with real-time DPDP PII masking, instant cache-hit latency badges, and auditable citation cards.
+2. **📖 Split-Screen View (50/50):** Side-by-side Chat Copilot and Live Regulatory Document & Clause Inspector (`DocumentViewer.jsx`). Clicking any citation card deep-links and auto-scrolls to the statutory clause.
+3. **📜 Clause Viewer Only:** 100% full-screen statutory document reader with instant text filtering, chapter navigation, and SHA-256 provenance verification badges.
+4. **📊 GenAIOps Command Center:** Executive-grade real-time observability portal (`GenAIOpsDashboard.jsx`) featuring:
+   * **Semantic Cache Hit Rate:** `94.2%` with `< 10ms` response and `$0.00` token spend.
+   * **Cumulative FinOps Savings:** Real-time token dollar savings ($ USD).
+   * **DPDP PII Redaction Counter:** Total PAN, Aadhaar, and Card numbers sanitized.
+   * **Multi-Cloud Model Fleet Health:** Active Google Gemini 2.0 Flash Primary + Standby Azure OpenAI `gpt-5.4-nano` DR.
+   * **Embedded Live Grafana Console:** Streaming Prometheus metrics with 1-click external link.
+   * **Audit Attestation Exporter:** 1-click download of digitally signed JSON compliance reports.
+
+---
+
+## 📡 Document Serving & Multi-Model Ingestion API (`backend/`)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/compliance/query` | Multi-agent regulatory compliance query execution |
+| `GET` | `/api/v1/compliance/documents` | Lists all indexed RBI Master Directions with section metadata |
+| `GET` | `/api/v1/compliance/document/{id}` | Returns parsed full markdown, section map, and SHA-256 hash |
+| `POST` | `/api/v1/compliance/ingest` | Triggers raw regulatory ingestion into Qdrant Vector DB |
+| `GET` | `/api/v1/compliance/stats` | Real-time vector collection and data lake statistics |
+| `POST` | `/api/v1/compliance/cache/invalidate` | Purges semantic cache upon new circular releases |
 
 ---
 
@@ -59,7 +92,7 @@ helm upgrade --install bank-compliance ./app/bank-compliance/chart \
 Every Git Pull Request automatically runs the **Regression Evaluation Harness** against a curated **Golden Dataset** (`eval/golden_dataset.jsonl`):
 
 ```bash
-python eval/evaluate.py
+python eval/evaluate.py --mode fast
 ```
 
 * **Groundedness / Faithfulness Threshold:** $\ge 3.5 / 5.0$ (Score: **4.68**) ✅
@@ -99,5 +132,5 @@ npm run dev
 
 ### 3. Run Quality Evaluation
 ```bash
-python eval/evaluate.py
+python eval/evaluate.py --mode fast
 ```
