@@ -89,7 +89,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: '1.9.0'
+          terraform_version: '1.11.0'
           terraform_wrapper: false
 
       - name: Terraform Init & Drift Detection
@@ -138,8 +138,8 @@ jobs:
           echo "status=$STATUS" >> $GITHUB_OUTPUT
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
-          # Save structured JSON for dynamic aggregator
-          cat << EOF > status.json
+          # Save uniquely named JSON for dynamic aggregator
+          cat << EOF > "status-${{ matrix.env_name }}.json"
           {
             "name": "${{ matrix.name }}",
             "root": "${{ matrix.root }}",
@@ -164,7 +164,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: status-${{ matrix.env_name }}
-          path: ${{ matrix.root }}/status.json
+          path: ${{ matrix.root }}/status-${{ matrix.env_name }}.json
           retention-days: 7
 
       - name: Upload Drift Plan Artifact
@@ -227,29 +227,33 @@ jobs:
           python3 -c "
           import json, glob, os
 
-          files = glob.glob('all-statuses/**/status.json', recursive=True) + glob.glob('all-statuses/*.json')
-          results = []
-          for f in files:
+          files = glob.glob('all-statuses/**/status-*.json', recursive=True) + glob.glob('all-statuses/status-*.json')
+          raw_results = []
+          for f in set(files):
               try:
                   with open(f, 'r') as fp:
-                      results.append(json.load(fp))
+                      raw_results.append(json.load(fp))
               except Exception:
                   pass
+
+          # Deduplicate strictly by root
+          results_map = {r['root']: r for r in raw_results if 'root' in r}
+          results = list(results_map.values())
 
           has_drift = any(r.get('status') == 'DRIFTED' for r in results)
           has_error = any(r.get('status') == 'ERROR' for r in results)
 
           if has_error:
-              overall_status = '🔴 EXECUTION FAILED'
+              overall_status = '🔴 ATTENTION REQUIRED (ERRORS DETECTED)'
           elif has_drift:
-              overall_status = '🟡 DRIFT DETECTED'
+              overall_status = '🟡 DRIFT DETECTED (RECONCILIATION REQUIRED)'
           else:
               overall_status = '🟢 100% IN SYNC (ZERO DRIFT)'
 
           md = []
           md.append('# 🛡️ Enterprise Terraform Drift Governance Report')
           md.append('')
-          md.append(f'> **Overall Health:** `{overall_status}` | **Scanned Roots:** `{len(results)} CAF Roots`')
+          md.append(f'> **Overall Platform Health:** `{overall_status}` | **Scanned Roots:** `{len(results)} CAF Roots`')
           md.append(f'> **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99` | **Alert Notification:** `{os.environ.get(\"NOTIFICATION_EMAIL\", \"richtextforganesh@outlook.com\")}`')
           md.append('')
           md.append('---')
@@ -273,9 +277,8 @@ jobs:
           md.append('* **If Status is 🟢 IN SYNC:** Zero action required. Cloud resources match committed Git IaC.')
           md.append('* **If Status is 🟡 DRIFT DETECTED:**')
           md.append('  1. An automated GitHub Issue has been created with the full `terraform plan` delta diff.')
-          md.append('  2. An email alert has been dispatched.')
-          md.append('  3. **Unintended Drift:** Trigger the corresponding workload IaC workflow with approval to self-heal.')
-          md.append('  4. **Intended Drift:** Update your Terraform `.tf` files in `main` to match live state.')
+          md.append('  2. **Unintended Drift:** Trigger the corresponding workload IaC workflow to apply and self-heal.')
+          md.append('  3. **Intended Drift (Hotfix):** Update your Terraform `.tf` files in `main` to match live Azure state.')
           md.append('* **If Status is 🔴 EXECUTION ERROR:** Review authentication / variable configuration in the failed stage.')
 
           summary_content = '\n'.join(md)
