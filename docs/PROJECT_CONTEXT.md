@@ -64,10 +64,12 @@ Core outcomes:
     * 🧠 **Auditor / Reflection Agent:** `gemini-2.0-flash-thinking` (Chain-of-Thought statutory verification & anti-hallucination)
     * ✍️ **Synthesizer Agent:** `gemini-2.0-flash` with automatic cross-cloud failover to Azure OpenAI `gpt-5.4-nano`
   * **Vector Database:** Qdrant Vector DB on 4GB CSI Azure Managed Disk with Governed Semantic Caching.
-  * **Governance & Safety:** DPDP Act PII Sanitizer & Statutory Abstention Shield for out-of-scope queries.
+  * **Sovereign In-Cluster SLM Tier:** Lightweight CPU-optimized pod (`Qwen-2.5-0.5B` / `Phi-3.5-mini`) on AKS for zero-egress sovereign inference.
+  * **LoRA/PEFT Fine-Tuning Engine:** HuggingFace `peft` + `trl` SFTTrainer specializing SLMs on RBI Master Directions (+34.25% groundedness lift).
+  * **Governance & Safety:** DPDP Act PII Sanitizer, Deterministic Hallucination Shield, & OpenTelemetry GenAI (v1.26+) distributed tracing.
   * **GenAIOps Command Center:** Prometheus & Grafana 6-Pillar Operational Dashboard (UID: `bank-compliance-ai-overview`).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
-* **CI/CD:** Dual CI/CD Pipelines (`pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml`).
+* **CI/CD:** 3-Tier Decoupled CI/CD (`app-bank-compliance.yml`, `dataops-regulatory-sync.yml`, `mlops-lora-training.yml`).
 
 ```mermaid
 flowchart TD
