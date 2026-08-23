@@ -215,6 +215,9 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - name: Checkout Monorepo Code
+        uses: actions/checkout@v4
+
       - name: Download All Status Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -224,65 +227,4 @@ jobs:
 
       - name: Generate Dynamic Executive Dashboard
         run: |
-          python3 -c "
-          import json, glob, os
-
-          files = glob.glob('all-statuses/**/status-*.json', recursive=True) + glob.glob('all-statuses/status-*.json')
-          raw_results = []
-          for f in set(files):
-              try:
-                  with open(f, 'r') as fp:
-                      raw_results.append(json.load(fp))
-              except Exception:
-                  pass
-
-          # Deduplicate strictly by root
-          results_map = {r['root']: r for r in raw_results if 'root' in r}
-          results = list(results_map.values())
-
-          has_drift = any(r.get('status') == 'DRIFTED' for r in results)
-          has_error = any(r.get('status') == 'ERROR' for r in results)
-
-          if has_error:
-              overall_status = '🔴 ATTENTION REQUIRED (ERRORS DETECTED)'
-          elif has_drift:
-              overall_status = '🟡 DRIFT DETECTED (RECONCILIATION REQUIRED)'
-          else:
-              overall_status = '🟢 100% IN SYNC (ZERO DRIFT)'
-
-          md = []
-          md.append('# 🛡️ Enterprise Terraform Drift Governance Report')
-          md.append('')
-          md.append(f'> **Overall Platform Health:** `{overall_status}` | **Scanned Roots:** `{len(results)} CAF Roots`')
-          md.append(f'> **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99` | **Alert Notification:** `{os.environ.get(\"NOTIFICATION_EMAIL\", \"richtextforganesh@outlook.com\")}`')
-          md.append('')
-          md.append('---')
-          md.append('')
-          md.append('### 📋 Real-Time Infrastructure Status Matrix')
-          md.append('')
-          md.append('| Infrastructure Scope | Terraform State Root | Subscription ID | Live Governance Status |')
-          md.append('|---|---|---|:---:|')
-
-          for r in sorted(results, key=lambda x: x.get('root', '')):
-              name = r.get('name')
-              root = r.get('root')
-              sub_id = r.get('sub_id')
-              badge = r.get('badge', 'UNKNOWN')
-              md.append(f'| **{name}** | `{root}` | `{sub_id}` | {badge} |')
-
-          md.append('')
-          md.append('---')
-          md.append('')
-          md.append('### 🛠️ Self-Healing & Drift Reconciliation Runbook:')
-          md.append('* **If Status is 🟢 IN SYNC:** Zero action required. Cloud resources match committed Git IaC.')
-          md.append('* **If Status is 🟡 DRIFT DETECTED:**')
-          md.append('  1. An automated GitHub Issue has been created with the full `terraform plan` delta diff.')
-          md.append('  2. **Unintended Drift:** Trigger the corresponding workload IaC workflow to apply and self-heal.')
-          md.append('  3. **Intended Drift (Hotfix):** Update your Terraform `.tf` files in `main` to match live Azure state.')
-          md.append('* **If Status is 🔴 EXECUTION ERROR:** Review authentication / variable configuration in the failed stage.')
-
-          summary_content = '\n'.join(md)
-
-          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as s:
-              s.write(summary_content + '\n')
-          "
+          python3 scripts/generate_drift_dashboard.py all-statuses
