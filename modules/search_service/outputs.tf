@@ -1,11 +1,11 @@
 output "id" {
   description = "Resource ID of the Search Service."
-  value       = azurerm_search_service.this.id
+  value       = module.search_service.resource_id
 }
 
 output "name" {
   description = "Name of the Search Service."
-  value       = azurerm_search_service.this.name
+  value       = var.name
 }
 
 output "endpoint" {
