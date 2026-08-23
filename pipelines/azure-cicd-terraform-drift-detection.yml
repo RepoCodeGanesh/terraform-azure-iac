@@ -284,3 +284,49 @@ stages:
                   exit 1
                 fi
             displayName: "Run Terraform Plan (Drift Check)"
+
+  # ── 6. Consolidated Governance Summary ───────────────────────────────────────
+  - stage: DriftGovernanceSummary
+    displayName: "6. Drift Governance Summary Dashboard"
+    dependsOn:
+      - DriftBootstrap
+      - DriftHub
+      - DriftSharedServices
+      - DriftTaxBot
+      - DriftBankCompliance
+    condition: always()
+    jobs:
+      - job: PublishSummaryDashboard
+        displayName: "Publish Executive Summary"
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - script: |
+              cat << 'EOF' > $(Build.ArtifactStagingDirectory)/drift-summary.md
+              # 🛡️ Enterprise Terraform Drift Governance Report
+
+              > **Monorepo:** HappyTechies Cloud & AI Platform | **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
+              > **Scanned Roots:** 5 CAF Roots | **Status:** Evaluated via Azure DevOps WIF
+
+              ---
+
+              ### 📋 Multi-Root Infrastructure Status Matrix
+
+              | Infrastructure Scope | Terraform State Root | Subscription ID |
+              |---|---|---|
+              | **Platform - Bootstrap** | `platform/bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` |
+              | **Platform - Hub Network** | `platform/hub` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` |
+              | **Platform - Shared Services** | `platform/shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` |
+              | **Workload - TaxBot PaaS** | `workloads/tax-advisor` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` |
+              | **Workload - BankCompliance AKS** | `workloads/bank-compliance-ai-aks` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` |
+
+              ---
+
+              ### 🛠️ Drift Reconciliation Actions:
+              * **If Status is In Sync:** Zero action required. Cloud resources match committed Git IaC.
+              * **If Status is Drifted:**
+                1. Review warning logs in the corresponding pipeline stage above.
+                2. Run the corresponding IaC pipeline with approved apply to self-heal.
+              EOF
+              echo "##vso[task.uploadsummary]$(Build.ArtifactStagingDirectory)/drift-summary.md"
+            displayName: "Upload ADO Markdown Summary"

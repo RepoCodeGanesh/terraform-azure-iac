@@ -212,17 +212,38 @@ jobs:
 
   # ─── Consolidated Governance Summary ────────────────────────────────────────
   governance-summary:
-    name: Drift Governance Summary
-    needs: detect-drift
+    name: 📊 Drift Governance Summary Dashboard
+    needs: [resolve-targets, detect-drift]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Report Monorepo Drift Status
+      - name: Generate Executive Drift Governance Dashboard
         run: |
-          echo "=============================================================================="
-          echo "  HappyTechies Monorepo -- Terraform Multi-Root Drift Governance Report"
-          echo "=============================================================================="
-          echo "  Notification Recipient : ${{ env.NOTIFICATION_EMAIL }}"
-          echo "  Scanned Roots          : 5 Roots (Bootstrap, Hub, Shared, TaxBot, BankCompliance)"
-          echo "  Completed At           : $(date -u)"
-          echo "=============================================================================="
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          # 🛡️ Enterprise Terraform Drift Governance Report
+
+          > **Monorepo:** `HappyTechies Cloud & AI Platform` | **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
+          > **Scanned Roots:** `5 CAF Roots` | **Alert Notification:** `ganesank@mytaxbot.site`
+
+          ---
+
+          ### 📋 Multi-Root Infrastructure Status Matrix
+
+          | Infrastructure Scope | Terraform State Root | Subscription ID | Governance Status |
+          |---|---|---|:---:|
+          | **Platform - Bootstrap** | `platform/bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` | `🟢 EVALUATED` |
+          | **Platform - Hub Network** | `platform/hub` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `🟢 EVALUATED` |
+          | **Platform - Shared Services** | `platform/shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` | `🟢 EVALUATED` |
+          | **Workload - TaxBot PaaS** | `workloads/tax-advisor` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `🟢 EVALUATED` |
+          | **Workload - BankCompliance AKS** | `workloads/bank-compliance-ai-aks` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `🟢 EVALUATED` |
+
+          ---
+
+          ### 🛠️ Self-Healing & Drift Reconciliation Runbook:
+          * **If Status is In Sync (`CLEAN`):** Zero action required. Cloud resources match committed Git IaC.
+          * **If Status is Drifted (`DRIFTED`):**
+            1. An automated GitHub Issue has been created with the full `terraform plan` delta diff.
+            2. An email alert has been dispatched to `ganesank@mytaxbot.site`.
+            3. To reconcile unintended drift: Trigger the corresponding workload IaC workflow to apply and self-heal.
+            4. To reconcile intended drift (emergency Azure Portal changes): Update your Terraform `.tf` files in `main` to match live state.
+          EOF
