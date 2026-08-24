@@ -162,6 +162,24 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Cloud resources were manually provisioned or left behind from a previous destroyed state while the remote state file was deleted or out-of-sync.
 * **Resolution:** For Key Vault secrets, delete and purge soft-deleted secrets (`az keyvault secret delete` and `az keyvault secret purge`). For role assignments, remove orphaned assignments using `az role assignment delete --ids <id>` or import them into Terraform state (`terraform import <resource> <id>`).
 
+### 10. AKS Diagnostic Setting Pre-existence & Terraform State Collision
+* **Symptom:** `azurerm_monitor_diagnostic_setting` fails with `already exists - to be managed via Terraform this resource needs to be imported into the State`.
+* **Root Cause:** When an AKS cluster is deployed with OMS agent or policy enforcement, Azure Monitor diagnostic settings (`diag-aks-ht-bankc-p-cin-01`) may be created directly in ARM or exist from earlier unmanaged runs.
+* **Resolution:** Import the diagnostic setting into the Terraform state:
+  ```bash
+  terraform import -var-file="prod.tfvars" 'module.bank_compliance_aks.azurerm_monitor_diagnostic_setting.aks_diagnostics[0]' '/subscriptions/<sub-id>/resourceGroups/<rg-name>/providers/Microsoft.ContainerService/managedClusters/<cluster-name>|<diag-name>'
+  ```
+
+### 11. GitHub Actions: Job Depends on Unknown Job in `needs:` Array
+* **Symptom:** Workflow parse failure: `Invalid workflow file: ... Job 'summary' depends on unknown job 'deploy-backend-aks'`.
+* **Root Cause:** A downstream aggregation or summary job lists a job ID in `needs:` that does not match the exact key name defined under `jobs:` in the workflow YAML.
+* **Resolution:** Synchronize the job key in `jobs:` (e.g., rename `deploy-aks:` to `deploy-backend-aks:`) to match all downstream `needs:` references.
+
+### 12. AKS Stopped State Mutation Restrictions (`OperationNotAllowed`)
+* **Symptom:** Terraform apply or ARM mutation fails with `400 Bad Request: OperationNotAllowed: Managed Cluster is in stopped state, no operations except for start are allowed`.
+* **Root Cause:** For FinOps cost optimization, AKS clusters may be powered down (`Stopped`). Azure Resource Manager forbids any cluster updates, node pool upgrades, or addon mutations while stopped.
+* **Resolution:** Start the AKS cluster (`az aks start --name <cluster> --resource-group <rg>`) and wait for `provisioningState: Succeeded` before applying Terraform changes.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies

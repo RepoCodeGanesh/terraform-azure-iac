@@ -112,7 +112,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── JOB 3: Deploy Kubernetes Manifests to AKS ─────────────────────────────
-  deploy-aks:
+  deploy-backend-aks:
     name: Deploy to AKS
     needs: build-and-push-backend
     if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
