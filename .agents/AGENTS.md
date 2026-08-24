@@ -180,6 +180,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** For FinOps cost optimization, AKS clusters may be powered down (`Stopped`). Azure Resource Manager forbids any cluster updates, node pool upgrades, or addon mutations while stopped.
 * **Resolution:** Start the AKS cluster (`az aks start --name <cluster> --resource-group <rg>`) and wait for `provisioningState: Succeeded` before applying Terraform changes.
 
+### 13. Static Web App Deployment Token Misalignment (`Reason: No matching Static Web App was found or the api key was invalid`)
+* **Symptom:** `Azure/static-web-apps-deploy@v1` fails with HTTP 400 `BadRequest: No matching Static Web App was found or the api key was invalid`.
+* **Root Cause:** In caller workflows calling reusable `app-deploy-swa.yml`, `swa_token_secret_name` was omitted and defaulted to a legacy uppercase secret name (`SWA-TAXB-DEPLOYMENT-TOKEN`) containing an obsolete token, whereas Terraform stores the live API key in `taxb-swa-deployment-token`.
+* **Resolution:** Explicitly pass `swa_token_secret_name: 'taxb-swa-deployment-token'` in the caller workflow `with:` block and ensure Key Vault secrets reflect the live `az staticwebapp secrets list` API token.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
