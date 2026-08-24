@@ -27,19 +27,20 @@ resource "azurerm_management_group" "landingzones" {
   ]
 }
 
-# ─── 2. Enterprise Governance & Security Initiative (Policy Set) ─────────────
+# ─── 2. Enterprise Governance & Security Initiative (Top 10 Baseline) ────────
 
 resource "azurerm_management_group_policy_set_definition" "enterprise_baseline" {
   name                 = "initiative-ht-enterprise-baseline"
   policy_type          = "Custom"
   display_name         = "HappyTechies Enterprise Governance Baseline"
-  description          = "Enterprise Security, Tagging, Region, and Zero-Trust Guardrails across all Landing Zones."
+  description          = "Enterprise Security, FinOps Tagging, Zero-Trust, and Data Protection Guardrails across all Landing Zones."
   management_group_id  = "/providers/Microsoft.Management/managementGroups/${var.root_management_group_id}"
 
-  # 1. Allowed Deployment Locations
+  # ─── Core Region & Data Residency Guardrails ───────────────────────────────
+  # 1. Allowed Deployment Locations (India + AI Regions)
   policy_definition_reference {
-    policy_definition_id         = "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
-    reference_id                 = "AllowedLocations"
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
+    reference_id         = "AllowedLocations"
     parameter_values = jsonencode({
       listOfAllowedLocations = {
         value = [
@@ -55,6 +56,7 @@ resource "azurerm_management_group_policy_set_definition" "enterprise_baseline" 
     })
   }
 
+  # ─── Encryption in Transit & Web Security ──────────────────────────────────
   # 2. Enforce HTTPS / Secure Transfer on Storage Accounts
   policy_definition_reference {
     policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9"
@@ -67,19 +69,59 @@ resource "azurerm_management_group_policy_set_definition" "enterprise_baseline" 
     reference_id         = "AppServiceHttpsOnly"
   }
 
+  # ─── Key Vault & Secrets Governance ────────────────────────────────────────
   # 4. Enforce Key Vault Soft-Delete
   policy_definition_reference {
     policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d"
     reference_id         = "KeyVaultSoftDelete"
   }
 
-  # 5. Require 'Environment' Tag on Resources
+  # 5. Key Vault Secrets Expiration Date (Audit Mode)
   policy_definition_reference {
-    policy_definition_id         = "/providers/Microsoft.Authorization/policyDefinitions/871b6d14-10aa-478d-b590-94f262ecfa99"
-    reference_id                 = "RequireEnvironmentTag"
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/98728c90-32c7-4049-8429-847dc0f4fe37"
+    reference_id         = "KeyVaultSecretsExpiration"
+  }
+
+  # ─── Storage & Data Lake Protection ────────────────────────────────────────
+  # 6. Disallow Public Blob Access on Storage Accounts (Audit Mode)
+  policy_definition_reference {
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/4fa4b6c0-31ca-4c0d-b10d-24b96f62a751"
+    reference_id         = "StorageDisallowPublicAccess"
+  }
+
+  # ─── Kubernetes & Container DevSecOps ──────────────────────────────────────
+  # 7. Azure Policy / OPA Gatekeeper Add-on for AKS (Audit Mode)
+  policy_definition_reference {
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/0a15ec92-a229-4763-bb14-0ea34a568f8d"
+    reference_id         = "AKSPolicyAddonEnabled"
+  }
+
+  # ─── Zero-Trust Network Microsegmentation ──────────────────────────────────
+  # 8. Subnets Should Be Associated with a Network Security Group (NSG)
+  policy_definition_reference {
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/e71308d3-144b-4262-b144-efdc3cc90517"
+    reference_id         = "SubnetsAssociatedWithNSG"
+  }
+
+  # ─── FinOps & Resource Tagging Governance ──────────────────────────────────
+  # 9. Require 'Environment' Tag on Resources
+  policy_definition_reference {
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/871b6d14-10aa-478d-b590-94f262ecfa99"
+    reference_id         = "RequireEnvironmentTag"
     parameter_values = jsonencode({
       tagName = {
         value = "Environment"
+      }
+    })
+  }
+
+  # 10. Require 'ManagedBy' Tag on Resources
+  policy_definition_reference {
+    policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/871b6d14-10aa-478d-b590-94f262ecfa99"
+    reference_id         = "RequireManagedByTag"
+    parameter_values = jsonencode({
+      tagName = {
+        value = "ManagedBy"
       }
     })
   }

@@ -1,0 +1,89 @@
+# ==============================================================================
+# Workflow: Platform - Governance & Policy-as-Code (Enterprise CAF Standard)
+# Provisions: Management Groups Tree, Enterprise Baseline Policy Set & Assignments
+# Target Scope: Root Management Group (HappieTechies-root-MG)
+# Central Template Repo: RepoCodeGanesh/.github
+# ==============================================================================
+
+name: Platform - Governance & Policy-as-Code
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'release/**']
+    tags: ['release/*', 'v*']
+    paths:
+      - 'platform/governance/**'
+      - '.github/workflows/platform-governance.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'platform/governance/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    name: Plan
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-plan.yml@main
+    with:
+      working_directory: 'platform/governance'
+      subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
+      environment_name: 'bootstrap'
+      artifact_name: 'governance-tfplan'
+    secrets:
+      CLIENT_ID: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  apply:
+    name: Apply
+    needs: plan
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-apply.yml@main
+    with:
+      working_directory: 'platform/governance'
+      subscription_id: '7689ad81-71ba-481b-a17c-e1b6be61bab1'
+      environment_name: 'bootstrap'
+      artifact_name: 'governance-tfplan'
+    secrets:
+      CLIENT_ID: ${{ secrets.BOOTSTRAP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  summary:
+    name: 📊 Infrastructure Release Summary
+    needs: [plan, apply]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Governance Release Summary
+        run: |
+          PLAN_RES="${{ needs.plan.result == 'success' && '🟢 SUCCESS' || (needs.plan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          APPLY_RES="${{ needs.apply.result == 'success' && '🟢 APPLIED' || (needs.apply.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED (PR Mode)') }}"
+          OVERALL="🟢 GOVERNANCE IN SYNC"
+          if [ "${{ needs.plan.result }}" = "failure" ] || [ "${{ needs.apply.result }}" = "failure" ]; then
+            OVERALL="🔴 PIPELINE FAILED"
+          fi
+
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          # 🏛️ Platform - Governance & Policy-as-Code Summary
+
+          > **Overall Outcome:** \`${OVERALL}\`
+          > **Target Scope:** \`HappieTechies-root-MG (HappyTechies Root)\`
+          > **Management Groups:** \`mg-ht-platform\`, \`mg-ht-landingzones\`
+          > **Policy Initiative:** \`initiative-ht-enterprise-baseline\` (Top 10 Guardrails)
+          > **State Key:** \`sthtbootpcin01/tfstate/governance/prod.tfstate\`
+
+          ---
+
+          ### 📋 Pipeline Execution Matrix
+          | Stage | Result |
+          |---|:---:|
+          | **1. Terraform Plan (Governance)** | ${PLAN_RES} |
+          | **2. Terraform Apply (Policy-as-Code)** | ${APPLY_RES} |
+          EOF

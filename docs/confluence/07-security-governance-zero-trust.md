@@ -106,11 +106,17 @@ All Azure subscriptions inherit global zero-trust governance through the **Happy
 
 ### Active Enterprise Baseline Policies (`initiative-ht-enterprise-baseline`)
 
-| Policy Component | Policy Definition ID | Enforcement Mode | Enterprise Rationale |
-| :--- | :--- | :--- | :--- |
-| **Allowed Deployment Locations** | `e56962a6-4747-49cd-b67b-bf8b01975c4c` | `Audit / Allow` | Restricts resources to India (`centralindia`, `southindia`, `westindia`) and AI regions (`southeastasia`, `eastus`). |
-| **Secure HTTPS on Storage Accounts** | `404c3081-a854-4457-ae30-26a93ef643f9` | `Audit` | Guarantees encryption in transit (TLS 1.2+) for all blob containers. |
-| **HTTPS Only on App Services** | `a4af4a39-4135-47fb-b175-47fbdf85311d` | `Audit` | Ensures Function Apps and APIs drop non-HTTPS traffic. |
-| **Key Vault Soft Delete Protection** | `1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d` | `Audit` | Protects certificates and secrets from unrecoverable deletion. |
-| **Mandatory FinOps Tagging** | `871b6d14-10aa-478d-b590-94f262ecfa99` | `Audit` | Audits resources lacking the required `Environment` tag. |
+| # | Policy Component | Policy Definition ID | Enforcement Mode | Enterprise Rationale |
+|:---|:---|:---|:---|:---|
+| **1** | **Allowed Deployment Locations** | `e56962a6-4747-49cd-b67b-bf8b01975c4c` | `Audit / Allow` | Restricts resources to India (`centralindia`, `southindia`, `westindia`) and AI regions (`southeastasia`, `eastus`). |
+| **2** | **Secure HTTPS on Storage Accounts** | `404c3081-a854-4457-ae30-26a93ef643f9` | `Audit` | Guarantees encryption in transit (TLS 1.2+) for all blob containers. |
+| **3** | **HTTPS Only on App Services & Functions** | `a4af4a39-4135-47fb-b175-47fbdf85311d` | `Audit` | Ensures Function Apps and APIs drop non-HTTPS traffic. |
+| **4** | **Key Vault Soft Delete Protection** | `1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d` | `Audit` | Protects certificates and secrets from unrecoverable deletion. |
+| **5** | **Key Vault Secrets Expiration Date** | `98728c90-32c7-4049-8429-847dc0f4fe37` | `Audit` | Audits secrets in Key Vault to ensure expiration and rotation tracking. |
+| **6** | **Disallow Public Storage Blob Access** | `4fa4b6c0-31ca-4c0d-b10d-24b96f62a751` | `Audit` | Audits public blob read access to prevent accidental data leaks. |
+| **7** | **Azure Policy / OPA Gatekeeper for AKS** | `0a15ec92-a229-4763-bb14-0ea34a568f8d` | `Audit` | Validates that OPA Gatekeeper admission controller is active on AKS. |
+| **8** | **Subnets Associated with NSG** | `e71308d3-144b-4262-b144-efdc3cc90517` | `AuditIfNotExists` | Ensures virtual network subnets are protected by firewall NSG rules. |
+| **9** | **Require 'Environment' Tag** | `871b6d14-10aa-478d-b590-94f262ecfa99` | `Audit` | Audits resources lacking the required `Environment` FinOps tag. |
+| **10** | **Require 'ManagedBy' Tag** | `871b6d14-10aa-478d-b590-94f262ecfa99` | `Audit` | Enforces and audits mandatory `ManagedBy = terraform` IaC provenance. |
+
 
