@@ -1,7 +1,7 @@
 # 🛡️ Enterprise Security, Zero-Trust Architecture & Governance
 
 * **Document Code:** `SEC-HT-GOV-ZERO-TRUST-01`
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `Security & Compliance`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Security & Compliance`
 * **Status:** `MANDATORY / ENTERPRISE STANDARD`
 * **Compliance Alignment:** Microsoft Cloud Security Benchmark (MCSB), RBI Master Directions on Cybersecurity, Indian DPDP Act 2023
 
@@ -46,10 +46,10 @@ The **HappyTechies AI Landing Zone** implements an end-to-end **Zero-Trust Archi
 
 ### A. Transparent Financial PII Redaction Engine
 Before any compliance officer or taxpayer query is submitted to Azure OpenAI, the in-memory PII redactor automatically masks Indian financial identifiers:
-* **PAN Cards:** `[A-Z]{5}[0-9]{4}[A-Z]{1}` $\rightarrow$ `[PAN-REDACTED]`
-* **Aadhaar Numbers:** `[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}` $\rightarrow$ `[AADHAAR-REDACTED]`
-* **Bank Account Numbers:** `[0-9]{9,18}` $\rightarrow$ `[ACCOUNT-REDACTED]`
-* **Phone Numbers:** `(?:\+91|91)?[6-9]\d{9}` $\rightarrow$ `[PHONE-REDACTED]`
+* **PAN Cards:** `[A-Z]{5}[0-9]{4}[A-Z]{1}` ➔ `[PAN-REDACTED]`
+* **Aadhaar Numbers:** `[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}` ➔ `[AADHAAR-REDACTED]`
+* **Bank Account Numbers:** `[0-9]{9,18}` ➔ `[ACCOUNT-REDACTED]`
+* **Phone Numbers:** `(?:\+91|91)?[6-9]\d{9}` ➔ `[PHONE-REDACTED]`
 
 ### B. Azure AI Content Safety Shield (`F0` Free Tier)
 * Evaluates all incoming prompts across 4 severity categories: *Hate, Self-Harm, Sexual, Violence*.

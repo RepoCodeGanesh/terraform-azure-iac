@@ -1,6 +1,6 @@
 # 💰 FinOps & Near-Zero Idle Cost Strategy
 
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `FinOps & Governance`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `FinOps & Governance`
 * **Target Audience:** FinOps Leads, Cloud Architects, Engineering Managers
 * **Status:** `ACTIVE`
 

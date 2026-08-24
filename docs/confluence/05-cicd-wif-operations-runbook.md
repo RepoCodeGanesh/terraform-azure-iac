@@ -1,22 +1,45 @@
-# 🛠️ Dual CI/CD, Workload Identity & Operations Runbook
+# 🛠️ Dual CI/CD, Workload Identity & Decoupled MLOps Runbook
 
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `DevSecOps & Operations`
-* **Target Audience:** DevOps Engineers, Platform Engineers, SREs
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `DevSecOps & Operations`
+* **Target Audience:** DevOps Engineers, Platform Engineers, ML Engineers, SREs
 * **Status:** `ACTIVE`
 
 ---
 
-## 🎯 1. Dual CI/CD Architecture Overview
+## 🎯 1. Non-Identical 3-Tier CI/CD & MLOps Architecture Overview
 
-The Landing Zone supports dual CI/CD orchestration:
-1. **GitHub Actions (GHA)**: Primary automation engine utilizing central organization templates in `RepoCodeGanesh/.github`.
-2. **Azure DevOps (ADO)**: Enterprise secondary pipeline engine utilizing modular YAML templates in `pipelines/templates/`.
+The HappyTechies Platform implements an **Enterprise 3-Tier Decoupled CI/CD Pattern**. Rather than cramming heavy machine learning training into daily application deployments, each pipeline is specialized with non-identical triggers, SLAs, and execution lifecycles:
 
-Both engines authenticate to Azure via **passwordless Workload Identity Federation (WIF)** using OpenID Connect (OIDC) tokens — **zero client secrets or passwords are stored in pipeline secrets**.
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│              ENTERPRISE 3-TIER DECOUPLED PIPELINE ARCHITECTURE (NON-IDENTICAL)                   │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+ ├── 🚀 TIER 1: FAST-LANE APPLICATION CI/CD (GitHub Actions — Active Driver)
+ │   • Trigger: Push / PR to 'app/**' (< 3 mins SLA)
+ │   • Lifecycle: Bandit SAST Scan ➔ Docker Build GHCR ➔ Helm Deploy (AKS) ➔ React Deploy (SWA)
+ │   • Purpose: Maximizes developer velocity; hotfixes ship to production instantly.
+ │
+ ├── 🏛️ TIER 2: ENTERPRISE IAC GOVERNANCE & AUDIT (Azure DevOps — Standby / Governance Driver)
+ │   • Trigger: 'trigger: none' (Manual Operator Run) + Scheduled 02:00 UTC Drift Detection
+ │   • Lifecycle: Terraform Validate ➔ Plan ➔ 'bank-compliance-prod' Manual Gate ➔ Apply (WIF OIDC)
+ │   • Purpose: Eliminates concurrent state-lock collisions on sthtbootpcin01; preserves audit gates.
+ │
+ └── 🧠 TIER 3: DECOUPLED MLOPS TRAINING & QUALITY GATE (GitHub Actions & Azure DevOps)
+     • Trigger: On-Demand Parameterized Dispatch (Choose Model: Qwen-2.5 / Phi-3.5)
+     • Lifecycle: Synthetic DataOps (1,915 QA pairs) ➔ PyTorch LoRA Training (r=16) ➔ Ragas Benchmark
+     • Purpose: Heavy AI model specialization without congesting application deployment pipelines.
+```
 
 ---
 
-## 🔑 2. Workload Identity Federation (WIF) Mapping Matrix
+## 📐 2. Visual Architecture Diagram: Decoupled CI/CD & MLOps Lifecycle
+
+![Enterprise Decoupled Dual CI/CD & MLOps Flow](../images/05-decoupled-dual-cicd-mlops-flow.png)
+
+---
+
+## 🔑 3. Workload Identity Federation (WIF) Mapping Matrix
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
@@ -29,66 +52,38 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
 ---
 
-## 🔄 3. Standard Change Execution Workflow
+## 🔄 4. Non-Identical Pipeline Execution Matrix
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Dev as Platform Engineer
-    participant Git as GitHub / ADO
-    participant Plan as CI Plan Job
-    participant Appr as Environment Approval
-    participant Apply as CI Apply Job
-    participant Azure as Azure Cloud (WIF)
-
-    Dev->>Git: Push changes or open PR
-    Git->>Plan: Trigger Speculative Plan
-    Plan->>Azure: OIDC Auth & terraform plan -out=tfplan
-    Plan-->>Dev: Plan Artifact exported for review
-    Dev->>Appr: Review plan & approve deployment
-    Appr->>Apply: Trigger Apply Stage
-    Apply->>Azure: terraform apply tfplan
-    Azure-->>Apply: Infrastructure updated
-    Apply-->>Dev: Deployment Success Notification
-```
+| Pipeline | File Path | Engine | Trigger | Execution SLA | Purpose |
+|---|---|:---:|---|:---:|---|
+| **App CI/CD Fast-Lane** | `.github/workflows/app-bank-compliance.yml` | GHA | Push to `app/bank-compliance/**` | `< 3 Mins` | Builds Docker container and deploys React SPA to `bank.mytaxbot.site`. |
+| **App CI/CD (Standby)** | `pipelines/azure-cicd-app-bank-compliance.yml` | ADO | Manual (`trigger: none`) | `< 4 Mins` | Enterprise multi-stage standby pipeline with SonarCloud SAST gate. |
+| **MLOps LoRA Fine-Tuning** | `.github/workflows/mlops-lora-training.yml` | GHA | On-Demand (`workflow_dispatch`) | `15–30 Mins` | Fine-tunes Small Language Model on 1,915 RBI QA pairs. |
+| **MLOps LoRA (ADO)** | `pipelines/azure-cicd-mlops-lora-training.yml` | ADO | Parameterized Manual Run | `15–30 Mins` | Azure DevOps multi-stage PyTorch LoRA fine-tuning and evaluation gate. |
+| **Terraform Drift Detection** | `.github/workflows/terraform-drift-detection.yml` | GHA | Daily 02:00 UTC / Manual | `5 Mins` | Evaluates speculative `terraform plan -detailed-exitcode` across 5 roots. |
+| **Terraform Drift (ADO)** | `pipelines/azure-cicd-terraform-drift-detection.yml`| ADO | Daily 02:00 UTC / Manual | `5 Mins` | Azure DevOps multi-root drift detection engine using WIF service connections. |
+| **AKS Auto-Shutdown (FinOps)**| `.github/workflows/aks-auto-shutdown.yml` | GHA | Daily 20:00 IST Cron | `30 Secs` | Powers off AKS cluster nightly for $0.00 idle compute profile. |
 
 ---
 
-## 🚨 4. Operational Troubleshooting Playbook
+## 🚨 5. Operational Troubleshooting Playbook
 
 ### Scenario 1: `429 Too Many Requests` (OpenAI Rate Throttling)
 * **Alert Trigger:** `alert-openai-throttled-429` fires in Azure Monitor.
-* **Root Cause:** Spike in user questions exceeding the allocated Tokens-Per-Minute (TPM).
-* **Resolution:**
-  1. Open Azure Portal $\rightarrow$ Azure OpenAI `oai-ht-taxb-p-eus-01`.
-  2. Under **Model Deployments**, increase TPM allocation for `gpt-5.4-nano`.
-  3. Verify LiteLLM prompt caching is active to absorb repeat questions.
+* **Root Cause:** TPM quota exhausted on primary OpenAI deployment.
+* **Remediation Action:**
+  1. LiteLLM Gateway automatically routes traffic to fallback Google Gemini 2.0 Flash or in-cluster Sovereign SLM.
+  2. Increase TPM allocation in `platform/shared-services/main.tf` if sustained throughput exceeds 10k TPM.
+  3. Purge or tune semantic vector cache TTL in Qdrant (`/api/v1/compliance/cache/invalidate`).
 
-### Scenario 2: AKS Cluster Stopped / Backend Unreachable
-* **Symptom:** React frontend displays *"Unable to connect to BankCompliance AKS backend API"*.
-* **Root Cause:** Cluster was auto-stopped by the FinOps scheduler.
-* **Resolution:**
-  1. Open GitHub Actions in the repository.
-  2. Navigate to **FinOps Cluster Lifecycle Scheduler** (`.github/workflows/aks-auto-shutdown.yml`) $\rightarrow$ **Run workflow** $\rightarrow$ select action `start`.
-  3. Or run Azure CLI:
-     ```bash
-     az aks start --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01
-     ```
-
-### Scenario 3: Custom Domain Binding (`bank.mytaxbot.site`)
-* **Step 1:** Run `terraform apply` with `enable_custom_domain = false` (creates Static Web App).
-* **Step 2:** Copy default hostname output (e.g. `agreeable-beach-xxx.azurestaticapps.net`).
-* **Step 3:** At your DNS registrar, create **CNAME record**:
-  * **Host:** `bank`
-  * **Points to:** `agreeable-beach-xxx.azurestaticapps.net`
-* **Step 4:** Set `enable_custom_domain = true` in `prod.tfvars` and run `terraform apply`.
-
-### Scenario 4: Terraform Configuration Drift Alert
-* **Workflow:** `.github/workflows/terraform-drift-detection.yml`
-* **Frequency:** Scheduled daily at `02:00 UTC` (`07:30 IST`).
-* **Alert Target:** `ganesank@mytaxbot.site` + Automated GitHub Issue.
-* **Resolution:**
-  1. Inspect the drift plan snippet attached to the email / GitHub Issue.
-  2. If the out-of-band change was unintentional, trigger the corresponding workflow to apply and self-heal.
-  3. If the out-of-band change was intentional, backport the change into the `.tf` code and commit to `main`.
-
+### Scenario 2: Terraform State Lock (`sthtbootpcin01`)
+* **Symptom:** `Error acquiring the state lock: blob is already leased`.
+* **Root Cause:** Dual CI/CD pipeline concurrent execution or aborted manual apply.
+* **Remediation Action:**
+  ```bash
+  az storage blob lease break \
+    --account-name sthtbootpcin01 \
+    --container-name tfstate \
+    --blob-name workloads/bank-compliance-ai-aks/prod.tfstate \
+    --auth-mode login
+  ```

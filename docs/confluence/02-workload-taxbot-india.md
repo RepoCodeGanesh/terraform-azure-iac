@@ -1,6 +1,6 @@
 # 🤖 Workload 1: TaxBot India (AI Income Tax Advisor)
 
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `Workloads`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Workloads`
 * **Live Domain:** [https://www.mytaxbot.site](https://www.mytaxbot.site)
 * **Workload Code:** `taxb` (Resource Group: `rg-ht-taxb-p-cin-01`)
 * **Status:** `PRODUCTION / LIVE`

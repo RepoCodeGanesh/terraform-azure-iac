@@ -94,8 +94,8 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
 ## 🔒 5. Multi-Root Terraform Architecture
 Each tier maintains its own state file in the remote backend `sthtbootpcin01` to enforce separation of blast radius:
-* `platform/bootstrap` $\rightarrow$ `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
-* `platform/hub` $\rightarrow$ `sthtbootpcin01/tfstate/hub/prod.tfstate`
-* `platform/shared-services` $\rightarrow$ `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
-* `workloads/tax-advisor` $\rightarrow$ `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
-* `workloads/bank-compliance-ai-aks` $\rightarrow$ `sthtbootpcin01/tfstate/workloads/bank-compliance-ai-aks/prod.tfstate`
+* `platform/bootstrap` ➔ `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
+* `platform/hub` ➔ `sthtbootpcin01/tfstate/hub/prod.tfstate`
+* `platform/shared-services` ➔ `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
+* `workloads/tax-advisor` ➔ `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
+* `workloads/bank-compliance-ai-aks` ➔ `sthtbootpcin01/tfstate/workloads/bank-compliance-ai-aks/prod.tfstate`

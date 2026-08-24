@@ -1,6 +1,6 @@
 # 🏦 BankCompliance AI: Engineering Learnings, Debugging & Runbook
 
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `Runbooks & Masterclasses`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Runbooks & Masterclasses`
 * **Live Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **APIM Gateway:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
 * **Status:** `PRODUCTION READY & FULLY AUTOMATED`

@@ -1,7 +1,7 @@
 # 🏛️ Cloud & AI Platform Technical Strategy
 
 * **Document Code:** `STRAT-HT-CLOUD-AI-01`
-* **Space:** `HappyTechies Cloud & AI Platform` $\rightarrow$ `Strategy & Architecture`
+* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Strategy & Architecture`
 * **Status:** `APPROVED / EXECUTIVE STRATEGY`
 * **Author:** AI Platform Architecture Team (`ai-platform-team@happytechies.com`)
 

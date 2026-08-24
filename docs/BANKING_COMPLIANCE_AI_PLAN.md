@@ -19,7 +19,7 @@ Global and regional financial institutions (e.g., HDFC Bank, SBI, ICICI, Citi, H
 
 ## 🏛️ Architectural Rationale & Design Decision Justifications
 
-### 1. Why Option A (LiteLLM AI Gateway $\rightarrow$ Azure OpenAI) instead of Local On-Cluster SLMs?
+### 1. Why Option A (LiteLLM AI Gateway ➔ Azure OpenAI) instead of Local On-Cluster SLMs?
 * **Sub-Second Response SLA (<800ms):** Branch compliance officers and legal auditors require instant answers during live customer interactions. Running 3B–8B models on CPU nodes results in 5–8 second latency.
 * **Zero Burstable CPU Credit Risk:** `Standard_B4ms` is a burstable VM. Cloud routing keeps node CPU at ~2–5%, guaranteeing the VM credit bank stays 100% full and never throttles.
 * **Ultra-Light RAM Footprint (<200MB):** Leaves 15+ GB of node RAM completely free for Qdrant vector caching, Redis, and FastAPI workers.

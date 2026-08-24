@@ -36,7 +36,7 @@ parameters:
       - "workloads/bank-compliance-ai-aks"
 
 variables:
-  TERRAFORM_VERSION: "1.7.5"
+  TERRAFORM_VERSION: "1.9.0"
   VM_IMAGE: "ubuntu-latest"
 
 stages:
@@ -56,6 +56,7 @@ stages:
           - task: AzureCLI@2
             inputs:
               azureSubscription: "bootstrap"
+              addSpnToEnvironment: true
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: |
@@ -65,14 +66,26 @@ stages:
                 export ARM_TENANT_ID=$tenantId
                 export ARM_ID_TOKEN=$idToken
                 terraform init -reconfigure -backend-config=backend.hcl -input=false
-                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
-                if [ "$EXIT_CODE" -eq 2 ]; then
-                  echo "##vso[task.logissue type=warning]Drift detected in platform/bootstrap"
-                elif [ "$EXIT_CODE" -eq 1 ]; then
-                  echo "##vso[task.logissue type=error]Terraform plan error in platform/bootstrap"
-                  exit 1
-                else
+                
+                VAR_ARG=""
+                if [ -f "prod.tfvars" ]; then
+                  VAR_ARG="-var-file=prod.tfvars"
+                fi
+                
+                set +e
+                terraform plan -detailed-exitcode -no-color $VAR_ARG > plan_output.txt 2>&1
+                EXIT_CODE=$?
+                set -e
+                
+                if [ $EXIT_CODE -eq 0 ]; then
                   echo "No drift detected in platform/bootstrap."
+                elif [ $EXIT_CODE -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in platform/bootstrap"
+                  cat plan_output.txt
+                else
+                  echo "##vso[task.logissue type=error]Terraform execution error in platform/bootstrap"
+                  cat plan_output.txt
+                  exit 1
                 fi
             displayName: "Run Terraform Plan (Drift Check)"
 
@@ -92,6 +105,7 @@ stages:
           - task: AzureCLI@2
             inputs:
               azureSubscription: "hub-prod"
+              addSpnToEnvironment: true
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: |
@@ -101,14 +115,26 @@ stages:
                 export ARM_TENANT_ID=$tenantId
                 export ARM_ID_TOKEN=$idToken
                 terraform init -reconfigure -backend-config=backend.hcl -input=false
-                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
-                if [ "$EXIT_CODE" -eq 2 ]; then
-                  echo "##vso[task.logissue type=warning]Drift detected in platform/hub"
-                elif [ "$EXIT_CODE" -eq 1 ]; then
-                  echo "##vso[task.logissue type=error]Terraform plan error in platform/hub"
-                  exit 1
-                else
+                
+                VAR_ARG=""
+                if [ -f "prod.tfvars" ]; then
+                  VAR_ARG="-var-file=prod.tfvars"
+                fi
+                
+                set +e
+                terraform plan -detailed-exitcode -no-color $VAR_ARG > plan_output.txt 2>&1
+                EXIT_CODE=$?
+                set -e
+                
+                if [ $EXIT_CODE -eq 0 ]; then
                   echo "No drift detected in platform/hub."
+                elif [ $EXIT_CODE -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in platform/hub"
+                  cat plan_output.txt
+                else
+                  echo "##vso[task.logissue type=error]Terraform execution error in platform/hub"
+                  cat plan_output.txt
+                  exit 1
                 fi
             displayName: "Run Terraform Plan (Drift Check)"
 
@@ -128,6 +154,7 @@ stages:
           - task: AzureCLI@2
             inputs:
               azureSubscription: "shared-services"
+              addSpnToEnvironment: true
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: |
@@ -137,14 +164,26 @@ stages:
                 export ARM_TENANT_ID=$tenantId
                 export ARM_ID_TOKEN=$idToken
                 terraform init -reconfigure -backend-config=backend.hcl -input=false
-                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
-                if [ "$EXIT_CODE" -eq 2 ]; then
-                  echo "##vso[task.logissue type=warning]Drift detected in platform/shared-services"
-                elif [ "$EXIT_CODE" -eq 1 ]; then
-                  echo "##vso[task.logissue type=error]Terraform plan error in platform/shared-services"
-                  exit 1
-                else
+                
+                VAR_ARG=""
+                if [ -f "prod.tfvars" ]; then
+                  VAR_ARG="-var-file=prod.tfvars"
+                fi
+                
+                set +e
+                terraform plan -detailed-exitcode -no-color $VAR_ARG > plan_output.txt 2>&1
+                EXIT_CODE=$?
+                set -e
+                
+                if [ $EXIT_CODE -eq 0 ]; then
                   echo "No drift detected in platform/shared-services."
+                elif [ $EXIT_CODE -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in platform/shared-services"
+                  cat plan_output.txt
+                else
+                  echo "##vso[task.logissue type=error]Terraform execution error in platform/shared-services"
+                  cat plan_output.txt
+                  exit 1
                 fi
             displayName: "Run Terraform Plan (Drift Check)"
 
@@ -164,6 +203,7 @@ stages:
           - task: AzureCLI@2
             inputs:
               azureSubscription: "app-prod"
+              addSpnToEnvironment: true
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: |
@@ -173,14 +213,26 @@ stages:
                 export ARM_TENANT_ID=$tenantId
                 export ARM_ID_TOKEN=$idToken
                 terraform init -reconfigure -backend-config=backend.hcl -input=false
-                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
-                if [ "$EXIT_CODE" -eq 2 ]; then
-                  echo "##vso[task.logissue type=warning]Drift detected in workloads/tax-advisor"
-                elif [ "$EXIT_CODE" -eq 1 ]; then
-                  echo "##vso[task.logissue type=error]Terraform plan error in workloads/tax-advisor"
-                  exit 1
-                else
+                
+                VAR_ARG=""
+                if [ -f "prod.tfvars" ]; then
+                  VAR_ARG="-var-file=prod.tfvars"
+                fi
+                
+                set +e
+                terraform plan -detailed-exitcode -no-color $VAR_ARG > plan_output.txt 2>&1
+                EXIT_CODE=$?
+                set -e
+                
+                if [ $EXIT_CODE -eq 0 ]; then
                   echo "No drift detected in workloads/tax-advisor."
+                elif [ $EXIT_CODE -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in workloads/tax-advisor"
+                  cat plan_output.txt
+                else
+                  echo "##vso[task.logissue type=error]Terraform execution error in workloads/tax-advisor"
+                  cat plan_output.txt
+                  exit 1
                 fi
             displayName: "Run Terraform Plan (Drift Check)"
 
@@ -200,6 +252,7 @@ stages:
           - task: AzureCLI@2
             inputs:
               azureSubscription: "app-prod"
+              addSpnToEnvironment: true
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: |
@@ -209,13 +262,71 @@ stages:
                 export ARM_TENANT_ID=$tenantId
                 export ARM_ID_TOKEN=$idToken
                 terraform init -reconfigure -backend-config=backend.hcl -input=false
-                terraform plan -detailed-exitcode -no-color || EXIT_CODE=$?
-                if [ "$EXIT_CODE" -eq 2 ]; then
-                  echo "##vso[task.logissue type=warning]Drift detected in workloads/bank-compliance-ai-aks"
-                elif [ "$EXIT_CODE" -eq 1 ]; then
-                  echo "##vso[task.logissue type=error]Terraform plan error in workloads/bank-compliance-ai-aks"
-                  exit 1
-                else
+                
+                VAR_ARG=""
+                if [ -f "prod.tfvars" ]; then
+                  VAR_ARG="-var-file=prod.tfvars"
+                fi
+                
+                set +e
+                terraform plan -detailed-exitcode -no-color $VAR_ARG > plan_output.txt 2>&1
+                EXIT_CODE=$?
+                set -e
+                
+                if [ $EXIT_CODE -eq 0 ]; then
                   echo "No drift detected in workloads/bank-compliance-ai-aks."
+                elif [ $EXIT_CODE -eq 2 ]; then
+                  echo "##vso[task.logissue type=warning]Drift detected in workloads/bank-compliance-ai-aks"
+                  cat plan_output.txt
+                else
+                  echo "##vso[task.logissue type=error]Terraform execution error in workloads/bank-compliance-ai-aks"
+                  cat plan_output.txt
+                  exit 1
                 fi
             displayName: "Run Terraform Plan (Drift Check)"
+
+  # ── 6. Consolidated Governance Summary ───────────────────────────────────────
+  - stage: DriftGovernanceSummary
+    displayName: "6. Drift Governance Summary Dashboard"
+    dependsOn:
+      - DriftBootstrap
+      - DriftHub
+      - DriftSharedServices
+      - DriftTaxBot
+      - DriftBankCompliance
+    condition: always()
+    jobs:
+      - job: PublishSummaryDashboard
+        displayName: "Publish Executive Summary"
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - script: |
+              cat << 'EOF' > $(Build.ArtifactStagingDirectory)/drift-summary.md
+              # 🛡️ Enterprise Terraform Drift Governance Report
+
+              > **Monorepo:** HappyTechies Cloud & AI Platform | **Tenant ID:** `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
+              > **Scanned Roots:** 5 CAF Roots | **Status:** Evaluated via Azure DevOps WIF
+
+              ---
+
+              ### 📋 Multi-Root Infrastructure Status Matrix
+
+              | Infrastructure Scope | Terraform State Root | Subscription ID |
+              |---|---|---|
+              | **Platform - Bootstrap** | `platform/bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` |
+              | **Platform - Hub Network** | `platform/hub` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` |
+              | **Platform - Shared Services** | `platform/shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` |
+              | **Workload - TaxBot PaaS** | `workloads/tax-advisor` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` |
+              | **Workload - BankCompliance AKS** | `workloads/bank-compliance-ai-aks` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` |
+
+              ---
+
+              ### 🛠️ Drift Reconciliation Actions:
+              * **If Status is In Sync:** Zero action required. Cloud resources match committed Git IaC.
+              * **If Status is Drifted:**
+                1. Review warning logs in the corresponding pipeline stage above.
+                2. Run the corresponding IaC pipeline with approved apply to self-heal.
+              EOF
+              echo "##vso[task.uploadsummary]$(Build.ArtifactStagingDirectory)/drift-summary.md"
+            displayName: "Upload ADO Markdown Summary"

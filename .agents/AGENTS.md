@@ -141,6 +141,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Monorepo uses partial backend definitions with empty `backend "azurerm" {}` in `versions.tf`.
 * **Resolution:** Always initialize Terraform with `-reconfigure -backend-config=backend.hcl -input=false` and set `ARM_USE_OIDC: "true"`.
 
+### 7. GitHub Actions Expression Syntax: Unexpected Symbol / Escaped Quotes
+* **Symptom:** Workflow parse failure `Unexpected symbol: '\"...'. Located at position X within expression: ${{ inputs.param || \"...\" }}`.
+* **Root Cause:** GitHub Actions expressions (`${{ ... }}`) require single quotes (`'...'`) for string literals. Double quotes (`"..."`) or escaped quotes (`\"...\"`) are invalid within expressions. Furthermore, directly interpolating `${{ ... }}` into inline scripts (Python/Bash) risks script injection and string delimiter clashes.
+* **Resolution:** In expressions, always use single quotes (`${{ inputs.param || 'default-value' }}`). For inline scripts, pass variables via step-level `env:` and access them via `os.environ` or `$ENV_VAR`.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies

@@ -91,7 +91,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
 ```
 
 ### B. Viewing in Azure Portal
-1. Navigate to **Azure Portal** $\rightarrow$ **Kubernetes services** $\rightarrow$ `aks-ht-bankc-p-cin-01`.
+1. Navigate to **Azure Portal** ➔ **Kubernetes services** ➔ `aks-ht-bankc-p-cin-01`.
 2. Select **Insights** under the *Monitoring* section.
 3. Access tabs:
    * **Cluster:** Overview of node CPU and memory utilization.
@@ -174,13 +174,13 @@ kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring
 kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring
 ```
 * **URL:** `http://localhost:9090`
-* Check scraped endpoints: Go to **Status** $\rightarrow$ **Targets**.
+* Check scraped endpoints: Go to **Status** ➔ **Targets**.
 
 ---
 
 ### C. Built-in Grafana Dashboards Included
 
-Once inside Grafana, click **Dashboards** $\rightarrow$ **Browse** to open pre-loaded dashboards:
+Once inside Grafana, click **Dashboards** ➔ **Browse** to open pre-loaded dashboards:
 
 | Dashboard Name | Purpose | Key Metrics |
 | :--- | :--- | :--- |
