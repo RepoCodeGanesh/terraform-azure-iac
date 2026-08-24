@@ -11,6 +11,7 @@ It contains all Terraform infrastructure, Azure DevOps pipelines, and applicatio
 ```
 terraform-azure-iac/
 ├── platform/
+│   ├── governance/         # Enterprise Management Groups & Policy-as-Code (HappieTechies-root-MG)
 │   ├── bootstrap/          # Bootstrap sub (7689ad81) — remote state SA, Key Vault
 │   ├── hub/                # Hub-prod sub (3eb8cc01) — Azure Firewall, Bastion, Gateway
 │   └── shared-services/    # Shared-services sub (859a785c) — APIM, Log Analytics, Key Vault
@@ -33,14 +34,15 @@ terraform-azure-iac/
 
 ---
 
-## Subscription Map
+## Management Group & Subscription Map (CAF Enterprise Hierarchy)
 
-| Scope | Subscription | Subscription ID |
-|-------|-------------|----------------|
-| Bootstrap | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` |
-| Hub Network | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` |
-| Shared Services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` |
-| Apps / AI Workloads | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` |
+* **Root MG:** `HappieTechies-root-MG` (`HappyTechies Root`)
+  * **Platform MG (`mg-ht-platform`):**
+    * `bootstrap` (`7689ad81-71ba-481b-a17c-e1b6be61bab1`)
+    * `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`)
+    * `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`)
+  * **Landing Zones MG (`mg-ht-landingzones`):**
+    * `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`)
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
@@ -87,6 +89,7 @@ State files are path-keyed — **git repo location does not affect state**.
 
 | Root | State Key |
 |------|-----------|
+| `platform/governance` | `governance/prod.tfstate` |
 | `platform/bootstrap` | `bootstrap/prod.tfstate` |
 | `platform/hub` | `hub/prod.tfstate` |
 | `platform/shared-services` | `shared-services/prod.tfstate` |
