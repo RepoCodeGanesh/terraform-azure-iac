@@ -149,6 +149,19 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** GitHub Actions expressions (`${{ ... }}`) require single quotes (`'...'`) for string literals. Double quotes (`"..."`) or escaped quotes (`\"...\"`) are invalid within expressions. Furthermore, directly interpolating `${{ ... }}` into inline scripts (Python/Bash) risks script injection and string delimiter clashes.
 * **Resolution:** In expressions, always use single quotes (`${{ inputs.param || 'default-value' }}`). For inline scripts, pass variables via step-level `env:` and access them via `os.environ` or `$ENV_VAR`.
 
+### 8. Azure Cognitive Services Soft-Delete & `FlagMustBeSetForRestore` Collision
+* **Symptom:** `azapi_resource` creation for Azure OpenAI or Content Safety fails with `409 Conflict: FlagMustBeSetForRestore` ("An existing resource with ID '...' has been soft-deleted. To restore it, set the restore flag to true").
+* **Root Cause:** Deleting an Azure Cognitive Services / OpenAI account places it into a soft-deleted retention state (48 hours to 90 days). ARM / AzAPI resource creation requests (`PUT`) fail because the resource name remains locked in the subscription's recycle bin.
+* **Resolution:** Purge the soft-deleted resource from the recycle bin before re-running Terraform apply:
+  ```bash
+  az cognitiveservices account purge --name <account-name> --resource-group <rg-name> --location <location> --subscription <sub-id>
+  ```
+
+### 9. Key Vault Secrets & RBAC Role Assignment 409 Conflicts Missing from State
+* **Symptom:** `azurerm_key_vault_secret` or `azurerm_role_assignment` fails with `409 Conflict: A secret with ID ... already exists` or `RoleAssignmentExists`.
+* **Root Cause:** Cloud resources were manually provisioned or left behind from a previous destroyed state while the remote state file was deleted or out-of-sync.
+* **Resolution:** For Key Vault secrets, delete and purge soft-deleted secrets (`az keyvault secret delete` and `az keyvault secret purge`). For role assignments, remove orphaned assignments using `az role assignment delete --ids <id>` or import them into Terraform state (`terraform import <resource> <id>`).
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
