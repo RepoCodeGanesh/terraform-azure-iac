@@ -190,6 +190,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** By default, AKS Web App Routing initializes NGINX with `defaultIngressControllerType: External` creating a public Azure Load Balancer frontend.
 * **Resolution:** Reconfigure App Routing to internal mode via Azure CLI (`az aks approuting update --nginx Internal --name <cluster> --resource-group <rg>`) or set `loadBalancerAnnotations: { "service.beta.kubernetes.io/azure-load-balancer-internal": "true" }` on the `NginxIngressController` CRD. Azure automatically deletes the public IP and unbinds the frontend.
 
+### 15. GitHub Actions: `Workflow does not exist or does not have a workflow_dispatch trigger in this branch`
+* **Symptom:** In GitHub Actions UI, clicking **Run workflow** displays yellow warning: `Workflow does not exist or does not have a workflow_dispatch trigger in this branch` with the button disabled.
+* **Root Cause:** GitHub Actions UI caches the historical YAML filename (e.g. `terraform-unified-manager.yml`). If the file was renamed in a feature branch (e.g. to `ops-terraform-manager.yml`), GitHub checks the branch for the exact historical filename and fails if it doesn't match.
+* **Resolution:** Ensure the exact YAML filename expected by the UI (`terraform-unified-manager.yml`) exists in the branch with a valid `workflow_dispatch:` trigger.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
