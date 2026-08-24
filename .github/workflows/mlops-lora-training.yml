@@ -129,6 +129,10 @@ jobs:
 
       - name: Generate Dynamic MLOps Training & Benchmark Summary
         if: always()
+        env:
+          BASE_MODEL: ${{ inputs.base_model || github.event.inputs.base_model || 'Qwen/Qwen2.5-0.5B-Instruct' }}
+          LORA_RANK: ${{ inputs.lora_rank || github.event.inputs.lora_rank || '16' }}
+          EPOCHS: ${{ inputs.epochs || github.event.inputs.epochs || '3' }}
         run: |
           python3 -c "
           import json, os
@@ -149,9 +153,9 @@ jobs:
               except Exception:
                   pass
 
-          base_model = '${{ github.event.inputs.base_model || \"Qwen/Qwen2.5-0.5B-Instruct\" }}'
-          lora_rank = '${{ github.event.inputs.lora_rank || \"16\" }}'
-          epochs = '${{ github.event.inputs.epochs || \"3\" }}'
+          base_model = os.environ.get('BASE_MODEL', 'Qwen/Qwen2.5-0.5B-Instruct')
+          lora_rank = os.environ.get('LORA_RANK', '16')
+          epochs = os.environ.get('EPOCHS', '3')
 
           md = f'''# 🧠 BankCompliance AI — MLOps LoRA Training & Benchmark Summary
 
