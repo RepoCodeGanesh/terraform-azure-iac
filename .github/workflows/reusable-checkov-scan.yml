@@ -1,0 +1,84 @@
+# ==============================================================================
+# Reusable Workflow: Checkov IaC Security & Policy-as-Code Gate
+# Enterprise Monorepo Security Standard — HappyTechies Cloud & AI Platform
+# ==============================================================================
+
+name: Reusable - Checkov IaC Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      working_directory:
+        description: 'Directory path containing Terraform or Kubernetes files to scan'
+        required: true
+        type: string
+      framework:
+        description: 'Target framework (terraform, kubernetes, all)'
+        required: false
+        type: string
+        default: 'terraform'
+      soft_fail:
+        description: 'Advisory mode flag (true = do not fail pipeline on violations)'
+        required: false
+        type: boolean
+        default: true
+      artifact_name:
+        description: 'Name of the SARIF artifact to upload'
+        required: false
+        type: string
+        default: 'checkov-sarif-report'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  checkov-scan:
+    name: 🛡️ Checkov IaC Scan (${{ inputs.working_directory }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov Security Scan
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ${{ inputs.working_directory }}
+          framework: ${{ inputs.framework }}
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          soft_fail: ${{ inputs.soft_fail }}
+          compact: true
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: results.sarif
+          category: checkov-${{ inputs.working_directory }}
+
+      - name: Generate Checkov Step Summary
+        if: always()
+        run: |
+          STATUS="${{ steps.checkov.outcome == 'success' && '🟢 PASSED (or Soft-Failed)' || '🔴 FAILED' }}"
+          MODE="${{ inputs.soft_fail && '🟡 Phase 1: Discovery (Advisory Mode)' || '🔴 Phase 3: Enforcement Mode' }}"
+          
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          ## 🛡️ Checkov IaC Security Gate Summary
+          
+          > **Target Directory:** \`${{ inputs.working_directory }}\`
+          > **Framework:** \`${{ inputs.framework }}\`
+          > **Rollout Mode:** \`${MODE}\`
+          > **Scan Outcome:** \`${STATUS}\`
+          
+          ---
+          
+          ### 📌 Policy-as-Code Guidelines
+          * **CIS Azure Foundations Benchmarks:** Validates NSGs, AKS identities, Key Vault, and Storage configurations.
+          * **Advisory Status:** During Phase 1 (Week 1), findings are recorded to the GitHub Security tab and step summary without blocking deployments.
+          * **Inline Waivers:** To suppress accepted architectural trade-offs, add \`#checkov:skip=CKV_AZURE_XX: "Reason"\` above the resource block.
+          EOF

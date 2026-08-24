@@ -203,6 +203,15 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Ingestion:** Automated PDF layout-aware chunking pipeline with SHA-256 cryptographic provenance hashing for auditable citations.
 * **Vector Store:** Qdrant Vector Store on AKS with 4GB Managed CSI Persistent Disk and HNSW indexing.
 
+### 5. 🛡️ DevSecOps & Policy-as-Code (Checkov IaC Security)
+* **Scanner:** Checkov (Palo Alto / Bridgecrew) Static Code Analysis & Policy-as-Code.
+* **Config:** Central repository configuration at `.checkov.yaml` with framework targets `[terraform, kubernetes]`.
+* **Rollout Strategy:**
+  - **Phase 1: Discovery (Week 1)**: Advisory mode (`soft_fail: true`). Scans all platform & workload IaC PRs, outputs markdown summaries to `$GITHUB_STEP_SUMMARY`, and uploads SARIF findings to GitHub Security tab without blocking deployments.
+  - **Phase 2: Baseline (Week 2)**: Create baseline suppression file for existing architectural trade-offs.
+  - **Phase 3: Enforcement (Week 3+)**: Enforce blocking gate (`soft_fail: false`) for new CRITICAL/HIGH violations.
+* **Inline Waivers:** When suppressing an accepted violation, use `#checkov:skip=CKV_AZURE_XX: "Documented justification"`.
+
 ---
 
 ## 🤖 Developer AI Tooling & Environment Context
@@ -212,4 +221,5 @@ State files are path-keyed — **git repo location does not affect state**.
   - **Account Email:** `richtextforganesh@outlook.com`
   - **Secret Location:** Azure Key Vault `kv-ht-ss-p-cin-01` (secret: `confluence-api-token` in Shared Services sub `859a785c-bd38-402d-b595-1f44f40fb9bf`).
   - **Auto-Sync Script:** `scripts/sync_to_confluence.py` (converts markdown to storage XHTML and updates Space `HT` via REST API).
+
 

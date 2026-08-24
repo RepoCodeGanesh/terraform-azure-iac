@@ -27,10 +27,22 @@ concurrency:
 permissions:
   id-token: write
   contents: read
+  security-events: write
 
 jobs:
+  # ── STAGE 0: DevSecOps IaC Security & Policy Gate (Checkov Phase 1: Discovery) ──
+  checkov-scan:
+    name: DevSecOps IaC Scan
+    uses: ./.github/workflows/reusable-checkov-scan.yml
+    with:
+      working_directory: 'workloads/tax-advisor'
+      framework: 'terraform'
+      soft_fail: true
+
+  # ── STAGE 1: Terraform Plan ──────────────────────────────────────────────────
   plan:
     name: Plan
+    needs: checkov-scan
     uses: RepoCodeGanesh/.github/.github/workflows/tf-plan.yml@main
     with:
       working_directory: 'workloads/tax-advisor'
@@ -41,6 +53,7 @@ jobs:
       CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
+  # ── STAGE 2: Terraform Apply ─────────────────────────────────────────────────
   apply:
     name: Apply
     needs: plan
@@ -55,13 +68,15 @@ jobs:
       CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
+  # ── STAGE 3: Infrastructure Release Summary ──────────────────────────────────
   summary:
     name: 📊 Infrastructure Release Summary
-    needs: [plan, apply]
+    needs: [checkov-scan, plan, apply]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - run: |
+          CHECKOV_RES="${{ needs.checkov-scan.result == 'success' && '🟡 ADVISORY (Discovery Mode)' || (needs.checkov-scan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           PLAN_RES="${{ needs.plan.result == 'success' && '🟢 SUCCESS' || (needs.plan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           APPLY_RES="${{ needs.apply.result == 'success' && '🟢 APPLIED' || (needs.apply.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED (PR Mode)') }}"
           OVERALL="🟢 INFRASTRUCTURE READY"
@@ -81,6 +96,7 @@ jobs:
           ### 📋 Pipeline Execution Matrix
           | Stage | Result |
           |---|:---:|
+          | **0. Checkov IaC Security Gate** | ${CHECKOV_RES} |
           | **1. Terraform Plan** | ${PLAN_RES} |
           | **2. Terraform Apply** | ${APPLY_RES} |
           EOF
