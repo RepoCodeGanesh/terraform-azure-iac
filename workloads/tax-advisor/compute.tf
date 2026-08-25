@@ -42,7 +42,7 @@ module "function_app" {
     "AZURE_SEARCH_ENDPOINT"          = module.search_service.endpoint
     "AZURE_SEARCH_INDEX"             = "tax-docs"
     "AZURE_CONTENT_SAFETY_ENDPOINT"  = data.azurerm_cognitive_account.content_safety.endpoint
-    "DOCUMENT_INTELLIGENCE_ENDPOINT" = "https://di-ht-bankc-p-cin-01.cognitiveservices.azure.com/"
+    "DOCUMENT_INTELLIGENCE_ENDPOINT" = "https://di-ht-ss-p-cin-01.cognitiveservices.azure.com/"
     "RAG_DOCUMENTS_CONTAINER"        = "documents"
     "APP_NAME"                       = "TaxBot India"
     "APP_VERSION"                    = "1.0.0"
