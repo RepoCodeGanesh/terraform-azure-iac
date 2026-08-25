@@ -46,8 +46,8 @@ aks_os_disk_size_gb = 30
 enable_azure_policy = true
 
 # ─── FinOps: Azure Spot Instance Node Pool (Optional Worker Nodes) ───────────
-enable_spot_node_pool = false
-aks_spot_vm_size      = "Standard_B2s"
+enable_spot_node_pool = true
+aks_spot_vm_size      = "Standard_B2ms"
 aks_spot_max_count    = 3
 
 # ── Custom Domain & Cloudflare DNS ───────────────────────────────────────────
