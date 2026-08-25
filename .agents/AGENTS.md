@@ -227,6 +227,21 @@ State files are path-keyed — **git repo location does not affect state**.
   - **Phase 3: Enforcement (Week 3+)**: Enforce blocking gate (`soft_fail: false`) for new CRITICAL/HIGH violations.
 * **Inline Waivers:** When suppressing an accepted violation, use `#checkov:skip=CKV_AZURE_XX: "Documented justification"`.
 
+### 6. 📦 Reusable Module Architecture Philosophy (AVM Wrappers vs. Hardened Native)
+* **Architecture Pattern:** Hybrid CAF modularization calling official `hashicorp/azurerm ~> 4.0` provider.
+* **AVM Wrappers:** Used for standalone single-purpose services with mature Microsoft schemas (`modules/search_service` wrapping `Azure/avm-res-search-searchservice/azurerm`).
+* **Hardened Native Modules:** Used for core compute, networking, and security (`modules/aks`, `modules/key_vault`, `modules/network`, `modules/function_app`, `modules/cosmos_db`, `modules/cognitive_account`, `modules/content_safety`, `modules/static_web_app`):
+  - **FinOps Guardrails:** Enforces Free-tier SKUs (`Free`, `Y1`, `F0`, `Essential`), Ephemeral OS ($0.00), and KEDA scale-to-zero.
+  - **WIF & OIDC Direct Binding:** Direct binding of Federated Identity Credentials and RBAC without fighting third-party module abstraction layers.
+  - **Fast Execution:** Eliminates deeply nested module trees, executing CI/CD plans in < 15 seconds.
+
+### 7. 🏛️ 5-Pillar Enterprise CAF Platform Standards ($0.00 / Ultra-Low Cost)
+1. **FinOps Spend Protection:** $15 monthly budget guardrails (`azurerm_consumption_budget_subscription`) across all 4 subscriptions with email alerts at 70%, 90%, 100% to `richtextforganesh@outlook.com`.
+2. **Centralized Observability:** Azure Managed Grafana (`sku = "Essential"` $0.00 / 30 users) in `platform/shared-services` with `Monitoring Reader` RBAC, Central Action Group (`ag-ht-ss-p-cin-01`), Resource Graph KQL inventory queries, and Azure Monitor Workbooks.
+3. **Security Posture:** Microsoft Defender for Cloud Free CSPM (Continuous CIS Azure Foundations benchmark scanning) + Key Vault `AuditEvent` diagnostic streaming to `law-ht-ss-p-cin-01`.
+4. **Zero-Trust Hybrid Networking:** Central Private DNS Zones in Hub (`privatelink.vaultcore.azure.net`, `cognitiveservices`, `search`) linked to Hub, Shared Services, and Apps Spoke VNets.
+5. **Shared AI Platform Services:** Central Azure Document Intelligence (`F0` 500 pgs/mo free) and Azure AI Search (`free` 10k docs free) in `platform/shared-services` with endpoints wired to Key Vault and workload ConfigMaps.
+
 ---
 
 ## 🤖 Developer AI Tooling & Environment Context
