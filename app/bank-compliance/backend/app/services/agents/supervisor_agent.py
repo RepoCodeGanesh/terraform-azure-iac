@@ -25,12 +25,17 @@ GREETING_PATTERNS = [
     r"^who\s+are\s+you", r"^what\s+can\s+you\s+do", r"^help\b", r"^start\b", r"^greetings\b"
 ]
 
-# Conversational Follow-up Indicators that genuinely require prior history context
+# Strict Conversational Follow-up Indicators that genuinely require prior history context
 FOLLOWUP_PATTERNS = [
-    r"^what\s+about\b", r"^how\s+about\b", r"^why\b", r"^is\s+that\b",
-    r"^can\s+(they|it|we|you|i)\b", r"^what\s+if\b", r"^explain\s+(more|this|that|further)\b",
-    r"^who\b", r"^and\b", r"^does\s+(it|this|that)\b", r"^what\s+are\s+the\s+penalties\b",
-    r"^in\s+that\s+case\b", r"^what\s+does\s+clause\b", r"^give\s+examples?\b"
+    r"^(why|how)\s+(is|are)\s+(this|that|it|these)\s+(mandatory|required|prohibited|allowed|forbidden|necessary|so)\b",
+    r"^(is|are|was|were)\s+(this|that|these|they|it)\s+(mandatory|required|prohibited|allowed|forbidden|applicable|valid)\b",
+    r"^what\s+(is|are)\s+the\s+penalt(y|ies)\b",
+    r"^what\s+about\s+(the\s+)?(penalt|fines?|deadlines?|timelines?|exemptions?|director|ciso|board|nri|customer|bank|audit)",
+    r"^explain\s+(this|that|further|more|clause|section)\b",
+    r"^in\s+(that|this)\s+case\b",
+    r"^what\s+if\s+(a\s+bank|the\s+bank|they|we|it)\b",
+    r"^(can|does|do)\s+(a\s+bank|the\s+bank|it|this|they|we)\b",
+    r"^(give|show)\s+(an?\s+)?examples?\b"
 ]
 
 DOMAIN_KEYWORDS = {
