@@ -185,9 +185,6 @@ stages:
                   --set secrets.openaiKey="$OPENAI_KEY" \
                   --wait \
                   --timeout 5m
-                
-                chmod +x app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
-                ./app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
 
 # ── STAGE 4: Build & Deploy Frontend to Static Web App ──────────────────────
 - stage: DeployFrontend
