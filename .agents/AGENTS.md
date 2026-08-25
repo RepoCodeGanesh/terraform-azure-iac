@@ -195,6 +195,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** GitHub Actions UI caches the historical YAML filename (e.g. `terraform-unified-manager.yml`). If the file was renamed in a feature branch (e.g. to `ops-terraform-manager.yml`), GitHub checks the branch for the exact historical filename and fails if it doesn't match.
 * **Resolution:** Ensure the exact YAML filename expected by the UI (`terraform-unified-manager.yml`) exists in the branch with a valid `workflow_dispatch:` trigger.
 
+### 16. Reusable Workflow Permission Delegation (`The workflow is requesting 'actions: read', but is only allowed 'actions: none'`)
+* **Symptom:** Workflow failure on startup: `Error calling workflow '.../reusable-checkov-scan.yml...'. The workflow is requesting 'actions: read', but is only allowed 'actions: none'`.
+* **Root Cause:** When a caller workflow defines an explicit top-level `permissions:` block, any undeclared scopes default to `none`. GitHub Actions enforces that a called reusable workflow's requested permissions must be a subset of (or allowed by) what the caller grants. `github/codeql-action/upload-sarif` in the reusable scan workflow requires `actions: read` along with `security-events: write` and `contents: read`.
+* **Resolution:** Explicitly include `actions: read` in the caller workflow's top-level `permissions:` block alongside `contents: read`, `security-events: write`, and `id-token: write`.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
