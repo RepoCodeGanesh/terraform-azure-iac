@@ -19,11 +19,10 @@ backend:
     tag: latest
     pullPolicy: Always
   service:
-    type: LoadBalancer
+    type: ClusterIP
     port: 80
     altPort: 8000
     targetPort: 8000
-    dnsLabel: "bankc-api-ht-cin"
   resources:
     requests:
       cpu: 1m

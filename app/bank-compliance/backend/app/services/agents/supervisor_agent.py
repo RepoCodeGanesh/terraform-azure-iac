@@ -25,6 +25,14 @@ GREETING_PATTERNS = [
     r"^who\s+are\s+you", r"^what\s+can\s+you\s+do", r"^help\b", r"^start\b", r"^greetings\b"
 ]
 
+# Conversational Follow-up Indicators that genuinely require prior history context
+FOLLOWUP_PATTERNS = [
+    r"^what\s+about\b", r"^how\s+about\b", r"^why\b", r"^is\s+that\b",
+    r"^can\s+(they|it|we|you|i)\b", r"^what\s+if\b", r"^explain\s+(more|this|that|further)\b",
+    r"^who\b", r"^and\b", r"^does\s+(it|this|that)\b", r"^what\s+are\s+the\s+penalties\b",
+    r"^in\s+that\s+case\b", r"^what\s+does\s+clause\b", r"^give\s+examples?\b"
+]
+
 DOMAIN_KEYWORDS = {
     "kyc": ["kyc", "nri", "v-cip", "video kyc", "ovd", "passport", "customer identification", "aadhaar", "pan", "re-kyc", "pep", "aml", "cft", "ckyc"],
     "it_governance": ["cloud", "data localization", "cybersecurity", "meity", "disaster recovery", "dr site", "data residue", "bcp", "incident", "soc"],
@@ -82,6 +90,14 @@ Analyze the user's query and output a JSON object:
 Output ONLY valid JSON.
 """
 
+def _contains_keyword(kw: str, text: str) -> bool:
+    """Matches keywords supporting standard English inflection (plurals, -ing, -ed, -ies)."""
+    if kw.endswith("y") and len(kw) > 2 and kw[-2] not in "aeiou":
+        pattern = rf"\b{re.escape(kw[:-1])}(y|ies)\b"
+    else:
+        pattern = rf"\b{re.escape(kw)}(s|es|ed|ing)?\b"
+    return bool(re.search(pattern, text, re.IGNORECASE))
+
 class SupervisorAgent:
     """Planner Agent: Classifies intent, resolves conversational history, and plans sub-tasks via Gemini 2.0 Flash-Lite."""
     
@@ -90,7 +106,7 @@ class SupervisorAgent:
         raw_query = state["sanitized_query"].strip()
         query_lower = raw_query.lower()
         
-        # ── 1. Fast Check for Greetings & Help ───────────────────────────────
+        # ── 1. Fast Check for Greetings & Help (<1ms) ─────────────────────────
         for pattern in GREETING_PATTERNS:
             if re.search(pattern, query_lower):
                 state["intent"] = "greeting"
@@ -99,17 +115,31 @@ class SupervisorAgent:
                 state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
                 return state
 
-        # ── 2. Multi-Turn History Resolution ──────────────────────────────────
+        # ── 2. Guardrail: Raw Query Out-of-Scope Pre-Check (<2ms) ─────────────
+        is_followup = any(re.search(pat, query_lower) for pat in FOLLOWUP_PATTERNS)
+        raw_has_banking = any(_contains_keyword(kw, query_lower) for kw in GENERAL_BANKING_KEYWORDS) or \
+                          any(any(_contains_keyword(kw, query_lower) for kw in kws) for kws in DOMAIN_KEYWORDS.values())
+
+        # If raw query is NOT a conversational follow-up and has ZERO banking relevance -> instant Out-of-Scope (<5ms)
+        if not is_followup and not raw_has_banking:
+            logger.info("SupervisorAgent intercepted off-topic query in <5ms: '%s'", raw_query)
+            state["intent"] = "out_of_scope"
+            state["sub_tasks"] = []
+            state["identified_domains"] = []
+            state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
+            return state
+
+        # ── 3. Context-Aware Multi-Turn History Resolution ────────────────────
         resolved_query = raw_query
         history = state.get("history") or []
-        if history and len(raw_query.split()) <= 6:
+        if is_followup and history:
             last_user_msg = next((m.get("content", "") for m in reversed(history) if m.get("role") == "user"), "")
             if last_user_msg:
                 resolved_query = f"{last_user_msg} -> Specifically: {raw_query}"
                 state["sanitized_query"] = resolved_query
                 query_lower = resolved_query.lower()
 
-        # ── 3. Call Gemini 2.0 Flash-Lite via LiteLLM for Intent Planning ─────
+        # ── 4. Call Gemini 2.0 Flash-Lite via LiteLLM for Intent Planning ─────
         planned_via_llm = False
         if httpx:
             try:
@@ -142,15 +172,15 @@ class SupervisorAgent:
             except Exception as e:
                 logger.debug("SupervisorAgent LLM call fell back to local taxonomy: %s", e)
 
-        # ── 4. Deterministic Out-of-Scope & Domain Classification Guardrail ───
+        # ── 5. Deterministic Domain Classification Guardrail ──────────────────
         identified_domains: List[str] = []
         for domain, keywords in DOMAIN_KEYWORDS.items():
-            if any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in keywords):
+            if any(_contains_keyword(kw, query_lower) for kw in keywords):
                 identified_domains.append(domain)
                 
-        has_general_banking = any(re.search(rf"\b{re.escape(kw)}\b", query_lower) for kw in GENERAL_BANKING_KEYWORDS)
+        has_general_banking = any(_contains_keyword(kw, query_lower) for kw in GENERAL_BANKING_KEYWORDS)
         
-        # If query has zero banking/regulatory relevance, immediately reject as out of scope
+        # Post-validation check
         if not identified_domains and not has_general_banking:
             state["intent"] = "out_of_scope"
             state["sub_tasks"] = []
@@ -173,7 +203,7 @@ class SupervisorAgent:
             state["sub_tasks"] = sub_tasks
             state["identified_domains"] = identified_domains
 
-        # ── 5. Generate Contextual Follow-up Chips ─────────────────────────────
+        # ── 6. Generate Contextual Follow-up Chips ─────────────────────────────
         primary_domain = state["identified_domains"][0] if state.get("identified_domains") else "general"
         state["suggested_followups"] = DOMAIN_SUGGESTIONS.get(primary_domain, DOMAIN_SUGGESTIONS["general"])
         

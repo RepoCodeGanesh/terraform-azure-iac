@@ -130,9 +130,9 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Resolution:** Pass public Entra ID Client IDs directly inside the matrix objects (`client_id: '934ab83b-...'`) rather than indexing secrets.
 
 ### 4. Multi-Agent Semantic Drift & Hallucination Loop on Off-Topic Queries
-* **Symptom:** Asking `"how to fly in sky"` caused the AI to synthesize a detailed answer on NRI KYC V-CIP.
-* **Root Cause:** When initial vector search returned 0 results, the Auditor Agent reflection loop injected a generic domain search query (`"RBI Master Direction on kyc"`), pulling unrelated documents into context and forcing synthesis.
-* **Resolution:** Enforce a deterministic out-of-scope guardrail in `SupervisorAgent` to immediately reject non-banking queries in `<10ms` before entering vector retrieval or reflection loops.
+* **Symptom:** Asking `"how to fly in sky"` or `"i want to fry"` caused the AI to synthesize detailed answers on NRI KYC V-CIP or Cloud Data Localization.
+* **Root Cause:** (1) When initial vector search returned 0 results, the Auditor Agent reflection loop injected a generic domain search query (`"RBI Master Direction on kyc"`), pulling unrelated documents into context and forcing synthesis. (2) In multi-turn chat sessions, short off-topic queries ($\le 6$ words) were blindly prepended with the prior question (`"Can a bank store data in cloud? -> Specifically: i want to fry"`), bypassing domain guardrails.
+* **Resolution:** (1) Enforce a deterministic out-of-scope guardrail in `SupervisorAgent` checking the raw prompt before history concatenation to reject non-banking queries in `<5ms`. (2) Only resolve conversation history if the follow-up contains explicit contextual markers (`what about`, `why`, `is that mandatory`, `explain more`).
 
 ### 5. Grafana ClusterIP & Public HTTPS Mixed Content
 * **Symptom:** Embedded Grafana iframe fails to load or appears empty on `https://bank.mytaxbot.site`.
