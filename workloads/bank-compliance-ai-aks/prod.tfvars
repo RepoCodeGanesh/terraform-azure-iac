@@ -45,6 +45,11 @@ aks_node_count      = 1
 aks_os_disk_size_gb = 30
 enable_azure_policy = true
 
+# ── Spot Node Pool Configuration (FinOps 80%+ Savings) ───────────────────────
+enable_spot_node_pool = true
+aks_spot_vm_size      = "Standard_B2s"
+aks_spot_max_count    = 3
+
 # ── Custom Domain & Cloudflare DNS ───────────────────────────────────────────
 custom_domain_name   = "bank.mytaxbot.site"
 cloudflare_zone_id   = "45acc43e2f88066e0406eca94edffc53"
