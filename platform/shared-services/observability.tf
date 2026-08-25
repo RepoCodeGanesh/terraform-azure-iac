@@ -38,6 +38,26 @@ resource "azurerm_dashboard_grafana" "shared_grafana" {
   depends_on = [azurerm_resource_group.shared_services]
 }
 
+# ─── Grafana RBAC: Grant Grafana System Identity Monitoring Reader on LAW ───
+
+resource "azurerm_role_assignment" "grafana_monitoring_reader" {
+  scope                = azurerm_resource_group.shared_services.id
+  role_definition_name = "Monitoring Reader"
+  principal_id         = azurerm_dashboard_grafana.shared_grafana.identity[0].principal_id
+
+  depends_on = [azurerm_dashboard_grafana.shared_grafana]
+}
+
+# ─── Grafana RBAC: Grant Deployer User Principal Grafana Admin Role ─────────
+
+resource "azurerm_role_assignment" "grafana_admin_deployer" {
+  scope                = azurerm_dashboard_grafana.shared_grafana.id
+  role_definition_name = "Grafana Admin"
+  principal_id         = data.azurerm_client_config.current.object_id
+
+  depends_on = [azurerm_dashboard_grafana.shared_grafana]
+}
+
 # ─── Pillar 2: Central Monitor Action Group (ag-ht-ss-p-cin-01) ───────────────
 # Free Tier: Up to 1,000 free email notifications per month
 
