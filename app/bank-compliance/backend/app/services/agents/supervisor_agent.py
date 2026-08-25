@@ -1,8 +1,8 @@
 """
 BankCompliance AI — Supervisor / Planner Agent
 ==============================================
-Role: Fast Semantic Decomposition & Intent Planning
-Model: Google Gemini 2.0 Flash-Lite via LiteLLM
+Role: Enterprise Mathematical & Semantic Intent Planning (Layers 1 & 2)
+Model: Google Gemini 2.0 Flash-Lite via LiteLLM + Mathematical Vector Centroid Sieve
 """
 
 import re
@@ -10,6 +10,7 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from app.services.agents.agent_state import AgentExecutionState
+from app.services.agents.domain_guardrail import DomainCentroidGuardrail
 from app.core.config import settings
 
 try:
@@ -19,38 +20,10 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Conversational Greetings & Help Triggers
+# Fast Greeting & Help Sieve (<1ms)
 GREETING_PATTERNS = [
     r"^hi\b", r"^hello\b", r"^hey\b", r"^good\s*(morning|afternoon|evening|day)\b",
     r"^who\s+are\s+you", r"^what\s+can\s+you\s+do", r"^help\b", r"^start\b", r"^greetings\b"
-]
-
-# Strict Conversational Follow-up Indicators that genuinely require prior history context
-FOLLOWUP_PATTERNS = [
-    r"^(why|how)\s+(is|are)\s+(this|that|it|these)\s+(mandatory|required|prohibited|allowed|forbidden|necessary|so)\b",
-    r"^(is|are|was|were)\s+(this|that|these|they|it)\s+(mandatory|required|prohibited|allowed|forbidden|applicable|valid)\b",
-    r"^what\s+(is|are)\s+the\s+penalt(y|ies)\b",
-    r"^what\s+about\s+(the\s+)?(penalt|fines?|deadlines?|timelines?|exemptions?|director|ciso|board|nri|customer|bank|audit)",
-    r"^explain\s+(this|that|further|more|clause|section)\b",
-    r"^in\s+(that|this)\s+case\b",
-    r"^what\s+if\s+(a\s+bank|the\s+bank|they|we|it)\b",
-    r"^(can|does|do)\s+(a\s+bank|the\s+bank|it|this|they|we)\b",
-    r"^(give|show)\s+(an?\s+)?examples?\b"
-]
-
-DOMAIN_KEYWORDS = {
-    "kyc": ["kyc", "nri", "v-cip", "video kyc", "ovd", "passport", "customer identification", "aadhaar", "pan", "re-kyc", "pep", "aml", "cft", "ckyc"],
-    "it_governance": ["cloud", "data localization", "cybersecurity", "meity", "disaster recovery", "dr site", "data residue", "bcp", "incident", "soc"],
-    "outsourcing": ["outsourcing", "vendor", "fintech", "ciso", "sub-contracting", "core management", "soc-2", "third-party", "sas-70"],
-    "digital_payments": ["tokenisation", "tokenization", "card", "coft", "cvv", "payment", "tsp", "merchant", "checkout", "pos", "upi", "credit card", "debit card"],
-    "digital_lending": ["lending", "loan", "disbursement", "cooling-off", "lps", "dlr", "recovery agent", "fldg", "first loss default guarantee"]
-}
-
-# Broad Banking and Financial Keywords
-GENERAL_BANKING_KEYWORDS = [
-    "bank", "rbi", "reserve bank", "account", "transaction", "circular", "master direction", "compliance",
-    "statutory", "audit", "deposit", "interest", "penalty", "mandate", "regulator", "financial", "fraud",
-    "customer", "borrower", "lender", "nbfc", "fintech", "license", "authorization", "kyc", "pan", "aadhaar"
 ]
 
 DOMAIN_SUGGESTIONS = {
@@ -89,27 +62,32 @@ DOMAIN_SUGGESTIONS = {
 
 PLANNER_SYSTEM_PROMPT = """You are the Supervisor Planning Agent for an Indian Banking Regulatory Copilot.
 Analyze the user's query and output a JSON object:
-1. "intent": "greeting" (if hello/help), "out_of_scope" (if query is NOT related to banking/finance/compliance, like cooking/sports/movies), or "compliance_query" (if banking/RBI/finance related).
+1. "intent": "greeting" (if hello/help), "out_of_scope" (if query is NOT related to banking/finance/compliance, like cooking/sports/movies/plumbing/general chat), or "compliance_query" (if banking/RBI/finance related).
 2. "domains": list of matching RBI domains from ["kyc", "it_governance", "outsourcing", "digital_payments", "digital_lending"] or empty if out of scope.
 3. "sub_tasks": list of concise sub-search queries for vector retrieval.
 Output ONLY valid JSON.
 """
 
-def _contains_keyword(kw: str, text: str) -> bool:
-    """Matches keywords supporting standard English inflection (plurals, -ing, -ed, -ies)."""
-    if kw.endswith("y") and len(kw) > 2 and kw[-2] not in "aeiou":
-        pattern = rf"\b{re.escape(kw[:-1])}(y|ies)\b"
-    else:
-        pattern = rf"\b{re.escape(kw)}(s|es|ed|ing)?\b"
-    return bool(re.search(pattern, text, re.IGNORECASE))
+DISAMBIGUATION_SYSTEM_PROMPT = """You are the Conversational Query Disambiguator for an Indian Banking Compliance Copilot.
+Given the chat history and the latest user turn:
+1. Determine if the latest turn is a direct follow-up / clarification to the previous banking topic, OR a new unrelated topic.
+2. If it is an unrelated topic (e.g. plumbing, food, sports, general knowledge), mark "is_followup": false and keep the query as-is.
+3. If it is a genuine follow-up, rewrite it into a self-contained standalone banking query resolving pronouns.
+Output ONLY JSON:
+{
+  "is_followup": true/false,
+  "standalone_query": "rewritten query or original query"
+}
+"""
 
 class SupervisorAgent:
-    """Planner Agent: Classifies intent, resolves conversational history, and plans sub-tasks via Gemini 2.0 Flash-Lite."""
+    """Planner Agent: Classifies intent, mathematically guards domain boundaries, and resolves history."""
     
     @staticmethod
     async def plan(state: AgentExecutionState) -> AgentExecutionState:
         raw_query = state["sanitized_query"].strip()
         query_lower = raw_query.lower()
+        history = state.get("history") or []
         
         # ── 1. Fast Check for Greetings & Help (<1ms) ─────────────────────────
         for pattern in GREETING_PATTERNS:
@@ -120,29 +98,71 @@ class SupervisorAgent:
                 state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
                 return state
 
-        # ── 2. Guardrail: Raw Query Out-of-Scope Pre-Check (<2ms) ─────────────
-        is_followup = any(re.search(pat, query_lower) for pat in FOLLOWUP_PATTERNS)
-        raw_has_banking = any(_contains_keyword(kw, query_lower) for kw in GENERAL_BANKING_KEYWORDS) or \
-                          any(any(_contains_keyword(kw, query_lower) for kw in kws) for kws in DOMAIN_KEYWORDS.values())
+        # ── 2. Layer 1: Mathematical Vector Centroid Guardrail (<3ms) ─────────
+        is_in_domain, centroid_sim, max_clause_sim = DomainCentroidGuardrail.evaluate(raw_query)
+        logger.info(
+            "Layer 1 Centroid Evaluation: '%s' | In-Domain=%s (CentroidSim=%.4f, MaxClauseSim=%.4f)",
+            raw_query, is_in_domain, centroid_sim, max_clause_sim
+        )
 
-        # If raw query is NOT a conversational follow-up and has ZERO banking relevance -> instant Out-of-Scope (<5ms)
-        if not is_followup and not raw_has_banking:
-            logger.info("SupervisorAgent intercepted off-topic query in <5ms: '%s'", raw_query)
-            state["intent"] = "out_of_scope"
-            state["sub_tasks"] = []
-            state["identified_domains"] = []
-            state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
-            return state
-
-        # ── 3. Context-Aware Multi-Turn History Resolution ────────────────────
+        # ── 3. Layer 2: Conversational Disambiguation (Multi-Turn) ────────────
         resolved_query = raw_query
-        history = state.get("history") or []
-        if is_followup and history:
-            last_user_msg = next((m.get("content", "") for m in reversed(history) if m.get("role") == "user"), "")
-            if last_user_msg:
-                resolved_query = f"{last_user_msg} -> Specifically: {raw_query}"
-                state["sanitized_query"] = resolved_query
-                query_lower = resolved_query.lower()
+        
+        if history:
+            # Multi-turn conversational session
+            disambiguated = False
+            if httpx:
+                try:
+                    litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
+                    api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
+                    
+                    history_snippet = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in history[-3:]])
+                    payload = {
+                        "model": "gemini-2.0-flash-lite",
+                        "messages": [
+                            {"role": "system", "content": DISAMBIGUATION_SYSTEM_PROMPT},
+                            {"role": "user", "content": f"Chat History:\n{history_snippet}\n\nLatest Turn:\n{raw_query}"}
+                        ],
+                        "max_tokens": 100,
+                        "temperature": 0.0
+                    }
+                    async with httpx.AsyncClient(timeout=2.0) as client:
+                        resp = await client.post(
+                            f"{litellm_url}/chat/completions",
+                            json=payload,
+                            headers={"Authorization": f"Bearer {api_key}"}
+                        )
+                        if resp.status_code == 200:
+                            content = resp.json()["choices"][0]["message"]["content"].strip()
+                            if "{" in content and "}" in content:
+                                parsed = json.loads(content[content.find("{"):content.rfind("}")+1])
+                                is_followup = parsed.get("is_followup", False)
+                                if is_followup:
+                                    resolved_query = parsed.get("standalone_query", raw_query)
+                                    state["sanitized_query"] = resolved_query
+                                    # Re-evaluate resolved query mathematically
+                                    is_in_domain, centroid_sim, max_clause_sim = DomainCentroidGuardrail.evaluate(resolved_query)
+                                disambiguated = True
+                except Exception as e:
+                    logger.debug("Disambiguation LLM call skipped: %s", e)
+
+            if not disambiguated and not is_in_domain:
+                # If offline/fallback and raw query has zero mathematical domain similarity -> Hard Out-of-Scope
+                logger.info("SupervisorAgent intercepted off-topic query in multi-turn chat: '%s'", raw_query)
+                state["intent"] = "out_of_scope"
+                state["sub_tasks"] = []
+                state["identified_domains"] = []
+                state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
+                return state
+        else:
+            # Standalone single-turn query: If mathematically out of domain, immediately reject
+            if not is_in_domain:
+                logger.info("SupervisorAgent mathematically intercepted off-topic query in <3ms: '%s'", raw_query)
+                state["intent"] = "out_of_scope"
+                state["sub_tasks"] = []
+                state["identified_domains"] = []
+                state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
+                return state
 
         # ── 4. Call Gemini 2.0 Flash-Lite via LiteLLM for Intent Planning ─────
         planned_via_llm = False
@@ -159,7 +179,7 @@ class SupervisorAgent:
                     "max_tokens": 150,
                     "temperature": 0.0
                 }
-                async with httpx.AsyncClient(timeout=3.0) as client:
+                async with httpx.AsyncClient(timeout=2.5) as client:
                     resp = await client.post(
                         f"{litellm_url}/chat/completions",
                         json=payload,
@@ -175,40 +195,23 @@ class SupervisorAgent:
                             state["sub_tasks"] = parsed.get("sub_tasks", [resolved_query])
                             planned_via_llm = True
             except Exception as e:
-                logger.debug("SupervisorAgent LLM call fell back to local taxonomy: %s", e)
+                logger.debug("SupervisorAgent LLM call fell back to vector taxonomy: %s", e)
 
-        # ── 5. Deterministic Domain Classification Guardrail ──────────────────
-        identified_domains: List[str] = []
-        for domain, keywords in DOMAIN_KEYWORDS.items():
-            if any(_contains_keyword(kw, query_lower) for kw in keywords):
-                identified_domains.append(domain)
-                
-        has_general_banking = any(_contains_keyword(kw, query_lower) for kw in GENERAL_BANKING_KEYWORDS)
-        
-        # Post-validation check
-        if not identified_domains and not has_general_banking:
+        # Post-validation check using mathematical criterion
+        if state.get("intent") == "out_of_scope" or not is_in_domain:
             state["intent"] = "out_of_scope"
             state["sub_tasks"] = []
             state["identified_domains"] = []
             state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
             return state
-            
+
         if not planned_via_llm or state.get("intent") != "compliance_query":
             state["intent"] = "compliance_query"
-            sub_tasks: List[str] = []
-            if len(identified_domains) > 1:
-                for domain in identified_domains:
-                    clean_name = domain.replace('_', ' ').title()
-                    sub_tasks.append(f"RBI {clean_name} requirements for: {resolved_query}")
-            else:
-                sub_tasks.append(resolved_query)
-                if not identified_domains:
-                    identified_domains.append("general")
-                    
-            state["sub_tasks"] = sub_tasks
-            state["identified_domains"] = identified_domains
+            state["sub_tasks"] = [resolved_query]
+            if not state.get("identified_domains"):
+                state["identified_domains"] = ["general"]
 
-        # ── 6. Generate Contextual Follow-up Chips ─────────────────────────────
+        # ── 5. Generate Contextual Follow-up Chips ─────────────────────────────
         primary_domain = state["identified_domains"][0] if state.get("identified_domains") else "general"
         state["suggested_followups"] = DOMAIN_SUGGESTIONS.get(primary_domain, DOMAIN_SUGGESTIONS["general"])
         

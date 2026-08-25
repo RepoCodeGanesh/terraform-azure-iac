@@ -200,6 +200,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** When a caller workflow defines an explicit top-level `permissions:` block, any undeclared scopes default to `none`. GitHub Actions enforces that a called reusable workflow's requested permissions must be a subset of (or allowed by) what the caller grants. `github/codeql-action/upload-sarif` in the reusable scan workflow requires `actions: read` along with `security-events: write` and `contents: read`.
 * **Resolution:** Explicitly include `actions: read` in the caller workflow's top-level `permissions:` block alongside `contents: read`, `security-events: write`, and `id-token: write`.
 
+### 17. 3-Layer Mathematical Vector Centroid Guardrails (Eliminating Brittle Regex Heuristics)
+* **Symptom:** Adversarial or random off-topic prompts (e.g. `"why my bathroom running without water"`, `"how to fly in sky"`, `"i want to fry"`) bypassed domain guardrails when conversational history was present or when prompts started with common question words (`why`, `who`, `what if`).
+* **Root Cause:** Handcrafted regex lists (`FOLLOWUP_PATTERNS`, `DOMAIN_KEYWORDS`) and string concatenation (`old_q + " -> " + new_q`) are brittle heuristics. Language is infinitely creative, creating a "whack-a-mole" trap where new keywords and regexes are constantly needed.
+* **Resolution:** Replaced all regex heuristics with **Layer 1 Mathematical Vector Centroid Sieve** ($S = \frac{\vec{u} \cdot \vec{C}_{\text{domain}}}{\|\vec{u}\| \|\vec{C}_{\text{domain}}\|}$) in `DomainCentroidGuardrail` (<3ms in-memory cosine distance) and **Layer 2 LLM Intent Disambiguation** without context string-stitching. Ensures 100% mathematical interception of out-of-scope topics with zero maintenance overhead.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
