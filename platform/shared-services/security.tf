@@ -169,6 +169,7 @@ resource "azurerm_security_center_subscription_pricing" "free_cspm" {
 }
 
 resource "azurerm_security_center_contact" "security_admin" {
+  name                = "default"
   email               = "richtextforganesh@outlook.com"
   phone               = "+919876543210"
   alert_notifications = true
@@ -186,9 +187,8 @@ resource "azurerm_monitor_diagnostic_setting" "shared_kv_diagnostics" {
     category = "AuditEvent"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 
   depends_on = [module.shared_key_vault, module.shared_log_analytics]

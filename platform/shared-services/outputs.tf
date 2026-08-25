@@ -88,11 +88,6 @@ output "ai_search_endpoint" {
   value       = "https://${azurerm_search_service.shared_ai_search.name}.search.windows.net"
 }
 
-output "grafana_endpoint" {
-  description = "Endpoint URL of the central Azure Managed Grafana workspace."
-  value       = azurerm_dashboard_grafana.shared_grafana.endpoint
-}
-
 output "action_group_id" {
   description = "Resource ID of the central Monitor Action Group for enterprise alerts."
   value       = azurerm_monitor_action_group.central_alerts.id

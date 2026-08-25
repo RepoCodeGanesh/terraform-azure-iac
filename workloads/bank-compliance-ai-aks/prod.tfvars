@@ -45,8 +45,8 @@ aks_node_count      = 1
 aks_os_disk_size_gb = 30
 enable_azure_policy = true
 
-# ── Spot Node Pool Configuration (FinOps 80%+ Savings) ───────────────────────
-enable_spot_node_pool = true
+# ─── FinOps: Azure Spot Instance Node Pool (Optional Worker Nodes) ───────────
+enable_spot_node_pool = false
 aks_spot_vm_size      = "Standard_B2s"
 aks_spot_max_count    = 3
 

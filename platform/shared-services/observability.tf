@@ -17,47 +17,6 @@ module "shared_log_analytics" {
   tags                = local.tags
 }
 
-# ─── Pillar 2: Central Azure Managed Grafana (Essential Free Tier $0.00) ──────
-# Free Tier ($0.00): Supports up to 30 users with Entra ID SSO & Azure Monitor datasource
-
-resource "azurerm_dashboard_grafana" "shared_grafana" {
-  name                              = "grafana-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
-  resource_group_name               = azurerm_resource_group.shared_services.name
-  location                          = azurerm_resource_group.shared_services.location
-  sku                               = "Essential"
-  api_key_enabled                   = true
-  public_network_access_enabled     = true
-  deterministic_outbound_ip_enabled = false
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = local.tags
-
-  depends_on = [azurerm_resource_group.shared_services]
-}
-
-# ─── Grafana RBAC: Grant Grafana System Identity Monitoring Reader on LAW ───
-
-resource "azurerm_role_assignment" "grafana_monitoring_reader" {
-  scope                = azurerm_resource_group.shared_services.id
-  role_definition_name = "Monitoring Reader"
-  principal_id         = azurerm_dashboard_grafana.shared_grafana.identity[0].principal_id
-
-  depends_on = [azurerm_dashboard_grafana.shared_grafana]
-}
-
-# ─── Grafana RBAC: Grant Deployer User Principal Grafana Admin Role ─────────
-
-resource "azurerm_role_assignment" "grafana_admin_deployer" {
-  scope                = azurerm_dashboard_grafana.shared_grafana.id
-  role_definition_name = "Grafana Admin"
-  principal_id         = data.azurerm_client_config.current.object_id
-
-  depends_on = [azurerm_dashboard_grafana.shared_grafana]
-}
-
 # ─── Pillar 2: Central Monitor Action Group (ag-ht-ss-p-cin-01) ───────────────
 # Free Tier: Up to 1,000 free email notifications per month
 
@@ -75,20 +34,6 @@ resource "azurerm_monitor_action_group" "central_alerts" {
   tags = local.tags
 
   depends_on = [azurerm_resource_group.shared_services]
-}
-
-# ─── Pillar 2: Azure Resource Graph Central Inventory Saved Queries ──────────
-
-resource "azurerm_resource_graph_query" "orphan_disks" {
-  name        = "query-orphan-disks-and-ips"
-  query       = "Resources | where type =~ 'microsoft.compute/disks' and isnull(managedBy) | project id, name, resourceGroup, subscriptionId, type"
-  description = "Identifies unattached managed disks and unassociated Public IPs across all subscriptions to prevent cost leakage."
-}
-
-resource "azurerm_resource_graph_query" "tag_compliance" {
-  name        = "query-tag-compliance"
-  query       = "Resources | where isempty(tags.Environment) or isempty(tags.Project) or isempty(tags.Workload) | project id, name, type, resourceGroup, subscriptionId"
-  description = "Identifies any cloud resource missing mandatory enterprise CAF governance tags."
 }
 
 # ─── Pillar 2: Centralized Azure Monitor Workbook (Single Pane of Glass) ─────
