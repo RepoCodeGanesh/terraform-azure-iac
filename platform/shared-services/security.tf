@@ -103,3 +103,93 @@ resource "azurerm_key_vault_secret" "content_safety_endpoint" {
 
   depends_on = [module.shared_key_vault, module.shared_content_safety]
 }
+
+resource "azurerm_key_vault_secret" "doc_intelligence_endpoint" {
+  name         = "doc-intelligence-endpoint"
+  value        = azurerm_cognitive_account.shared_doc_intelligence.endpoint
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, azurerm_cognitive_account.shared_doc_intelligence]
+}
+
+resource "azurerm_key_vault_secret" "doc_intelligence_api_key" {
+  name         = "doc-intelligence-api-key"
+  value        = azurerm_cognitive_account.shared_doc_intelligence.primary_access_key
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, azurerm_cognitive_account.shared_doc_intelligence]
+}
+
+resource "azurerm_key_vault_secret" "ai_search_endpoint" {
+  name         = "ai-search-endpoint"
+  value        = "https://${azurerm_search_service.shared_ai_search.name}.search.windows.net"
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, azurerm_search_service.shared_ai_search]
+}
+
+resource "azurerm_key_vault_secret" "ai_search_api_key" {
+  name         = "ai-search-api-key"
+  value        = azurerm_search_service.shared_ai_search.primary_key
+  key_vault_id = module.shared_key_vault.id
+  tags         = local.tags
+
+  depends_on = [module.shared_key_vault, azurerm_search_service.shared_ai_search]
+}
+
+# ─── Workload RBAC: App-Prod SP Role Delegation on Shared Document Intelligence ──
+
+resource "azurerm_role_assignment" "app_prod_doc_intel_user" {
+  scope                = azurerm_cognitive_account.shared_doc_intelligence.id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = var.app_prod_sp_object_id
+
+  depends_on = [azurerm_cognitive_account.shared_doc_intelligence]
+}
+
+# ─── Workload RBAC: App-Prod SP Role Delegation on Shared AI Search ──────────
+
+resource "azurerm_role_assignment" "app_prod_search_contributor" {
+  scope                = azurerm_search_service.shared_ai_search.id
+  role_definition_name = "Search Index Data Contributor"
+  principal_id         = var.app_prod_sp_object_id
+
+  depends_on = [azurerm_search_service.shared_ai_search]
+}
+
+# ─── Pillar 3: Microsoft Defender for Cloud (Free Foundation CSPM Tier) ───────
+# Free Tier ($0.00): Continuous CIS Azure Foundations benchmark scanning & Secure Score
+
+resource "azurerm_security_center_subscription_pricing" "free_cspm" {
+  tier          = "Free"
+  resource_type = "VirtualMachines"
+}
+
+resource "azurerm_security_center_contact" "security_admin" {
+  email               = "richtextforganesh@outlook.com"
+  phone               = "+919876543210"
+  alert_notifications = true
+  alerts_to_admins    = true
+}
+
+# ─── Pillar 3: Key Vault Audit Diagnostics to Central LAW ─────────────────────
+
+resource "azurerm_monitor_diagnostic_setting" "shared_kv_diagnostics" {
+  name                       = "diag-${module.shared_kv_name.name}"
+  target_resource_id         = module.shared_key_vault.id
+  log_analytics_workspace_id = module.shared_log_analytics.id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+
+  depends_on = [module.shared_key_vault, module.shared_log_analytics]
+}
