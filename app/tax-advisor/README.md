@@ -5,6 +5,7 @@ An Enterprise AI Income Tax & Salary Optimization Copilot for Indian Income Tax 
 * **Live Production Domain:** **[https://www.mytaxbot.site](https://www.mytaxbot.site)**
 * **Infrastructure Root:** [`workloads/tax-advisor/`](../../workloads/tax-advisor/)
 * **CI/CD Workflows:** `.github/workflows/app-tax-advisor.yml` & `pipelines/azure-cicd-app-tax-advisor.yml`
+* **Status:** Verified Active & Deployed (HTTP 200 OK)
 
 ---
 

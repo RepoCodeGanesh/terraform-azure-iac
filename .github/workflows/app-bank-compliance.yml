@@ -112,10 +112,10 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── JOB 3: Deploy Kubernetes Manifests to AKS ─────────────────────────────
-  deploy-aks:
+  deploy-backend-aks:
     name: Deploy to AKS
     needs: build-and-push-backend
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push')
     runs-on: ubuntu-latest
     environment: bank-compliance-prod
     steps:
@@ -169,12 +169,6 @@ jobs:
           echo "=== LiteLLM Logs ==="
           kubectl logs -n bank-compliance -l app=litellm-proxy --tail=100 || true
 
-      - name: Deploy Prometheus & Grafana Observability Stack
-        working-directory: app/bank-compliance/k8s/monitoring
-        run: |
-          chmod +x deploy-monitoring.sh
-          ./deploy-monitoring.sh
-
       - name: Generate AKS Production Release Step Summary
         if: always()
         run: |
@@ -193,7 +187,7 @@ jobs:
           | **AI Gateway (LiteLLM)** | Azure OpenAI ➔ Google Gemini Fallback Chain | 🟢 Healthy |
           | **Vector Database (Qdrant)** | 4GB CSI Azure Managed Disk | 🟢 Connected |
           | **FinOps Autoscaler** | KEDA Scale-to-Zero (0 to 5 Pods) | 🟢 Enabled (\$0 Idle) |
-          | **Observability** | Prometheus + Grafana 5-Pillar Dashboard | 🟢 Scraping |
+          | **Observability** | Azure Container Insights + Log Analytics (law-ht-ss-p-cin-01) | 🟢 Streaming |
 
           EOF
 
@@ -201,7 +195,7 @@ jobs:
   deploy-frontend:
     name: Build & Deploy Frontend SPA
     needs: [devsecops-scan, ai-eval-quality-gate]
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push')
+    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push')
     uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
     with:
       static_web_app_name: 'stapp-ht-bankc-p-cin-01'

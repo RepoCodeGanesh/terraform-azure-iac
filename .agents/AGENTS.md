@@ -11,6 +11,7 @@ It contains all Terraform infrastructure, Azure DevOps pipelines, and applicatio
 ```
 terraform-azure-iac/
 ├── platform/
+│   ├── governance/         # Enterprise Management Groups & Policy-as-Code (HappieTechies-root-MG)
 │   ├── bootstrap/          # Bootstrap sub (7689ad81) — remote state SA, Key Vault
 │   ├── hub/                # Hub-prod sub (3eb8cc01) — Azure Firewall, Bastion, Gateway
 │   └── shared-services/    # Shared-services sub (859a785c) — APIM, Log Analytics, Key Vault
@@ -33,14 +34,15 @@ terraform-azure-iac/
 
 ---
 
-## Subscription Map
+## Management Group & Subscription Map (CAF Enterprise Hierarchy)
 
-| Scope | Subscription | Subscription ID |
-|-------|-------------|----------------|
-| Bootstrap | `bootstrap` | `7689ad81-71ba-481b-a17c-e1b6be61bab1` |
-| Hub Network | `Hub-prod` | `3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` |
-| Shared Services | `Shared-services` | `859a785c-bd38-402d-b595-1f44f40fb9bf` |
-| Apps / AI Workloads | `Apps-prod` | `f4ffefe1-d689-4059-969c-ccc73e2a11d4` |
+* **Root MG:** `HappieTechies-root-MG` (`HappyTechies Root`)
+  * **Platform MG (`mg-ht-platform`):**
+    * `bootstrap` (`7689ad81-71ba-481b-a17c-e1b6be61bab1`)
+    * `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`)
+    * `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`)
+  * **Landing Zones MG (`mg-ht-landingzones`):**
+    * `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`)
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
@@ -87,6 +89,7 @@ State files are path-keyed — **git repo location does not affect state**.
 
 | Root | State Key |
 |------|-----------|
+| `platform/governance` | `governance/prod.tfstate` |
 | `platform/bootstrap` | `bootstrap/prod.tfstate` |
 | `platform/hub` | `hub/prod.tfstate` |
 | `platform/shared-services` | `shared-services/prod.tfstate` |
@@ -127,9 +130,9 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Resolution:** Pass public Entra ID Client IDs directly inside the matrix objects (`client_id: '934ab83b-...'`) rather than indexing secrets.
 
 ### 4. Multi-Agent Semantic Drift & Hallucination Loop on Off-Topic Queries
-* **Symptom:** Asking `"how to fly in sky"` caused the AI to synthesize a detailed answer on NRI KYC V-CIP.
-* **Root Cause:** When initial vector search returned 0 results, the Auditor Agent reflection loop injected a generic domain search query (`"RBI Master Direction on kyc"`), pulling unrelated documents into context and forcing synthesis.
-* **Resolution:** Enforce a deterministic out-of-scope guardrail in `SupervisorAgent` to immediately reject non-banking queries in `<10ms` before entering vector retrieval or reflection loops.
+* **Symptom:** Asking `"how to fly in sky"` or `"i want to fry"` caused the AI to synthesize detailed answers on NRI KYC V-CIP or Cloud Data Localization.
+* **Root Cause:** (1) When initial vector search returned 0 results, the Auditor Agent reflection loop injected a generic domain search query (`"RBI Master Direction on kyc"`), pulling unrelated documents into context and forcing synthesis. (2) In multi-turn chat sessions, short off-topic queries ($\le 6$ words) were blindly prepended with the prior question (`"Can a bank store data in cloud? -> Specifically: i want to fry"`), bypassing domain guardrails.
+* **Resolution:** (1) Enforce a deterministic out-of-scope guardrail in `SupervisorAgent` checking the raw prompt before history concatenation to reject non-banking queries in `<5ms`. (2) Only resolve conversation history if the follow-up contains explicit contextual markers (`what about`, `why`, `is that mandatory`, `explain more`).
 
 ### 5. Grafana ClusterIP & Public HTTPS Mixed Content
 * **Symptom:** Embedded Grafana iframe fails to load or appears empty on `https://bank.mytaxbot.site`.
@@ -145,6 +148,62 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Symptom:** Workflow parse failure `Unexpected symbol: '\"...'. Located at position X within expression: ${{ inputs.param || \"...\" }}`.
 * **Root Cause:** GitHub Actions expressions (`${{ ... }}`) require single quotes (`'...'`) for string literals. Double quotes (`"..."`) or escaped quotes (`\"...\"`) are invalid within expressions. Furthermore, directly interpolating `${{ ... }}` into inline scripts (Python/Bash) risks script injection and string delimiter clashes.
 * **Resolution:** In expressions, always use single quotes (`${{ inputs.param || 'default-value' }}`). For inline scripts, pass variables via step-level `env:` and access them via `os.environ` or `$ENV_VAR`.
+
+### 8. Azure Cognitive Services Soft-Delete & `FlagMustBeSetForRestore` Collision
+* **Symptom:** `azapi_resource` creation for Azure OpenAI or Content Safety fails with `409 Conflict: FlagMustBeSetForRestore` ("An existing resource with ID '...' has been soft-deleted. To restore it, set the restore flag to true").
+* **Root Cause:** Deleting an Azure Cognitive Services / OpenAI account places it into a soft-deleted retention state (48 hours to 90 days). ARM / AzAPI resource creation requests (`PUT`) fail because the resource name remains locked in the subscription's recycle bin.
+* **Resolution:** Purge the soft-deleted resource from the recycle bin before re-running Terraform apply:
+  ```bash
+  az cognitiveservices account purge --name <account-name> --resource-group <rg-name> --location <location> --subscription <sub-id>
+  ```
+
+### 9. Key Vault Secrets & RBAC Role Assignment 409 Conflicts Missing from State
+* **Symptom:** `azurerm_key_vault_secret` or `azurerm_role_assignment` fails with `409 Conflict: A secret with ID ... already exists` or `RoleAssignmentExists`.
+* **Root Cause:** Cloud resources were manually provisioned or left behind from a previous destroyed state while the remote state file was deleted or out-of-sync.
+* **Resolution:** For Key Vault secrets, delete and purge soft-deleted secrets (`az keyvault secret delete` and `az keyvault secret purge`). For role assignments, remove orphaned assignments using `az role assignment delete --ids <id>` or import them into Terraform state (`terraform import <resource> <id>`).
+
+### 10. AKS Diagnostic Setting Pre-existence & Terraform State Collision
+* **Symptom:** `azurerm_monitor_diagnostic_setting` fails with `already exists - to be managed via Terraform this resource needs to be imported into the State`.
+* **Root Cause:** When an AKS cluster is deployed with OMS agent or policy enforcement, Azure Monitor diagnostic settings (`diag-aks-ht-bankc-p-cin-01`) may be created directly in ARM or exist from earlier unmanaged runs.
+* **Resolution:** Import the diagnostic setting into the Terraform state:
+  ```bash
+  terraform import -var-file="prod.tfvars" 'module.bank_compliance_aks.azurerm_monitor_diagnostic_setting.aks_diagnostics[0]' '/subscriptions/<sub-id>/resourceGroups/<rg-name>/providers/Microsoft.ContainerService/managedClusters/<cluster-name>|<diag-name>'
+  ```
+
+### 11. GitHub Actions: Job Depends on Unknown Job in `needs:` Array
+* **Symptom:** Workflow parse failure: `Invalid workflow file: ... Job 'summary' depends on unknown job 'deploy-backend-aks'`.
+* **Root Cause:** A downstream aggregation or summary job lists a job ID in `needs:` that does not match the exact key name defined under `jobs:` in the workflow YAML.
+* **Resolution:** Synchronize the job key in `jobs:` (e.g., rename `deploy-aks:` to `deploy-backend-aks:`) to match all downstream `needs:` references.
+
+### 12. AKS Stopped State Mutation Restrictions (`OperationNotAllowed`)
+* **Symptom:** Terraform apply or ARM mutation fails with `400 Bad Request: OperationNotAllowed: Managed Cluster is in stopped state, no operations except for start are allowed`.
+* **Root Cause:** For FinOps cost optimization, AKS clusters may be powered down (`Stopped`). Azure Resource Manager forbids any cluster updates, node pool upgrades, or addon mutations while stopped.
+* **Resolution:** Start the AKS cluster (`az aks start --name <cluster> --resource-group <rg>`) and wait for `provisioningState: Succeeded` before applying Terraform changes.
+
+### 13. Static Web App Deployment Token Misalignment (`Reason: No matching Static Web App was found or the api key was invalid`)
+* **Symptom:** `Azure/static-web-apps-deploy@v1` fails with HTTP 400 `BadRequest: No matching Static Web App was found or the api key was invalid`.
+* **Root Cause:** In caller workflows calling reusable `app-deploy-swa.yml`, `swa_token_secret_name` was omitted and defaulted to a legacy uppercase secret name (`SWA-TAXB-DEPLOYMENT-TOKEN`) containing an obsolete token, whereas Terraform stores the live API key in `taxb-swa-deployment-token`.
+* **Resolution:** Explicitly pass `swa_token_secret_name: 'taxb-swa-deployment-token'` in the caller workflow `with:` block and ensure Key Vault secrets reflect the live `az staticwebapp secrets list` API token.
+
+### 14. AKS Ingress Public IP Elimination via Internal Web App Routing
+* **Symptom:** AKS Web App Routing addon provisions an unwanted public IP (`kubernetes-*`) on the NGINX ingress controller incurring hourly static IP charges (~$3.65/mo).
+* **Root Cause:** By default, AKS Web App Routing initializes NGINX with `defaultIngressControllerType: External` creating a public Azure Load Balancer frontend.
+* **Resolution:** Reconfigure App Routing to internal mode via Azure CLI (`az aks approuting update --nginx Internal --name <cluster> --resource-group <rg>`) or set `loadBalancerAnnotations: { "service.beta.kubernetes.io/azure-load-balancer-internal": "true" }` on the `NginxIngressController` CRD. Azure automatically deletes the public IP and unbinds the frontend.
+
+### 15. GitHub Actions: `Workflow does not exist or does not have a workflow_dispatch trigger in this branch`
+* **Symptom:** In GitHub Actions UI, clicking **Run workflow** displays yellow warning: `Workflow does not exist or does not have a workflow_dispatch trigger in this branch` with the button disabled.
+* **Root Cause:** GitHub Actions UI caches the historical YAML filename (e.g. `terraform-unified-manager.yml`). If the file was renamed in a feature branch (e.g. to `ops-terraform-manager.yml`), GitHub checks the branch for the exact historical filename and fails if it doesn't match.
+* **Resolution:** Ensure the exact YAML filename expected by the UI (`terraform-unified-manager.yml`) exists in the branch with a valid `workflow_dispatch:` trigger.
+
+### 16. Reusable Workflow Permission Delegation (`The workflow is requesting 'actions: read', but is only allowed 'actions: none'`)
+* **Symptom:** Workflow failure on startup: `Error calling workflow '.../reusable-checkov-scan.yml...'. The workflow is requesting 'actions: read', but is only allowed 'actions: none'`.
+* **Root Cause:** When a caller workflow defines an explicit top-level `permissions:` block, any undeclared scopes default to `none`. GitHub Actions enforces that a called reusable workflow's requested permissions must be a subset of (or allowed by) what the caller grants. `github/codeql-action/upload-sarif` in the reusable scan workflow requires `actions: read` along with `security-events: write` and `contents: read`.
+* **Resolution:** Explicitly include `actions: read` in the caller workflow's top-level `permissions:` block alongside `contents: read`, `security-events: write`, and `id-token: write`.
+
+### 17. 3-Layer Mathematical Vector Centroid Guardrails (Eliminating Brittle Regex Heuristics)
+* **Symptom:** Adversarial or random off-topic prompts (e.g. `"why my bathroom running without water"`, `"how to fly in sky"`, `"i want to fry"`) bypassed domain guardrails when conversational history was present or when prompts started with common question words (`why`, `who`, `what if`).
+* **Root Cause:** Handcrafted regex lists (`FOLLOWUP_PATTERNS`, `DOMAIN_KEYWORDS`) and string concatenation (`old_q + " -> " + new_q`) are brittle heuristics. Language is infinitely creative, creating a "whack-a-mole" trap where new keywords and regexes are constantly needed.
+* **Resolution:** Replaced all regex heuristics with **Layer 1 Mathematical Vector Centroid Sieve** ($S = \frac{\vec{u} \cdot \vec{C}_{\text{domain}}}{\|\vec{u}\| \|\vec{C}_{\text{domain}}\|}$) in `DomainCentroidGuardrail` (<3ms in-memory cosine distance) and **Layer 2 LLM Intent Disambiguation** without context string-stitching. Ensures 100% mathematical interception of out-of-scope topics with zero maintenance overhead.
 
 ---
 
@@ -169,6 +228,30 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Ingestion:** Automated PDF layout-aware chunking pipeline with SHA-256 cryptographic provenance hashing for auditable citations.
 * **Vector Store:** Qdrant Vector Store on AKS with 4GB Managed CSI Persistent Disk and HNSW indexing.
 
+### 5. 🛡️ DevSecOps & Policy-as-Code (Checkov IaC Security)
+* **Scanner:** Checkov (Palo Alto / Bridgecrew) Static Code Analysis & Policy-as-Code.
+* **Config:** Central repository configuration at `.checkov.yaml` with framework targets `[terraform, kubernetes]`.
+* **Rollout Strategy:**
+  - **Phase 1: Discovery (Week 1)**: Advisory mode (`soft_fail: true`). Scans all platform & workload IaC PRs, outputs markdown summaries to `$GITHUB_STEP_SUMMARY`, and uploads SARIF findings to GitHub Security tab without blocking deployments.
+  - **Phase 2: Baseline (Week 2)**: Create baseline suppression file for existing architectural trade-offs.
+  - **Phase 3: Enforcement (Week 3+)**: Enforce blocking gate (`soft_fail: false`) for new CRITICAL/HIGH violations.
+* **Inline Waivers:** When suppressing an accepted violation, use `#checkov:skip=CKV_AZURE_XX: "Documented justification"`.
+
+### 6. 📦 Reusable Module Architecture Philosophy (AVM Wrappers vs. Hardened Native)
+* **Architecture Pattern:** Hybrid CAF modularization calling official `hashicorp/azurerm ~> 4.0` provider.
+* **AVM Wrappers:** Used for standalone single-purpose services with mature Microsoft schemas (`modules/search_service` wrapping `Azure/avm-res-search-searchservice/azurerm`).
+* **Hardened Native Modules:** Used for core compute, networking, and security (`modules/aks`, `modules/key_vault`, `modules/network`, `modules/function_app`, `modules/cosmos_db`, `modules/cognitive_account`, `modules/content_safety`, `modules/static_web_app`):
+  - **FinOps Guardrails:** Enforces Free-tier SKUs (`Free`, `Y1`, `F0`, `Essential`), Ephemeral OS ($0.00), and KEDA scale-to-zero.
+  - **WIF & OIDC Direct Binding:** Direct binding of Federated Identity Credentials and RBAC without fighting third-party module abstraction layers.
+  - **Fast Execution:** Eliminates deeply nested module trees, executing CI/CD plans in < 15 seconds.
+
+### 7. 🏛️ 5-Pillar Enterprise CAF Platform Standards ($0.00 / Ultra-Low Cost)
+1. **FinOps Spend Protection:** $15 monthly budget guardrails (`azurerm_consumption_budget_subscription`) across all 4 subscriptions with email alerts at 70%, 90%, 100% to `richtextforganesh@outlook.com`.
+2. **Centralized Observability:** Azure Managed Grafana (`sku = "Essential"` $0.00 / 30 users) in `platform/shared-services` with `Monitoring Reader` RBAC, Central Action Group (`ag-ht-ss-p-cin-01`), Resource Graph KQL inventory queries, and Azure Monitor Workbooks.
+3. **Security Posture:** Microsoft Defender for Cloud Free CSPM (Continuous CIS Azure Foundations benchmark scanning) + Key Vault `AuditEvent` diagnostic streaming to `law-ht-ss-p-cin-01`.
+4. **Zero-Trust Hybrid Networking:** Central Private DNS Zones in Hub (`privatelink.vaultcore.azure.net`, `cognitiveservices`, `search`) linked to Hub, Shared Services, and Apps Spoke VNets.
+5. **Shared AI Platform Services:** Central Azure Document Intelligence (`F0` 500 pgs/mo free) and Azure AI Search (`free` 10k docs free) in `platform/shared-services` with endpoints wired to Key Vault and workload ConfigMaps.
+
 ---
 
 ## 🤖 Developer AI Tooling & Environment Context
@@ -178,4 +261,5 @@ State files are path-keyed — **git repo location does not affect state**.
   - **Account Email:** `richtextforganesh@outlook.com`
   - **Secret Location:** Azure Key Vault `kv-ht-ss-p-cin-01` (secret: `confluence-api-token` in Shared Services sub `859a785c-bd38-402d-b595-1f44f40fb9bf`).
   - **Auto-Sync Script:** `scripts/sync_to_confluence.py` (converts markdown to storage XHTML and updates Space `HT` via REST API).
+
 

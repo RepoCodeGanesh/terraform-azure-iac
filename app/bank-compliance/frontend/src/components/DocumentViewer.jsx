@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { BookOpen, Search, ExternalLink, ShieldCheck, Hash, Layers, Maximize2, Minimize2, X, ChevronRight } from 'lucide-react'
+import { BookOpen, Search, ExternalLink, ShieldCheck, Maximize2, Minimize2, X, ChevronRight, Hash } from 'lucide-react'
 import MarkdownRenderer from './MarkdownRenderer'
 
 export default function DocumentViewer({
@@ -34,7 +34,7 @@ export default function DocumentViewer({
           const data = await res.json()
           setDocData(data)
         } else {
-          // Fallback mock data if offline
+          // Fallback data
           setDocData({
             document_id: selectedDocId,
             title: `RBI Master Direction — ${selectedDocId.replace(/[-_]/g, ' ').toUpperCase()}`,
@@ -74,32 +74,32 @@ export default function DocumentViewer({
     return (
       <div style={{
         flex: 1,
-        background: '#0a0f1d',
-        borderLeft: '1px solid #1f293d',
+        background: 'rgba(10, 14, 22, 0.95)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '32px',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         textAlign: 'center'
       }}>
         <div style={{
           width: '56px',
           height: '56px',
           borderRadius: '16px',
-          background: 'rgba(59, 130, 246, 0.1)',
+          background: 'rgba(79, 70, 229, 0.15)',
+          border: '1px solid rgba(79, 70, 229, 0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '16px'
         }}>
-          <BookOpen size={28} color="#3b82f6" />
+          <BookOpen size={28} color="#818cf8" />
         </div>
-        <h3 style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 600, marginBottom: '6px' }}>
+        <h3 style={{ color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, marginBottom: '6px' }}>
           Interactive Regulatory Clause Viewer
         </h3>
-        <p style={{ fontSize: '0.8rem', maxWidth: '300px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '0.8rem', maxWidth: '300px', lineHeight: 1.5, color: 'var(--text-muted)' }}>
           Click any citation chip or select a Master Direction from the sidebar to inspect official legal clauses side-by-side.
         </p>
       </div>
@@ -108,39 +108,38 @@ export default function DocumentViewer({
 
   return (
     <div style={{
-      flex: viewMode === 'fullscreen' ? 1 : '0 0 50%',
-      background: '#0d1322',
-      borderLeft: '1px solid #1e293b',
+      flex: viewMode === 'fullscreen' ? 1 : '0 0 48%',
+      background: 'rgba(10, 14, 22, 0.95)',
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
       overflow: 'hidden'
     }}>
       {/* Viewer Header */}
-      <div style={{
+      <div className="glass-panel" style={{
         padding: '12px 18px',
-        background: '#111827',
-        borderBottom: '1px solid #1f2937',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        borderBottom: '1px solid var(--border-subtle)',
         gap: '12px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
           <div style={{
-            background: 'linear-gradient(135deg, #1e3a8a, #2563eb)',
-            padding: '6px',
-            borderRadius: '6px',
+            background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+            padding: '7px',
+            borderRadius: '8px',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            boxShadow: '0 0 12px rgba(79, 70, 229, 0.3)'
           }}>
-            <BookOpen size={16} color="#ffffff" />
+            <BookOpen size={15} color="#ffffff" />
           </div>
           <div style={{ minWidth: 0 }}>
             <h2 style={{
-              fontSize: '0.88rem',
+              fontSize: '0.86rem',
               fontWeight: 700,
-              color: '#f8fafc',
+              color: 'var(--text-main)',
               margin: 0,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -150,21 +149,23 @@ export default function DocumentViewer({
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
               <span style={{
-                fontSize: '0.68rem',
+                fontSize: '0.65rem',
                 color: '#38bdf8',
                 background: 'rgba(56, 189, 248, 0.1)',
-                padding: '2px 6px',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                padding: '1px 6px',
                 borderRadius: '4px',
                 fontWeight: 600
               }}>
                 {docData?.category || 'Regulatory Direction'}
               </span>
               <span style={{
-                fontSize: '0.68rem',
-                color: '#10b981',
+                fontSize: '0.65rem',
+                color: '#34d399',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '3px'
+                gap: '3px',
+                fontFamily: 'JetBrains Mono, monospace'
               }}>
                 <ShieldCheck size={11} /> {docData?.provenance_hash || 'sha256:verified'}
               </span>
@@ -181,15 +182,16 @@ export default function DocumentViewer({
               rel="noreferrer"
               title="Open Official RBI Circular Link"
               style={{
-                color: '#94a3b8',
+                color: 'var(--text-muted)',
                 padding: '6px',
                 borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
-                textDecoration: 'none'
+                textDecoration: 'none',
+                transition: 'all 0.15s'
               }}
             >
-              <ExternalLink size={15} />
+              <ExternalLink size={14} />
             </a>
           )}
           <button
@@ -198,7 +200,7 @@ export default function DocumentViewer({
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#94a3b8',
+              color: 'var(--text-muted)',
               padding: '6px',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -206,7 +208,7 @@ export default function DocumentViewer({
               alignItems: 'center'
             }}
           >
-            {viewMode === 'fullscreen' ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+            {viewMode === 'fullscreen' ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
           <button
             onClick={onClose}
@@ -214,7 +216,7 @@ export default function DocumentViewer({
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#94a3b8',
+              color: 'var(--text-muted)',
               padding: '6px',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -222,7 +224,7 @@ export default function DocumentViewer({
               alignItems: 'center'
             }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       </div>
@@ -230,13 +232,13 @@ export default function DocumentViewer({
       {/* Filter / Search Bar */}
       <div style={{
         padding: '8px 16px',
-        background: '#090d16',
-        borderBottom: '1px solid #1e293b',
+        background: 'rgba(15, 23, 42, 0.65)',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
         gap: '8px'
       }}>
-        <Search size={14} color="#64748b" />
+        <Search size={13} color="var(--text-muted)" />
         <input
           type="text"
           value={searchQuery}
@@ -246,94 +248,66 @@ export default function DocumentViewer({
             flex: 1,
             background: 'transparent',
             border: 'none',
+            color: '#fff',
+            fontSize: '0.8rem',
             outline: 'none',
-            color: '#f1f5f9',
-            fontSize: '0.78rem'
+            fontFamily: 'inherit'
           }}
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}
           >
             Clear
           </button>
         )}
       </div>
 
-      {/* Document Body */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '16px 20px',
-        color: '#cbd5e1',
-        fontSize: '0.85rem',
-        lineHeight: 1.6
-      }}>
+      {/* Document Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-            Loading statutory clauses &amp; computing SHA-256 provenance...
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            Loading statutory direction...
           </div>
-        ) : docData?.sections && docData.sections.length > 0 ? (
-          docData.sections
-            .filter(sec => !searchQuery || sec.title.toLowerCase().includes(searchQuery.toLowerCase()) || sec.raw_text.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map((sec, idx) => {
-              const isHighlighted = highlightClause && (
-                sec.title.toLowerCase().includes(highlightClause.toLowerCase()) ||
-                sec.raw_text.toLowerCase().includes(highlightClause.toLowerCase())
-              )
-              return (
-                <div
-                  key={idx}
-                  ref={isHighlighted ? clauseRef : null}
-                  style={{
-                    marginBottom: '20px',
-                    padding: '14px',
-                    borderRadius: '8px',
-                    background: isHighlighted ? 'rgba(37, 99, 235, 0.12)' : '#111827',
-                    border: isHighlighted ? '1px solid #3b82f6' : '1px solid #1f2937',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
-                    paddingBottom: '6px'
-                  }}>
-                    <h3 style={{
-                      fontSize: '0.88rem',
-                      fontWeight: 700,
-                      color: isHighlighted ? '#60a5fa' : '#f1f5f9',
-                      margin: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-                      <Hash size={13} color={isHighlighted ? '#60a5fa' : '#64748b'} />
-                      {sec.title}
-                    </h3>
-                    {isHighlighted && (
-                      <span style={{
-                        fontSize: '0.65rem',
-                        background: '#2563eb',
-                        color: '#ffffff',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        fontWeight: 700
-                      }}>
-                        Cited Evidence
-                      </span>
-                    )}
-                  </div>
+        ) : (
+          (docData?.sections || []).map((sec, sIdx) => {
+            const isMatch = !searchQuery || sec.title.toLowerCase().includes(searchQuery.toLowerCase()) || (sec.raw_text || '').toLowerCase().includes(searchQuery.toLowerCase())
+            if (!isMatch) return null
+
+            const isHighlighted = highlightClause && (sec.raw_text || '').toLowerCase().includes(highlightClause.toLowerCase())
+
+            return (
+              <div
+                key={sIdx}
+                ref={isHighlighted ? clauseRef : null}
+                className="glass-card"
+                style={{
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  border: isHighlighted ? '1px solid rgba(245, 158, 11, 0.6)' : '1px solid var(--border-subtle)',
+                  background: isHighlighted ? 'rgba(245, 158, 11, 0.08)' : 'rgba(15, 23, 42, 0.6)',
+                  boxShadow: isHighlighted ? '0 0 20px rgba(245, 158, 11, 0.15)' : 'none'
+                }}
+              >
+                <div style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: isHighlighted ? '#fbbf24' : '#818cf8',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <Hash size={13} />
+                  <span>{sec.title}</span>
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: '1.6' }}>
                   <MarkdownRenderer content={sec.raw_text} />
                 </div>
-              )
-            })
-        ) : (
-          <MarkdownRenderer content={docData?.content || 'No statutory document content available.'} />
+              </div>
+            )
+          })
         )}
       </div>
     </div>

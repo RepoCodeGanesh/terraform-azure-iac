@@ -8,21 +8,22 @@ This directory contains the Azure DevOps YAML pipeline workflows and reusable st
 
 ```
 pipelines/
-├── README.md                          # This documentation file
-├── azure-cicd-bootstrap.yml           # Pipeline for platform/bootstrap
-├── azure-cicd-hub.yml                 # Pipeline for platform/hub
-├── azure-cicd-shared-ser.yml          # Pipeline for platform/shared-services
-├── azure-cicd-tax-advisor.yml         # Pipeline for workloads/tax-advisor
-├── azure-cicd-app-tax-advisor.yml     # Pipeline for app/tax-advisor
-├── azure-cicd-bank-compliance-aks.yml # Pipeline for workloads/bank-compliance-ai-aks
-├── azure-cicd-app-bank-compliance.yml # Pipeline for app/bank-compliance (DevSecOps + AKS + SWA)
-├── azure-cicd-mlops-lora-training.yml # Pipeline for decoupled LoRA/PEFT Fine-Tuning & Evaluation
-├── azure-cicd-terraform-drift-detection.yml # Pipeline for automated daily multi-root drift detection
-├── azure-cicd-aks-auto-shutdown.yml   # Pipeline for nightly AKS auto-shutdown (FinOps $0.00)
-└── templates/                         # Reusable pipeline stage templates
-    ├── validate.yml                   # Optional standalone validate stage
-    ├── plan.yml                       # Format check, validation & speculative terraform plan
-    └── apply.yml                      # Terraform apply with environment approvals
+├── README.md                                       # This documentation file
+├── azure-cicd-platform-governance.yml             # Pipeline for platform/governance (Root MG & Policy-as-Code)
+├── azure-cicd-platform-bootstrap.yml              # Pipeline for platform/bootstrap (Remote state & Key Vault)
+├── azure-cicd-platform-hub.yml                    # Pipeline for platform/hub (Firewall & Hub VNet)
+├── azure-cicd-platform-shared-services.yml        # Pipeline for platform/shared-services (APIM, LAW, AI)
+├── azure-cicd-workload-tax-advisor.yml            # Pipeline for workloads/tax-advisor (IaC)
+├── azure-cicd-workload-bank-compliance-aks.yml    # Pipeline for workloads/bank-compliance-ai-aks (IaC)
+├── azure-cicd-app-tax-advisor.yml                 # Pipeline for app/tax-advisor (React + Python Functions)
+├── azure-cicd-app-bank-compliance.yml             # Pipeline for app/bank-compliance (DevSecOps + AKS + SWA)
+├── azure-cicd-mlops-lora-training.yml             # Pipeline for decoupled LoRA/PEFT Fine-Tuning & Eval
+├── azure-cicd-ops-drift-detection.yml             # Pipeline for automated daily multi-root drift detection
+├── azure-cicd-finops-aks-auto-shutdown.yml        # Pipeline for nightly AKS auto-shutdown (FinOps $0.00)
+└── templates/                                     # Reusable pipeline stage templates
+    ├── validate.yml                               # Optional standalone validate stage
+    ├── plan.yml                                   # Format check, validation & speculative terraform plan
+    └── apply.yml                                  # Terraform apply with environment approvals
 ```
 
 ---
@@ -31,33 +32,32 @@ pipelines/
 
 ### 1. Monorepo Path Filtering
 Pipelines are configured with **Path Filtering** (`paths: include/exclude`) to ensure that changes in one infrastructure layer only trigger its specific pipeline:
-* **Bootstrap Changes** (`platform/bootstrap/**`) ➔ Triggers `azure-cicd-bootstrap.yml`
-* **Hub Changes** (`platform/hub/**`) ➔ Triggers `azure-cicd-hub.yml`
-* **Shared Services Changes** (`platform/shared-services/**`) ➔ Triggers `azure-cicd-shared-ser.yml`
-* **TaxBot Workload Changes** (`workloads/tax-advisor/**`) ➔ Triggers `azure-cicd-tax-advisor.yml`
+* **Governance Changes** (`platform/governance/**`) ➔ Triggers `azure-cicd-platform-governance.yml`
+* **Bootstrap Changes** (`platform/bootstrap/**`) ➔ Triggers `azure-cicd-platform-bootstrap.yml`
+* **Hub Changes** (`platform/hub/**`) ➔ Triggers `azure-cicd-platform-hub.yml`
+* **Shared Services Changes** (`platform/shared-services/**`) ➔ Triggers `azure-cicd-platform-shared-services.yml`
+* **TaxBot Workload Changes** (`workloads/tax-advisor/**`) ➔ Triggers `azure-cicd-workload-tax-advisor.yml`
 * **TaxBot Application Changes** (`app/tax-advisor/**`) ➔ Triggers `azure-cicd-app-tax-advisor.yml`
-* **BankCompliance Workload Changes** (`workloads/bank-compliance-ai-aks/**`) ➔ Triggers `azure-cicd-bank-compliance-aks.yml`
+* **BankCompliance Workload Changes** (`workloads/bank-compliance-ai-aks/**`) ➔ Triggers `azure-cicd-workload-bank-compliance-aks.yml`
 * **BankCompliance Application Changes** (`app/bank-compliance/**`) ➔ Triggers `azure-cicd-app-bank-compliance.yml`
 * **Documentation Edits** (`**/*.md`) ➔ **Excluded** from triggering builds to preserve agent minutes.
 
 ---
 
-### Service connections & Terraform roots
+### Service Connections & Terraform Roots
 
-Each pipeline uses **Azure Resource Manager** authentication via **Workload Identity federation**. The service connection name must match the pipeline variable exactly.
+Each pipeline uses **Azure Resource Manager** authentication via **Workload Identity Federation**. The service connection name must match the pipeline variable exactly.
 
-| Azure DevOps service connection | Pipeline YAML | Terraform root | Home subscription |
+| Azure DevOps Service Connection | Pipeline YAML | Terraform Root | Target Scope |
 | :--- | :--- | :--- | :--- |
-| `bootstrap` | `azure-cicd-bootstrap.yml` | `platform/bootstrap` | `bootstrap` (`7689ad81-71ba-481b-a17c-e1b6be61bab1`) |
-| `hub-prod` | `azure-cicd-hub.yml` | `platform/hub` | `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`) |
-| `shared-services` | `azure-cicd-shared-ser.yml` | `platform/shared-services` | `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`) |
-| `app-prod` | `azure-cicd-tax-advisor.yml` | `workloads/tax-advisor` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
-| `app-prod` | `azure-cicd-bank-compliance-aks.yml` | `workloads/bank-compliance-ai-aks` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
+| `bootstrap` | `azure-cicd-platform-governance.yml` | `platform/governance` | `HappieTechies-root-MG` (Root MG) |
+| `bootstrap` | `azure-cicd-platform-bootstrap.yml` | `platform/bootstrap` | `bootstrap` (`7689ad81-71ba-481b-a17c-e1b6be61bab1`) |
+| `hub-prod` | `azure-cicd-platform-hub.yml` | `platform/hub` | `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`) |
+| `shared-services` | `azure-cicd-platform-shared-services.yml` | `platform/shared-services` | `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`) |
+| `app-prod` | `azure-cicd-workload-tax-advisor.yml` | `workloads/tax-advisor` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
+| `app-prod` | `azure-cicd-workload-bank-compliance-aks.yml` | `workloads/bank-compliance-ai-aks` | `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) |
 
-
-**Remote state backend:** All roots store state in the bootstrap storage account `sthtbootpcin01`. Every pipeline identity needs **Storage Blob Data** access on that account (or container) for `terraform init` / plan / apply, even when deploying into another subscription.
-
-**Cross-subscription:** The `app-prod` connection deploys into Apps-prod but Terraform also reads Hub-prod and Shared-services (peering, shared ASP/LAW/APIM) and may write APIM backends in Shared-services. Grant the federated identity RBAC on those scopes as needed.
+**Remote state backend:** All roots store state in the bootstrap storage account `sthtbootpcin01`. Every pipeline identity needs **Storage Blob Data** access on that account (or container) for `terraform init` / plan / apply.
 
 ---
 
@@ -81,12 +81,6 @@ Deployment jobs in `apply.yml` bind to specific Azure DevOps Environments:
 * `hub-prod`
 * `shared-services-prod`
 * `tax-advisor-prod`
+* `bank-compliance-prod`
 
 To enable **Manual Approval Gates**, navigate to **Azure DevOps ➔ Pipelines ➔ Environments**, select the environment, and configure **Approvals and checks**.
-
----
-
-### 4. Performance & Caching Optimizations
-
-* **Provider Caching (`Cache@2`)**: Shared cross-layer cache key (`terraform-providers | "$(Agent.OS)"`) prevents re-downloading AzureRM provider binaries.
-* **Stage Consolidation**: Validation logic runs inside the `Plan` stage VM, eliminating unnecessary VM boot overhead.

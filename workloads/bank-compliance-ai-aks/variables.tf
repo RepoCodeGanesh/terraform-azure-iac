@@ -187,6 +187,26 @@ variable "enable_azure_policy" {
   default     = true
 }
 
+# ── Spot Node Pool Configurations (FinOps) ──────────────────────────────────
+
+variable "enable_spot_node_pool" {
+  description = "Whether to enable the secondary Spot instance node pool for cost savings (80%+ discount)."
+  type        = bool
+  default     = true
+}
+
+variable "aks_spot_vm_size" {
+  description = "VM size for the secondary Spot node pool (e.g. Standard_B2s or Standard_D2s_v5)."
+  type        = string
+  default     = "Standard_B2s"
+}
+
+variable "aks_spot_max_count" {
+  description = "Maximum number of spot nodes to autoscale."
+  type        = number
+  default     = 3
+}
+
 # ── Custom Domain & Governance Configurations ───────────────────────────────
 
 variable "custom_domain_name" {

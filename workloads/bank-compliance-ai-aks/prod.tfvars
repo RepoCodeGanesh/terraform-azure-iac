@@ -40,10 +40,15 @@ shared_content_safety_name = "cs-ht-ss-p-sea-01"
 
 # ── AKS Cluster Configuration ───────────────────────────────────────────────
 aks_sku_tier        = "Free"
-aks_vm_size         = "Standard_B4ms"
+aks_vm_size         = "Standard_B2ms"
 aks_node_count      = 1
 aks_os_disk_size_gb = 30
 enable_azure_policy = true
+
+# ─── FinOps: Azure Spot Instance Node Pool (Optional Worker Nodes) ───────────
+enable_spot_node_pool = true
+aks_spot_vm_size      = "Standard_B2ms"
+aks_spot_max_count    = 3
 
 # ── Custom Domain & Cloudflare DNS ───────────────────────────────────────────
 custom_domain_name   = "bank.mytaxbot.site"

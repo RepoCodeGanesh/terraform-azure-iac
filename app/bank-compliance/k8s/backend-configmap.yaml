@@ -9,8 +9,10 @@ metadata:
   name: bankc-backend-config
   namespace: bank-compliance
 data:
-  # Azure AI Content Safety Service Endpoint in Shared-Services subscription
+  # Azure AI Platform Services in Shared-Services Subscription ($0.00 Free Tiers)
   CONTENT_SAFETY_ENDPOINT: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
+  DOCUMENT_INTELLIGENCE_ENDPOINT: "https://di-ht-ss-p-cin-01.cognitiveservices.azure.com/"
+  AZURE_AI_SEARCH_ENDPOINT: "https://srch-ht-ss-p-cin-01.search.windows.net"
 
   # Internal Kubernetes Cluster DNS (Zero Egress Costs)
   LITELLM_URL: "http://litellm:4000/v1"

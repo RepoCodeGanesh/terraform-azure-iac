@@ -1,0 +1,34 @@
+# ==============================================================================
+# Enterprise Checkov Configuration — HappyTechies Cloud & AI Platform
+# Phase 1: Discovery (Week 1) Baseline Policy-as-Code Configuration
+# ==============================================================================
+
+# Scanned frameworks
+framework:
+  - terraform
+  - kubernetes
+
+# Discovery Mode (Phase 1): Advisory scanning, logs findings without breaking pipelines
+soft-fail: true
+
+# Disable remote registry downloader for local relative modules
+download-external-modules: false
+
+# Compact CLI output
+compact: true
+
+# Directory & path exclusions
+skip-path:
+  - .terraform
+  - .git
+  - .agents
+  - .github
+  - app/bank-compliance/frontend/dist
+  - app/bank-compliance/frontend/node_modules
+  - app/tax-advisor/frontend/dist
+  - app/tax-advisor/frontend/node_modules
+  - node_modules
+  - venv
+  - .venv
+  - .pytest_cache
+  - __pycache__

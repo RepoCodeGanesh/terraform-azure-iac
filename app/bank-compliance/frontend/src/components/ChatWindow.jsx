@@ -1,42 +1,49 @@
-import React, { useState } from 'react'
-import { Send, Bot, User, Shield, Sparkles, Download, ArrowRight } from 'lucide-react'
-import PIIBanner from './PIIBanner'
-import CitationCard from './CitationCard'
+import React, { useState, useEffect, useRef } from 'react'
+import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu } from 'lucide-react'
 import MarkdownRenderer from './MarkdownRenderer'
+import CitationCard from './CitationCard'
+import PIIBanner from './PIIBanner'
 
 const INITIAL_SUGGESTIONS = [
-  "What documents are acceptable for NRI KYC video verification?",
-  "Can a bank store transaction data in an overseas public cloud?",
-  "What are the restrictions on outsourcing CISO functions to FinTechs?",
-  "Can a merchant store 16-digit card PAN after transaction checkout?"
+  "Can a bank store transaction data in a public overseas cloud?",
+  "What are the acceptable OVDs for NRI account opening under V-CIP?",
+  "What are the RBI restrictions on outsourcing CISO functions?",
+  "What is the penalty for issuing an unsolicited credit card?"
 ]
 
 export default function ChatWindow({ selectedCircular, onSelectCitation }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Welcome to BankCompliance AI 👋\n\nI am your official Reserve Bank of India (RBI) Regulatory & Compliance Copilot. Ask any compliance inquiry regarding KYC, IT Governance, Cloud Outsourcing, Tokenisation, or Digital Lending.\n\nAll sensitive customer data (PAN, Aadhaar, Card numbers) is masked in real-time by the DPDP PII Shield. Click on any citation to inspect the underlying legal clause in the Split-Screen Document Viewer.',
+      text: `Hello! I am **BankCompliance AI**, an enterprise-grade regulatory and statutory compliance copilot specialized in **Reserve Bank of India (RBI) Master Directions**.\n\nAsk any question regarding **KYC & V-CIP norms**, **IT Governance & Cloud Localization**, **IT Outsourcing**, **Digital Lending**, or **CoFT Payment Security**.\n\nAll answers are audited against our official indexed statutory knowledge lake.`,
       citations: [],
       pii: [],
-      suggested_queries: INITIAL_SUGGESTIONS
+      suggested_queries: INITIAL_SUGGESTIONS,
+      model_used: 'governance-core',
+      latency_ms: 8
     }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [activeSuggestions, setActiveSuggestions] = useState(INITIAL_SUGGESTIONS)
+  const messagesEndRef = useRef(null)
 
-  const submitQuery = async (queryText) => {
-    if (!queryText.trim() || loading) return
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
-    const userQuery = queryText.trim()
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, loading])
+
+  const submitQuery = async (userQuery) => {
+    if (!userQuery || !userQuery.trim() || loading) return
+
+    const historyPayload = messages
+      .slice(-4)
+      .map(m => ({ role: m.role, content: m.text }))
+
     setInput('')
-    
-    // Build multi-turn conversational history (last 6 turns)
-    const historyPayload = messages.slice(-6).map(m => ({
-      role: m.role,
-      content: m.text
-    }))
-
     setMessages(prev => [...prev, { role: 'user', text: userQuery }])
     setLoading(true)
 
@@ -121,187 +128,264 @@ Approved for CCO / Internal Audit Review.`
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
+      {/* Messages Scroll Area */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {messages.map((m, idx) => (
-          <div key={idx} style={{
+          <div key={idx} className="animate-fade-in" style={{
             display: 'flex',
-            gap: '12px',
+            gap: '14px',
             alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-            maxWidth: '85%'
+            maxWidth: m.role === 'user' ? '75%' : '90%'
           }}>
             {m.role === 'assistant' && (
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 0 12px rgba(79, 70, 229, 0.35)'
+              }}>
                 <Bot size={18} color="#fff" />
               </div>
             )}
+            
             <div style={{
-              background: m.role === 'user' ? '#1d4ed8' : '#111827',
-              border: m.role === 'user' ? 'none' : '1px solid #374151',
-              borderRadius: '12px',
-              padding: '14px 18px',
-              color: '#f3f4f6',
-              fontSize: '0.95rem',
-              lineHeight: '1.5',
-              whiteSpace: 'pre-line'
+              background: m.role === 'user' 
+                ? 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)' 
+                : 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: m.role === 'user' ? 'none' : 'blur(16px)',
+              border: m.role === 'user' ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--border-subtle)',
+              borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+              padding: '16px 20px',
+              color: 'var(--text-main)',
+              fontSize: '0.92rem',
+              lineHeight: '1.6',
+              boxShadow: m.role === 'user' ? '0 4px 20px rgba(79, 70, 229, 0.25)' : 'var(--shadow-glass)'
             }}>
               <PIIBanner piiList={m.pii} />
 
-              {/* Cache Hit / Multi-Agent Latency Badge */}
-              {m.role === 'assistant' && (m.cached || m.latency_ms > 0) && (
-                <div style={{ marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  {m.cached ? (
+              {/* Telemetry Header Badge Bar */}
+              {m.role === 'assistant' && (
+                <div style={{
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                  paddingBottom: '8px',
+                  gap: '8px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {m.cached ? (
+                      <span style={{
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.35)',
+                        color: '#34d399',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <Zap size={10} /> Semantic Cache Hit ({m.latency_ms}ms • $0.00)
+                      </span>
+                    ) : (
+                      <span style={{
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        border: '1px solid rgba(99, 102, 241, 0.35)',
+                        color: '#a5b4fc',
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <Cpu size={10} /> Multi-Agent Fleet ({m.latency_ms}ms)
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      border: '1px solid #10b981',
-                      color: '#10b981',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '12px'
+                      fontSize: '0.68rem',
+                      color: 'var(--text-muted)',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '2px 7px',
+                      borderRadius: '6px'
                     }}>
-                      ⚡ Semantic Cache Hit ({m.latency_ms}ms • $0.00 Cost)
+                      {m.model_used || 'gemini-2.0-flash'}
                     </span>
-                  ) : (
-                    <span style={{
-                      background: 'rgba(59, 130, 246, 0.15)',
-                      border: '1px solid #3b82f6',
-                      color: '#60a5fa',
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: '12px'
-                    }}>
-                      🤖 Multi-Agent Synthesis ({m.latency_ms}ms)
-                    </span>
-                  )}
+                  </div>
                 </div>
               )}
 
+              {/* Message Content */}
               {m.role === 'user' ? m.text : <MarkdownRenderer content={m.text} />}
               
               {/* Citation Cards */}
               {m.citations && m.citations.length > 0 && (
-                <div style={{ marginTop: '12px', borderTop: '1px solid #374151', paddingTop: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase' }}>
-                      Auditable RBI Master Direction Citations:
-                    </span>
+                <div style={{ marginTop: '16px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                      <ShieldCheck size={13} />
+                      <span>Verified RBI Master Direction Evidence:</span>
+                    </div>
                     <button
                       onClick={() => exportMemo(m)}
                       style={{
-                        background: 'rgba(59, 130, 246, 0.15)',
-                        border: '1px solid #3b82f6',
-                        color: '#60a5fa',
+                        background: 'rgba(99, 102, 241, 0.12)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        color: '#c7d2fe',
                         borderRadius: '6px',
-                        padding: '4px 10px',
-                        fontSize: '0.75rem',
+                        padding: '3px 8px',
+                        fontSize: '0.7rem',
                         fontWeight: 600,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '4px',
+                        transition: 'all 0.15s ease'
                       }}
                     >
-                      <Download size={12} /> Export Memo
+                      <Download size={11} /> Export Memo
                     </button>
                   </div>
-                  {m.citations.map((c, cIdx) => (
-                    <CitationCard
-                      key={cIdx}
-                      citation={c}
-                      onSelectCitation={onSelectCitation}
-                    />
-                  ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {m.citations.map((c, cIdx) => (
+                      <CitationCard
+                        key={cIdx}
+                        citation={c}
+                        onSelectCitation={onSelectCitation}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </div>
         ))}
+        
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9ca3af', fontSize: '0.9rem' }}>
-            <Sparkles size={16} className="animate-spin" />
-            <span>Multi-Agent Fleet evaluating RBI Master Directions...</span>
+          <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', fontSize: '0.85rem', paddingLeft: '48px' }}>
+            <Sparkles size={16} color="#6366f1" className="pulse-indicator" />
+            <span>Multi-Agent Fleet auditing RBI Master Directions against vector lake...</span>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Suggested Follow-up Prompt Chips */}
       {activeSuggestions && activeSuggestions.length > 0 && !loading && (
         <div style={{
-          padding: '8px 20px',
-          background: '#0d131f',
-          borderTop: '1px solid #1f2937',
+          padding: '10px 24px',
+          background: 'rgba(10, 14, 22, 0.65)',
+          borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           gap: '8px',
           overflowX: 'auto',
           alignItems: 'center'
         }}>
-          <span style={{ fontSize: '0.75rem', color: '#6b7280', flexShrink: 0, fontWeight: 600 }}>Suggested:</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Suggested:
+          </span>
           {activeSuggestions.slice(0, 3).map((s, sIdx) => (
             <button
               key={sIdx}
               onClick={() => submitQuery(s)}
               style={{
-                background: '#1f2937',
-                border: '1px solid #374151',
-                borderRadius: '16px',
-                padding: '6px 12px',
-                color: '#93c5fd',
-                fontSize: '0.78rem',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '9999px',
+                padding: '5px 12px',
+                color: 'var(--text-secondary)',
+                fontSize: '0.75rem',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '5px',
+                transition: 'all 0.18s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.18)'
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)'
+                e.currentTarget.style.color = '#ffffff'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                e.currentTarget.style.color = 'var(--text-secondary)'
               }}
             >
               <span>{s}</span>
-              <ArrowRight size={12} />
+              <ArrowRight size={11} />
             </button>
           ))}
         </div>
       )}
 
-      {/* Input */}
-      <form onSubmit={handleSend} style={{ padding: '16px 20px', background: '#111827', borderTop: '1px solid #374151', display: 'flex', gap: '12px' }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask an RBI compliance question (e.g. KYC for NRIs, IT data localization)..."
-          style={{
-            flex: 1,
-            background: '#1f2937',
-            border: '1px solid #374151',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            color: '#fff',
-            fontSize: '0.95rem',
-            outline: 'none'
-          }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: '#3b82f6',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 20px',
-            color: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: 600
-          }}
-        >
-          <Send size={16} />
-          Send
-        </button>
-      </form>
+      {/* Floating Modern Command Bar Input */}
+      <div style={{ padding: '16px 24px', background: 'rgba(10, 14, 22, 0.85)', borderTop: '1px solid var(--border-subtle)' }}>
+        <form onSubmit={handleSend} style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          background: 'rgba(15, 23, 42, 0.75)',
+          borderRadius: '14px',
+          border: '1px solid var(--border-glass)',
+          padding: '6px 8px 6px 16px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          transition: 'all 0.2s ease'
+        }}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask an RBI compliance question (e.g. KYC for NRIs, IT data localization, CoFT tokenisation)..."
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '0.9rem',
+              outline: 'none',
+              fontFamily: 'inherit'
+            }}
+          />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            style={{
+              background: input.trim() ? 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)' : 'rgba(255, 255, 255, 0.08)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '10px 18px',
+              color: input.trim() ? '#ffffff' : 'var(--text-muted)',
+              cursor: input.trim() ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              transition: 'all 0.2s ease',
+              boxShadow: input.trim() ? '0 0 12px rgba(79, 70, 229, 0.4)' : 'none'
+            }}
+          >
+            <span>Send</span>
+            <Send size={14} />
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

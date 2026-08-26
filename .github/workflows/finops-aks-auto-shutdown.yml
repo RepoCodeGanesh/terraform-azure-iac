@@ -40,8 +40,8 @@ jobs:
       - name: Azure OIDC Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.APP_CLIENT_ID || '99ab7987-3989-46c3-bae9-92279be16608' }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || '4cef0d84-84d6-4ed0-8abe-773b015bcf99' }}
           subscription-id: ${{ env.SUBSCRIPTION_ID }}
 
       - name: Check Cluster Status & Execute Power Action

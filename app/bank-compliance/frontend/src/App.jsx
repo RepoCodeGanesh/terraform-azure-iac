@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText, Activity } from 'lucide-react'
+import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText, Activity, Sparkles, Cpu, Layers } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import DocumentViewer from './components/DocumentViewer'
 import GenAIOpsDashboard from './components/GenAIOpsDashboard'
@@ -16,13 +16,13 @@ export default function App() {
   const [viewMode, setViewMode] = useState('split') // 'split' | 'chat-only' | 'doc-only' | 'telemetry'
 
   const CIRCULAR_MAP = [
-    { label: "All Master Directions", id: "01-rbi-master-direction-kyc-aml-vcip", isAll: true },
-    { label: "KYC & V-CIP (2016-2026)", id: "01-rbi-master-direction-kyc-aml-vcip" },
-    { label: "IT Governance & Localization", id: "02-rbi-master-direction-it-governance-cybersecurity" },
-    { label: "IT Outsourcing & Vendor Risk", id: "03-rbi-master-direction-it-outsourcing-fintech" },
-    { label: "Digital Payment Security", id: "04-rbi-master-direction-digital-payment-tokenisation" },
-    { label: "Credit & Debit Cards (2025)", id: "05-rbi-master-direction-credit-debit-cards-issuance" },
-    { label: "Digital Lending Norms", id: "06-rbi-master-direction-digital-lending-guidelines" }
+    { label: "All Master Directions", id: "01-rbi-master-direction-kyc-aml-vcip", isAll: true, count: 24, icon: Layers },
+    { label: "KYC & V-CIP (2016-2026)", id: "01-rbi-master-direction-kyc-aml-vcip", count: 4, icon: Shield },
+    { label: "IT Governance & Cloud Data", id: "02-rbi-master-direction-it-governance-cybersecurity", count: 4, icon: Cpu },
+    { label: "IT Outsourcing & Vendor Risk", id: "03-rbi-master-direction-it-outsourcing-fintech", count: 4, icon: Building2 },
+    { label: "Digital Payments & CoFT", id: "04-rbi-master-direction-digital-payment-tokenisation", count: 4, icon: Sparkles },
+    { label: "Credit & Debit Cards (2025)", id: "05-rbi-master-direction-credit-debit-cards-issuance", count: 4, icon: BookOpen },
+    { label: "Digital Lending & FLDG Norms", id: "06-rbi-master-direction-digital-lending-guidelines", count: 4, icon: FileText }
   ]
 
   const handleSelectCircular = (item) => {
@@ -35,7 +35,6 @@ export default function App() {
   }
 
   const handleSelectCitation = (citation) => {
-    // Determine doc id from circular_no or title
     let targetDocId = '01-rbi-master-direction-kyc-aml-vcip'
     const circLower = (citation.circular_no || citation.title || '').toLowerCase()
 
@@ -72,7 +71,7 @@ export default function App() {
 
       const res = await fetch(apiEndpoint, { method: 'POST' })
       const data = await res.json()
-      setIngestSuccess(`Synced ${data.total_circulars || 6} Master Directions (${data.total_clauses || 24} clauses)`)
+      setIngestSuccess(`Synced ${data.total_circulars || 6} Directions (${data.total_clauses || 24} clauses)`)
       setLakeStats({ total_circulars: data.total_circulars || 6, total_indexed_clauses: data.total_clauses || 24 })
     } catch (err) {
       console.warn('Ingestion sync fallback:', err)
@@ -84,54 +83,78 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#090d16' }}>
-      {/* Header */}
-      <header style={{
-        background: '#111827',
-        borderBottom: '1px solid #374151',
-        padding: '10px 24px',
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-dark)' }}>
+      {/* 2026 Sleek Glass Header */}
+      <header className="glass-panel" style={{
+        padding: '12px 24px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        borderBottom: '1px solid var(--border-subtle)',
+        zIndex: 20
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: '#1e3a8a', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
-            <Building2 size={22} color="#60a5fa" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+            padding: '9px',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 0 16px rgba(79, 70, 229, 0.4)'
+          }}>
+            <Building2 size={20} color="#ffffff" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f3f4f6', letterSpacing: '-0.02em', margin: 0 }}>
-              BankCompliance AI
-            </h1>
-            <p style={{ fontSize: '0.72rem', color: '#9ca3af', margin: 0 }}>
-              RBI Master Directions &amp; Regulatory Legal Copilot • Hosted on AKS
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
+                BankCompliance AI
+              </h1>
+              <span style={{
+                background: 'rgba(99, 102, 241, 0.15)',
+                border: '1px solid rgba(99, 102, 241, 0.4)',
+                color: '#a5b4fc',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                padding: '1px 7px',
+                borderRadius: '9999px',
+                letterSpacing: '0.04em'
+              }}>
+                v2026.1
+              </span>
+            </div>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
+              RBI Regulatory Copilot • Multi-Agent State Graph on AKS
             </p>
           </div>
         </div>
 
         {/* View Mode Controls & Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Segmented View Switcher */}
           <div style={{
             display: 'flex',
-            background: '#0d131f',
-            borderRadius: '8px',
-            border: '1px solid #1f2937',
-            padding: '2px'
+            background: 'rgba(15, 23, 42, 0.8)',
+            borderRadius: '10px',
+            border: '1px solid var(--border-subtle)',
+            padding: '3px',
+            gap: '2px'
           }}>
             <button
               onClick={() => setViewMode('chat-only')}
               title="Chat Only Mode"
               style={{
-                background: viewMode === 'chat-only' ? '#1f2937' : 'transparent',
-                border: 'none',
-                color: viewMode === 'chat-only' ? '#60a5fa' : '#64748b',
-                padding: '4px 8px',
-                borderRadius: '6px',
+                background: viewMode === 'chat-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                border: viewMode === 'chat-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                color: viewMode === 'chat-only' ? '#c7d2fe' : 'var(--text-muted)',
+                padding: '6px 12px',
+                borderRadius: '7px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 fontSize: '0.75rem',
-                fontWeight: 600
+                fontWeight: 600,
+                transition: 'all 0.18s ease'
               }}
             >
               <MessageSquare size={13} />
@@ -141,17 +164,18 @@ export default function App() {
               onClick={() => setViewMode('split')}
               title="Split-Screen Copilot & Document Viewer"
               style={{
-                background: viewMode === 'split' ? '#1e3a8a' : 'transparent',
-                border: 'none',
-                color: viewMode === 'split' ? '#ffffff' : '#64748b',
-                padding: '4px 8px',
-                borderRadius: '6px',
+                background: viewMode === 'split' ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(6, 182, 212, 0.2))' : 'transparent',
+                border: viewMode === 'split' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+                color: viewMode === 'split' ? '#ffffff' : 'var(--text-muted)',
+                padding: '6px 12px',
+                borderRadius: '7px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 fontSize: '0.75rem',
-                fontWeight: 600
+                fontWeight: 600,
+                transition: 'all 0.18s ease'
               }}
             >
               <Columns size={13} />
@@ -161,17 +185,18 @@ export default function App() {
               onClick={() => setViewMode('doc-only')}
               title="Document Viewer Only"
               style={{
-                background: viewMode === 'doc-only' ? '#1f2937' : 'transparent',
-                border: 'none',
-                color: viewMode === 'doc-only' ? '#60a5fa' : '#64748b',
-                padding: '4px 8px',
-                borderRadius: '6px',
+                background: viewMode === 'doc-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                border: viewMode === 'doc-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                color: viewMode === 'doc-only' ? '#c7d2fe' : 'var(--text-muted)',
+                padding: '6px 12px',
+                borderRadius: '7px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 fontSize: '0.75rem',
-                fontWeight: 600
+                fontWeight: 600,
+                transition: 'all 0.18s ease'
               }}
             >
               <FileText size={13} />
@@ -181,43 +206,57 @@ export default function App() {
               onClick={() => setViewMode('telemetry')}
               title="GenAIOps Command Center & Observability"
               style={{
-                background: viewMode === 'telemetry' ? '#1e3a8a' : 'transparent',
-                border: 'none',
-                color: viewMode === 'telemetry' ? '#ffffff' : '#64748b',
-                padding: '4px 8px',
-                borderRadius: '6px',
+                background: viewMode === 'telemetry' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 182, 212, 0.2))' : 'transparent',
+                border: viewMode === 'telemetry' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid transparent',
+                color: viewMode === 'telemetry' ? '#6ee7b7' : 'var(--text-muted)',
+                padding: '6px 12px',
+                borderRadius: '7px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 fontSize: '0.75rem',
-                fontWeight: 600
+                fontWeight: 600,
+                transition: 'all 0.18s ease'
               }}
             >
               <Activity size={13} />
-              <span>GenAIOps Command Center</span>
+              <span>GenAIOps Dashboard</span>
             </button>
           </div>
 
           <span style={{
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid #10b981',
-            color: '#10b981',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: '#34d399',
             fontSize: '0.72rem',
-            padding: '4px 10px',
-            borderRadius: '20px',
+            padding: '5px 12px',
+            borderRadius: '9999px',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '6px'
           }}>
-            <Shield size={12} /> DPDP PII Shield Active
+            <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+            <Shield size={12} /> DPDP Shield Active
           </span>
+          
           <a
             href="https://www.mytaxbot.site"
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#9ca3af', textDecoration: 'none', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+            style={{
+              color: 'var(--text-muted)',
+              textDecoration: 'none',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              border: '1px solid transparent',
+              transition: 'all 0.2s'
+            }}
           >
             <span>TaxBot India</span>
             <ExternalLink size={12} />
@@ -227,103 +266,128 @@ export default function App() {
 
       {/* Main Body */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar */}
+        {/* Sleek Sidebar */}
         <aside style={{
-          width: '260px',
-          background: '#0d131f',
-          borderRight: '1px solid #1f2937',
-          padding: '14px',
+          width: '275px',
+          background: 'rgba(10, 14, 22, 0.95)',
+          borderRight: '1px solid var(--border-subtle)',
+          padding: '16px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px'
+          gap: '12px',
+          overflowY: 'auto'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              RBI Master Directions
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Master Directions
             </div>
             <button
               onClick={triggerDataLakeSync}
               disabled={ingesting}
               title="Sync Regulatory Data Lake to Qdrant"
               style={{
-                background: 'rgba(59, 130, 246, 0.15)',
-                border: '1px solid #3b82f6',
-                color: '#60a5fa',
-                borderRadius: '4px',
-                padding: '2px 6px',
+                background: 'rgba(99, 102, 241, 0.12)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                color: '#a5b4fc',
+                borderRadius: '6px',
+                padding: '3px 8px',
                 fontSize: '0.68rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '5px',
+                transition: 'all 0.15s ease'
               }}
             >
               <RefreshCw size={10} className={ingesting ? 'animate-spin' : ''} />
-              <span>Sync Lake</span>
+              <span>Sync</span>
             </button>
           </div>
 
           {ingestSuccess && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.2)',
-              border: '1px solid #10b981',
-              borderRadius: '6px',
-              padding: '6px 8px',
+            <div className="animate-fade-in" style={{
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '8px',
+              padding: '8px 10px',
               fontSize: '0.72rem',
               color: '#34d399',
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
             }}>
-              <CheckCircle2 size={12} />
+              <CheckCircle2 size={13} />
               <span>{ingestSuccess}</span>
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+          {/* Navigation Items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             {CIRCULAR_MAP.map((c, i) => {
               const isSelected = selectedDocId === c.id || (c.isAll && selectedCircular === 'All')
+              const IconComponent = c.icon || BookOpen
               return (
                 <button
                   key={i}
                   onClick={() => handleSelectCircular(c)}
                   style={{
                     textAlign: 'left',
-                    background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                    border: isSelected ? '1px solid #3b82f6' : '1px solid transparent',
-                    borderRadius: '6px',
-                    padding: '8px 10px',
-                    color: isSelected ? '#60a5fa' : '#9ca3af',
+                    background: isSelected 
+                      ? 'linear-gradient(90deg, rgba(79, 70, 229, 0.25) 0%, rgba(13, 17, 26, 0.4) 100%)' 
+                      : 'transparent',
+                    border: isSelected ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                    borderRadius: '8px',
+                    padding: '9px 12px',
+                    color: isSelected ? '#ffffff' : 'var(--text-secondary)',
                     fontSize: '0.8rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'space-between',
                     gap: '8px',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.18s ease'
                   }}
                 >
-                  <BookOpen size={13} color={isSelected ? '#60a5fa' : '#64748b'} />
-                  <span style={{ fontWeight: isSelected ? 600 : 400 }}>{c.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', overflow: 'hidden' }}>
+                    <IconComponent size={14} color={isSelected ? '#818cf8' : '#64748b'} />
+                    <span style={{ fontWeight: isSelected ? 600 : 400, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                      {c.label}
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    color: isSelected ? '#a5b4fc' : '#475569',
+                    background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                    padding: '1px 6px',
+                    borderRadius: '9999px',
+                    fontWeight: 600
+                  }}>
+                    {c.count}
+                  </span>
                 </button>
               )
             })}
           </div>
 
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ background: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid #1f2937' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8' }}>
-                <Database size={11} />
-                <span>Regulatory Data Lake</span>
+          {/* Bottom Telemetry & FinOps Cards */}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="glass-card" style={{ padding: '10px 12px', borderRadius: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8' }}>
+                <Database size={12} />
+                <span>Knowledge Lake</span>
               </div>
-              <div style={{ fontSize: '0.68rem', color: '#9ca3af', marginTop: '2px' }}>
-                sthtbankcpcin01 • {lakeStats.total_circulars} Circulars • {lakeStats.total_indexed_clauses} Clauses in Qdrant
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                {lakeStats.total_circulars} Master Directions • {lakeStats.total_indexed_clauses} Clauses in Qdrant
               </div>
             </div>
 
-            <div style={{ background: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid #1f2937' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#f59e0b' }}>Cluster FinOps State</div>
-              <div style={{ fontSize: '0.68rem', color: '#9ca3af', marginTop: '2px' }}>
-                AKS Free Tier • Ephemeral OS • 4GB CSI Disk
+            <div className="glass-card" style={{ padding: '10px 12px', borderRadius: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.72rem', fontWeight: 600, color: '#f59e0b' }}>
+                <Activity size={12} />
+                <span>AKS FinOps State</span>
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                Free Tier • 1 Public IP • Sub-10ms Cache
               </div>
             </div>
           </div>
@@ -336,7 +400,7 @@ export default function App() {
 
         {/* Center: Conversational Copilot */}
         {viewMode !== 'doc-only' && viewMode !== 'telemetry' && (
-          <div style={{ flex: viewMode === 'split' ? '0 0 50%' : 1, display: 'flex', height: '100%' }}>
+          <div style={{ flex: viewMode === 'split' ? '0 0 52%' : 1, display: 'flex', height: '100%', borderRight: viewMode === 'split' ? '1px solid var(--border-subtle)' : 'none' }}>
             <ChatWindow
               selectedCircular={selectedCircular}
               onSelectCitation={handleSelectCitation}
@@ -358,4 +422,3 @@ export default function App() {
     </div>
   )
 }
-
