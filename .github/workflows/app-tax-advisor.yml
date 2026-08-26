@@ -112,3 +112,29 @@ jobs:
     with:
       artifact_name: 'taxbot-backend-package'
       release_artifacts: 'functionapp.zip'
+
+  # ── JOB 6: Automated Post-Deployment Synthetic Health Check ─────────────────
+  verify-deployment:
+    name: 🧪 Automated Synthetic Health Check
+    needs: [configure-cors]
+    if: always() && needs.configure-cors.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe APIM Health Endpoint
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://apim-ht-ss-p-cin-01.azure-api.net/tax-advisor/health)
+          echo "APIM Gateway /health status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error ::APIM Gateway Health check failed with status $STATUS"
+            exit 1
+          fi
+
+      - name: Probe Frontend Production Web App
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.mytaxbot.site)
+          echo "Frontend www.mytaxbot.site status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error ::Frontend check failed with status $STATUS"
+            exit 1
+          fi
+          echo "✅ All Synthetic Post-Deployment Checks Passed!"

@@ -214,6 +214,15 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Synthetic Health Check on Live Application
+        if: needs.deploy-frontend.result == 'success'
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://bank.mytaxbot.site)
+          echo "Frontend https://bank.mytaxbot.site status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning ::Frontend https://bank.mytaxbot.site returned status $STATUS during post-deploy probe."
+          fi
+
       - name: Generate True Release Summary
         run: |
           SAST_STATUS="${{ needs.devsecops-scan.result == 'success' && '🟢 PASSED' || (needs.devsecops-scan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"

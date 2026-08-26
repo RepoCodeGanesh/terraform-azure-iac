@@ -96,10 +96,13 @@ module "taxb_apim_api" {
         <header>x-session-id</header>
       </expose-headers>
     </cors>
+    <set-header name="Host" exists-action="override">
+      <value>${module.function_app.default_hostname}</value>
+    </set-header>
     <set-backend-service backend-id="func-backend-${var.workload}" />
   </inbound>
   <backend>
-    <forward-request timeout="30" />
+    <forward-request timeout="60" />
   </backend>
   <outbound>
     <base />

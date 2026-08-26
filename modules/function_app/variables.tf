@@ -73,3 +73,9 @@ variable "public_network_access_enabled" {
   type        = bool
   default     = true
 }
+
+variable "minimum_tls_version" {
+  description = "The minimum supported TLS version for the Function App. Defaults to 1.2 to support APIM Consumption gateway."
+  type        = string
+  default     = "1.2"
+}
