@@ -16,6 +16,17 @@ resource "cloudflare_record" "taxb_cname" {
   depends_on = [module.taxb_frontend]
 }
 
+resource "cloudflare_record" "taxb_apex" {
+  zone_id = var.cloudflare_zone_id
+  name    = "@"
+  content = module.taxb_frontend.default_host_name
+  type    = "CNAME"
+  proxied = false
+  ttl     = 1
+
+  depends_on = [module.taxb_frontend]
+}
+
 # ─── Wait 10s for Global DNS Edge Propagation (Prevents Race Conditions) ──────
 
 resource "time_sleep" "wait_for_dns" {
