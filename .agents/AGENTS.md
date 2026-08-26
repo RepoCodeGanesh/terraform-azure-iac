@@ -205,6 +205,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Handcrafted regex lists (`FOLLOWUP_PATTERNS`, `DOMAIN_KEYWORDS`) and string concatenation (`old_q + " -> " + new_q`) are brittle heuristics. Language is infinitely creative, creating a "whack-a-mole" trap where new keywords and regexes are constantly needed.
 * **Resolution:** Replaced all regex heuristics with **Layer 1 Mathematical Vector Centroid Sieve** ($S = \frac{\vec{u} \cdot \vec{C}_{\text{domain}}}{\|\vec{u}\| \|\vec{C}_{\text{domain}}\|}$) in `DomainCentroidGuardrail` (<3ms in-memory cosine distance) and **Layer 2 LLM Intent Disambiguation** without context string-stitching. Ensures 100% mathematical interception of out-of-scope topics with zero maintenance overhead.
 
+### 18. APIM to App Service / Function App SNI TLS Handshake Failure (`BackendConnectionFailure` / HTTP 500)
+* **Symptom:** API Management returns `HTTP 500 Internal Server Error` with `BackendConnectionFailure: The request was aborted: Could not create SSL/TLS secure channel` when calling Azure Function App or App Service backend, while direct calls to the Function App succeed.
+* **Root Cause:** (1) When APIM forwards HTTPS requests, it preserves the incoming `Host` header (`apim-ht-ss-p-cin-01.azure-api.net`). Azure App Service front door checks the SNI certificate for that domain, finds none, and immediately terminates TLS. (2) `minTlsVersion` mismatch if Function App requires TLS 1.3 while APIM Consumption tier defaults to TLS 1.2.
+* **Resolution:** (1) Set `minTlsVersion = 1.2` on the Function App (`az functionapp config set --min-tls-version 1.2`). (2) Add explicit `<set-header name="Host" exists-action="override"><value><app-name>.azurewebsites.net</value></set-header>` in the APIM `<inbound>` policy to pass the correct SNI domain to Azure Front Door.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
