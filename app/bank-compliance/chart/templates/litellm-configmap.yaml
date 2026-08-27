@@ -26,10 +26,10 @@ data:
           model: gemini/gemini-3.5-flash-lite
           api_key: "os.environ/GEMINI_API_KEY"
 
-      # ── 3. Complex Model: Google Gemini 3.5 Flash ─────────────────────────────
+      # ── 3. Complex Model: Google Gemini 3.6 Flash ─────────────────────────────
       - model_name: gemini-2.0-flash-thinking
         litellm_params:
-          model: gemini/gemini-3.5-flash
+          model: gemini/gemini-3.6-flash
           api_key: "os.environ/GEMINI_API_KEY"
 
       # ── 4. Cross-Cloud Fallback: Microsoft Azure OpenAI Service ───────────────
