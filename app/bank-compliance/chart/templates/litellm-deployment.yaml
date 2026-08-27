@@ -50,19 +50,21 @@ spec:
           # Liveness: if LiteLLM process hangs — restart it
           livenessProbe:
             httpGet:
-              path: /health/liveliness
+              path: /health
               port: 4000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 30
+            timeoutSeconds: 5
             failureThreshold: 3
-          # Readiness: only route traffic when all AI models are loaded and verified healthy
+          # Readiness: only route traffic when models are initialized
           readinessProbe:
             httpGet:
-              path: /health/readiness
+              path: /health
               port: 4000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 15
-            failureThreshold: 3
+            timeoutSeconds: 5
+            failureThreshold: 5
       volumes:
         - name: litellm-config
           configMap:
