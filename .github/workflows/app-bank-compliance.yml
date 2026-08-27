@@ -179,25 +179,25 @@ jobs:
           done
 
           # ── Auto-recover from stuck Helm release (caused by killed CI jobs) ────────
-          # When a GHA job is canceled mid-Helm, the release is left in 'pending-upgrade'
-          # or 'pending-install'. The next run fails immediately. This step detects and
-          # auto-heals the state by patching the secret label to 'failed' so Helm can
-          # proceed. No manual kubectl intervention ever needed.
-          HELM_STATUS=$(kubectl get secret -n bank-compliance \
-            -l "owner=helm,name=bank-compliance" \
-            --sort-by=.metadata.creationTimestamp \
-            -o jsonpath='{.items[-1].metadata.labels.status}' 2>/dev/null || echo "none")
-
-          echo "Current Helm release status: $HELM_STATUS"
-
-          if [ "$HELM_STATUS" = "pending-upgrade" ] || [ "$HELM_STATUS" = "pending-install" ]; then
-            echo "⚠️ Stuck Helm release detected ($HELM_STATUS) — auto-recovering..."
-            STUCK_SECRET=$(kubectl get secret -n bank-compliance \
-              -l "owner=helm,name=bank-compliance,status=$HELM_STATUS" \
-              -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-            kubectl label secret "$STUCK_SECRET" -n bank-compliance status=failed --overwrite
-            echo "✅ Helm release unlocked — proceeding with upgrade"
-          fi
+          # Query DIRECTLY by status label — reliable on all kubectl versions.
+          # Negative jsonpath indexing (.items[-1]) is NOT supported universally.
+          # This patches ALL stuck secrets in case multiple accumulated.
+          for STUCK_STATUS in pending-upgrade pending-install pending-rollback; do
+            STUCK_SECRETS=$(kubectl get secret -n bank-compliance \
+              -l "owner=helm,name=bank-compliance,status=${STUCK_STATUS}" \
+              -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)
+            if [ -n "$STUCK_SECRETS" ]; then
+              echo "⚠️  Stuck Helm release(s) detected [${STUCK_STATUS}]: $STUCK_SECRETS"
+              for SECRET in $STUCK_SECRETS; do
+                kubectl label secret "$SECRET" -n bank-compliance status=failed --overwrite
+                echo "  ✅ Patched: $SECRET → failed"
+              done
+            fi
+          done
+          echo "Current Helm secrets:"
+          kubectl get secret -n bank-compliance -l "owner=helm,name=bank-compliance" \
+            -o custom-columns="NAME:.metadata.name,STATUS:.metadata.labels.status" \
+            --sort-by=.metadata.creationTimestamp 2>/dev/null || true
 
           helm upgrade --install bank-compliance ./app/bank-compliance/chart \
             --namespace bank-compliance \
