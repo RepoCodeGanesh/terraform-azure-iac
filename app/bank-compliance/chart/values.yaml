@@ -45,7 +45,7 @@ litellm:
   replicaCount: 1
   image:
     repository: ghcr.io/berriai/litellm
-    tag: main-v1.41.0
+    tag: main-v1.57.4  # v1.41.0 had prometheus NoneType callback bug — fixed in v1.57.4+
   service:
     type: ClusterIP
     port: 4000
