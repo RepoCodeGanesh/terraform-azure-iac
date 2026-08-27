@@ -14,31 +14,25 @@ data:
     #   - Enterprise Fallback: Microsoft Azure OpenAI Service (gpt-5.4-nano)
     # ==============================================================================
     model_list:
-      # ── 1. Primary Model for General Synthesis & Chat (Azure OpenAI) ──────────
+      # ── 1. Primary Model: Google Gemini 3.6 Flash ($0.00 Idle Cost) ───────────
       - model_name: gemini-2.0-flash
         litellm_params:
-          model: azure/gpt-5.4-nano
-          api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
-          api_key: "os.environ/AZURE_API_KEY"
-          api_version: "2024-06-01"
+          model: gemini/gemini-3.6-flash
+          api_key: "os.environ/GEMINI_API_KEY"
 
-      # ── 2. Specialist Model: Planner & Intent Classifier (Azure OpenAI) ───────
+      # ── 2. Specialist Model: Google Gemini 3.5 Flash-Lite (Sub-50ms) ──────────
       - model_name: gemini-2.0-flash-lite
         litellm_params:
-          model: azure/gpt-5.4-nano
-          api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
-          api_key: "os.environ/AZURE_API_KEY"
-          api_version: "2024-06-01"
+          model: gemini/gemini-3.5-flash-lite
+          api_key: "os.environ/GEMINI_API_KEY"
 
-      # ── 3. Specialist Model: Legal & Hallucination Auditor (Azure OpenAI) ────
+      # ── 3. Complex Model: Google Gemini 3.5 Flash ─────────────────────────────
       - model_name: gemini-2.0-flash-thinking
         litellm_params:
-          model: azure/gpt-5.4-nano
-          api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
-          api_key: "os.environ/AZURE_API_KEY"
-          api_version: "2024-06-01"
+          model: gemini/gemini-3.5-flash
+          api_key: "os.environ/GEMINI_API_KEY"
 
-      # ── 4. Cross-Cloud Enterprise Model (Microsoft Azure OpenAI) ──────────────
+      # ── 4. Cross-Cloud Fallback: Microsoft Azure OpenAI Service ───────────────
       - model_name: gpt-5.4-nano
         litellm_params:
           model: azure/gpt-5.4-nano
@@ -63,9 +57,6 @@ data:
       num_retries: 3
       timeout: 30
       fallbacks:
-        # Tier 1: If Thinking model fails/times out -> Try Flash ($0) -> Failover to Azure
-        - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano"]
-        # Tier 2: If Flash-Lite fails -> Try Flash ($0) -> Failover to Azure
-        - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano"]
-        # Tier 3: If Flash fails -> Direct Failover to Azure OpenAI
         - gemini-2.0-flash: ["gpt-5.4-nano"]
+        - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano"]
+        - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano"]
