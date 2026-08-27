@@ -25,7 +25,9 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # false: a second push QUEUES behind the current deploy instead of killing it mid-Helm.
+  # Killing helm mid-upgrade leaves the release in a FAILED state requiring manual rollback.
+  cancel-in-progress: false
 
 permissions:
   id-token: write
