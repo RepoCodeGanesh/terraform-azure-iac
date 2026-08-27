@@ -21,3 +21,40 @@ spec:
       metadata:
         type: Utilization
         value: "70"
+---
+# ── LiteLLM AI Gateway: Scale-to-Zero when no AI requests in flight ────────────
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: litellm-proxy-scaler
+  namespace: bank-compliance
+spec:
+  scaleTargetRef:
+    name: litellm-proxy
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  cooldownPeriod: 300
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "70"
+---
+# ── Qdrant Vector DB: Longer cooldown (600s) — cold start loads index from disk ─
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: qdrant-scaler
+  namespace: bank-compliance
+spec:
+  scaleTargetRef:
+    name: qdrant
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 600
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "70"
+

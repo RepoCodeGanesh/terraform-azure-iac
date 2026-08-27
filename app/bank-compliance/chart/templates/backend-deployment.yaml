@@ -16,6 +16,13 @@ spec:
   selector:
     matchLabels:
       app: bankc-backend
+  # Rolling update: bring up new pod, confirm healthy, then terminate old pod.
+  # maxUnavailable: 0 ensures zero downtime (old pod only removed after new one is Ready).
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -29,6 +36,9 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
+      # Allow 30s for in-flight requests to drain before forced kill.
+      # FastAPI handles SIGTERM and closes gracefully within this window.
+      terminationGracePeriodSeconds: 30
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
