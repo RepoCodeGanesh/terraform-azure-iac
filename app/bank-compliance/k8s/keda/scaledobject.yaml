@@ -41,6 +41,7 @@ spec:
         value: "70"
 ---
 # ── Qdrant Vector DB: Longer cooldown (600s) — cold start loads index from disk ─
+# NOTE: scaleTargetRef.kind = StatefulSet (not Deployment — Qdrant is a StatefulSet)
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -48,6 +49,8 @@ metadata:
   namespace: bank-compliance
 spec:
   scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
     name: qdrant
   minReplicaCount: 0
   maxReplicaCount: 1

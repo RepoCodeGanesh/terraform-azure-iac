@@ -33,7 +33,7 @@ backend:
   env:
     contentSafetyEndpoint: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
     litellmUrl: "http://litellm:4000/v1"
-    openaiModel: "gpt-5.4-nano"
+    openaiModel: "gemini-2.0-flash"
     qdrantHost: "qdrant"
     qdrantPort: "6333"
     qdrantCollection: "rbi_master_directions"

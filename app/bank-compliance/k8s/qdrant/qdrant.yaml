@@ -18,6 +18,8 @@ spec:
       labels:
         app: qdrant
     spec:
+      # 60s grace period — allows Qdrant to flush WAL (write-ahead log) before shutdown
+      terminationGracePeriodSeconds: 60
       tolerations:
         - key: "node.kubernetes.io/disk-pressure"
           operator: "Exists"
@@ -35,11 +37,27 @@ spec:
               name: grpc
           resources:
             requests:
-              cpu: "100m"
+              cpu: "10m"       # Tuned down from 100m — fits on single B2ms node
               memory: "256Mi"
             limits:
               cpu: "500m"
               memory: "1Gi"
+          # Liveness: restart if Qdrant process crashes or corrupts internal state
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6333
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          # Readiness: only route queries when vector index is fully loaded from disk
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 6333
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
           volumeMounts:
             - name: qdrant-storage
               mountPath: /qdrant/storage
@@ -68,3 +86,4 @@ spec:
     - name: grpc
       port: 6334
       targetPort: 6334
+
