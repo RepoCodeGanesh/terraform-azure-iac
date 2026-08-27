@@ -1,12 +1,21 @@
 # ==============================================================================
-# BankCompliance AI — FinOps Tuned Ingress-NGINX Controller
-# Purpose: Ultra-low footprint (1m CPU request) Ingress Controller for single-node AKS
+# BankCompliance AI — FinOps Tuned Ingress-NGINX Controller & Ingress
+# Purpose: Single-Node Ingress routing with automatic Azure DNS label mapping
 # ==============================================================================
 
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ingress-nginx
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+spec:
+  controller: k8s.io/ingress-nginx
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -101,8 +110,10 @@ kind: Service
 metadata:
   name: ingress-nginx-controller
   namespace: ingress-nginx
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: "bankc-api-ht-cin"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - name: http
       port: 80
@@ -112,3 +123,23 @@ spec:
       targetPort: 443
   selector:
     app.kubernetes.io/name: ingress-nginx
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bankc-ingress
+  namespace: bank-compliance
+  annotations:
+    ingress.class: nginx
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bankc-backend
+                port:
+                  number: 8000

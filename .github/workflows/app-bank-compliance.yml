@@ -140,13 +140,41 @@ jobs:
           OPENAI_ENDPOINT=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-endpoint --query value -o tsv)
           OPENAI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name openai-api-key --query value -o tsv)
           GEMINI_KEY=$(az keyvault secret show --vault-name kv-ht-ss-p-cin-01 --name gemini-api-key --query value -o tsv)
-          
+
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          
+
+          # ── Resolve Workload Identity Client ID from live Azure resource ────────
+          # This is the ONLY value that changes on every Terraform destroy+apply
+          # because the UAMI gets a new object ID each time. Fetching live from
+          # Azure prevents any manual intervention after infra recreate.
+          UAMI_CLIENT_ID=$(az identity show \
+            --name uami-ht-bankc-p-cin-01 \
+            --resource-group rg-ht-bankc-p-cin-01 \
+            --query clientId -o tsv)
+
+          if [ -z "$UAMI_CLIENT_ID" ]; then
+            echo "❌ ERROR: Could not resolve UAMI client ID — UAMI may not exist yet. Run Terraform apply first."
+            exit 1
+          fi
+
+          echo "✅ Resolved UAMI Client ID: ${UAMI_CLIENT_ID}"
+
           kubectl create namespace bank-compliance --dry-run=client -o yaml | kubectl apply -f -
-          
+
           # FinOps & Compute Right-Sizing: Deploy Tuned Ingress-NGINX (1m CPU)
           kubectl apply -f ./app/bank-compliance/k8s/nginx/ingress-nginx.yaml
+
+          # Wait for Ingress-NGINX LoadBalancer IP to be assigned before Helm
+          echo "⏳ Waiting for Ingress-NGINX LoadBalancer IP..."
+          for i in $(seq 1 24); do
+            INGRESS_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            if [ -n "$INGRESS_IP" ]; then
+              echo "✅ Ingress-NGINX is ready at IP: $INGRESS_IP"
+              break
+            fi
+            echo "  Attempt $i/24 — waiting 10s..."
+            sleep 10
+          done
 
           helm upgrade --install bank-compliance ./app/bank-compliance/chart \
             --namespace bank-compliance \
@@ -155,8 +183,10 @@ jobs:
             --set secrets.openaiEndpoint="$OPENAI_ENDPOINT" \
             --set secrets.openaiKey="$OPENAI_KEY" \
             --set secrets.geminiApiKey="$GEMINI_KEY" \
+            --set serviceAccount.clientId="$UAMI_CLIENT_ID" \
             --wait \
             --timeout 10m
+
 
       - name: Collect AKS Diagnostic Logs on Failure
         if: failure()
@@ -171,6 +201,54 @@ jobs:
           kubectl logs -n bank-compliance -l app=bankc-backend --tail=100 || true
           echo "=== LiteLLM Logs ==="
           kubectl logs -n bank-compliance -l app=litellm-proxy --tail=100 || true
+
+      # ── End-to-End Smoke Test: Validates entire chain is working post-deploy ──
+      # Why: Catches silent failures (model deprecation, APIM mis-routing, cold
+      #      start errors) that don't fail the Helm deploy but break the live UI.
+      - name: 🔥 E2E Smoke Test — AI Compliance Query (APIM → NGINX → Gemini)
+        run: |
+          echo "⏳ Waiting 20s for pods to stabilize after Helm rollout..."
+          sleep 20
+
+          echo "🚀 Sending live compliance query through APIM gateway..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query" \
+            -H "Content-Type: application/json" \
+            -d '{"query": "What are the RBI data localization rules for banking transaction records?"}' \
+            --max-time 60)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ SMOKE TEST FAILED: APIM returned HTTP $HTTP_CODE"
+            echo "Response body: $BODY"
+            exit 1
+          fi
+
+          # Validate the response is a real AI answer, not an abstention/empty
+          MODEL_USED=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('model_used',''))")
+          CITATION_COUNT=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('citations',[])))")
+
+          echo "Model used: $MODEL_USED"
+          echo "Citations returned: $CITATION_COUNT"
+
+          if echo "$MODEL_USED" | grep -q "abstention"; then
+            echo "❌ SMOKE TEST FAILED: Response was an out-of-scope abstention — AI model may be misconfigured"
+            echo "Full response: $BODY"
+            exit 1
+          fi
+
+          if [ "$CITATION_COUNT" -lt 1 ]; then
+            echo "❌ SMOKE TEST FAILED: No citations returned — Qdrant or retrieval pipeline is broken"
+            echo "Full response: $BODY"
+            exit 1
+          fi
+
+          echo "✅ SMOKE TEST PASSED: model=$MODEL_USED citations=$CITATION_COUNT"
+
 
       - name: Generate AKS Production Release Step Summary
         if: always()

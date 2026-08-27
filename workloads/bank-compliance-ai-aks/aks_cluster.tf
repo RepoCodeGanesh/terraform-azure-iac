@@ -17,6 +17,7 @@ module "bank_compliance_aks" {
   vnet_id                    = module.bankc_vnet.vnet_id
   enable_role_assignments    = var.enable_role_assignments
   enable_azure_policy        = var.enable_azure_policy
+  enable_web_app_routing     = false # FinOps: Disabled — community Ingress-NGINX at 1m CPU used instead
   node_count                 = var.aks_node_count
   vm_size                    = var.aks_vm_size
   os_disk_type               = "Ephemeral"
@@ -29,6 +30,7 @@ module "bank_compliance_aks" {
     module.spoke_to_hub_peering
   ]
 }
+
 
 # ─── Application Pod Workload Identity (OIDC Federation) ──────────────────────
 

@@ -67,8 +67,11 @@ resource "azurerm_kubernetes_cluster" "this" {
     service_cidr        = var.service_cidr
   }
 
-  web_app_routing {
-    dns_zone_ids = []
+  dynamic "web_app_routing" {
+    for_each = var.enable_web_app_routing ? [1] : []
+    content {
+      dns_zone_ids = []
+    }
   }
 
   key_vault_secrets_provider {

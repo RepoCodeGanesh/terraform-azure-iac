@@ -41,6 +41,12 @@ variable "enable_role_assignments" {
   default     = true
 }
 
+variable "enable_web_app_routing" {
+  description = "Whether to enable Microsoft AKS Web App Routing NGINX add-on."
+  type        = bool
+  default     = false
+}
+
 variable "enable_azure_policy" {
   description = "Whether Azure Policy add-on is enabled."
   type        = bool
