@@ -52,8 +52,8 @@ litellm:
     targetPort: 4000
   resources:
     requests:
-      cpu: 10m
-      memory: 64Mi
+      cpu: 1m
+      memory: 32Mi
     limits:
       cpu: 500m
       memory: 300Mi

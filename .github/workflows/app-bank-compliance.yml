@@ -145,9 +145,8 @@ jobs:
           
           kubectl create namespace bank-compliance --dry-run=client -o yaml | kubectl apply -f -
           
-          # FinOps & Compute Right-Sizing: Ensure 1 replica on single-node cluster
-          kubectl scale deployment nginx -n app-routing-system --replicas=1 || true
-          kubectl scale deployment azure-wi-webhook-controller-manager -n kube-system --replicas=1 || true
+          # FinOps & Compute Right-Sizing: Deploy Tuned Ingress-NGINX (1m CPU)
+          kubectl apply -f ./app/bank-compliance/k8s/nginx/ingress-nginx.yaml
 
           helm upgrade --install bank-compliance ./app/bank-compliance/chart \
             --namespace bank-compliance \
