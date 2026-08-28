@@ -1,5 +1,5 @@
 import time
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import httpx
@@ -198,26 +198,54 @@ async def list_circulars():
 
 @router.get("/compliance/documents")
 async def list_all_documents():
-    """Lists all available RBI Master Directions with metadata and clause counts."""
+    """Lists all available RBI Master Directions (PDFs and Markdown) with provenance hashes and metadata."""
     from app.services.pdf_ingest_service import PDFIngestService
     from app.services.data_lake_service import DataLakeService
 
     docs_dir = DataLakeService.get_documents_dir()
+    raw_pdf_dir = DataLakeService.get_raw_pdfs_dir()
     documents = []
+    seen_ids = set()
 
-    if docs_dir.exists():
-        for file_path in sorted(docs_dir.glob("*.md")):
+    # 1. Enumerate PDFs
+    if raw_pdf_dir.exists():
+        for pdf_path in sorted(raw_pdf_dir.glob("*.pdf")):
             try:
-                doc_info = PDFIngestService.parse_markdown_document(file_path)
+                doc_info = PDFIngestService.parse_pdf_document(pdf_path.read_bytes(), pdf_path.name)
+                seen_ids.add(doc_info["document_id"])
                 documents.append({
                     "document_id": doc_info["document_id"],
                     "filename": doc_info["filename"],
                     "title": doc_info["title"],
+                    "circular_no": doc_info["circular_no"],
                     "category": doc_info["category"],
                     "provenance_hash": doc_info["provenance_hash"],
                     "total_sections": doc_info["total_sections"],
+                    "total_pages": doc_info.get("total_pages", 1),
+                    "file_type": "PDF",
                     "source_url": doc_info["source_url"]
                 })
+            except Exception as e:
+                logger.error("Failed parsing PDF metadata for %s: %s", pdf_path.name, e)
+
+    # 2. Enumerate Markdown docs
+    if docs_dir.exists():
+        for file_path in sorted(docs_dir.glob("*.md")):
+            try:
+                doc_info = PDFIngestService.parse_markdown_document(file_path)
+                if doc_info["document_id"] not in seen_ids:
+                    documents.append({
+                        "document_id": doc_info["document_id"],
+                        "filename": doc_info["filename"],
+                        "title": doc_info["title"],
+                        "circular_no": doc_info["circular_no"],
+                        "category": doc_info["category"],
+                        "provenance_hash": doc_info["provenance_hash"],
+                        "total_sections": doc_info["total_sections"],
+                        "total_pages": 1,
+                        "file_type": "Markdown",
+                        "source_url": doc_info["source_url"]
+                    })
             except Exception as e:
                 logger.error("Failed parsing metadata for %s: %s", file_path.name, e)
 
@@ -241,9 +269,32 @@ async def get_document_content(document_id: str):
 
     return doc_data
 
+@router.post("/compliance/upload-pdf")
+async def upload_rbi_pdf(file: UploadFile = File(...)):
+    """
+    Industry Ingestion Interface: Upload a native signed RBI Circular PDF,
+    extract clauses with layout-aware parser, compute SHA-256 provenance hash,
+    and hot-index into Qdrant vector store with automated cache invalidation.
+    """
+    from app.services.data_lake_service import DataLakeService
+
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Only PDF (.pdf) documents are supported.")
+
+    try:
+        content = await file.read()
+        if len(content) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+        result = DataLakeService.ingest_pdf_bytes(content, file.filename)
+        return result
+    except Exception as e:
+        logger.error("Failed processing uploaded PDF: %s", e)
+        raise HTTPException(status_code=500, detail=f"PDF ingestion failed: {str(e)}")
+
 @router.post("/compliance/ingest")
 async def trigger_ingestion():
-    """Triggers live ingestion of RBI Master Directions into Qdrant Vector DB."""
+    """Triggers live ingestion of all RBI Master Directions (PDFs + Markdown) into Qdrant Vector DB."""
     from app.services.data_lake_service import DataLakeService
     result = DataLakeService.ingest_and_index_corpus()
     return result
@@ -263,4 +314,5 @@ async def invalidate_cache_endpoint(new_version: str):
         "new_corpus_version": new_version,
         "purged_entries": purged
     }
+
 

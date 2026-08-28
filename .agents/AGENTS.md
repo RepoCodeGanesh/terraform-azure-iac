@@ -205,6 +205,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Handcrafted regex lists (`FOLLOWUP_PATTERNS`, `DOMAIN_KEYWORDS`) and string concatenation (`old_q + " -> " + new_q`) are brittle heuristics. Language is infinitely creative, creating a "whack-a-mole" trap where new keywords and regexes are constantly needed.
 * **Resolution:** Replaced all regex heuristics with **Layer 1 Mathematical Vector Centroid Sieve** ($S = \frac{\vec{u} \cdot \vec{C}_{\text{domain}}}{\|\vec{u}\| \|\vec{C}_{\text{domain}}\|}$) in `DomainCentroidGuardrail` (<3ms in-memory cosine distance) and **Layer 2 LLM Intent Disambiguation** without context string-stitching. Ensures 100% mathematical interception of out-of-scope topics with zero maintenance overhead.
 
+### 18. LiteLLM Routing Strategy Enterprise License Exception (`CrashLoopBackOff` on `latency-based-routing`)
+* **Symptom:** `litellm-proxy` pod goes into `CrashLoopBackOff` with exit code 3. Helm upgrade times out with `Error: context deadline exceeded`. Logs show `Exception: You must be a LiteLLM Enterprise user to use this feature. If you have a license please set LITELLM_LICENSE in your env.`
+* **Root Cause:** `router_settings.routing_strategy: "latency-based-routing"` is an enterprise-only feature in LiteLLM. When deployed in open-source LiteLLM without `LITELLM_LICENSE`, the proxy aborts startup immediately.
+* **Resolution:** Set `routing_strategy: "least-busy"` or `"simple-shuffle"` in `litellm-configmap.yaml` and `k8s/litellm/config.yaml`. These routing strategies are 100% free and open-source.
+
 ---
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies

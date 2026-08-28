@@ -53,7 +53,7 @@ data:
 
     # ── Intelligent Multi-Tier Routing & Circuit Breaking ────────────────────────
     router_settings:
-      routing_strategy: "latency-based-routing"
+      routing_strategy: "least-busy"
       num_retries: 3
       timeout: 30
       fallbacks:
