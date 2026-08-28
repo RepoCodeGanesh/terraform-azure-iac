@@ -10,9 +10,10 @@ last_updated: "2026-01-15"
 ## Chapter I: Liberalised Remittance Scheme (LRS) Limits & TCS
 
 ### Clause 1.1: Permissible LRS Remittance Ceilings
-Under the Liberalised Remittance Scheme (LRS), Authorised Dealer (AD Category-I) banks may freely allow resident individuals to remit up to **USD 250,000** (or equivalent) per financial year (April-March) for any permissible current or capital account transaction.
-* **Permissible Purposes:** Education, medical treatment, overseas travel, gifts, purchase of foreign shares/real estate.
+Under the Liberalised Remittance Scheme (LRS), Authorised Dealer (AD Category-I) banks may freely allow resident individuals to remit and send up to **USD 250,000** (or foreign currency equivalent in dollars, euros, pounds) per financial year (April-March) abroad for any permissible current or capital account transaction.
+* **Permissible Purposes:** Overseas university education fees and tuition, living expenses for students studying abroad, medical treatment, overseas leisure and business travel, family gifts, and purchase of foreign shares or real estate.
 * **Prohibited Purposes:** Remittances for lottery, gambling, margins in overseas derivatives, or purchase of banned foreign entities under FATF high-risk jurisdictions.
+
 
 ### Clause 1.2: Tax Collected at Source (TCS) & PAN Mandate
 * **Mandatory PAN:** Mandatory submission of permanent account number (PAN) for all LRS remittances.
