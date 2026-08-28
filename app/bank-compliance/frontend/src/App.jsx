@@ -1,31 +1,47 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText, Activity, Sparkles, Cpu, Layers, Upload, FileCheck } from 'lucide-react'
+import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText, Activity, Sparkles, Cpu, Layers, Upload, FileCheck, Search, Filter } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import DocumentViewer from './components/DocumentViewer'
 import GenAIOpsDashboard from './components/GenAIOpsDashboard'
+import RedlineStudio from './components/RedlineStudio'
 
 export default function App() {
   const [selectedCircular, setSelectedCircular] = useState('All')
+  const [activeSector, setActiveSector] = useState('All')
+  const [searchFilter, setSearchFilter] = useState('')
   const [ingesting, setIngesting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [ingestSuccess, setIngestSuccess] = useState(null)
-  const [lakeStats, setLakeStats] = useState({ total_circulars: 6, total_indexed_clauses: 24 })
+  const [lakeStats, setLakeStats] = useState({ total_circulars: 12, total_indexed_clauses: 120 })
   const fileInputRef = useRef(null)
   
-  // Split-Screen Interactive State
+  // Split-Screen & Mode State
   const [selectedDocId, setSelectedDocId] = useState('01-rbi-master-direction-kyc-aml-vcip')
   const [highlightClause, setHighlightClause] = useState('')
-  const [viewMode, setViewMode] = useState('split') // 'split' | 'chat-only' | 'doc-only' | 'telemetry'
+  const [viewMode, setViewMode] = useState('split') // 'split' | 'chat-only' | 'doc-only' | 'telemetry' | 'redline'
 
   const CIRCULAR_MAP = [
-    { label: "All Master Directions", id: "01-rbi-master-direction-kyc-aml-vcip", isAll: true, count: 24, icon: Layers },
-    { label: "KYC & V-CIP (2016-2026)", id: "01-rbi-master-direction-kyc-aml-vcip", count: 4, icon: Shield },
-    { label: "IT Governance & Cloud Data", id: "02-rbi-master-direction-it-governance-cybersecurity", count: 4, icon: Cpu },
-    { label: "IT Outsourcing & Vendor Risk", id: "03-rbi-master-direction-it-outsourcing-fintech", count: 4, icon: Building2 },
-    { label: "Digital Payments & CoFT", id: "04-rbi-master-direction-digital-payment-tokenisation", count: 4, icon: Sparkles },
-    { label: "Credit & Debit Cards (2025)", id: "05-rbi-master-direction-credit-debit-cards-issuance", count: 4, icon: BookOpen },
-    { label: "Digital Lending & FLDG Norms", id: "06-rbi-master-direction-digital-lending-guidelines", count: 4, icon: FileText }
+    { label: "All Master Directions", id: "01-rbi-master-direction-kyc-aml-vcip", sector: "All", isAll: true, count: 120, icon: Layers },
+    // ── Pillar 1: KYC, Risk & Cyber Governance ──────────────────────────────────
+    { label: "KYC & V-CIP (2016-2026)", id: "01-rbi-master-direction-kyc-aml-vcip", sector: "KYC & Fraud", count: 8, icon: Shield },
+    { label: "IT Governance & Cyber Risk", id: "02-rbi-master-direction-it-governance-cybersecurity", sector: "Cyber & IT", count: 8, icon: Cpu },
+    { label: "IT Outsourcing & Cloud Data", id: "03-rbi-master-direction-it-outsourcing-fintech", sector: "Cyber & IT", count: 8, icon: Building2 },
+    { label: "Frauds Classification (FMR)", id: "07-rbi-master-direction-frauds-classification-reporting", sector: "KYC & Fraud", count: 8, icon: Shield },
+    { label: "Integrated Ombudsman Scheme", id: "08-rbi-master-direction-integrated-ombudsman-scheme", sector: "KYC & Fraud", count: 8, icon: BookOpen },
+
+    // ── Pillar 2: Payments & Digital Lending ────────────────────────────────────
+    { label: "Digital Payments & CoFT", id: "04-rbi-master-direction-digital-payment-tokenisation", sector: "Lending & Cards", count: 8, icon: Sparkles },
+    { label: "Credit & Debit Cards (2025)", id: "05-rbi-master-direction-credit-debit-cards-issuance", sector: "Lending & Cards", count: 8, icon: BookOpen },
+    { label: "Digital Lending & FLDG Norms", id: "06-rbi-master-direction-digital-lending-guidelines", sector: "Lending & Cards", count: 8, icon: FileText },
+    { label: "Prepaid Instruments (PPI)", id: "11-rbi-master-direction-prepaid-payment-instruments", sector: "Lending & Cards", count: 8, icon: Sparkles },
+
+    // ── Pillar 3: Capital, Liquidity & Forex ────────────────────────────────────
+    { label: "Basel III Capital & LCR", id: "09-rbi-master-direction-basel-iii-capital-regulations", sector: "Capital & Basel", count: 8, icon: Database },
+    { label: "FEMA & LRS Trade Remittance", id: "10-rbi-master-direction-fema-lrs-trade-remittance", sector: "Forex & Payments", count: 8, icon: ExternalLink },
+    { label: "Safe Deposit Lockers Norms", id: "12-rbi-master-direction-bank-lockers-safe-custody", sector: "Forex & Payments", count: 8, icon: Shield }
   ]
+
+
 
   const handleSelectCircular = (item) => {
     setSelectedCircular(item.isAll ? 'All' : item.label)
@@ -255,6 +271,27 @@ export default function App() {
               <span>Clause Viewer</span>
             </button>
             <button
+              onClick={() => setViewMode('redline')}
+              title="Automated Policy & Contract Redline Studio"
+              style={{
+                background: viewMode === 'redline' ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.35), rgba(139, 92, 246, 0.25))' : 'transparent',
+                border: viewMode === 'redline' ? '1px solid rgba(236, 72, 153, 0.5)' : '1px solid transparent',
+                color: viewMode === 'redline' ? '#f472b6' : 'var(--text-muted)',
+                padding: '6px 12px',
+                borderRadius: '7px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                transition: 'all 0.18s ease'
+              }}
+            >
+              <FileCheck size={13} />
+              <span>Policy Redliner</span>
+            </button>
+            <button
               onClick={() => setViewMode('telemetry')}
               title="GenAIOps Command Center & Observability"
               style={{
@@ -276,6 +313,7 @@ export default function App() {
               <span>GenAIOps Dashboard</span>
             </button>
           </div>
+
 
           <span style={{
             background: 'rgba(16, 185, 129, 0.1)',
@@ -403,9 +441,63 @@ export default function App() {
             </div>
           )}
 
+          {/* Sector Filter Chips */}
+          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }}>
+            {['All', 'Cyber & IT', 'KYC & Fraud', 'Lending & Cards', 'Capital & Basel', 'Forex & Payments'].map((sector) => (
+              <button
+                key={sector}
+                onClick={() => setActiveSector(sector)}
+                style={{
+                  background: activeSector === sector ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.03)',
+                  border: activeSector === sector ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                  color: activeSector === sector ? '#c7d2fe' : 'var(--text-muted)',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  padding: '2px 7px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {sector}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(15, 23, 42, 0.6)',
+            border: '1px solid #1e293b',
+            borderRadius: '6px',
+            padding: '4px 8px',
+            gap: '6px'
+          }}>
+            <Search size={11} color="#64748b" />
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Filter circulars..."
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#f8fafc',
+                fontSize: '0.72rem',
+                outline: 'none',
+                width: '100%'
+              }}
+            />
+          </div>
+
           {/* Navigation Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            {CIRCULAR_MAP.map((c, i) => {
+            {CIRCULAR_MAP
+              .filter(c => activeSector === 'All' || c.sector === 'All' || c.sector === activeSector)
+              .filter(c => !searchFilter || c.label.toLowerCase().includes(searchFilter.toLowerCase()))
+              .map((c, i) => {
               const isSelected = selectedDocId === c.id || (c.isAll && selectedCircular === 'All')
               const IconComponent = c.icon || BookOpen
               return (
@@ -419,9 +511,9 @@ export default function App() {
                       : 'transparent',
                     border: isSelected ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
                     borderRadius: '8px',
-                    padding: '9px 12px',
+                    padding: '8px 10px',
                     color: isSelected ? '#ffffff' : 'var(--text-secondary)',
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -430,17 +522,17 @@ export default function App() {
                     transition: 'all 0.18s ease'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', overflow: 'hidden' }}>
-                    <IconComponent size={14} color={isSelected ? '#818cf8' : '#64748b'} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                    <IconComponent size={13} color={isSelected ? '#818cf8' : '#64748b'} />
                     <span style={{ fontWeight: isSelected ? 600 : 400, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                       {c.label}
                     </span>
                   </div>
                   <span style={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.62rem',
                     color: isSelected ? '#a5b4fc' : '#475569',
                     background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                    padding: '1px 6px',
+                    padding: '1px 5px',
                     borderRadius: '9999px',
                     fontWeight: 600
                   }}>
@@ -469,7 +561,7 @@ export default function App() {
                 <span>AKS FinOps State</span>
               </div>
               <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                Free Tier • 1 Public IP • Sub-10ms Cache
+                Free Tier • Level 3 Redliner Active • Sub-10ms
               </div>
             </div>
           </div>
@@ -480,8 +572,13 @@ export default function App() {
           <GenAIOpsDashboard onBackToChat={() => setViewMode('split')} />
         )}
 
+        {/* Level 3: Policy & Contract Redline Studio Mode */}
+        {viewMode === 'redline' && (
+          <RedlineStudio />
+        )}
+
         {/* Center: Conversational Copilot */}
-        {viewMode !== 'doc-only' && viewMode !== 'telemetry' && (
+        {viewMode !== 'doc-only' && viewMode !== 'telemetry' && viewMode !== 'redline' && (
           <div style={{ flex: viewMode === 'split' ? '0 0 52%' : 1, display: 'flex', height: '100%', borderRight: viewMode === 'split' ? '1px solid var(--border-subtle)' : 'none' }}>
             <ChatWindow
               selectedCircular={selectedCircular}
@@ -491,7 +588,7 @@ export default function App() {
         )}
 
         {/* Right Pane: Split-Screen Interactive Document Viewer */}
-        {viewMode !== 'chat-only' && viewMode !== 'telemetry' && (
+        {viewMode !== 'chat-only' && viewMode !== 'telemetry' && viewMode !== 'redline' && (
           <DocumentViewer
             selectedDocId={selectedDocId}
             highlightClause={highlightClause}
@@ -504,3 +601,4 @@ export default function App() {
     </div>
   )
 }
+
