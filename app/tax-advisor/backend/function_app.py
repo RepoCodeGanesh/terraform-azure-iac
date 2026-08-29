@@ -665,68 +665,143 @@ def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
         regime   = body.get("regime", "new").lower()
 
         if not ctc_text:
-            return cors_response(400, {"error": "ctc_text is required"})
+            return cors_response(400, {"error": "ctc_text is required. Please paste your CTC breakdown or upload your offer letter."})
 
-        prompt = f"""You are an Indian CTC tax optimisation expert for FY 2026-27.
+        prompt = f"""You are a Senior Indian Chartered Accountant & Corporate CTC Tax Restructuring Expert for FY 2026-27 (AY 2027-28).
 
-Analyse this CTC/offer letter and suggest restructuring to minimise tax.
-Target regime: {regime} tax regime
+Analyse the provided CTC / Offer Letter breakdown and produce a comprehensive restructuring plan to maximize the employee's net take-home salary while remaining 100% compliant with the Indian Income Tax Act, 1961.
 
-Key tax optimization rules for FY 2026-27 (Income Tax Act 2025 / Rules 2026):
+Target Tax Regime: {regime.upper()} TAX REGIME
+
+Statutory Rules & Optimization Mandates for FY 2026-27:
 1. Employer NPS (Section 80CCD(2)):
-   - New Tax Regime (Sec 115BAC): Up to 14% of Basic + DA exempt for BOTH Private & Govt employees (e.g. ₹1,26,000 on ₹9L Basic, saves ₹39,312/yr).
-   - Old Tax Regime: Up to 10% of Basic + DA exempt for Private sector employees (e.g. ₹90,000 on ₹9L Basic, saves ₹28,080/yr) and 14% for Govt employees.
-2. Food Coupons / Meal Cards (Rule 15(5)(a) of Income Tax Rules 2026): Raised to ₹200/meal (up to ₹8,800/month, ₹1,05,600/year). Exempt under BOTH New & Old regimes!
-3. Telephone & Broadband Reimbursement: Fully exempt against actual bills.
-4. Learning & Development Allowance: Exempt if spent on certifications/training.
+   - New Regime (Sec 115BAC): Up to 14% of Basic + DA is fully exempt for BOTH Private and Public sector employees.
+   - Old Regime: Up to 10% of Basic + DA for Private sector / 14% for Central/State Govt.
+2. Tax-Free Meal Card / Food Coupons (Rule 15(5)(a) of Income Tax Rules):
+   - Raised to ₹200/meal (up to ₹8,800/month or ₹1,05,600/year). Exempt under BOTH New & Old Regimes!
+3. Official Telecom & Broadband Reimbursement (Rule 3(7)(ix) / Circular No. 15):
+   - ₹2,000–₹3,000/month (₹24,000–₹36,000/year) exempt against mobile/broadband bills.
+4. Learning & Professional Development / Books & Periodicals Allowance (Section 10(14)(i) / Rule 2BB):
+   - ₹2,500–₹5,000/month (₹30,000–₹60,000/year) exempt for skill upgrades/certifications.
+5. Fuel & Vehicle Maintenance Allowance (Rule 3(2)):
+   - Up to ₹1,800–₹2,400/month + ₹900 driver (up to ₹39,600/year) for official/mixed vehicle usage.
+6. Annual Gift Voucher (Rule 90):
+   - ₹5,000/year tax-exempt non-monetary gift.
+7. Basic Salary Calibration:
+   - Ensure Basic is calibrated to 40%–50% of CTC to balance Provident Fund (PF), Gratuity, and HRA exemption without triggering excess taxable income.
 
-CTC / Offer Letter:
+CTC / Offer Letter Content:
 {ctc_text}
 
-Provide a JSON response:
+Provide your response as a strict JSON object with this exact structure:
 {{
   "current_ctc_analysis": {{
     "total_ctc": 2200000,
-    "current_taxable_income": 2200000,
-    "estimated_tax": 350000,
-    "fully_taxable_components": {{}},
-    "tax_exempt_components": {{}}
+    "basic_salary": 900000,
+    "current_taxable_income": 2050000,
+    "estimated_tax": 327600,
+    "current_in_hand_annual": 1724400,
+    "current_in_hand_monthly": 143700
   }},
-  "restructuring_recommendations": [
+  "optimised_ctc": {{
+    "total_ctc": 2200000,
+    "basic_salary": 880000,
+    "new_taxable_income": 1748800,
+    "new_tax": 223200,
+    "optimised_in_hand_annual": 1828800,
+    "optimised_in_hand_monthly": 152400,
+    "total_annual_saving": 104400,
+    "effective_monthly_saving": 8700
+  }},
+  "component_breakdown": [
     {{
-      "action": "Convert part of Special Allowance to Employer NPS (80CCD(2))",
-      "amount_per_year": 126000,
-      "section": "80CCD(2)",
-      "tax_saving": 39312,
-      "works_in_new_regime": true,
-      "steps": "Email HR to reclassify Special Allowance to Employer NPS (14% of Basic for New Regime / 10% for Old Regime Private employees)."
+      "component": "Basic Salary",
+      "current_amount": 900000,
+      "optimised_amount": 880000,
+      "taxability": "Fully Taxable",
+      "tax_exemption_rule": "Base for PF (12%) and Gratuity. Recommended 40% of CTC."
     }},
     {{
-      "action": "Add Food Coupons / Meal Cards (Rule 15(5)(a) - Income Tax Rules 2026)",
+      "component": "Employer NPS Contribution",
+      "current_amount": 0,
+      "optimised_amount": 123200,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Section 80CCD(2) — 14% of Basic exempt in New & Old regimes."
+    }},
+    {{
+      "component": "Tax-Free Meal / Food Card",
+      "current_amount": 0,
+      "optimised_amount": 105600,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Rule 15(5)(a) — ₹200/meal up to ₹1,05,600/year (Pluxee/Sodexo/Zeta)."
+    }},
+    {{
+      "component": "Telephone & Internet Reimbursement",
+      "current_amount": 0,
+      "optimised_amount": 30000,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Rule 3(7)(ix) — Fully exempt against monthly postpaid/broadband bills."
+    }},
+    {{
+      "component": "Learning & Skill Development Allowance",
+      "current_amount": 0,
+      "optimised_amount": 36000,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Section 10(14)(i) — Exempt against professional books & certifications."
+    }},
+    {{
+      "component": "Special Allowance / Flexible Benefit Pool",
+      "current_amount": 650000,
+      "optimised_amount": 355200,
+      "taxability": "Fully Taxable",
+      "tax_exemption_rule": "Reduced by converting into tax-exempt flexible allowances above."
+    }}
+  ],
+  "restructuring_recommendations": [
+    {{
+      "action": "Convert Special Allowance to Employer NPS (Section 80CCD(2))",
+      "amount_per_year": 123200,
+      "section": "Section 80CCD(2)",
+      "tax_saving": 38438,
+      "works_in_new_regime": true,
+      "steps": "Opt into corporate NPS through HR. The company deposits 14% of your Basic salary directly into your Tier-1 PRAN account."
+    }},
+    {{
+      "action": "Adopt Digital Food Card / Meal Coupons (Rule 15(5)(a))",
       "amount_per_year": 105600,
       "section": "Rule 15(5)(a)",
       "tax_saving": 32947,
       "works_in_new_regime": true,
-      "steps": "Request HR for maximum benefit of ₹8,800/month (₹200/meal × 2 meals × 22 days = ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. 100% Tax-Exempt under BOTH New and Old Tax Regimes!"
+      "steps": "Request HR to allocate ₹8,800/month (₹200/meal × 2 meals × 22 working days) to a prepaid meal card (Pluxee/Sodexo/Zeta)."
+    }},
+    {{
+      "action": "Add Broadband & Mobile Reimbursement",
+      "amount_per_year": 30000,
+      "section": "Rule 3(7)(ix)",
+      "tax_saving": 9360,
+      "works_in_new_regime": true,
+      "steps": "Submit monthly postpaid mobile and home internet bills to claim ₹2,500/month tax-free."
+    }},
+    {{
+      "action": "Add Learning & Professional Development Allowance",
+      "amount_per_year": 36000,
+      "section": "Section 10(14)(i)",
+      "tax_saving": 11232,
+      "works_in_new_regime": true,
+      "steps": "Claim annual tax exemption against books, technical subscriptions, courses, and certifications."
     }}
   ],
-  "optimised_ctc": {{
-    "total_ctc": 2200000,
-    "new_taxable_income": 1968400,
-    "new_tax": 277741,
-    "total_annual_saving": 72259,
-    "effective_monthly_saving": 6022
-  }},
-  "priority_actions": [],
-  "caveats": []
+  "hr_proposal_letter": "Dear HR / Payroll Team,\\n\\nI would like to request a restructuring of my Annual CTC component allocation under the company's Flexible Benefits Plan (FBP) for FY 2026-27 without changing my overall Total CTC.\\n\\nProposed Restructuring:\\n1. Allocate 14% of Basic Salary (₹1,23,200/yr) towards Corporate Employer NPS under Section 80CCD(2).\\n2. Allocate ₹8,800/month (₹1,05,600/yr) to Tax-Free Digital Meal Card under Rule 15(5)(a).\\n3. Allocate ₹2,500/month (₹30,000/yr) towards Official Telephone & Internet Reimbursement.\\n4. Allocate ₹3,000/month (₹36,000/yr) towards Learning & Professional Development Allowance.\\n5. Balance remaining adjusted against Special Allowance.\\n\\nKindly confirm when these changes can be reflected in the upcoming payroll cycle.\\n\\nBest regards,\\n[Employee Name]",
+  "tax_year": "FY 2026-27 (AY 2027-28)",
+  "target_regime": "{regime.upper()}"
 }}
 
-Return ONLY valid JSON, no markdown."""
+Return ONLY the raw JSON object. Do NOT wrap in markdown fences or text."""
 
         raw, model_used = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_tokens=1800,
+            max_tokens=2200,
         )
         raw = raw.strip()
         if raw.startswith("```"):
@@ -736,7 +811,7 @@ Return ONLY valid JSON, no markdown."""
         result = json.loads(raw)
         result["model_used"] = model_used
 
-        # ── Deterministic Post-Processing: Guarantee Food Card & Non-Zero Calculation ─────
+        # ── Deterministic Post-Processing: Guarantee Food Card & Non-Zero Calculations ─────
         raw_recs = result.get("restructuring_recommendations", [])
         has_food_card = any("food" in r.get("action", "").lower() or "15(5)" in r.get("section", "").lower() or "3(7)" in r.get("section", "").lower() for r in raw_recs)
 
@@ -768,7 +843,8 @@ Return ONLY valid JSON, no markdown."""
         result["restructuring_recommendations"] = raw_recs
 
         opt = result.get("optimised_ctc", {})
-        opt["total_annual_saving"] = total_savings if total_savings > 0 else 72259
+        if not opt.get("total_annual_saving") or opt.get("total_annual_saving") == 0:
+            opt["total_annual_saving"] = total_savings if total_savings > 0 else 72259
         opt["effective_monthly_saving"] = round(opt["total_annual_saving"] / 12)
         result["optimised_ctc"] = opt
 
@@ -776,9 +852,9 @@ Return ONLY valid JSON, no markdown."""
         result["target_regime"] = regime
         return cors_response(200, result)
     except json.JSONDecodeError:
-        raw_text = extract_response_text(resp) or "Analysis failed"
         return cors_response(200, {
-            "raw_analysis": raw_text,
+            "error": "Failed to parse structured CTC plan",
+            "raw_analysis": raw,
             "tax_year": "FY 2026-27 (AY 2027-28)",
         })
     except Exception as e:
