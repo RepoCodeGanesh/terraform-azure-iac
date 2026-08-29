@@ -46,8 +46,122 @@ The partner shall retain complete 12-digit raw Aadhaar numbers in plaintext data
     setDocumentName('FinTech_CoLending_Vendor_SOW.pdf')
   }
 
+  // ── Client-Side Dynamic Statutory Rules Engine (100% Offline & Resilience Shield) ──
+  const auditContractLocally = (text, docName) => {
+    const rawParas = (text || '').split(/\n\n+/).map(p => p.trim()).filter(Boolean)
+    const paras = rawParas.length > 0 ? rawParas : [text.trim()]
+    const violations = []
+
+    const rules = [
+      {
+        id: "RULE-DATA-LOCALIZATION-03",
+        violation_title: "Cloud Data Localization & Cross-Border Sovereign Breach",
+        category: "IT Outsourcing & FinTech Risk",
+        violated_circular: "RBI/2023-24/102",
+        violated_clause: "Clause 12.2: Data Sovereignty within India",
+        pattern: /(?:store|host|replicate|transfer|process|maintain).*?(?:outside india|in offshore|in foreign|in overseas|in singapore|in frankfurt|in us|in eu|in europe)/i,
+        severity: "CRITICAL",
+        explanation: "RBI strictly mandates all banking transaction data, logs, and customer PII to reside exclusively on sovereign Indian cloud regions.",
+        suggested_replacement: "All Bank data, customer PII, and system logs shall be stored and processed exclusively within sovereign cloud regions located in the territory of India."
+      },
+      {
+        id: "RULE-CYBER-SLA-01",
+        violation_title: "Cyber Incident Reporting SLA Exceeded (6-Hour Mandate)",
+        category: "IT Governance & Cybersecurity",
+        violated_circular: "RBI/2023-24/108",
+        violated_clause: "Clause 5.1: 6-Hour Cyber Incident SLA",
+        pattern: /(?:notify|inform|report|alert).*?(?:within|in|after).*?(\b(?:24|48|72|[2-9]\d+)\s*(?:hours|hrs|days|calendar days|business days)\b)/i,
+        severity: "CRITICAL",
+        explanation: "RBI IT Governance mandates that all cyber incidents must be reported to the Bank CISO and CERT-In within 6 hours of discovery.",
+        suggested_replacement: "The Vendor shall immediately notify the Bank CISO of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery."
+      },
+      {
+        id: "RULE-FLDG-CAP-02",
+        violation_title: "First Loss Default Guarantee (FLDG) Exceeds 5% Cap",
+        category: "Digital Lending & FinTech Norms",
+        violated_circular: "RBI/2022-23/111",
+        violated_clause: "Section 4: Default Loss Guarantee Cap",
+        pattern: /(?:default loss guarantee|fldg|dlg|credit enhancement).*?(\b(?:[6-9]|[1-9]\d+)\s*%)/i,
+        severity: "HIGH",
+        explanation: "RBI Digital Lending Guidelines strictly cap First Loss Default Guarantees (FLDG) at 5% of the total loan portfolio.",
+        suggested_replacement: "The total First Loss Default Guarantee (FLDG) provided by the LSP shall be strictly capped at 5% of the total disbursed portfolio."
+      },
+      {
+        id: "RULE-RIGHT-TO-AUDIT-04",
+        violation_title: "Restriction on Bank and RBI Right to Audit",
+        category: "IT Outsourcing & FinTech Risk",
+        violated_circular: "RBI/2023-24/102",
+        violated_clause: "Chapter III, Clause 7: Right to Audit",
+        pattern: /(?:exempt from.*?audit|no audit|confidential and not subject to audit|audit fees shall apply|bank shall not have the right to inspect|not subject to.*?inspection)/i,
+        severity: "HIGH",
+        explanation: "Contracts must grant unhindered audit rights to both the Bank and RBI officers.",
+        suggested_replacement: "The Bank and authorized officers of the Reserve Bank of India shall have unhindered right to inspect, examine, and audit vendor systems."
+      },
+      {
+        id: "RULE-AADHAAR-MASK-07",
+        violation_title: "Unmasked Aadhaar Storage Violation",
+        category: "KYC & AML Compliance",
+        violated_circular: "RBI/DBR/2016-17/14",
+        violated_clause: "Section 16: Aadhaar Redaction & DPDP Act",
+        pattern: /(?:store|retain|archive|save).*?(?:full aadhaar|12-digit.*?aadhaar|raw aadhaar|complete aadhaar)/i,
+        severity: "CRITICAL",
+        explanation: "Storing raw 12-digit Aadhaar numbers in plaintext violates UIDAI & RBI rules. Only masked Aadhaar (XXXX-XXXX-1234) is permitted.",
+        suggested_replacement: "The Vendor shall ensure all Aadhaar numbers are immediately masked (e.g. XXXX-XXXX-1234), and raw Aadhaar numbers shall never be stored in plaintext."
+      },
+      {
+        id: "RULE-OMBUDSMAN-SLA-06",
+        violation_title: "Customer Grievance Resolution SLA Exceeds 30 Days",
+        category: "Customer Protection & Grievance",
+        violated_circular: "RBI/2021-22/126",
+        violated_clause: "Chapter I, Clause 1.2: Grievance Turnaround",
+        pattern: /(?:complaint|grievance|dispute)s?.*?(?:resolved|responded to|addressed).*?(?:within|in).*?(\b(?:45|60|90|[4-9]\d+)\s*(?:days|calendar days)\b)/i,
+        severity: "HIGH",
+        explanation: "Customer complaints must be resolved within a statutory maximum of thirty (30) days.",
+        suggested_replacement: "The Bank and its partner shall investigate and resolve all customer complaints within a maximum period of thirty (30) calendar days from receipt."
+      }
+    ]
+
+    paras.forEach((p, idx) => {
+      rules.forEach(rule => {
+        if (rule.pattern.test(p)) {
+          violations.push({
+            clause_id: `C-${String(idx + 1).padStart(2, '0')}`,
+            clause_title: `Section ${idx + 1}`,
+            original_text: p,
+            violation_title: rule.violation_title,
+            category: rule.category,
+            severity: rule.severity,
+            violated_circular: rule.violated_circular,
+            violated_clause: rule.violated_clause,
+            explanation: rule.explanation,
+            suggested_replacement: rule.suggested_replacement
+          })
+        }
+      })
+    })
+
+    const criticalCount = violations.filter(v => v.severity === 'CRITICAL').length
+    const highCount = violations.filter(v => v.severity === 'HIGH').length
+    const mediumCount = violations.filter(v => v.severity === 'MEDIUM').length
+
+    const penalty = criticalCount * 30 + highCount * 15 + mediumCount * 5
+    const score = Math.max(10, Math.min(100, 100 - penalty))
+    const riskTier = score >= 85 ? 'LOW RISK / COMPLIANT' : score >= 60 ? 'MEDIUM RISK' : 'HIGH RISK'
+
+    return {
+      document_name: docName || 'Agreement.pdf',
+      compliance_score: score,
+      risk_tier: riskTier,
+      total_violations: violations.length,
+      total_clauses_reviewed: Math.max(1, paras.length),
+      severity_summary: { critical: criticalCount, high: highCount, medium: mediumCount },
+      violations: violations
+    }
+  }
+
   const runRedlineAudit = async () => {
     setAuditing(true)
+    const currentText = contractText || sampleAgreement
     try {
       const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       const defaultEndpoint = isLocal
@@ -60,50 +174,20 @@ The partner shall retain complete 12-digit raw Aadhaar numbers in plaintext data
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: contractText || sampleAgreement, document_name: documentName })
+        body: JSON.stringify({ text: currentText, document_name: documentName })
       })
 
       if (res.ok) {
         const data = await res.json()
         setAuditResult(data)
       } else {
-        // Fallback calculation if offline
-        setAuditResult({
-          document_name: documentName,
-          compliance_score: 45,
-          risk_tier: 'HIGH RISK',
-          total_violations: 5,
-          severity_summary: { critical: 2, high: 3, medium: 0 },
-          violations: [
-            {
-              clause_id: 'C-01',
-              clause_title: 'Section 1: Sovereign Data Hosting',
-              original_text: 'All Bank customer data, transactions, and system logs shall be hosted on primary cloud servers in Singapore with backup archives in Frankfurt.',
-              violation_title: 'Cloud Data Localization & Cross-Border Sovereign Breach',
-              category: 'IT Outsourcing & FinTech Risk',
-              severity: 'CRITICAL',
-              violated_circular: 'RBI/2023-24/102',
-              violated_clause: 'Clause 12.2: Data Sovereignty within India',
-              explanation: 'RBI strictly mandates all banking transaction data, logs, and customer PII to reside exclusively on sovereign Indian cloud regions.',
-              suggested_replacement: 'All Bank data, customer PII, and system logs shall be stored and processed exclusively within sovereign cloud regions located in the territory of India.'
-            },
-            {
-              clause_id: 'C-02',
-              clause_title: 'Section 2: Cybersecurity Incident Notification',
-              original_text: 'The Vendor shall notify the Bank of any confirmed or suspected cybersecurity incidents or data breaches within 48 hours of detection.',
-              violation_title: 'Cyber Incident Reporting SLA Exceeded (6-Hour Mandate)',
-              category: 'IT Governance & Cybersecurity',
-              severity: 'CRITICAL',
-              violated_circular: 'RBI/2023-24/108',
-              violated_clause: 'Clause 5.1: 6-Hour Cyber Incident SLA',
-              explanation: 'RBI IT Governance mandates that all cyber incidents must be reported to the Bank CISO and CERT-In within 6 hours of discovery.',
-              suggested_replacement: 'The Vendor shall immediately notify the Bank CISO of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery.'
-            }
-          ]
-        })
+        const localResult = auditContractLocally(currentText, documentName)
+        setAuditResult(localResult)
       }
     } catch (err) {
-      console.warn('Redline audit fallback:', err)
+      console.warn('Network redline failed, applying in-browser statutory audit engine:', err)
+      const localResult = auditContractLocally(currentText, documentName)
+      setAuditResult(localResult)
     } finally {
       setAuditing(false)
     }
@@ -373,17 +457,33 @@ The partner shall retain complete 12-digit raw Aadhaar numbers in plaintext data
               Redline Audit Diffs ({auditResult.violations.length} Clauses Requiring Modification)
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {auditResult.violations.map((v, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: '#111827',
-                    border: '1px solid #1e293b',
-                    borderRadius: '10px',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
+            {auditResult.violations.length === 0 ? (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '10px',
+                padding: '24px',
+                textAlign: 'center',
+                color: '#34d399'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✅</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>100% Statutory Compliance Achieved!</div>
+                <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '4px' }}>
+                  No statutory violations, cross-border breaches, or SLA infractions were detected in the audited text.
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {auditResult.violations.map((v, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: '#111827',
+                      border: '1px solid #1e293b',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
                     gap: '10px'
                   }}
                 >
@@ -476,6 +576,7 @@ The partner shall retain complete 12-digit raw Aadhaar numbers in plaintext data
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
       )}
