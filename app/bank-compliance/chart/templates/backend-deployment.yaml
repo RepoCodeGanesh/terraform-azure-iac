@@ -27,8 +27,6 @@ spec:
     metadata:
       labels:
         app: bankc-backend
-        # Injects Azure federated identity tokens into pod env
-        azure.workload.identity/use: "true"
       annotations:
         # Automated Prometheus telemetry scraping
         prometheus.io/scrape: "true"

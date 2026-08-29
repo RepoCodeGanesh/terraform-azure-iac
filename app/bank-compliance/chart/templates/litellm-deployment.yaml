@@ -21,7 +21,6 @@ spec:
     metadata:
       labels:
         app: litellm-proxy
-        azure.workload.identity/use: "true"
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "4000"

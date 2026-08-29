@@ -194,7 +194,14 @@ jobs:
                 echo "  ✅ Patched: $SECRET → failed"
               done
             fi
-          done
+          # ── Enforce 1-Replica FinOps Quota on System Addons (Free up ~400m CPU) ───
+          echo "⚡ Optimizing system addon replicas for single-node cluster (FinOps quota)..."
+          kubectl scale deployment keda-admission-webhooks -n kube-system --replicas=1 2>/dev/null || true
+          kubectl scale deployment keda-operator-metrics-apiserver -n kube-system --replicas=1 2>/dev/null || true
+          kubectl scale deployment metrics-server -n kube-system --replicas=1 2>/dev/null || true
+          kubectl scale deployment konnectivity-agent-autoscaler -n kube-system --replicas=1 2>/dev/null || true
+          kubectl scale deployment coredns-autoscaler -n kube-system --replicas=1 2>/dev/null || true
+
           echo "Current Helm secrets:"
           kubectl get secret -n bank-compliance -l "owner=helm,name=bank-compliance" \
             -o custom-columns="NAME:.metadata.name,STATUS:.metadata.labels.status" \
