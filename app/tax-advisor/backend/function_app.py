@@ -33,6 +33,9 @@ OPENAI_MODEL            = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
 SEARCH_ENDPOINT         = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
 SEARCH_INDEX            = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
 CONTENT_SAFETY_ENDPOINT = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
+COSMOS_DB_ENDPOINT      = os.environ.get("COSMOS_DB_ENDPOINT", "")
+COSMOS_DB_DATABASE      = os.environ.get("COSMOS_DB_DATABASE", "db-tax-advisor")
+COSMOS_DB_CONTAINER     = os.environ.get("COSMOS_DB_CONTAINER", "chat_history")
 APP_NAME                = os.environ.get("APP_NAME", "TaxBot India")
 APP_VERSION             = os.environ.get("APP_VERSION", "1.0.0")
 
@@ -42,6 +45,12 @@ CORS_HEADERS = {
     "Access-Control-Allow-Headers": "Content-Type, Authorization, x-session-id",
     "Content-Type": "application/json",
 }
+
+try:
+    from azure.cosmos import CosmosClient
+    HAS_COSMOS = True
+except ImportError:
+    HAS_COSMOS = False
 
 SYSTEM_PROMPT = """You are TaxBot India, an expert Indian income tax advisor for FY 2026-27 (AY 2027-28).
 You have deep knowledge of:
@@ -94,6 +103,62 @@ def extract_response_text(resp) -> str:
     except Exception as e:
         logging.error(f"Error extracting stream response text: {e}")
         return ""
+
+# ── Cosmos DB Session Persistence Helpers ─────────────────────────────────────
+_cosmos_container = None
+
+def get_cosmos_container():
+    global _cosmos_container
+    if _cosmos_container is not None:
+        return _cosmos_container
+    if not HAS_COSMOS or not COSMOS_DB_ENDPOINT:
+        return None
+    try:
+        credential = get_credential()
+        client = CosmosClient(COSMOS_DB_ENDPOINT, credential=credential)
+        db = client.get_database_client(COSMOS_DB_DATABASE)
+        _cosmos_container = db.get_container_client(COSMOS_DB_CONTAINER)
+        return _cosmos_container
+    except Exception as e:
+        logging.warning("Cosmos DB initialization failed: %s", e)
+        return None
+
+def save_chat_turn(session_id: str, user_message: str, reply: str, model: str = OPENAI_MODEL) -> bool:
+    container = get_cosmos_container()
+    if not container:
+        return False
+    try:
+        import uuid
+        doc = {
+            "id": str(uuid.uuid4()),
+            "sessionId": session_id,
+            "userMessage": user_message,
+            "reply": reply,
+            "model": model,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        container.upsert_item(doc)
+        return True
+    except Exception as e:
+        logging.warning("Failed to save chat turn to Cosmos DB: %s", e)
+        return False
+
+def get_session_history(session_id: str, limit: int = 20) -> list:
+    container = get_cosmos_container()
+    if not container:
+        return []
+    try:
+        query = "SELECT c.id, c.sessionId, c.userMessage, c.reply, c.timestamp FROM c WHERE c.sessionId = @sessionId ORDER BY c.timestamp ASC"
+        items = list(container.query_items(
+            query=query,
+            parameters=[{"name": "@sessionId", "value": session_id}],
+            enable_cross_partition_query=False,
+            partition_key=session_id
+        ))
+        return items[-limit:]
+    except Exception as e:
+        logging.warning("Failed to fetch session history from Cosmos DB: %s", e)
+        return []
 
 def sanitize_pii(text: str) -> str:
     """Mask Indian PAN card numbers and Aadhaar numbers to enforce PII privacy."""
@@ -332,13 +397,38 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
         )
         reply = extract_response_text(resp)
 
+        # 💾 3. Persist Turn to Azure Cosmos DB
+        session_id = body.get("sessionId") or body.get("session_id") or req.headers.get("x-session-id") or "default-session"
+        saved = save_chat_turn(session_id, raw_message, reply, OPENAI_MODEL)
+
         return cors_response(200, {
             "reply": reply,
             "model": OPENAI_MODEL,
+            "sessionId": session_id,
+            "persisted": saved,
             "sources_searched": bool(context),
         })
     except Exception as e:
         logging.error(f"Chat error: {e}")
+        return cors_response(500, {"error": str(e)})
+
+# ── Route: GET /history ────────────────────────────────────────────────────────
+@app.route(route="history", methods=["GET", "OPTIONS"])
+def history(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
+    try:
+        session_id = req.params.get("sessionId") or req.params.get("session_id") or req.headers.get("x-session-id")
+        if not session_id:
+            return cors_response(400, {"error": "sessionId query parameter is required"})
+        turns = get_session_history(session_id)
+        return cors_response(200, {
+            "sessionId": session_id,
+            "turns": turns,
+            "count": len(turns)
+        })
+    except Exception as e:
+        logging.error(f"History fetch error: {e}")
         return cors_response(500, {"error": str(e)})
 
 # ── Route: POST /compare-regime ────────────────────────────────────────────────

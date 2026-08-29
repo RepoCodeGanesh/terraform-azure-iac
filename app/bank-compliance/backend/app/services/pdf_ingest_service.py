@@ -26,11 +26,71 @@ class PDFIngestService:
         return hashlib.sha256(file_bytes).hexdigest()
 
     @classmethod
+    def extract_with_document_intelligence(cls, file_bytes: bytes) -> Optional[List[Dict[str, Any]]]:
+        """
+        Extracts structured text and layout using Azure Document Intelligence (di-ht-ss-p-cin-01).
+        Provides enterprise layout awareness and OCR for complex regulatory tables.
+        """
+        import json
+        import urllib.request
+        from app.core.config import settings
+        
+        endpoint = getattr(settings, "DOCUMENT_INTELLIGENCE_ENDPOINT", "")
+        key = getattr(settings, "DOCUMENT_INTELLIGENCE_KEY", "")
+        if not endpoint or not key:
+            return None
+
+        try:
+            url = f"{endpoint.rstrip('/')}/formrecognizer/documentModels/prebuilt-layout:analyze?api-version=2023-07-31"
+            headers = {
+                "Ocp-Apim-Subscription-Key": key,
+                "Content-Type": "application/pdf"
+            }
+            req = urllib.request.Request(url, data=file_bytes, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                operation_location = resp.headers.get("Operation-Location")
+                if not operation_location:
+                    return None
+
+            import time
+            poll_headers = {"Ocp-Apim-Subscription-Key": key}
+            for _ in range(12):
+                time.sleep(2)
+                poll_req = urllib.request.Request(operation_location, headers=poll_headers)
+                with urllib.request.urlopen(poll_req, timeout=15) as poll_resp:
+                    result = json.loads(poll_resp.read().decode("utf-8"))
+                    status = result.get("status")
+                    if status == "succeeded":
+                        analyze_result = result.get("analyzeResult", {})
+                        pages_data = []
+                        for page in analyze_result.get("pages", []):
+                            page_num = page.get("pageNumber", 1)
+                            lines = [line.get("content", "") for line in page.get("lines", [])]
+                            pages_data.append({
+                                "page_number": page_num,
+                                "text": "\n".join(lines).strip()
+                            })
+                        if pages_data:
+                            logger.info("Successfully extracted %d pages using Azure Document Intelligence", len(pages_data))
+                            return pages_data
+                    elif status in ("failed", "canceled"):
+                        break
+        except Exception as e:
+            logger.warning("Azure Document Intelligence extraction failed, falling back: %s", e)
+        return None
+
+    @classmethod
     def extract_text_from_pdf_bytes(cls, file_bytes: bytes) -> List[Dict[str, Any]]:
         """
         Extracts pages and text from raw PDF bytes.
-        Returns a list of dicts with page number and page text.
+        Uses Azure Document Intelligence if available, with automated fallback to pypdf.
         """
+        # 1. Try Azure Document Intelligence (Enterprise Layout Analysis)
+        di_pages = cls.extract_with_document_intelligence(file_bytes)
+        if di_pages:
+            return di_pages
+
+        # 2. Local High-Performance Parser (pypdf)
         pages_data = []
         if PYPDF_AVAILABLE:
             try:

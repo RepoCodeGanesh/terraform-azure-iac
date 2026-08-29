@@ -22,9 +22,48 @@ export default function ChatAdvisor() {
   const [error, setError] = useState(null)
   const messagesEndRef = useRef(null)
 
+  // Persistent session across browser refreshes (Cosmos DB partition key)
+  const [sessionId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let saved = localStorage.getItem('taxb_session_id')
+      if (!saved) {
+        saved = 'taxb-sess-' + (window.crypto?.randomUUID ? window.crypto.randomUUID() : Math.random().toString(36).substring(2, 11))
+        localStorage.setItem('taxb_session_id', saved)
+      }
+      return saved
+    }
+    return 'default-session'
+  })
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  // Restore past session history from Cosmos DB on load
+  useEffect(() => {
+    if (!sessionId) return
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/history?sessionId=${encodeURIComponent(sessionId)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.turns && data.turns.length > 0) {
+            const restored = [
+              messages[0], // welcome message
+              ...data.turns.flatMap(t => [
+                { role: 'user', content: t.userMessage },
+                { role: 'assistant', content: t.reply }
+              ])
+            ]
+            setMessages(restored)
+          }
+        }
+      } catch {
+        // Silently fallback to fresh session if history service is warming up
+      }
+    }
+    fetchHistory()
+  }, [sessionId])
 
   useEffect(() => {
     scrollToBottom()
@@ -50,8 +89,15 @@ export default function ChatAdvisor() {
 
       const res = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: formattedHistory }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-session-id': sessionId
+        },
+        body: JSON.stringify({ 
+          message: text, 
+          history: formattedHistory,
+          sessionId: sessionId 
+        }),
       })
 
       if (!res.ok) {

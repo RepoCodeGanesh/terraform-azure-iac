@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Azure Content Safety
     CONTENT_SAFETY_ENDPOINT: str = os.getenv("CONTENT_SAFETY_ENDPOINT", "")
     
+    # Azure Document Intelligence (OCR & Table Extraction)
+    DOCUMENT_INTELLIGENCE_ENDPOINT: str = os.getenv("DOCUMENT_INTELLIGENCE_ENDPOINT", "https://di-ht-ss-p-cin-01.cognitiveservices.azure.com/")
+    DOCUMENT_INTELLIGENCE_KEY: str = os.getenv("DOCUMENT_INTELLIGENCE_KEY", "")
+    
     # CORS
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
     
