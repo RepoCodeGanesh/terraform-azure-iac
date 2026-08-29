@@ -56,4 +56,7 @@ observability_agent_location_short = "eus"
 custom_domain_name = "www.mytaxbot.site"
 cloudflare_zone_id = "45acc43e2f88066e0406eca94edffc53"
 
+# ── Deployment Service Principal ────────────────────────────────────────────
+app_prod_sp_object_id = "9630f661-27e7-42f0-8377-5565ba7db7cd"
+
 
