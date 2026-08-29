@@ -1,29 +1,41 @@
 # ==============================================================================
 # LiteLLM Multi-Model & Multi-Vendor Routing Configuration
 # Architecture:
-#   - Primary Fleet: Google Gemini 2.0 (Google AI Plus - $0.00 idle cost)
+#   - Primary Fleet: Google Gemini 2.0 / Groq LPU ($0.00 idle cost, 500+ tok/s)
 #   - Enterprise Fallback: Microsoft Azure OpenAI Service (gpt-5.4-nano)
 # ==============================================================================
 model_list:
-  # ── 1. Primary Model for General Synthesis & Chat (Google Cloud) ───────────
+  # ── 1. Ultra-Fast High-Throughput Model: Groq LPU (500+ tok/s) ─────────────
+  - model_name: groq-llama-70b
+    litellm_params:
+      model: groq/openai/gpt-oss-120b
+      api_key: "os.environ/GROQ_API_KEY"
+
+  # ── 2. Specialist Fast Classifier: Groq LPU (Sub-30ms) ─────────────────────
+  - model_name: groq-llama-8b
+    litellm_params:
+      model: groq/openai/gpt-oss-20b
+      api_key: "os.environ/GROQ_API_KEY"
+
+  # ── 3. Primary Model for General Synthesis & Chat (Google Cloud) ───────────
   - model_name: gemini-2.0-flash
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: "os.environ/GEMINI_API_KEY"
 
-  # ── 2. Specialist Model: Planner & Intent Classifier (Fast Sub-50ms) ──────
+  # ── 4. Specialist Model: Planner & Intent Classifier (Fast Sub-50ms) ──────
   - model_name: gemini-2.0-flash-lite
     litellm_params:
       model: gemini/gemini-2.0-flash-lite
       api_key: "os.environ/GEMINI_API_KEY"
 
-  # ── 3. Specialist Model: Legal & Hallucination Auditor (Chain-of-Thought) ─
+  # ── 5. Specialist Model: Legal & Hallucination Auditor (Chain-of-Thought) ─
   - model_name: gemini-2.0-flash-thinking
     litellm_params:
-      model: gemini/gemini-2.0-flash-thinking-exp
+      model: gemini/gemini-2.0-flash
       api_key: "os.environ/GEMINI_API_KEY"
 
-  # ── 4. Cross-Cloud Enterprise Fallback (Microsoft Azure OpenAI) ───────────
+  # ── 6. Cross-Cloud Enterprise Fallback (Microsoft Azure OpenAI) ───────────
   - model_name: gpt-5.4-nano
     litellm_params:
       model: azure/gpt-5.4-nano
@@ -31,7 +43,7 @@ model_list:
       api_key: "os.environ/AZURE_API_KEY"
       api_version: "2024-06-01"
 
-  # ── 5. In-Cluster Private Sovereign SLM (Zero-Egress AKS ClusterIP) ────────
+  # ── 7. In-Cluster Private Sovereign SLM (Zero-Egress AKS ClusterIP) ────────
   - model_name: private-slm
     litellm_params:
       model: openai/qwen2.5:0.5b
@@ -50,7 +62,8 @@ router_settings:
   num_retries: 3
   timeout: 30
   fallbacks:
-    - gemini-2.0-flash-thinking: ["gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
-    - gemini-2.0-flash-lite: ["gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
-    - gemini-2.0-flash: ["gpt-5.4-nano", "private-slm"]
+    - gemini-2.0-flash: ["groq-llama-70b", "gpt-5.4-nano", "private-slm"]
+    - groq-llama-70b: ["gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
+    - gemini-2.0-flash-lite: ["groq-llama-8b", "gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
+    - gemini-2.0-flash-thinking: ["groq-llama-70b", "gemini-2.0-flash", "gpt-5.4-nano", "private-slm"]
     - gpt-5.4-nano: ["private-slm"]

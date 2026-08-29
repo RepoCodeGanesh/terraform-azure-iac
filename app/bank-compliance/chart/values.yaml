@@ -63,3 +63,4 @@ secrets:
   openaiEndpoint: ""
   openaiKey: ""
   geminiApiKey: ""
+  groqApiKey: ""

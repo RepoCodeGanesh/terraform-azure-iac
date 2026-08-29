@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizedQuery
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 
 # ── Azure Monitor OpenTelemetry Instrumentation (Safe Initialization) ─────────
 try:
@@ -28,6 +28,8 @@ except ImportError:
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
+GROQ_API_KEY            = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL              = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 OPENAI_ENDPOINT         = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
 OPENAI_MODEL            = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
 SEARCH_ENDPOINT         = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
@@ -84,6 +86,19 @@ def get_openai_client() -> AzureOpenAI:
         api_version="2024-12-01-preview",
     )
 
+def get_groq_client():
+    if not GROQ_API_KEY:
+        return None
+    try:
+        return OpenAI(
+            base_url="https://api.groq.com/openai/v1",
+            api_key=GROQ_API_KEY,
+            timeout=15.0,
+        )
+    except Exception as e:
+        logging.warning("Failed to initialize Groq client: %s", e)
+        return None
+
 def extract_response_text(resp) -> str:
     """Safely extract text content from OpenAI ChatCompletion or Stream object."""
     if not resp:
@@ -103,6 +118,59 @@ def extract_response_text(resp) -> str:
     except Exception as e:
         logging.error(f"Error extracting stream response text: {e}")
         return ""
+
+def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens: int = 1024) -> tuple[str, str]:
+    """
+    Dual-Model Resilient Chat Execution:
+      1. Primary: GroqCloud LPU (llama-3.3-70b-versatile) - Ultra-fast (500+ tok/s) & Free
+      2. Secondary: Microsoft Azure OpenAI Service (gpt-5.4-nano) - Enterprise Fallback
+    Returns: (response_text, model_identifier)
+    """
+    # ── Attempt 1: GroqCloud LPU (Primary) ────────────────────────────────────
+    groq_client = get_groq_client()
+    if groq_client:
+        try:
+            resp = groq_client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            reply = extract_response_text(resp)
+            if reply:
+                logging.info("✅ Served via Primary Groq LPU (%s)", GROQ_MODEL)
+                return reply, f"groq/{GROQ_MODEL}"
+        except Exception as e:
+            logging.warning("⚠️ Primary Groq LPU failed (%s). Failing over to Azure OpenAI...", e)
+
+    # ── Attempt 2: Azure OpenAI Service (Secondary / Fallback) ────────────────
+    try:
+        client = get_openai_client()
+        resp = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_completion_tokens=max_tokens,
+            stream=False,
+        )
+        reply = extract_response_text(resp)
+        logging.info("✅ Served via Secondary Azure OpenAI (%s)", OPENAI_MODEL)
+        return reply, f"azure/{OPENAI_MODEL}"
+    except Exception as e:
+        try:
+            client = get_openai_client()
+            resp = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=False,
+            )
+            reply = extract_response_text(resp)
+            return reply, f"azure/{OPENAI_MODEL}"
+        except Exception as e2:
+            logging.error("❌ Both Primary (Groq) and Secondary (Azure OpenAI) failed: %s", e2)
+            raise e2
 
 # ── Cosmos DB Session Persistence Helpers ─────────────────────────────────────
 _cosmos_container = None
@@ -335,16 +403,20 @@ def diagnostics(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
     checks = {
+        "GROQ_PRIMARY_ENABLED":          bool(GROQ_API_KEY),
+        "GROQ_MODEL":                    GROQ_MODEL,
         "AZURE_OPENAI_ENDPOINT":         bool(OPENAI_ENDPOINT),
         "AZURE_OPENAI_MODEL":            bool(OPENAI_MODEL),
         "AZURE_SEARCH_ENDPOINT":         bool(SEARCH_ENDPOINT),
         "AZURE_SEARCH_INDEX":            bool(SEARCH_INDEX),
         "AZURE_CONTENT_SAFETY_ENDPOINT": bool(CONTENT_SAFETY_ENDPOINT),
     }
-    all_ok = all([checks["AZURE_OPENAI_ENDPOINT"], checks["AZURE_OPENAI_MODEL"], checks["AZURE_SEARCH_ENDPOINT"], checks["AZURE_SEARCH_INDEX"]])
+    all_ok = any([checks["GROQ_PRIMARY_ENABLED"], checks["AZURE_OPENAI_ENDPOINT"]])
     return cors_response(200 if all_ok else 500, {
         "status": "ok" if all_ok else "degraded",
         "checks": checks,
+        "primary_model": f"groq/{GROQ_MODEL}" if GROQ_API_KEY else f"azure/{OPENAI_MODEL}",
+        "fallback_model": f"azure/{OPENAI_MODEL}",
         "app": APP_NAME,
         "content_safety_enabled": bool(CONTENT_SAFETY_ENDPOINT),
     })
@@ -387,23 +459,16 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
                 messages.append({"role": h["role"], "content": sanitized_history})
         messages.append({"role": "user", "content": message})
 
-        client = get_openai_client()
-        resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=messages,
-            temperature=0.2,
-            max_completion_tokens=1024,
-            stream=False,
-        )
-        reply = extract_response_text(resp)
+        # Dual-Model Execution: Primary (Groq LPU) -> Secondary (Azure OpenAI)
+        reply, model_used = execute_chat_completion(messages, temperature=0.2, max_tokens=1024)
 
         # 💾 3. Persist Turn to Azure Cosmos DB
         session_id = body.get("sessionId") or body.get("session_id") or req.headers.get("x-session-id") or "default-session"
-        saved = save_chat_turn(session_id, raw_message, reply, OPENAI_MODEL)
+        saved = save_chat_turn(session_id, raw_message, reply, model_used)
 
         return cors_response(200, {
             "reply": reply,
-            "model": OPENAI_MODEL,
+            "model": model_used,
             "sessionId": session_id,
             "persisted": saved,
             "sources_searched": bool(context),
@@ -507,7 +572,7 @@ def compare_regime(req: func.HttpRequest) -> func.HttpResponse:
 def analyse_salary(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
-    resp = None
+    raw = ""
     try:
         body = req.get_json()
         salary_text = body.get("salary_text", "").strip()
@@ -516,7 +581,6 @@ def analyse_salary(req: func.HttpRequest) -> func.HttpResponse:
         if not salary_text:
             return cors_response(400, {"error": "salary_text is required"})
 
-        client = get_openai_client()
         prompt = f"""You are an Indian salary slip tax analyser.
 
 Analyse this salary slip and provide a structured tax breakdown for FY 2026-27 (AY 2027-28).
@@ -563,14 +627,12 @@ Provide a JSON response with this structure:
 
 Return ONLY valid JSON, no markdown."""
 
-        resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
+        raw, model_used = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_completion_tokens=1500,
-            stream=False,
+            max_tokens=1500,
         )
-        raw = extract_response_text(resp).strip()
+        raw = raw.strip()
         # Clean markdown if present
         if raw.startswith("```"):
             raw = raw.split("```")[1]
@@ -578,12 +640,12 @@ Return ONLY valid JSON, no markdown."""
                 raw = raw[4:]
         result = json.loads(raw)
         result["tax_year"] = "FY 2026-27 (AY 2027-28)"
+        result["model_used"] = model_used
         return cors_response(200, result)
     except json.JSONDecodeError as e:
         logging.error(f"JSON parse error in analyse-salary: {e}")
-        raw_text = extract_response_text(resp) or "Analysis failed"
         return cors_response(200, {
-            "raw_analysis": raw_text,
+            "raw_analysis": raw or "Analysis failed",
             "error": "Could not parse structured response",
             "tax_year": "FY 2026-27 (AY 2027-28)",
         })
@@ -596,7 +658,7 @@ Return ONLY valid JSON, no markdown."""
 def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
-    resp = None
+    raw = ""
     try:
         body = req.get_json()
         ctc_text = body.get("ctc_text", "").strip()
@@ -605,7 +667,6 @@ def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
         if not ctc_text:
             return cors_response(400, {"error": "ctc_text is required"})
 
-        client = get_openai_client()
         prompt = f"""You are an Indian CTC tax optimisation expert for FY 2026-27.
 
 Analyse this CTC/offer letter and suggest restructuring to minimise tax.
@@ -662,19 +723,18 @@ Provide a JSON response:
 
 Return ONLY valid JSON, no markdown."""
 
-        resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
+        raw, model_used = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_completion_tokens=1800,
-            stream=False,
+            max_tokens=1800,
         )
-        raw = extract_response_text(resp).strip()
+        raw = raw.strip()
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
                 raw = raw[4:]
         result = json.loads(raw)
+        result["model_used"] = model_used
 
         # ── Deterministic Post-Processing: Guarantee Food Card & Non-Zero Calculation ─────
         raw_recs = result.get("restructuring_recommendations", [])

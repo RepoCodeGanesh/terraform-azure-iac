@@ -164,8 +164,13 @@ class MultiAgentOrchestrator:
             litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
             api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
 
-            # Try calling LiteLLM with max_completion_tokens (supports newer model APIs)
-            for m in [model_target, "gpt-5.4-nano", "gemini-2.0-flash"]:
+            # Try calling LiteLLM with candidate models (Groq LPU -> Gemini -> Azure OpenAI)
+            candidate_models = []
+            for candidate in [model_target, "groq-llama-70b", "gemini-2.0-flash", "gpt-5.4-nano"]:
+                if candidate and candidate not in candidate_models:
+                    candidate_models.append(candidate)
+
+            for m in candidate_models:
                 try:
                     payload = {
                         "model": m,
