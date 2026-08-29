@@ -215,6 +215,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** The in-memory vector centroid was initialized against only 6 baseline circulars without stopword filtering. Common question words diluted sparse vectors, while colloquial loan collection terms (`collect`, `money`, `debts`) fell just below the static cosine threshold ($0.1021 < 0.12$).
 * **Resolution:** (1) Implemented stopword-filtered tokenization in `domain_guardrail.py` to remove non-informative words. (2) Auto-indexed all 12+ multi-domain Master Directions into the centroid. (3) Calibrated mathematical thresholds (`DOMAIN_SIMILARITY_THRESHOLD = 0.030`, `MAX_CLAUSE_SIMILARITY_THRESHOLD = 0.060`) ensuring 100% valid banking questions pass while non-banking queries (cooking, sports, plumbing) remain blocked.
 
+### 20. LiteLLM Prometheus Telemetry Callback Enterprise License Exception (`CrashLoopBackOff`)
+* **Symptom:** `litellm-proxy` pod goes into `CrashLoopBackOff` with exit code 3 (`Error: context deadline exceeded` during Helm install). Logs show `File "/usr/lib/python3.13/site-packages/litellm/proxy/proxy_server.py", line 1829, in load_config: Exception: You must be a LiteLLM Enterprise user to use this feature. If you have a license please set LITELLM_LICENSE in your env.`
+* **Root Cause:** In LiteLLM `v1.57.x+`, defining `litellm_settings.success_callback: ["prometheus"]` or `failure_callback: ["prometheus"]` is restricted to LiteLLM Enterprise. Without `LITELLM_LICENSE`, `proxy_server.py` rejects initialization immediately.
+* **Resolution:** Omit the enterprise `litellm_settings` Prometheus callback block from `litellm-configmap.yaml` and `k8s/litellm/config.yaml`. Application metrics are independently and natively collected via the FastAPI backend's Prometheus middleware (`:8000/metrics`) and Azure Monitor Container Insights at zero cost.
+
 ---
 
 

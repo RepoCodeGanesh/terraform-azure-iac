@@ -44,11 +44,6 @@ general_settings:
   cache_type: "in-memory"
   cache_ttl: 7200
 
-# ── Prometheus Telemetry Integration for Live Grafana Dashboards ────────────
-litellm_settings:
-  success_callback: ["prometheus"]
-  failure_callback: ["prometheus"]
-
 # ── Intelligent Multi-Tier Routing & Circuit Breaking ────────────────────────
 router_settings:
   routing_strategy: "least-busy"
