@@ -109,6 +109,7 @@ State files are path-keyed — **git repo location does not affect state**.
 7. **Document All Incident Learnings:** Whenever a bug, workflow failure, or edge-case is resolved, immediately add the root cause and remediation steps to the Troubleshooting section below.
 8. **Visual Presentation Standard:** Prefer clean ASCII box diagrams, Unicode structured flowcharts, and comparative Markdown tables over raw Mermaid blocks to guarantee 100% reliable rendering across all chat interfaces, IDE panels, and web viewers.
 9. **Frequent Documentation & Confluence Maintenance:** Proactively update local markdown docs (`docs/confluence/`, `README.md`, `PROJECT_CONTEXT.md`) and keep live Atlassian Confluence (`HT` space) synchronized whenever code, infrastructure, or policies evolve.
+10. **Strict Declarative Infrastructure Lifecycle (Zero Out-of-Band Cloud Deletions):** Never perform manual or out-of-band resource deletions via Azure CLI (`az resource delete`, `az group delete`) or Portal clicks. All resource deprecations and deletions must be executed strictly declaratively: remove the resource from the `.tf` code and let Terraform destroy it via `terraform plan` and `terraform apply` (or through the unified CI/CD pipeline) to preserve remote state integrity and prevent out-of-band drift.
 
 ---
 

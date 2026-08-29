@@ -43,11 +43,6 @@ output "apim_gateway_url" {
   value       = startswith(module.shared_api_management.gateway_url, "https://") ? module.shared_api_management.gateway_url : "https://${module.shared_api_management.gateway_url}"
 }
 
-output "service_plan_name" {
-  description = "Name of the App Service Plan."
-  value       = module.shared_service_plan.name
-}
-
 output "content_safety_name" {
   description = "Name of the shared Azure AI Content Safety account."
   value       = module.shared_content_safety.name
