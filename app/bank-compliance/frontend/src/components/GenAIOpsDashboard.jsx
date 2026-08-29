@@ -29,10 +29,11 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
     relevanceScore: 4.46,
     securityPassRate: 100,
     avgLatencyMs: 8.4,
-    totalCirculars: 6,
-    totalClauses: 24,
-    activeModel: 'Google Gemini 2.0 Flash (Primary)',
-    drModel: 'Azure OpenAI gpt-5.4-nano (Standby)',
+    totalCirculars: 14,
+    totalClauses: 59,
+    activeModel: 'Google Gemini 2.0 Flash (Primary Reasoning)',
+    groqModel: 'GroqCloud LPU (gpt-oss-120b & llama-3.3-70b)',
+    drModel: 'Azure OpenAI gpt-5.4-nano (Standby DR)',
     clusterState: 'Active (AKS Free Tier)',
     qdrantStatus: 'Healthy (4GB CSI Disk)'
   })
@@ -54,8 +55,8 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
         const data = await res.json()
         setTelemetry(prev => ({
           ...prev,
-          totalCirculars: data.total_circulars || 6,
-          totalClauses: data.total_indexed_clauses || 24,
+          totalCirculars: data.total_circulars || 14,
+          totalClauses: data.total_indexed_clauses || 59,
           qdrantStatus: data.status === 'ready' || data.status === 'synced' ? 'Healthy (4GB CSI Disk)' : 'Syncing'
         }))
       }
@@ -96,9 +97,10 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
       },
       fleet_orchestration: {
         primary_engine: telemetry.activeModel,
+        groq_lpu_accelerator: telemetry.groqModel,
         standby_dr_engine: telemetry.drModel,
-        vector_database: 'Qdrant on AKS (4GB Managed CSI)',
-        gateway: 'LiteLLM Multi-Model Proxy'
+        vector_database: 'Qdrant on AKS (4GB Managed CSI - 14 Master Directions / 59 Clauses)',
+        gateway: 'LiteLLM Multi-Cloud LPU Proxy'
       },
       cryptographic_provenance: {
         algorithm: 'SHA-256',
@@ -521,22 +523,40 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
               <span>Multi-Cloud AI Gateway &amp; Cluster Infrastructure</span>
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              {/* Google Gemini */}
               <div style={{ background: '#0d1322', padding: '16px', borderRadius: '8px', border: '1px solid #3b82f6' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 700, color: '#60a5fa', fontSize: '0.85rem' }}>Primary Active Tier</span>
+                  <span style={{ fontWeight: 700, color: '#60a5fa', fontSize: '0.85rem' }}>Primary Reasoning Tier</span>
                   <span style={{ background: '#10b981', color: '#ffffff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>● Active</span>
                 </div>
                 <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', marginTop: '8px' }}>
-                  Google Gemini 2.0 Flash Fleet
+                  Google Gemini 2.0 Flash
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.6 }}>
                   • Free Tier in Google AI Studio ($0 Token Cost)<br />
                   • 1M Token Context Window for full regulatory Master Directions<br />
-                  • Models: Flash (Synthesis), Flash-Lite (Router), Thinking (Auditor)
+                  • Models: Flash (Synthesis), Flash-Lite (Router)
                 </div>
               </div>
 
+              {/* GroqCloud LPU */}
+              <div style={{ background: '#0d1322', padding: '16px', borderRadius: '8px', border: '1px solid #f97316' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 700, color: '#fb923c', fontSize: '0.85rem' }}>Groq LPU Accelerator</span>
+                  <span style={{ background: '#f97316', color: '#ffffff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>● Active LPU</span>
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc', marginTop: '8px' }}>
+                  GroqCloud LPU Inference
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.6 }}>
+                  • Models: <code style={{ color: '#fb923c' }}>openai/gpt-oss-120b</code> &amp; <code style={{ color: '#fb923c' }}>llama-3.3-70b</code><br />
+                  • Sub-300ms ultra-low latency reflection &amp; auditor reasoning<br />
+                  • Free Tier LPU tokens via LiteLLM AI Gateway
+                </div>
+              </div>
+
+              {/* Azure OpenAI Standby */}
               <div style={{ background: '#0d1322', padding: '16px', borderRadius: '8px', border: '1px solid #334155' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 700, color: '#fbbf24', fontSize: '0.85rem' }}>Cross-Cloud DR Standby</span>
@@ -547,11 +567,12 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.6 }}>
                   • Deployment: <code style={{ color: '#f59e0b' }}>gpt-5.4-nano</code> in East US<br />
-                  • Seamless failover via LiteLLM if Google rate limits (429) fire<br />
+                  • Seamless failover via LiteLLM if Google / Groq rate limits (429) fire<br />
                   • $0.00 idle cost on Azure Consumption Tier
                 </div>
               </div>
 
+              {/* Qdrant */}
               <div style={{ background: '#0d1322', padding: '16px', borderRadius: '8px', border: '1px solid #10b981' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 700, color: '#34d399', fontSize: '0.85rem' }}>Vector Database</span>
@@ -562,7 +583,7 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px', lineHeight: 1.6 }}>
                   • Storage: 4GB Managed CSI Persistent Disk<br />
-                  • Index: Hybrid HNSW + Payload Filtering<br />
+                  • Index: 14 Master Directions (59 clauses)<br />
                   • Embedded in AKS namespace <code style={{ color: '#34d399' }}>bank-compliance</code>
                 </div>
               </div>
