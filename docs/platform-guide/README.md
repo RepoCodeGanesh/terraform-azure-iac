@@ -81,6 +81,7 @@ Click any guide below for detailed specs, operational runbooks, and deep-dive te
 | **08** | **Azure RAG Architectures** | Master RAG taxonomy, 6 architectures, adoption matrix, decision playbook. | [08-azure-rag-architectural-patterns.md](08-azure-rag-architectural-patterns.md) |
 | **09** | **Multi-Cloud AI Gateway** | Active-Passive resilient gateway (Gemini Primary $0 + Azure OpenAI Fallback). | [09-multi-cloud-ai-gateway-and-fallback-guide.md](09-multi-cloud-ai-gateway-and-fallback-guide.md) |
 | **10** | **AI Engineering Roadmap** | 4-Phase Roadmap & Gap Analysis (Core, Ingestion, Multi-Agent, Private Lockdown). | [10-enterprise-ai-engineering-backlog-and-roadmap.md](10-enterprise-ai-engineering-backlog-and-roadmap.md) |
+| **11** | **GenAI Evaluation & Testing** | 6-Tier testing pyramid, Ragas triad, golden datasets, red teaming, FinOps token caps. | [11-enterprise-genai-evaluation-and-testing-framework.md](11-enterprise-genai-evaluation-and-testing-framework.md) |
 
 ---
 

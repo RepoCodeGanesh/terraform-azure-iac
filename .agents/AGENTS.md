@@ -238,6 +238,7 @@ State files are path-keyed — **git repo location does not affect state**.
 
 ### 3. 🔍 LLMOps & Quality Guardrails
 * **Continuous Evaluation:** Automated CI/CD evaluation gate with Ragas Triad metrics (Groundedness 4.68/5.0, Citation Integrity 4.92/5.0, Answer Relevance 4.46/5.0).
+* **Enterprise Testing Framework:** 6-Tier testing pyramid documented in [`docs/platform-guide/11-enterprise-genai-evaluation-and-testing-framework.md`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/docs/platform-guide/11-enterprise-genai-evaluation-and-testing-framework.md).
 * **Data Protection:** Real-time DPDP Act PII Sanitization (PAN, Aadhaar, Card numbers auto-masked).
 * **Safety Shields:** Deterministic domain out-of-scope interceptor (<10ms) to prevent hallucination / semantic drift loops.
 
