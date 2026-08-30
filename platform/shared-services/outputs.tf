@@ -78,10 +78,6 @@ output "doc_intelligence_endpoint" {
   value       = azurerm_cognitive_account.shared_doc_intelligence.endpoint
 }
 
-output "ai_search_endpoint" {
-  description = "Endpoint URL of the shared Azure AI Search service."
-  value       = "https://${azurerm_search_service.shared_ai_search.name}.search.windows.net"
-}
 
 output "action_group_id" {
   description = "Resource ID of the central Monitor Action Group for enterprise alerts."

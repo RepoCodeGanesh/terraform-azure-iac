@@ -122,24 +122,6 @@ resource "azurerm_key_vault_secret" "doc_intelligence_api_key" {
   depends_on = [module.shared_key_vault, azurerm_cognitive_account.shared_doc_intelligence]
 }
 
-resource "azurerm_key_vault_secret" "ai_search_endpoint" {
-  name         = "ai-search-endpoint"
-  value        = "https://${azurerm_search_service.shared_ai_search.name}.search.windows.net"
-  key_vault_id = module.shared_key_vault.id
-  tags         = local.tags
-
-  depends_on = [module.shared_key_vault, azurerm_search_service.shared_ai_search]
-}
-
-resource "azurerm_key_vault_secret" "ai_search_api_key" {
-  name         = "ai-search-api-key"
-  value        = azurerm_search_service.shared_ai_search.primary_key
-  key_vault_id = module.shared_key_vault.id
-  tags         = local.tags
-
-  depends_on = [module.shared_key_vault, azurerm_search_service.shared_ai_search]
-}
-
 # ─── Workload RBAC: App-Prod SP Role Delegation on Shared Document Intelligence ──
 
 resource "azurerm_role_assignment" "app_prod_doc_intel_user" {
@@ -150,15 +132,7 @@ resource "azurerm_role_assignment" "app_prod_doc_intel_user" {
   depends_on = [azurerm_cognitive_account.shared_doc_intelligence]
 }
 
-# ─── Workload RBAC: App-Prod SP Role Delegation on Shared AI Search ──────────
 
-resource "azurerm_role_assignment" "app_prod_search_contributor" {
-  scope                = azurerm_search_service.shared_ai_search.id
-  role_definition_name = "Search Index Data Contributor"
-  principal_id         = var.app_prod_sp_object_id
-
-  depends_on = [azurerm_search_service.shared_ai_search]
-}
 
 # ─── Pillar 3: Microsoft Defender for Cloud (Free Foundation CSPM Tier) ───────
 # Free Tier ($0.00): Continuous CIS Azure Foundations benchmark scanning & Secure Score

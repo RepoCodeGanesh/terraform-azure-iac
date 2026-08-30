@@ -231,6 +231,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** When an AKS single-node cluster reaches 99% CPU request capacity, the `azure-wi-webhook-controller-manager` pod in `kube-system` goes into `Pending (Insufficient cpu)`. Any application pod labeled with `azure.workload.identity/use: "true"` invokes this mutating webhook on creation, causing ReplicaSet creation to fail and Helm rolling updates to time out.
 * **Resolution:** (1) For workloads using direct API keys passed via Kubernetes Secrets (like LiteLLM proxy and backend with multi-cloud secrets), remove `azure.workload.identity/use: "true"` from the pod templates in `litellm-deployment.yaml` and `backend-deployment.yaml`. (2) Clean up failed Helm release secrets: `kubectl delete secret -l owner=helm,name=bank-compliance,status=failed -n bank-compliance`.
 
+### 23. Terraform Undeclared Resource Reference on Partial Cleanup (`Reference to undeclared resource`)
+* **Symptom:** `terraform validate` or CI/CD Plan pipeline fails with `Error: Reference to undeclared resource ... on security.tf ... on outputs.tf ... A managed resource "azurerm_search_service" "shared_ai_search" has not been declared in the root module`.
+* **Root Cause:** When deprecating or removing an unused Azure cloud resource from its definition file (`ai_services.tf`), downstream references in `security.tf` (Key Vault secrets, RBAC role assignments) and `outputs.tf` were not simultaneously removed.
+* **Resolution:** Clean up all downstream consumers of the deleted resource: remove orphaned `azurerm_key_vault_secret`, `azurerm_role_assignment`, and `output` blocks. Run `terraform validate` across all root modules before pushing to git.
+
 ---
 
 
