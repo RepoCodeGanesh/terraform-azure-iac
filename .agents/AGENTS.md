@@ -241,6 +241,16 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** In GitHub Actions workflows calling reusable templates (`tf-plan.yml` / `tf-apply.yml`), `environment_name:` was configured with an un-suffixed name (e.g. `'bootstrap'` instead of `'bootstrap-prod'`). Entra ID App Registrations are configured with explicit Federated Identity Credentials expecting exact subject claims matching `repo:RepoCodeGanesh/terraform-azure-iac:environment:<root>-prod`.
 * **Resolution:** Synchronize `environment_name` in caller workflows (`.github/workflows/platform-governance.yml`, `platform-bootstrap.yml`, etc.) to match the exact `-prod` environment configured on the corresponding Entra ID App Registration (`bootstrap-prod`, `hub-prod`, `shared-services-prod`, `bank-compliance-prod`, `tax-advisor-prod`).
 
+### 25. React JSX Sibling Expression Parsing Failure in Conditional Assistant Header (`Expected ')' but found '{'`)
+* **Symptom:** Vite SPA production build fails with `[vite:esbuild] Transform failed with 1 error: ... ChatWindow.jsx:245:16: ERROR: Expected ")" but found "{"`.
+* **Root Cause:** Inside a conditional expression `{m.role === 'assistant' && ( ... )}`, multiple sibling elements (the telemetry badge bar `<div>` and the expandable trace block `{!m.cached && ...}`) were placed consecutively without an enclosing React Fragment (`<> ... </>`). Additionally, loop iterator indexing used an undefined variable `i` instead of map parameter `idx`.
+* **Resolution:** Wrap all sibling elements within a React Fragment (`<> ... </>`) inside the conditional expression and use `idx` consistently for trace toggling state.
+
+### 26. Bash Inline Script EOF Syntax Error on Nested Loop in GitHub Actions (`syntax error: unexpected end of file`)
+* **Symptom:** GitHub Actions deployment step terminates with `/home/runner/work/...sh: line 80: syntax error: unexpected end of file` (exit code 2).
+* **Root Cause:** In the inline bash script for auto-recovering stuck Helm releases, an outer loop `for STUCK_STATUS in ...; do` was opened but lacked a closing `done` before proceeding to the FinOps quota scaling block.
+* **Resolution:** Ensure all `for` loops in CI/CD inline shell scripts have corresponding `done` terminators. Always match `do ... done` pairs before adding downstream execution stages.
+
 ---
 
 

@@ -194,6 +194,8 @@ jobs:
                 echo "  ✅ Patched: $SECRET → failed"
               done
             fi
+          done
+
           # ── Enforce 1-Replica FinOps Quota on System Addons (Free up ~400m CPU) ───
           echo "⚡ Optimizing system addon replicas for single-node cluster (FinOps quota)..."
           kubectl scale deployment keda-admission-webhooks -n kube-system --replicas=1 2>/dev/null || true
