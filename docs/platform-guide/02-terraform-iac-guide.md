@@ -78,8 +78,12 @@ flowchart TD
   * `azurerm_resource_group`: `rg-ht-ss-p-cin-01`
   * `azurerm_log_analytics_workspace`: `law-ht-ss-p-cin-01` (`PerGB2018`, 30-day retention)
   * `azurerm_api_management`: `apim-ht-ss-p-cin-01` (`Consumption_0` SKU — $0 base cost)
-  * `azurerm_key_vault`: `kv-ht-ss-p-cin-01` (Stores SWA deployment token)
-  * `azurerm_service_plan`: `asp-ht-ss-p-cin-01` (Free `F1` tier host)
+  * `azurerm_key_vault`: `kv-ht-ss-p-cin-01` (Stores SWA deployment token and platform secrets)
+  * `module.shared_openai`: `oai-ht-ss-p-eus-01` (`S0` SKU with `gpt-5.4-nano` deployment)
+  * `module.shared_content_safety`: `cs-ht-ss-p-sea-01` (`F0` SKU — 5,000 transactions/month free)
+  * `azurerm_cognitive_account`: Document Intelligence `di-ht-ss-p-cin-01` (`F0` SKU — 500 pages/month free)
+  * `azurerm_dashboard_grafana`: `amg-ht-ss-p-cin-01` (`Essential` SKU — $0.00 / 30 users)
+  * `azurerm_monitor_action_group`: `ag-ht-ss-p-cin-01` (Central email alerts & FinOps notifications)
 
 ### 4. Layer 4: Workloads — TaxBot India (`workloads/tax-advisor`)
 * **Target Subscription**: `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`)

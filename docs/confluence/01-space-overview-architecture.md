@@ -27,7 +27,8 @@ The **HappyTechies Azure AI Landing Zone** is an enterprise-grade, multi-subscri
   │   (sthtbootpcin01)│   (10.0.0.0/16)   │   Analytics       │   (10.41.0/16)│
   │ • Bootstrap KV    │ • Azure Firewall  │ • APIM Gateway    │ • BankC VNet  │
   │                   │   & Bastion       │ • Shared Key Vault│   (10.42.0/16)│
-  │                   │   Subnets         │ • Shared Plan     │ • AKS Cluster │
+  │                   │   Subnets         │ • Shared AI Svcs  │ • AKS Cluster │
+  │                   │                   │   (OAI, CS, DI)   │               │
   └───────────────────┴───────────────────┴───────────────────┴───────────────┘
 ```
 
