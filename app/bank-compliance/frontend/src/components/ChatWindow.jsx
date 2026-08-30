@@ -11,6 +11,17 @@ const INITIAL_SUGGESTIONS = [
   "What is the penalty for issuing an unsolicited credit card?"
 ]
 
+function formatAgentModelBadge(model) {
+  if (!model) return '✍️ Synthesizer: Gemini 2.0 Flash'
+  if (model === 'governance-abstention-shield') return '🛡️ Handled by: Supervisor Agent (Safety Shield)'
+  if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Router)'
+  if (model.includes('gpt-5.4-nano')) return '✍️ Synthesizer: Azure OpenAI (gpt-5.4-nano)'
+  if (model.includes('gemini-2.0-flash')) return '✍️ Synthesizer: Google Gemini (2.0 Flash)'
+  if (model.includes('groq') || model.includes('llama')) return '✍️ Synthesizer: Groq LPU (Llama-70B)'
+  if (model === 'governance-core') return '⚖️ BankCompliance Core'
+  return `✍️ Synthesizer: ${model}`
+}
+
 export default function ChatWindow({ selectedCircular, onSelectCitation }) {
   const [messages, setMessages] = useState([
     {
@@ -245,13 +256,15 @@ Approved for CCO / Internal Audit Review.`
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{
-                        fontSize: '0.68rem',
-                        color: 'var(--text-muted)',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        padding: '2px 7px',
-                        borderRadius: '6px'
+                        fontSize: '0.72rem',
+                        color: m.model_used === 'governance-abstention-shield' ? '#fcd34d' : '#c7d2fe',
+                        background: m.model_used === 'governance-abstention-shield' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(99, 102, 241, 0.14)',
+                        border: m.model_used === 'governance-abstention-shield' ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(99, 102, 241, 0.3)',
+                        padding: '3px 9px',
+                        borderRadius: '6px',
+                        fontWeight: 600
                       }}>
-                        {m.model_used || 'gemini-2.0-flash'}
+                        {formatAgentModelBadge(m.model_used)}
                       </span>
                     </div>
                   </div>
@@ -353,7 +366,7 @@ Approved for CCO / Internal Audit Review.`
                             <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
                               {m.model_used === 'governance-abstention-shield'
                                 ? 'Bypassed: Pre-compiled statutory domain boundary shield response returned.'
-                                : `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${m.model_used || 'Gemini 2.0 Flash / Groq LPU'}.`}
+                                : `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${formatAgentModelBadge(m.model_used)}.`}
                             </div>
                           </div>
                         </div>

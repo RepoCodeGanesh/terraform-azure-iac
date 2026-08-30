@@ -150,10 +150,8 @@ class MultiAgentOrchestrator:
 
     @staticmethod
     async def _call_llm_with_fallback(user_content: str, citations: List[Dict[str, Any]] = None) -> tuple[str, str]:
-        """Calls LiteLLM or Azure OpenAI with graceful fallback handling."""
-        model_target = getattr(settings, "OPENAI_MODEL", "gpt-5.4-nano")
-        if not model_target or model_target == "gemini-2.0-flash":
-            model_target = "gpt-5.4-nano"
+        """Calls LiteLLM with Google Gemini 2.0 Flash / Groq as Primary ($0 cost) and Azure OpenAI as DR Fallback."""
+        primary_model = getattr(settings, "OPENAI_MODEL", "gemini-2.0-flash") or "gemini-2.0-flash"
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -164,9 +162,9 @@ class MultiAgentOrchestrator:
             litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
             api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
 
-            # Try calling LiteLLM with candidate models (Groq LPU -> Gemini -> Azure OpenAI)
+            # ── Multi-Cloud Priority: Primary (Gemini/Groq $0) ➔ Standby DR (Azure OpenAI) ──
             candidate_models = []
-            for candidate in [model_target, "groq-llama-70b", "gemini-2.0-flash", "gpt-5.4-nano"]:
+            for candidate in [primary_model, "gemini-2.0-flash", "groq-llama-70b", "gpt-5.4-nano"]:
                 if candidate and candidate not in candidate_models:
                     candidate_models.append(candidate)
 
