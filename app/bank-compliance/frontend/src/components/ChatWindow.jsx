@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react'
+import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle } from 'lucide-react'
 import MarkdownRenderer from './MarkdownRenderer'
 import CitationCard from './CitationCard'
 import PIIBanner from './PIIBanner'
@@ -208,9 +208,13 @@ Approved for CCO / Internal Audit Review.`
                           type="button"
                           onClick={() => toggleTrace(idx)}
                           style={{
-                            background: expandedTraces[idx] ? 'rgba(99, 102, 241, 0.25)' : 'rgba(99, 102, 241, 0.12)',
-                            border: '1px solid rgba(99, 102, 241, 0.4)',
-                            color: '#c7d2fe',
+                            background: m.model_used === 'governance-abstention-shield'
+                              ? (expandedTraces[idx] ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.12)')
+                              : (expandedTraces[idx] ? 'rgba(99, 102, 241, 0.25)' : 'rgba(99, 102, 241, 0.12)'),
+                            border: m.model_used === 'governance-abstention-shield'
+                              ? '1px solid rgba(245, 158, 11, 0.4)'
+                              : '1px solid rgba(99, 102, 241, 0.4)',
+                            color: m.model_used === 'governance-abstention-shield' ? '#fcd34d' : '#c7d2fe',
                             fontSize: '0.7rem',
                             fontWeight: 600,
                             padding: '3px 10px',
@@ -223,8 +227,17 @@ Approved for CCO / Internal Audit Review.`
                           }}
                           title="Click to view step-by-step Multi-Agent execution trace"
                         >
-                          <Cpu size={11} />
-                          <span>Multi-Agent Fleet ({m.latency_ms}ms)</span>
+                          {m.model_used === 'governance-abstention-shield' ? (
+                            <>
+                              <ShieldAlert size={11} />
+                              <span>Supervisor Agent Intercept ({m.latency_ms}ms)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Cpu size={11} />
+                              <span>Multi-Agent Fleet ({m.latency_ms}ms)</span>
+                            </>
+                          )}
                           {expandedTraces[idx] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                         </button>
                       )}
@@ -247,16 +260,29 @@ Approved for CCO / Internal Audit Review.`
                   {!m.cached && expandedTraces[idx] && (
                     <div style={{
                       background: 'rgba(15, 23, 42, 0.7)',
-                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      border: m.model_used === 'governance-abstention-shield'
+                        ? '1px solid rgba(245, 158, 11, 0.35)'
+                        : '1px solid rgba(99, 102, 241, 0.3)',
                       borderRadius: '10px',
                       padding: '14px 16px',
                       marginBottom: '14px',
                       fontSize: '0.78rem',
                       animation: 'fadeIn 0.2s ease'
                     }}>
-                      <div style={{ fontWeight: 700, color: '#a5b4fc', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Cpu size={13} />
-                        <span>Autonomous Multi-Agent Execution Pipeline Trace:</span>
+                      <div style={{
+                        fontWeight: 700,
+                        color: m.model_used === 'governance-abstention-shield' ? '#fde68a' : '#a5b4fc',
+                        marginBottom: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        {m.model_used === 'governance-abstention-shield' ? <ShieldAlert size={13} /> : <Cpu size={13} />}
+                        <span>
+                          {m.model_used === 'governance-abstention-shield'
+                            ? 'Supervisor Agent Safety Shield Interception Trace:'
+                            : 'Autonomous Multi-Agent Execution Pipeline Trace:'}
+                        </span>
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -265,49 +291,69 @@ Approved for CCO / Internal Audit Review.`
                           <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
                           <div>
                             <div style={{ fontWeight: 600, color: '#f1f5f9' }}>
-                              1. Supervisor Agent (Router & Safety Shield)
+                              1. Supervisor Agent (Router & Safety Shield) — <span style={{ color: '#34d399' }}>ACTIVE</span>
                             </div>
                             <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                              Executed Layer-1 Vector Centroid Sieve (&lt;3ms), checked DPDP PII guardrails, and decomposed intent into statutory sub-tasks.
+                              {m.model_used === 'governance-abstention-shield'
+                                ? 'Executed Layer-1 Vector Centroid Sieve (<3ms). Intercepted non-banking off-topic query and enforced domain boundary.'
+                                : 'Executed Layer-1 Vector Centroid Sieve (<3ms), checked DPDP PII guardrails, and decomposed intent into statutory sub-tasks.'}
                             </div>
                           </div>
                         </div>
 
                         {/* Step 2: Retriever */}
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
+                          {m.model_used === 'governance-abstention-shield' ? (
+                            <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
+                          ) : (
+                            <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
+                          )}
                           <div>
-                            <div style={{ fontWeight: 600, color: '#f1f5f9' }}>
-                              2. Retriever Agent (Qdrant Vector Lake)
+                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9' }}>
+                              2. Retriever Agent (Qdrant Vector Lake) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}
                             </div>
-                            <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                              Performed 768-dim semantic cosine search over 14 RBI Master Directions and retrieved top statutory evidence with SHA-256 hashes.
+                            <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                              {m.model_used === 'governance-abstention-shield'
+                                ? 'Bypassed: Vector retrieval skipped for non-regulatory questions to save compute & latency.'
+                                : 'Performed 768-dim semantic cosine search over 14 RBI Master Directions and retrieved top statutory evidence with SHA-256 hashes.'}
                             </div>
                           </div>
                         </div>
 
                         {/* Step 3: Auditor */}
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
+                          {m.model_used === 'governance-abstention-shield' ? (
+                            <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
+                          ) : (
+                            <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
+                          )}
                           <div>
-                            <div style={{ fontWeight: 600, color: '#f1f5f9' }}>
-                              3. Auditor Agent (Reflection Critic)
+                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9' }}>
+                              3. Auditor Agent (Reflection Critic) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}
                             </div>
-                            <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                              Audited retrieved clauses against circular numbers (e.g. RBI/2023-24/102). Evaluated groundedness & citation integrity (Gate: PASS).
+                            <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                              {m.model_used === 'governance-abstention-shield'
+                                ? 'Bypassed: No regulatory citations to audit for out-of-scope intent.'
+                                : 'Audited retrieved clauses against circular numbers (e.g. RBI/2023-24/102). Evaluated groundedness & citation integrity (Gate: PASS).'}
                             </div>
                           </div>
                         </div>
 
                         {/* Step 4: Synthesizer */}
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
+                          {m.model_used === 'governance-abstention-shield' ? (
+                            <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
+                          ) : (
+                            <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
+                          )}
                           <div>
-                            <div style={{ fontWeight: 600, color: '#f1f5f9' }}>
-                              4. Synthesizer Agent (Statutory Legal Advisor)
+                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9' }}>
+                              4. Synthesizer Agent (Statutory Legal Advisor) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}
                             </div>
-                            <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                              Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via {m.model_used || 'Gemini 2.0 Flash / Groq LPU'}.
+                            <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                              {m.model_used === 'governance-abstention-shield'
+                                ? 'Bypassed: Pre-compiled statutory domain boundary shield response returned.'
+                                : `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${m.model_used || 'Gemini 2.0 Flash / Groq LPU'}.`}
                             </div>
                           </div>
                         </div>
