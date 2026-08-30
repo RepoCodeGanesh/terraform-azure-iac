@@ -17,6 +17,7 @@ function formatAgentModelBadge(model) {
   if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Router)'
   if (model.includes('gpt-5.4-nano')) return '✍️ Synthesizer: Azure OpenAI (gpt-5.4-nano)'
   if (model.includes('gemini-2.0-flash')) return '✍️ Synthesizer: Google Gemini (2.0 Flash)'
+  if (model.includes('120b')) return '✍️ Synthesizer: Groq LPU (GPT-OSS-120B)'
   if (model.includes('groq') || model.includes('llama')) return '✍️ Synthesizer: Groq LPU (Llama-70B)'
   if (model === 'governance-core') return '⚖️ BankCompliance Core'
   return `✍️ Synthesizer: ${model}`
