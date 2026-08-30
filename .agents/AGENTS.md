@@ -236,6 +236,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** When deprecating or removing an unused Azure cloud resource from its definition file (`ai_services.tf`), downstream references in `security.tf` (Key Vault secrets, RBAC role assignments) and `outputs.tf` were not simultaneously removed.
 * **Resolution:** Clean up all downstream consumers of the deleted resource: remove orphaned `azurerm_key_vault_secret`, `azurerm_role_assignment`, and `output` blocks. Run `terraform validate` across all root modules before pushing to git.
 
+### 24. GitHub Actions Entra ID OIDC Subject Mismatch on Environment Name (`AADSTS700213: No matching federated identity record found`)
+* **Symptom:** Workflow fails at `azure/login@v2` step with `AADSTS700213: No matching federated identity record found for presented assertion subject 'repo:RepoCodeGanesh/terraform-azure-iac:environment:<env-name>'. Check your federated identity credential Subject, Audience and Issuer against the presented assertion`.
+* **Root Cause:** In GitHub Actions workflows calling reusable templates (`tf-plan.yml` / `tf-apply.yml`), `environment_name:` was configured with an un-suffixed name (e.g. `'bootstrap'` instead of `'bootstrap-prod'`). Entra ID App Registrations are configured with explicit Federated Identity Credentials expecting exact subject claims matching `repo:RepoCodeGanesh/terraform-azure-iac:environment:<root>-prod`.
+* **Resolution:** Synchronize `environment_name` in caller workflows (`.github/workflows/platform-governance.yml`, `platform-bootstrap.yml`, etc.) to match the exact `-prod` environment configured on the corresponding Entra ID App Registration (`bootstrap-prod`, `hub-prod`, `shared-services-prod`, `bank-compliance-prod`, `tax-advisor-prod`).
+
 ---
 
 
