@@ -12,15 +12,15 @@ const INITIAL_SUGGESTIONS = [
 ]
 
 function formatAgentModelBadge(model) {
-  if (!model) return '✍️ Synthesizer: Gemini 2.0 Flash'
+  if (!model) return '⚡ 4 Agents Active • Final LLM: Gemini 2.0 Flash'
   if (model === 'governance-abstention-shield') return '🛡️ Handled by: Supervisor Agent (Safety Shield)'
   if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Router)'
-  if (model.includes('gpt-5.4-nano')) return '✍️ Synthesizer: Azure OpenAI (gpt-5.4-nano)'
-  if (model.includes('gemini-2.0-flash')) return '✍️ Synthesizer: Google Gemini (2.0 Flash)'
-  if (model.includes('120b')) return '✍️ Synthesizer: Groq LPU (GPT-OSS-120B)'
-  if (model.includes('groq') || model.includes('llama')) return '✍️ Synthesizer: Groq LPU (Llama-70B)'
+  if (model.includes('gpt-5.4-nano')) return '⚡ 4 Agents Active • Final LLM: Azure OpenAI (gpt-5.4-nano)'
+  if (model.includes('gemini-2.0-flash')) return '⚡ 4 Agents Active • Final LLM: Google Gemini (2.0 Flash)'
+  if (model.includes('120b')) return '⚡ 4 Agents Active • Final LLM: Groq LPU (GPT-OSS-120B)'
+  if (model.includes('groq') || model.includes('llama')) return '⚡ 4 Agents Active • Final LLM: Groq LPU (Llama-70B)'
   if (model === 'governance-core') return '⚖️ BankCompliance Core'
-  return `✍️ Synthesizer: ${model}`
+  return `⚡ 4 Agents Active • Final LLM: ${model}`
 }
 
 export default function ChatWindow({ selectedCircular, onSelectCitation }) {
@@ -247,7 +247,7 @@ Approved for CCO / Internal Audit Review.`
                           ) : (
                             <>
                               <Cpu size={11} />
-                              <span>Multi-Agent Fleet ({m.latency_ms}ms)</span>
+                              <span>4-Agent Pipeline ({m.latency_ms}ms)</span>
                             </>
                           )}
                           {expandedTraces[idx] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
