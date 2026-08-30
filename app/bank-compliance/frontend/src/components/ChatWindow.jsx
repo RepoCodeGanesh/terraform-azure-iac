@@ -11,16 +11,22 @@ const INITIAL_SUGGESTIONS = [
   "What is the penalty for issuing an unsolicited credit card?"
 ]
 
+function getSynthesizerModelName(model) {
+  if (!model) return 'Gemini 2.0 Flash'
+  if (model.includes('gpt-5.4-nano')) return 'Azure OpenAI (gpt-5.4-nano)'
+  if (model.includes('gemini-2.0-flash')) return 'Google Gemini (2.0 Flash)'
+  if (model.includes('120b')) return 'Groq LPU (GPT-OSS-120B)'
+  if (model.includes('groq') || model.includes('llama')) return 'Groq LPU (Llama-70B)'
+  return model
+}
+
 function formatAgentModelBadge(model) {
-  if (!model) return '⚡ 4 Agents Active • Final LLM: Gemini 2.0 Flash'
+  if (!model) return '⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ Gemini 2.0'
   if (model === 'governance-abstention-shield') return '🛡️ Handled by: Supervisor Agent (Safety Shield)'
   if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Router)'
-  if (model.includes('gpt-5.4-nano')) return '⚡ 4 Agents Active • Final LLM: Azure OpenAI (gpt-5.4-nano)'
-  if (model.includes('gemini-2.0-flash')) return '⚡ 4 Agents Active • Final LLM: Google Gemini (2.0 Flash)'
-  if (model.includes('120b')) return '⚡ 4 Agents Active • Final LLM: Groq LPU (GPT-OSS-120B)'
-  if (model.includes('groq') || model.includes('llama')) return '⚡ 4 Agents Active • Final LLM: Groq LPU (Llama-70B)'
   if (model === 'governance-core') return '⚖️ BankCompliance Core'
-  return `⚡ 4 Agents Active • Final LLM: ${model}`
+  const synthName = getSynthesizerModelName(model)
+  return `⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ ${synthName}`
 }
 
 export default function ChatWindow({ selectedCircular, onSelectCitation }) {
@@ -304,10 +310,11 @@ Approved for CCO / Internal Audit Review.`
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
                           <div>
-                            <div style={{ fontWeight: 600, color: '#f1f5f9' }}>
-                              1. Supervisor Agent (Router & Safety Shield) — <span style={{ color: '#34d399' }}>ACTIVE</span>
+                            <div style={{ fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                              <span>1. Supervisor Agent (Router & Safety Shield) — <span style={{ color: '#34d399' }}>ACTIVE</span></span>
+                              <span style={{ background: 'rgba(99, 102, 241, 0.2)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#c7d2fe', padding: '1px 6px', borderRadius: '4px', fontSize: '0.66rem' }}>Gemini 2.0 Flash-Lite</span>
                             </div>
-                            <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                            <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: '2px' }}>
                               {m.model_used === 'governance-abstention-shield'
                                 ? 'Executed Layer-1 Vector Centroid Sieve (<3ms). Intercepted non-banking off-topic query and enforced domain boundary.'
                                 : 'Executed Layer-1 Vector Centroid Sieve (<3ms), checked DPDP PII guardrails, and decomposed intent into statutory sub-tasks.'}
@@ -323,10 +330,13 @@ Approved for CCO / Internal Audit Review.`
                             <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
                           )}
                           <div>
-                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9' }}>
-                              2. Retriever Agent (Qdrant Vector Lake) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}
+                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                              <span>2. Retriever Agent (Qdrant Vector Lake) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
+                              {m.model_used !== 'governance-abstention-shield' && (
+                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '1px 6px', borderRadius: '4px', fontSize: '0.66rem' }}>Qdrant 768-dim DB</span>
+                              )}
                             </div>
-                            <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                            <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '2px' }}>
                               {m.model_used === 'governance-abstention-shield'
                                 ? 'Bypassed: Vector retrieval skipped for non-regulatory questions to save compute & latency.'
                                 : 'Performed 768-dim semantic cosine search over 14 RBI Master Directions and retrieved top statutory evidence with SHA-256 hashes.'}
@@ -342,10 +352,13 @@ Approved for CCO / Internal Audit Review.`
                             <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
                           )}
                           <div>
-                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9' }}>
-                              3. Auditor Agent (Reflection Critic) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}
+                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                              <span>3. Auditor Agent (Reflection Critic) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
+                              {m.model_used !== 'governance-abstention-shield' && (
+                                <span style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#fcd34d', padding: '1px 6px', borderRadius: '4px', fontSize: '0.66rem' }}>Gemini 2.0 Flash-Thinking</span>
+                              )}
                             </div>
-                            <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                            <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '2px' }}>
                               {m.model_used === 'governance-abstention-shield'
                                 ? 'Bypassed: No regulatory citations to audit for out-of-scope intent.'
                                 : 'Audited retrieved clauses against circular numbers (e.g. RBI/2023-24/102). Evaluated groundedness & citation integrity (Gate: PASS).'}
@@ -361,13 +374,16 @@ Approved for CCO / Internal Audit Review.`
                             <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
                           )}
                           <div>
-                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9' }}>
-                              4. Synthesizer Agent (Statutory Legal Advisor) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}
+                            <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                              <span>4. Synthesizer Agent (Statutory Legal Advisor) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
+                              {m.model_used !== 'governance-abstention-shield' && (
+                                <span style={{ background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#93c5fd', padding: '1px 6px', borderRadius: '4px', fontSize: '0.66rem' }}>{getSynthesizerModelName(m.model_used)}</span>
+                              )}
                             </div>
-                            <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                            <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '2px' }}>
                               {m.model_used === 'governance-abstention-shield'
                                 ? 'Bypassed: Pre-compiled statutory domain boundary shield response returned.'
-                                : `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${formatAgentModelBadge(m.model_used)}.`}
+                                : `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${getSynthesizerModelName(m.model_used)}.`}
                             </div>
                           </div>
                         </div>
