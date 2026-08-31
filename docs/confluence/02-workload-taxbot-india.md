@@ -1,44 +1,44 @@
-# 🤖 Workload 1: TaxBot India (AI Income Tax Advisor)
+# 02. Workload 1: TaxBot India (Serverless PaaS Architecture)
 
-* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Workloads`
+* **Space:** `HappyTechies Cloud & AI Platform` -> `Workloads`
 * **Live Domain:** [https://www.mytaxbot.site](https://www.mytaxbot.site)
 * **Workload Code:** `taxb` (Resource Group: `rg-ht-taxb-p-cin-01`)
 * **Status:** `PRODUCTION / LIVE`
 
 ---
 
-## 🎯 1. Executive Overview
+## 1. Executive Overview
 
 **TaxBot India** is a conversational AI tax advisor engineered for Indian salaried employees, NRIs, and freelancers navigating the **FY 2026-27 (AY 2027-28)** Income Tax rules. It evaluates tax liabilities under the **Old vs. New Tax Regimes**, computes statutory deductions (80C, 80D, 80CCD(1B), HRA, Home Loan 24(b)), and performs grounded legal statutory retrieval.
 
 ---
 
-## 🏗️ 2. Serverless PaaS Architectural Topology
+## 2. Serverless PaaS Architectural Topology
 
-```
+```text
  [ Taxpayer / React Web SPA (www.mytaxbot.site) ]
-                      │
-                      ▼ (HTTPS / Custom Domain DNS)
+                      |
+                      v (HTTPS / Custom Domain DNS)
  [ Azure Static Web App (stapp-ht-taxb-p-cin-01) ]
-                      │
-                      ▼
- [ Azure APIM Gateway (Consumption_0 — Shared Services) ]
-   ├── Rate Limiting: 20 calls/min per IP
-   └── CORS & WAF Protection
-                      │
-                      ▼
+                      |
+                      v
+ [ Azure APIM Gateway (Consumption_0 -- Shared Services) ]
+   +-- Rate Limiting: 20 calls/min per IP
+   \-- CORS & WAF Protection
+                      |
+                      v
  [ Python Linux Function App (func-ht-taxb-p-cin-01) ]
-   ├── OpenTelemetry Distributed Tracing ──► law-ht-ss-p-cin-01
-   ├── System-Assigned Managed Identity Auth
-   ├── Azure AI Content Safety (F0) ──► Jailbreak Defense
-   ├── Azure AI Search (srch-ht-taxb-p-cin-01) ──► Statutory RAG
-   ├── Cosmos DB (cosmos-ht-taxb-p-cin-01) ──► Session Chat History
-   └── Azure OpenAI (gpt-5.4-nano in East US) ──► Tax Computations
+   +-- OpenTelemetry Distributed Tracing --> law-ht-ss-p-cin-01
+   +-- System-Assigned Managed Identity Auth
+   +-- Azure AI Content Safety (F0) --> Jailbreak Defense
+   +-- Azure AI Search (srch-ht-taxb-p-cin-01) --> Statutory RAG
+   +-- Cosmos DB (cosmos-ht-taxb-p-cin-01) --> Session Chat History
+   \-- Azure OpenAI (gpt-5.4-nano in East US) --> Tax Computations
 ```
 
 ---
 
-## 📦 3. Component & SKU Specifications
+## 3. Component & SKU Specifications
 
 | Service Component | Resource Name | SKU / Tier | Primary Role |
 | :--- | :--- | :--- | :--- |
@@ -52,7 +52,7 @@
 
 ---
 
-## 💰 4. Cost & FinOps Profile
+## 4. Cost & FinOps Profile
 
 * **Running Idle Cost:** **~$0.10 / month** (from 1 active OpenAI metric alert `alert-openai-throttled-429`).
 * **Compute / Database Idle:** **$0.00** (Serverless Consumption Functions & Cosmos DB Free Tier).

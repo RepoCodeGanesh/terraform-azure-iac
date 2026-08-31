@@ -1,13 +1,13 @@
-# 🏷️ Enterprise Naming & Tagging Standards Specification
+# 06. Enterprise Naming & Tagging Standards Specification
 
 * **Document Code:** `STD-HT-CLOUD-NAMING-01`
-* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Governance & Standards`
+* **Space:** `HappyTechies Cloud & AI Platform` -> `Governance & Standards`
 * **Status:** `MANDATORY / ENTERPRISE STANDARD`
 * **Applies To:** All Azure Subscriptions, Terraform Modules, Kubernetes Clusters, and Workloads
 
 ---
 
-## 🎯 1. Purpose & Strategy Rationale
+## 1. Purpose & Strategy Rationale
 
 In enterprise cloud environments, inconsistent resource naming causes operational confusion, billing misallocation, security audit failures, and automated script breakage. **HappyTechies** enforces a strict, deterministic naming and tagging standard based on the **Microsoft Cloud Adoption Framework (CAF)**.
 
@@ -19,7 +19,7 @@ In enterprise cloud environments, inconsistent resource naming causes operationa
 
 ---
 
-## 📐 2. Enterprise Naming Schemas
+## 2. Enterprise Naming Schemas
 
 ### A. Hyphenated Standard Schema (Default for 95% of Resources)
 Used for Resource Groups, VNets, Subnets, AKS Clusters, Functions, Cognitive Services, Key Vaults, APIM:
@@ -37,7 +37,7 @@ Used for Resource Groups, VNets, Subnets, AKS Clusters, Functions, Cognitive Ser
 ### B. Compact Schema (Hyphen-Free)
 Used strictly for resources that forbid hyphens or enforce tight character limits (Storage Accounts, Container Registries):
 
-`<resource_type>-<project>-<workload>-<environment>-<region_short>-<instance>`
+`<resource_type><project><workload><environment><region_short><instance>`
 
 * **Example Bootstrap Storage:** `sthtbootpcin01`
 * **Example TaxBot Storage:** `sthttaxbpcin01`
@@ -45,7 +45,7 @@ Used strictly for resources that forbid hyphens or enforce tight character limit
 
 ---
 
-## 📚 3. Standard Abbreviation Dictionaries
+## 3. Standard Abbreviation Dictionaries
 
 ### Resource Types (`resource_type`)
 | Abbreviation | Azure Resource Type |
@@ -104,7 +104,7 @@ Used strictly for resources that forbid hyphens or enforce tight character limit
 
 ---
 
-## 🏷️ 4. Mandatory Enterprise Tagging Policy
+## 4. Mandatory Enterprise Tagging Policy
 
 Every resource provisioned via Terraform must inherit the unified tagging policy defined in `locals.tf`:
 

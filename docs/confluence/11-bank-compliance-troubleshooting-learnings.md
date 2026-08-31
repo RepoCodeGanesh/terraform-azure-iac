@@ -1,58 +1,54 @@
-# 🏦 BankCompliance AI: Engineering Learnings, Debugging & Runbook
+# 11. BankCompliance AI: Engineering Learnings & Troubleshooting
 
-* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Runbooks & Masterclasses`
+* **Space:** `HappyTechies Cloud & AI Platform` -> `Runbooks & Masterclasses`
 * **Live Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **APIM Gateway:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
 * **Status:** `PRODUCTION READY & FULLY AUTOMATED`
 
 ---
 
-## 📑 Table of Contents
-1. [Architecture Overview & Flow](#-architecture-overview--flow)
-2. [Issue 1: GitHub Actions Dynamic Environment Context vs Step Outputs](#-issue-1-github-actions-dynamic-environment-context-vs-step-outputs)
-3. [Issue 2: Oryx / Vite Build Breakage via UTF-8 Byte Order Mark (BOM)](#-issue-2-oryx--vite-build-breakage-via-utf-8-byte-order-mark-bom)
-4. [Issue 3: Frontend Fallback to Localhost & ClusterIP Networking](#-issue-3-frontend-fallback-to-localhost--clusterip-networking)
-5. [Issue 4: Content Security Policy (CSP) & Browser Mixed Content Restrictions](#-issue-4-content-security-policy-csp--browser-mixed-content-restrictions)
-6. [Issue 5: Azure OpenAI API Version vs Model Release Version](#-issue-5-azure-openai-api-version-vs-model-release-version)
-7. [Issue 6: Reasoning Model Parameters (`max_tokens` vs `max_completion_tokens`)](#-issue-6-reasoning-model-parameters-max_tokens-vs-max_completion_tokens)
-8. [Issue 7: Kubernetes Image Caching (`imagePullPolicy` & Commit SHA Tagging)](#-issue-7-kubernetes-image-caching-imagepullpolicy--commit-sha-tagging)
-9. [Platform Engineer Checklist & Golden Rules](#-platform-engineer-checklist--golden-rules)
+## Table of Contents
+1. [Architecture Overview & Flow](#1-architecture-overview--flow)
+2. [Issue 1: GitHub Actions Dynamic Environment Context vs Step Outputs](#2-issue-1-github-actions-dynamic-environment-context-vs-step-outputs)
+3. [Issue 2: Oryx / Vite Build Breakage via UTF-8 Byte Order Mark (BOM)](#3-issue-2-oryx--vite-build-breakage-via-utf-8-byte-order-mark-bom)
+4. [Issue 3: Frontend Fallback to Localhost & ClusterIP Networking](#4-issue-3-frontend-fallback-to-localhost--clusterip-networking)
+5. [Issue 4: Content Security Policy (CSP) & Browser Mixed Content Restrictions](#5-issue-4-content-security-policy-csp--browser-mixed-content-restrictions)
+6. [Issue 5: Azure OpenAI API Version vs Model Release Version](#6-issue-5-azure-openai-api-version-vs-model-release-version)
+7. [Issue 6: Reasoning Model Parameters (`max_tokens` vs `max_completion_tokens`)](#7-issue-6-reasoning-model-parameters-max_tokens-vs-max_completion_tokens)
+8. [Issue 7: Kubernetes Image Caching (`imagePullPolicy` & Commit SHA Tagging)](#8-issue-7-kubernetes-image-caching-imagepullpolicy--commit-sha-tagging)
+9. [Platform Engineer Checklist & Golden Rules](#9-platform-engineer-checklist--golden-rules)
 
 ---
 
-## 🏛️ Architecture Overview & Flow
+## 1. Architecture Overview & Flow
 
-```mermaid
-flowchart LR
-    subgraph Browser ["User Browser"]
-        A["bank.mytaxbot.site (React SPA)"]
-    end
-
-    subgraph Azure_Shared ["Shared Services Platform"]
-        B["Azure APIM Gateway<br/>(apim-ht-ss-p-cin-01)<br/>https://.../bankc"]
-        E["Azure OpenAI<br/>(oai-ht-taxb-p-eus-01)<br/>gpt-5.4-nano"]
-    end
-
-    subgraph Azure_AKS ["Apps-prod AKS (Central India)"]
-        C["bankc-backend Service<br/>(Azure Public LoadBalancer:80)"]
-        D["FastAPI Backend Pod<br/>(bankc-backend:8000)"]
-        F["LiteLLM Proxy Pod<br/>(litellm:4000)"]
-        G["Qdrant Vector DB<br/>(4GB CSI Managed Disk)"]
-    end
-
-    A -- "HTTPS (POST /api/v1/compliance/query)" --> B
-    B -- "HTTP (Forward to AKS)" --> C
-    C --> D
-    D -- "Vector Retrieval" --> G
-    D -- "Chat Completion" --> F
-    F -- "Azure REST (2024-06-01)" --> E
+```text
++--------------------+       +---------------------------------------------+
+|    User Browser    | ----> |           Azure Shared Services             |
+| bank.mytaxbot.site | HTTPS | APIM Gateway: apim-ht-ss-p-cin-01           |
++--------------------+       +----------------------+----------------------+
+                                                    | Forward to AKS
+                                                    v
+                             +---------------------------------------------+
+                             |           Apps-prod AKS (Central India)     |
+                             | Service: bankc-backend-svc (LoadBalancer:80)|
+                             | Pod: FastAPI Backend (Port 8000)            |
+                             | Pod: LiteLLM Gateway (Port 4000)            |
+                             | Pod: Qdrant Vector DB (4GB CSI Managed Disk)|
+                             +----------------------+----------------------+
+                                                    | Chat Completion
+                                                    v
+                             +---------------------------------------------+
+                             |   Azure OpenAI (oai-ht-taxb-p-eus-01)       |
+                             |   Deployment: gpt-5.4-nano                  |
+                             +---------------------------------------------+
 ```
 
 ---
 
-## 🔍 Detailed Issue Breakdown & Resolutions
+## 2. Detailed Issue Breakdown & Resolutions
 
-### 1. ⚙️ GitHub Actions Dynamic Environment Context vs Step Outputs
+### 1. GitHub Actions Dynamic Environment Context vs Step Outputs
 
 #### Symptom:
 * GitHub Actions workflow validator warning: `Context access might be invalid: IMAGE_TAG @[L66]`.
@@ -65,7 +61,7 @@ flowchart LR
 Use standard GitHub Actions **Step Outputs** (`$GITHUB_OUTPUT`) with explicit step `id`s instead of polluting the global `env` context:
 
 ```yaml
-# ❌ Before (Static context warning):
+# Before (Static context warning):
 - name: Downcase Image Name
   run: |
     echo "IMAGE_TAG=${{ env.REGISTRY }}/$(echo ${{ env.IMAGE_NAME }} | tr '[A-Z]' '[a-z]'):latest" >> $GITHUB_ENV
@@ -74,7 +70,7 @@ Use standard GitHub Actions **Step Outputs** (`$GITHUB_OUTPUT`) with explicit st
   with:
     tags: ${{ env.IMAGE_TAG }}
 
-# ✅ After (Strictly typed Step Output):
+# After (Strictly typed Step Output):
 - name: Downcase Image Name
   id: prep_tag
   run: |
@@ -88,7 +84,7 @@ Use standard GitHub Actions **Step Outputs** (`$GITHUB_OUTPUT`) with explicit st
 
 ---
 
-### 2. 📦 Oryx / Vite Build Breakage via UTF-8 Byte Order Mark (BOM)
+### 2. Oryx / Vite Build Breakage via UTF-8 Byte Order Mark (BOM)
 
 #### Symptom:
 * Azure Static Web Apps build step fails inside Oryx:
@@ -99,7 +95,7 @@ Use standard GitHub Actions **Step Outputs** (`$GITHUB_OUTPUT`) with explicit st
 
 #### Root Cause:
 * On Windows systems, PowerShell output redirection or editors can save text files as **UTF-8 with BOM** (the 3-byte prefix `0xEF 0xBB 0xBF` / Unicode `\uFEFF`).
-* During `vite build`, PostCSS uses `cosmiconfig` / `lilconfig` (`jsonLoader`) to inspect `package.json`. Node’s native `JSON.parse(content)` fails when reading raw strings starting with byte 0 `\uFEFF`.
+* During `vite build`, PostCSS uses `cosmiconfig` / `lilconfig` (`jsonLoader`) to inspect `package.json`. Node's native `JSON.parse(content)` fails when reading raw strings starting with byte 0 `\uFEFF`.
 
 #### Resolution:
 Strip the UTF-8 BOM from all configuration and source files:
@@ -116,11 +112,11 @@ Get-ChildItem -Recurse -File 'frontend' | ForEach-Object {
 
 ---
 
-### 3. 🌐 Frontend Fallback to Localhost & ClusterIP Networking
+### 3. Frontend Fallback to Localhost & ClusterIP Networking
 
 #### Symptom:
 * Users accessing `https://bank.mytaxbot.site` receive:
-  `⚠️ Unable to connect to BankCompliance AKS backend API. Please ensure the cluster and backend services are active.`
+  `Unable to connect to BankCompliance AKS backend API. Please ensure the cluster and backend services are active.`
 
 #### Root Cause:
 1. `VITE_API_URL` was not supplied during the Static Web App build, so Vite evaluated `import.meta.env.VITE_API_URL || 'http://localhost:8000/...'` and baked `http://localhost:8000` into the bundle.
@@ -156,13 +152,13 @@ Get-ChildItem -Recurse -File 'frontend' | ForEach-Object {
 
 ---
 
-### 4. 🔒 Content Security Policy (CSP) & Browser Mixed Content Restrictions
+### 4. Content Security Policy (CSP) & Browser Mixed Content Restrictions
 
 #### Symptom:
 * When accessing `https://bank.mytaxbot.site` (HTTPS), browser console logs `Blocked mixed content` or `Violates Content Security Policy directive`.
 
 #### Root Cause:
-1. **Mixed Content:** Browsers strictly prohibit secure HTTPS web pages from executing asynchronous HTTP fetch calls (`https://` ➔ `http://`).
+1. **Mixed Content:** Browsers strictly prohibit secure HTTPS web pages from executing asynchronous HTTP fetch calls (`https://` -> `http://`).
 2. **CSP Restrictions:** `staticwebapp.config.json` had `"Content-Security-Policy": "default-src 'self' https: data: ..."` which blocked all non-HTTPS network requests.
 
 #### Resolution:
@@ -175,7 +171,7 @@ resource "azapi_resource" "apim_bankc_api" {
 
   body = {
     properties = {
-      displayName          = "BankCompliance AI — Regulatory Copilot"
+      displayName          = "BankCompliance AI -- Regulatory Copilot"
       path                 = "bankc"
       protocols            = ["https"]
       serviceUrl           = "http://bankc-api-ht-cin.centralindia.cloudapp.azure.com"
@@ -190,7 +186,7 @@ resource "azapi_resource" "apim_bankc_api" {
 
 ---
 
-### 5. 🤖 Azure OpenAI API Version vs Model Release Version
+### 5. Azure OpenAI API Version vs Model Release Version
 
 #### Symptom:
 * LiteLLM Proxy logs:
@@ -209,12 +205,12 @@ model_list:
       model: azure/gpt-5.4-nano
       api_base: https://oai-ht-taxb-p-eus-01.openai.azure.com/
       api_key: "os.environ/AZURE_API_KEY"
-      api_version: "2024-06-01"  # ✅ Valid Azure OpenAI REST API version
+      api_version: "2024-06-01"  # Valid Azure OpenAI REST API version
 ```
 
 ---
 
-### 6. 🧠 Reasoning Model Parameters (`max_tokens` vs `max_completion_tokens`)
+### 6. Reasoning Model Parameters (`max_tokens` vs `max_completion_tokens`)
 
 #### Symptom:
 * LiteLLM / Azure OpenAI returns:
@@ -227,7 +223,7 @@ model_list:
 #### Resolution:
 Updated `app/api/routes.py` to use `max_completion_tokens`:
 ```python
-# ❌ Before:
+# Before:
 resp = await client.post(
     f"{settings.LITELLM_URL}/chat/completions",
     json={
@@ -238,7 +234,7 @@ resp = await client.post(
     }
 )
 
-# ✅ After:
+# After:
 resp = await client.post(
     f"{settings.LITELLM_URL}/chat/completions",
     json={
@@ -252,7 +248,7 @@ resp = await client.post(
 
 ---
 
-### 7. 🔄 Kubernetes Image Caching (`imagePullPolicy` & Commit SHA Tagging)
+### 7. Kubernetes Image Caching (`imagePullPolicy` & Commit SHA Tagging)
 
 #### Symptom:
 * After pushing code fixes and restarting Kubernetes deployments, pods continued to execute old Python code.
@@ -272,7 +268,7 @@ resp = await client.post(
 
 ---
 
-## 🏆 Platform Engineer Checklist & Golden Rules
+## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
 | :--- | :--- | :--- |

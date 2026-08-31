@@ -1,13 +1,13 @@
-# 🏛️ Cloud & AI Platform Technical Strategy
+# 08. Cloud & AI Platform Technical Strategy
 
 * **Document Code:** `STRAT-HT-CLOUD-AI-01`
-* **Space:** `HappyTechies Cloud & AI Platform` ➔ `Strategy & Architecture`
+* **Space:** `HappyTechies Cloud & AI Platform` -> `Strategy & Architecture`
 * **Status:** `APPROVED / EXECUTIVE STRATEGY`
 * **Author:** AI Platform Architecture Team (`ai-platform-team@happytechies.com`)
 
 ---
 
-## 🎯 1. Platform Vision & Strategic Objectives
+## 1. Platform Vision & Strategic Objectives
 
 The **HappyTechies Cloud & AI Platform** strategy bridges enterprise security, cloud economics (FinOps), and modern AI development. It delivers an enterprise landing zone that achieves three core pillars:
 
@@ -17,7 +17,7 @@ The **HappyTechies Cloud & AI Platform** strategy bridges enterprise security, c
 
 ---
 
-## 🏛️ 2. Key Strategy Decisions & Justifications
+## 2. Key Strategy Decisions & Justifications
 
 ### A. Why CAF Multi-Subscription Architecture?
 Instead of hosting all resources in a single Azure subscription, HappyTechies decouples scopes across 4 dedicated subscriptions:
@@ -39,20 +39,20 @@ Monolithic `terraform.tfstate` files introduce massive blast-radius risk, slow p
 ### C. Why Hybrid Serverless PaaS + Cloud-Native AKS?
 HappyTechies selects the right compute runtime based on workload statefulness:
 
-```
+```text
                       [ AI Workload Evaluation ]
-                                  │
+                                  |
                  Is the workload Stateful or Complex?
-                   ├── NO  ──► [ Serverless PaaS (Function App) ] (TaxBot India)
-                   │             • 100% Zero-Maintenance
-                   │             • Instant Zero-to-Infinity Scale
-                   │             • $0.00 Idle Cost
-                   │
-                   └── YES ──► [ Cloud-Native AKS (Free Tier) ] (BankCompliance AI)
-                                 • Self-Hosted Vector DB (Qdrant on 4GB CSI)
-                                 • Zero-Trust Pod NetworkPolicies
-                                 • Multi-Cloud Exit Portability (RBI Mandate)
-                                 • KEDA Scale-to-Zero Engine
+                   +-- NO  --> [ Serverless PaaS (Function App) ] (TaxBot India)
+                   |             * 100% Zero-Maintenance
+                   |             * Instant Zero-to-Infinity Scale
+                   |             * $0.00 Idle Cost
+                   |
+                   \-- YES --> [ Cloud-Native AKS (Free Tier) ] (BankCompliance AI)
+                                 * Self-Hosted Vector DB (Qdrant on 4GB CSI)
+                                 * Zero-Trust Pod NetworkPolicies
+                                 * Multi-Cloud Exit Portability (RBI Mandate)
+                                 * KEDA Scale-to-Zero Engine
 ```
 
 ---

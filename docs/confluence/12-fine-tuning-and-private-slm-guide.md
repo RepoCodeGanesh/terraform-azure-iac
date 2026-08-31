@@ -1,4 +1,4 @@
-# Confluence Runbook: Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps Architecture
+# 12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps
 
 **Document ID:** `CR-AI-12`  
 **Classification:** Enterprise AI Engineering & Platform Architecture  
@@ -21,12 +21,12 @@ This document details the architectural implementation of our **Parameter-Effici
 ## 2. Architectural Decision Matrix: RAG vs. Fine-Tuning vs. Pre-training
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                 ENTERPRISE LLM ARCHITECTURE TRADEOFF MATRIX                 │
-└─────────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------------+
+|                 ENTERPRISE LLM ARCHITECTURE TRADEOFF MATRIX                 |
++-----------------------------------------------------------------------------+
 
 Dimension            Pre-training from Scratch   PEFT / LoRA Fine-Tuning       RAG + Multi-Agent Graph
-───────────────────────────────────────────────────────────────────────────────────────────────────────
+-------------------------------------------------------------------------------------------------------
 Cost Profile         $5,000,000 - $50,000,000+   $0 - $50 (Free-tier compute)  $0.00 (API Gateway + Cache)
 Hardware Needed      10,000+ H100 GPUs           Standard CPU / Single GPU     Standard CPU (AKS Free Tier)
 Knowledge Freshness  Static (Frozen at cutoff)   Static until re-trained       Real-Time (Instant DB Sync)
@@ -44,32 +44,32 @@ Best Use Case        Foundational language base  Output style, JSON schemas    S
 ## 3. Mathematical & Engineering Foundation of LoRA (PEFT)
 
 ### The Rank Decomposition Formula
-During standard full fine-tuning, the model updates full weight matrix W0 matrix (d x k):
+During standard full fine-tuning, the model updates full weight matrix W0 (d x k):
 `W = W0 + Delta_W`
 
-In **Low-Rank Adaptation (LoRA)**, Delta_W is decomposed into two low-rank matrices B matrix (d x r) and A matrix (r x k), where rank r << min(d, k):
+In **Low-Rank Adaptation (LoRA)**, Delta_W is decomposed into two low-rank matrices B (d x r) and A (r x k), where rank r << min(d, k):
 `Delta_W = B * A`
 
 ```text
        Input x (d-dim)
-          │         │
-          │         ▼
-          │    ┌─────────┐
-          │    │ Matrix A│ (r x d)  <-- Down-projection
-          │    └────┬────┘
-          │         │ (r-dim)
-          │         ▼
-          │    ┌─────────┐
-          │    │ Matrix B│ (k x r)  <-- Up-projection
-          │    └────┬────┘
-          ▼         │
-    ┌──────────┐    │
-    │ Frozen W0│    │
-    └─────┬────┘    │
-          │         │
-          ▼         ▼
-          (+) ◄─────┘ (Scaled by alpha / r)
-          │
+          |         |
+          |         v
+          |    +---------+
+          |    | Matrix A| (r x d)  <-- Down-projection
+          |    +----+----+
+          |         | (r-dim)
+          |         v
+          |    +---------+
+          |    | Matrix B| (k x r)  <-- Up-projection
+          |    +----+----+
+          v         |
+    +----------+    |
+    | Frozen W0|    |
+    +-----+----+    |
+          |         |
+          v         v
+         (+) <------+ (Scaled by alpha / r)
+          |
       Output h (k-dim)
 ```
 
@@ -84,23 +84,23 @@ In **Low-Rank Adaptation (LoRA)**, Delta_W is decomposed into two low-rank matri
 To prevent pipeline bottlenecks, CI/CD is decoupled into 3 isolated workflows:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. APP CI/CD FAST-LANE (.github/workflows/app-bank-compliance.yml)          │
-│    • Scope: SAST Security Scan ➔ Fast Ragas Smoke Gate ➔ Deploy AKS & SWA   │
-│    • Speed: < 3 minutes                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------------+
+| 1. APP CI/CD FAST-LANE (.github/workflows/app-bank-compliance.yml)          |
+|    * Scope: SAST Security Scan -> Fast Ragas Smoke Gate -> Deploy AKS & SWA |
+|    * Speed: < 3 minutes                                                     |
++-----------------------------------------------------------------------------+
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 2. DATAOPS INGESTION SYNC (.github/workflows/dataops-regulatory-sync.yml)   │
-│    • Scope: PDF Parsing ➔ SHA-256 Provenance Hashing ➔ Qdrant Re-indexing   │
-│    • Trigger: Only when regulatory files in app/bank-compliance/documents/ │
-└─────────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------------+
+| 2. DATAOPS INGESTION SYNC (.github/workflows/dataops-regulatory-sync.yml)   |
+|    * Scope: PDF Parsing -> SHA-256 Provenance Hashing -> Qdrant Re-indexing |
+|    * Trigger: Only when regulatory files in app/bank-compliance/documents/ |
++-----------------------------------------------------------------------------+
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 3. MLOPS LoRA TRAINING (.github/workflows/mlops-lora-training.yml)          │
-│    • Scope: Synthetic QA Dataset Generation ➔ SFT Training ➔ Benchmark Eval │
-│    • Trigger: On-Demand via workflow_dispatch                               │
-└─────────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------------+
+| 3. MLOPS LoRA TRAINING (.github/workflows/mlops-lora-training.yml)          |
+|    * Scope: Synthetic QA Dataset Generation -> SFT Training -> Benchmark    |
+|    * Trigger: On-Demand via workflow_dispatch                               |
++-----------------------------------------------------------------------------+
 ```
 
 ---

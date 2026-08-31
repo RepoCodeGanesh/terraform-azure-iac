@@ -1,4 +1,4 @@
-# Confluence Technical Specification: Enterprise Network Topology, Packet Routing & DNS Architecture
+# 09. Enterprise Network Topology, Packet Routing & DNS Spec
 
 **Document ID:** `CR-NET-09`  
 **Classification:** Enterprise Cloud & Network Infrastructure Architecture  
@@ -18,72 +18,72 @@ The architecture follows the **Microsoft Cloud Adoption Framework (CAF) Hub-and-
 
 ---
 
-## 2. Visio-Level Global Ingress & Packet Flow Diagram
+## 2. Global Edge Ingress & Packet Flow Diagram
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                   GLOBAL EDGE INGRESS, SSL TERMINATION & PACKET ROUTING                          │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
++--------------------------------------------------------------------------------------------------+
+|                   GLOBAL EDGE INGRESS, SSL TERMINATION & PACKET ROUTING                          |
++--------------------------------------------------------------------------------------------------+
 
  [ Client Browser (User / Auditor) ]
-        │
-        │ 1. DNS Query: bank.mytaxbot.site (HTTPS TCP 443)
-        ▼
- ┌───────────────────────────────────────────────────────────────────────────┐
- │ Cloudflare Global Anycast Edge Network (DDoS Layer 7 Shield)              │
- │ • SSL Termination: Full (Strict) TLS 1.3 / TLS 1.2                        │
- │ • Edge Caching: Static Assets (TTL: 86400s), Dynamic API Bypassed         │
- │ • DNS CNAME Flattening: bank.mytaxbot.site ➔ apim-ht-ss-p-cin-01          │
- └─────────────────────────────────────┬─────────────────────────────────────┘
-                                       │
-                                       │ 2. HTTPS / TLS 1.2+ (SNI: apim-ht-ss-p-cin-01)
-                                       ▼
- ┌───────────────────────────────────────────────────────────────────────────┐
- │ Azure API Management (APIM) (Shared-services Sub: 859a785c | Region: CIN) │
- │ Hostname: apim-ht-ss-p-cin-01.azure-api.net (Consumption Tier)             │
- │ • Rate Limiting: 60 requests/min per client IP                            │
- │ • URL Rewrite: /bankc/api/v1/* ➔ /api/v1/*                                │
- │ • CORS Policy: Allowed Origin = https://bank.mytaxbot.site                │
- └─────────────────────────────────────┬─────────────────────────────────────┘
-                                       │
-                                       │ 3. Forwarded HTTP (TCP 80)
-                                       ▼
- ┌───────────────────────────────────────────────────────────────────────────┐
- │ Azure Kubernetes Service (AKS Spoke VNet: 10.42.0.0/16, Apps-prod Sub)    │
- │ Cluster: aks-ht-bankc-p-cin-01 | Node Pool: Standard_B4ms (Central India) │
- │                                                                           │
- │ ┌───────────────────────────────────────────────────────────────────────┐ │
- │ │ Azure Public LoadBalancer (Frontend IP: 20.x.x.x:80)                  │ │
- │ └───────────────────────────────────┬───────────────────────────────────┘ │
- │                                     │                                     │
- │                                     ▼                                     │
- │ ┌───────────────────────────────────────────────────────────────────────┐ │
- │ │ Namespace: bank-compliance (Azure CNI Overlay: 192.168.0.0/16)        │ │
- │ │                                                                       │ │
- │ │  [ Service: bankc-backend-svc ] (Type: LoadBalancer, Port: 80)        │ │
- │ │          │                                                            │ │
- │ │          │ 4. Forward to TargetPort 8000                              │ │
- │ │          ▼                                                            │ │
- │ │  [ Pod: bankc-backend (FastAPI) ] (IP: 192.168.1.14:8000)             │ │
- │ │          │                                                            │ │
- │ │          │ 5. In-Cluster Internal Vector Query (ClusterIP TCP 6333)   │ │
- │ │          ├────────────► [ Pod: qdrant-0 ] (IP: 192.168.1.18:6333)     │ │
- │ │          │              Storage: 4GB Azure Managed CSI (/qdrant/data) │ │
- │ │          │                                                            │ │
- │ │          │ 6. In-Cluster AI Proxy Request (ClusterIP TCP 4000)        │ │
- │ │          ├────────────► [ Pod: litellm-gateway ] (192.168.1.22:4000)  │ │
- │ │          │                     │                                      │ │
- │ │          │                     │ 7a. Primary: HTTPS 443               │ │
- │ │          │                     ├──────► Google Gemini 2.0 Flash       │ │
- │ │          │                     │                                      │ │
- │ │          │                     │ 7b. Standby Fallback: HTTPS 443      │ │
- │ │          │                     ├──────► Azure OpenAI (oai-ht-ss...)   │ │
- │ │          │                     │                                      │ │
- │ │          │                     │ 7c. Sovereign SLM: ClusterIP TCP 11434│
- │ │          │                     └──────► [ Pod: private-slm-inference] │
- │ │          │                              (IP: 192.168.1.25:11434)      │
- │ └──────────┴────────────────────────────────────────────────────────────┘ │
- └───────────────────────────────────────────────────────────────────────────┘
+        |
+        | 1. DNS Query: bank.mytaxbot.site (HTTPS TCP 443)
+        v
+ +---------------------------------------------------------------------------+
+ | Cloudflare Global Anycast Edge Network (DDoS Layer 7 Shield)              |
+ | * SSL Termination: Full (Strict) TLS 1.3 / TLS 1.2                        |
+ | * Edge Caching: Static Assets (TTL: 86400s), Dynamic API Bypassed         |
+ | * DNS CNAME Flattening: bank.mytaxbot.site -> apim-ht-ss-p-cin-01         |
+ +-------------------------------------+-------------------------------------+
+                                       |
+                                       | 2. HTTPS / TLS 1.2+ (SNI: apim-ht-ss-p-cin-01)
+                                       v
+ +---------------------------------------------------------------------------+
+ | Azure API Management (APIM) (Shared-services Sub: 859a785c | Region: CIN) |
+ | Hostname: apim-ht-ss-p-cin-01.azure-api.net (Consumption Tier)             |
+ | * Rate Limiting: 60 requests/min per client IP                            |
+ | * URL Rewrite: /bankc/api/v1/* -> /api/v1/*                               |
+ | * CORS Policy: Allowed Origin = https://bank.mytaxbot.site                |
+ +-------------------------------------+-------------------------------------+
+                                       |
+                                       | 3. Forwarded HTTP (TCP 80)
+                                       v
+ +---------------------------------------------------------------------------+
+ | Azure Kubernetes Service (AKS Spoke VNet: 10.42.0.0/16, Apps-prod Sub)    |
+ | Cluster: aks-ht-bankc-p-cin-01 | Node Pool: Standard_B4ms (Central India) |
+ |                                                                           |
+ | +-----------------------------------------------------------------------+ |
+ | | Azure Public LoadBalancer (Frontend IP: 20.x.x.x:80)                  | |
+ | +-----------------------------------+-----------------------------------+ |
+ |                                     |                                     |
+ |                                     v                                     |
+ | +-----------------------------------------------------------------------+ |
+ | | Namespace: bank-compliance (Azure CNI Overlay: 192.168.0.0/16)        | |
+ | |                                                                       | |
+ | |  [ Service: bankc-backend-svc ] (Type: LoadBalancer, Port: 80)        | |
+ | |          |                                                            | |
+ | |          | 4. Forward to TargetPort 8000                              | |
+ | |          v                                                            | |
+ | |  [ Pod: bankc-backend (FastAPI) ] (IP: 192.168.1.14:8000)             | |
+ | |          |                                                            | |
+ | |          | 5. In-Cluster Internal Vector Query (ClusterIP TCP 6333)   | |
+ | |          +------------> [ Pod: qdrant-0 ] (IP: 192.168.1.18:6333)     | |
+ | |          |              Storage: 4GB Azure Managed CSI (/qdrant/data) | |
+ | |          |                                                            | |
+ | |          | 6. In-Cluster AI Proxy Request (ClusterIP TCP 4000)        | |
+ | |          +------------> [ Pod: litellm-gateway ] (192.168.1.22:4000)  | |
+ | |          |                     |                                      | |
+ | |          |                     | 7a. Primary: HTTPS 443               | |
+ | |          |                     +------> Google Gemini 2.0 Flash       | |
+ | |          |                     |                                      | |
+ | |          |                     | 7b. Standby Fallback: HTTPS 443      | |
+ | |          |                     +------> Azure OpenAI (oai-ht-ss...)   | |
+ | |          |                     |                                      | |
+ | |          |                     | 7c. Sovereign SLM: ClusterIP TCP 11434|
+ | |          |                     \------> [ Pod: private-slm-inference] |
+ | |          |                              (IP: 192.168.1.25:11434)      |
+ | +----------+------------------------------------------------------------+ |
+ +---------------------------------------------------------------------------+
 ```
 
 ---
@@ -93,18 +93,18 @@ The architecture follows the **Microsoft Cloud Adoption Framework (CAF) Hub-and-
 | VNet / Subnet Resource Name | Address Space (CIDR) | Usable IP Range | Purpose & Delegations | Gateway IP |
 |:---|:---:|:---:|:---|:---:|
 | **`vnet-ht-hub-p-cin-01` (Hub)** | `10.0.0.0/16` | `10.0.0.1 - 10.0.255.254` | Central Hub VNet in `Hub-prod` (3eb8cc01) | `10.0.0.1` |
-| ├── `AzureFirewallSubnet` | `10.0.1.0/26` | `10.0.1.4 - 10.0.1.62` | Azure Firewall Premium / Standard | `10.0.1.1` |
-| ├── `AzureBastionSubnet` | `10.0.2.0/26` | `10.0.2.4 - 10.0.2.62` | Azure Bastion Host for secure RDP/SSH | `10.0.2.1` |
-| ├── `GatewaySubnet` | `10.0.3.0/27` | `10.0.3.4 - 10.0.3.30` | VPN / ExpressRoute Virtual Network Gateway | `10.0.3.1` |
-| └── `snet-hub-mgmt` | `10.0.4.0/24` | `10.0.4.4 - 10.0.4.254` | Jumpbox and management agents | `10.0.4.1` |
+| +-- `AzureFirewallSubnet` | `10.0.1.0/26` | `10.0.1.4 - 10.0.1.62` | Azure Firewall Premium / Standard | `10.0.1.1` |
+| +-- `AzureBastionSubnet` | `10.0.2.0/26` | `10.0.2.4 - 10.0.2.62` | Azure Bastion Host for secure RDP/SSH | `10.0.2.1` |
+| +-- `GatewaySubnet` | `10.0.3.0/27` | `10.0.3.4 - 10.0.3.30` | VPN / ExpressRoute Virtual Network Gateway | `10.0.3.1` |
+| \-- `snet-hub-mgmt` | `10.0.4.0/24` | `10.0.4.4 - 10.0.4.254` | Jumpbox and management agents | `10.0.4.1` |
 | **`vnet-ht-taxb-p-cin-01` (TaxBot)** | `10.41.0.0/16` | `10.41.0.1 - 10.41.255.254` | Spoke 1 in `Apps-prod` (f4ffefe1) | `10.41.0.1` |
-| ├── `snet-taxb-app` | `10.41.1.0/24` | `10.41.1.4 - 10.41.1.254` | Delegated to `Microsoft.Web/serverFarms` | `10.41.1.1` |
-| └── `snet-taxb-pe` | `10.41.2.0/24` | `10.41.2.4 - 10.41.2.254` | Private Endpoints (Cosmos DB, AI Search) | `10.41.2.1` |
+| +-- `snet-taxb-app` | `10.41.1.0/24` | `10.41.1.4 - 10.41.1.254` | Delegated to `Microsoft.Web/serverFarms` | `10.41.1.1` |
+| \-- `snet-taxb-pe` | `10.41.2.0/24` | `10.41.2.4 - 10.41.2.254` | Private Endpoints (Cosmos DB, AI Search) | `10.41.2.1` |
 | **`vnet-ht-bankc-p-cin-01` (BankC)** | `10.42.0.0/16` | `10.42.0.1 - 10.42.255.254` | Spoke 2 in `Apps-prod` (f4ffefe1) | `10.42.0.1` |
-| ├── `snet-bankc-aks-nodes` | `10.42.1.0/24` | `10.42.1.4 - 10.42.1.254` | AKS VM Node NICs (`aks-ht-bankc-p-cin-01`) | `10.42.1.1` |
-| └── `snet-bankc-pe` | `10.42.2.0/24` | `10.42.2.4 - 10.42.2.254` | Private Endpoints (Key Vault, Storage) | `10.42.2.1` |
+| +-- `snet-bankc-aks-nodes` | `10.42.1.0/24` | `10.42.1.4 - 10.42.1.254` | AKS VM Node NICs (`aks-ht-bankc-p-cin-01`) | `10.42.1.1` |
+| \-- `snet-bankc-pe` | `10.42.2.0/24` | `10.42.2.4 - 10.42.2.254` | Private Endpoints (Key Vault, Storage) | `10.42.2.1` |
 | **AKS Pod Network (Overlay)** | `192.168.0.0/16` | `192.168.0.1 - 192.168.255.254` | Azure CNI Overlay Pod Address Space | N/A (Overlay) |
-| └── `bank-compliance` Pods | `192.168.1.0/24` | `192.168.1.1 - 192.168.1.254` | Dynamic Pod IPs assigned by Cilium/CNI | Pod-specific |
+| \-- `bank-compliance` Pods | `192.168.1.0/24` | `192.168.1.1 - 192.168.1.254` | Dynamic Pod IPs assigned by Cilium/CNI | Pod-specific |
 | **Kubernetes Service CIDR** | `10.240.0.0/16` | `10.240.0.1 - 10.240.255.254` | Internal `ClusterIP` virtual IPs | N/A (Kube-Proxy)|
 
 ---
@@ -152,7 +152,7 @@ The following XML inbound policy is applied to the `/bankc` API on `apim-ht-ss-p
         <!-- 2. Rate Limiting: 60 requests per minute per Client IP -->
         <rate-limit-by-key calls="60" renewal-period="60" 
                            counter-key="@(context.Request.IpAddress)" 
-                           increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" />
+                           increment-condition="@(context.Response.StatusCode >= 200 &amp;&amp; context.Response.StatusCode &lt; 400)" />
 
         <!-- 3. Strip /bankc prefix and forward to AKS LoadBalancer -->
         <rewrite-uri template="@(context.Request.Url.Path.Replace(&quot;/bankc&quot;, &quot;&quot;))" />
