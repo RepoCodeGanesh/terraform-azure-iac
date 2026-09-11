@@ -89,7 +89,7 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 | Workload | Live Production Domain | Primary Tech Stack | Architectural Paradigm |
 | :--- | :--- | :--- | :--- |
 | **TaxBot India** | **`https://www.mytaxbot.site`** | Python Function App, Azure AI Search, Azure OpenAI `gpt-5.4-nano`, Cosmos DB, React SPA | **Serverless PaaS** |
-| **BankCompliance AI** | **`https://bank.mytaxbot.site`** | Azure Kubernetes Service (AKS Free Tier), LiteLLM Gateway, Qdrant Vector DB on 4GB CSI, React SPA | **Cloud-Native Kubernetes** |
+| **BankCompliance AI** | **`https://bank.mytaxbot.site`** | Azure Kubernetes Service (AKS Free Tier), LiteLLM Gateway (Gemini 2.0 Flash + Azure OpenAI), 4-Agent StateGraph, Qdrant on 4GB CSI, Split-Screen PDF Viewer, Sovereign SLM | **Cloud-Native Kubernetes** |
 
 ---
 

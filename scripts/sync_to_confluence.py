@@ -190,7 +190,7 @@ SECTION_PAGES_STORAGE = {
 """,
     "Section 2: Enterprise AI Applications (Workloads)": """
 <h1>Enterprise AI Applications Portfolio</h1>
-<p>This section documents the business copilot applications deployed on the HappyTechies Cloud Platform. Each application is decoupled into its own standalone repository with dedicated CI/CD pipelines, runtime compute, and custom domain endpoints.</p>
+<p>This section documents the business copilot applications deployed on the HappyTechies Cloud Platform. Applications are integrated in the enterprise monorepo under <code>app/tax-advisor</code> and <code>app/bank-compliance</code> with dedicated CI/CD pipelines, runtime compute, and custom domain endpoints.</p>
 <hr />
 <h2>Active AI Copilots</h2>
 <table class="wrapped confluenceTable"><tbody>

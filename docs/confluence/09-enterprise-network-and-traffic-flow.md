@@ -53,7 +53,7 @@ The architecture follows the **Microsoft Cloud Adoption Framework (CAF) Hub-and-
  | Cluster: aks-ht-bankc-p-cin-01 | Node Pool: Standard_B4ms (Central India) |
  |                                                                           |
  | +-----------------------------------------------------------------------+ |
- | | Azure Public LoadBalancer (Frontend IP: 20.x.x.x:80)                  | |
+ | | Azure LoadBalancer (Internal / APIM Gateway Route)                    | |
  | +-----------------------------------+-----------------------------------+ |
  |                                     |                                     |
  |                                     v                                     |
