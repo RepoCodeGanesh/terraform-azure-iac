@@ -58,7 +58,7 @@ flowchart TD
 ## 3. Option 1: Azure Container Insights Setup & KQL Queries
 
 ### A. Terraform Configuration
-Container Insights is enabled via the `oms_agent` block in [`modules/aks/main.tf`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/modules/aks/main.tf) and called by [`workloads/bank-compliance-ai-aks/aks_cluster.tf`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/workloads/bank-compliance-ai-aks/aks_cluster.tf):
+Container Insights is enabled via the `oms_agent` block in [`modules/aks/main.tf`](../../modules/aks/main.tf) and called by [`workloads/bank-compliance-ai-aks/aks_cluster.tf`](../../workloads/bank-compliance-ai-aks/aks_cluster.tf):
 
 ```hcl
 # In modules/aks/main.tf:
@@ -137,24 +137,26 @@ Perf
 
 ## 4. Option 2: Self-Hosted Prometheus + Grafana Setup & Dashboard Access
 
-### A. Quick Deployment (1-Click)
+### A. Quick Deployment via Helm (kube-prometheus-stack)
 
-The repository provides automated deployment scripts in [`app/bank-compliance/k8s/monitoring/`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/monitoring/):
+Deploy Prometheus and Grafana using the official `prometheus-community` Helm chart into the `monitoring` namespace:
 
-#### On Windows (PowerShell):
-```powershell
-# Authenticate with AKS
-az aks get-credentials --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01
-
-# Run deployment script
-.\app\bank-compliance\k8s\monitoring\deploy-monitoring.ps1
+#### 1. Add Helm Repository & Update:
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
 ```
 
-#### On Linux / macOS / Bash:
+#### 2. Install / Upgrade into `monitoring` Namespace:
 ```bash
-az aks get-credentials --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01
-chmod +x app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
-./app/bank-compliance/k8s/monitoring/deploy-monitoring.sh
+# Create namespace
+kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+# Install kube-prometheus-stack with persistent storage or lightweight sandbox settings
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set grafana.adminPassword="AdminSecurePassword123!" \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
 ```
 
 ---
@@ -167,7 +169,7 @@ kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring
 ```
 * **URL:** `http://localhost:3000`
 * **Username:** `admin`
-* **Password:** `AdminSecurePassword123!` *(configured in values.yaml)*
+* **Password:** `AdminSecurePassword123!`
 
 #### 2. Open Prometheus Query & Targets UI:
 ```powershell
@@ -194,7 +196,7 @@ Once inside Grafana, click **Dashboards** ➔ **Browse** to open pre-loaded dash
 
 ## 5. Custom AI / LLM Observability with PromQL
 
-The AI app pods ([`bankc-backend`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/backend-deployment.yaml) and [`litellm-proxy`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/litellm/deployment.yaml)) are instrumented and monitored by Prometheus.
+The AI app pods ([`bankc-backend`](../../app/bank-compliance/k8s/backend-deployment.yaml) and [`litellm-proxy`](../../app/bank-compliance/k8s/litellm/deployment.yaml)) are instrumented and monitored by Prometheus.
 
 ### Curated PromQL Cheatsheet
 
@@ -249,7 +251,7 @@ Open Prometheus UI at `http://localhost:9090/targets`. Verify that:
 * `serviceMonitor/bank-compliance/litellm-proxy-monitor` shows state **UP (1/1)**.
 
 ### Q2: Why did Grafana show "Failed to fetch" or restart?
-If Grafana hits an `OOMKilled` (Out of Memory) exit code 137, ensure its memory limit is configured to at least `512Mi` in [`app/bank-compliance/k8s/monitoring/values.yaml`](file:///c:/Users/RichT/OneDrive/Documents/Repos/terraform-azure-iac/app/bank-compliance/k8s/monitoring/values.yaml#L52-L59). Then restart your port-forward:
+If Grafana hits an `OOMKilled` (Out of Memory) exit code 137, ensure its memory limit is configured to at least `512Mi` (e.g. `--set grafana.resources.limits.memory=512Mi`). Then restart your port-forward:
 ```powershell
 kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
 ```

@@ -106,6 +106,6 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 * [x] **Automated RAG Evaluation in GitHub Actions:** Automated regression benchmarking on every Git Pull Request (`evaluate.py` + `golden_dataset.jsonl`).
 * [x] **Triad Quality Gates:** Automated build enforcement of **Faithfulness $\ge 95\%$** (hallucination detector), **Answer Relevancy $\ge 90\%$**, and **Citation Integrity $\ge 4.0/5.0$**.
 * [x] **Automated Jailbreak & Prompt Injection Testing:** Automated red-teaming tests running in the CI pipeline before deployment.
-* [x] Execution Blueprint Document: [`docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md`](docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
+* [x] Execution Blueprint Document: [`docs/archive/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md`](docs/archive/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
 
 

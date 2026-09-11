@@ -325,4 +325,4 @@ graph TD
 * [Platform Overview & Subscriptions](01-platform-overview.md)
 * [Terraform Infrastructure as Code Guide](02-terraform-iac-guide.md)
 * [Monitoring & Telemetry Guide](07-monitoring-telemetry-guide.md)
-* [BankCompliance AI Troubleshooting & Learnings](../BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md)
+* [BankCompliance AI Troubleshooting & Learnings](../confluence/11-bank-compliance-troubleshooting-learnings.md)

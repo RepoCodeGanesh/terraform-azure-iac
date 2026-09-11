@@ -9,14 +9,20 @@
 
 ## Table of Contents
 1. [Architecture Overview & Flow](#1-architecture-overview--flow)
-2. [Issue 1: GitHub Actions Dynamic Environment Context vs Step Outputs](#2-issue-1-github-actions-dynamic-environment-context-vs-step-outputs)
-3. [Issue 2: Oryx / Vite Build Breakage via UTF-8 Byte Order Mark (BOM)](#3-issue-2-oryx--vite-build-breakage-via-utf-8-byte-order-mark-bom)
-4. [Issue 3: Frontend Fallback to Localhost & ClusterIP Networking](#4-issue-3-frontend-fallback-to-localhost--clusterip-networking)
-5. [Issue 4: Content Security Policy (CSP) & Browser Mixed Content Restrictions](#5-issue-4-content-security-policy-csp--browser-mixed-content-restrictions)
-6. [Issue 5: Azure OpenAI API Version vs Model Release Version](#6-issue-5-azure-openai-api-version-vs-model-release-version)
-7. [Issue 6: Reasoning Model Parameters (`max_tokens` vs `max_completion_tokens`)](#7-issue-6-reasoning-model-parameters-max_tokens-vs-max_completion_tokens)
-8. [Issue 7: Kubernetes Image Caching (`imagePullPolicy` & Commit SHA Tagging)](#8-issue-7-kubernetes-image-caching-imagepullpolicy--commit-sha-tagging)
-9. [Platform Engineer Checklist & Golden Rules](#9-platform-engineer-checklist--golden-rules)
+2. [Detailed Issue Breakdown & Resolutions](#2-detailed-issue-breakdown--resolutions)
+   * [Issue 1: GitHub Actions Dynamic Environment Context vs Step Outputs](#1-github-actions-dynamic-environment-context-vs-step-outputs)
+   * [Issue 2: Oryx / Vite Build Breakage via UTF-8 Byte Order Mark (BOM)](#2-oryx--vite-build-breakage-via-utf-8-byte-order-mark-bom)
+   * [Issue 3: Frontend Fallback to Localhost & ClusterIP Networking](#3-frontend-fallback-to-localhost--clusterip-networking)
+   * [Issue 4: Content Security Policy (CSP) & Browser Mixed Content Restrictions](#4-content-security-policy-csp--browser-mixed-content-restrictions)
+   * [Issue 5: Azure OpenAI API Version vs Model Release Version](#5-azure-openai-api-version-vs-model-release-version)
+   * [Issue 6: Reasoning Model Parameters (`max_tokens` vs `max_completion_tokens`)](#6-reasoning-model-parameters-max_tokens-vs-max_completion_tokens)
+   * [Issue 7: Kubernetes Image Caching (`imagePullPolicy` & Commit SHA Tagging)](#7-kubernetes-image-caching-imagepullpolicy--commit-sha-tagging)
+   * [Issue 8: Semantic PR Title Validation Failure (`action-semantic-pull-request`)](#8-semantic-pr-title-validation-failure-action-semantic-pull-request)
+   * [Issue 9: Modern Azure OpenAI Parameter Compatibility](#9-modern-azure-openai-parameter-compatibility)
+   * [Issue 10: Heterogeneous Multi-Agent AI Routing (Google Gemini + Azure OpenAI)](#10-heterogeneous-multi-agent-ai-routing-google-gemini--azure-openai)
+   * [Issue 11: Out-of-Scope Reflection Loop Prevention (Governance Abstention Shield)](#11-out-of-scope-reflection-loop-prevention-governance-abstention-shield)
+   * [Issue 12: GenAIOps Grafana Command Center & Zero-Baseline Metric Handling](#12-genaiops-grafana-command-center--zero-baseline-metric-handling)
+3. [Platform Engineer Checklist & Golden Rules](#3-platform-engineer-checklist--golden-rules)
 
 ---
 
@@ -268,16 +274,87 @@ resp = await client.post(
 
 ---
 
+### 8. Semantic PR Title Validation Failure (`action-semantic-pull-request`)
+
+#### Symptom:
+* GitHub Actions job `Validate PR Title (Conventional Commits)` fails with error:
+  `No release type found in pull request title "Feature/phase11". Add a prefix to indicate what kind of release this pull request corresponds to.`
+
+#### Root Cause:
+* The repository enforces **Conventional Commits** (`amannn/action-semantic-pull-request@v5`) for automated SemVer changelog generation.
+* Default branch-based titles (e.g. `Feature/phase11`) lack the required semantic type prefix.
+
+#### Resolution:
+* Rename the PR title on GitHub using a valid semantic prefix:
+  * `feat: implement GenAIOps CI/CD quality gate, semantic caching, and Helm chart`
+  * `fix: resolve LiteLLM 400 parameter issue`
+  * `docs: update troubleshooting playbook`
+
+---
+
+### 9. Modern Azure OpenAI Parameter Compatibility
+
+#### Symptom:
+* LiteLLM proxy threw `400 BadRequestError`: `Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.`
+* Backend fell back to static fallback response for all queries.
+
+#### Root Cause:
+* Newer OpenAI and Azure OpenAI flagship deployments (`gpt-5.4-nano`, `gpt-4o`, `o1`, `o3-mini`) strictly deprecate `max_tokens` and enforce `max_completion_tokens`.
+
+#### Resolution:
+* Updated `orchestrator.py` and LiteLLM payloads to use `max_completion_tokens: 1024` or omit token caps when targeting modern reasoning models.
+
+---
+
+### 10. Heterogeneous Multi-Agent AI Routing (Google Gemini + Azure OpenAI)
+
+#### Architectural Pattern:
+* To balance sub-second latency with deep legal reasoning and zero idle cost:
+  1. **Supervisor / Planner Agent:** Invokes `gemini-2.0-flash-lite` via LiteLLM for sub-50ms intent classification and query decomposition.
+  2. **Retriever Agent:** Autonomous Qdrant hybrid vector search across indexed RBI Master Directions.
+  3. **Auditor / Reflection Agent:** Invokes `gemini-2.0-flash-thinking` via LiteLLM for legal chain-of-thought verification and anti-hallucination guardrails.
+  4. **Synthesizer Agent:** Invokes `gemini-2.0-flash` with automatic cross-cloud fallback to Azure OpenAI `gpt-5.4-nano`.
+
+---
+
+### 11. Out-of-Scope Reflection Loop Prevention (Governance Abstention Shield)
+
+#### Symptom:
+* When a user asked an unrelated prompt (e.g. *"how to cook chicken"*), the app returned an interpretation of RBI Cloud Data Localization (`RBI/2023-24/108`).
+
+#### Root Cause:
+* Qdrant returned 0 matches for cooking, triggering the Auditor reflection retry loop, which fell back to the default banking domain (`it_governance`).
+
+#### Resolution:
+* Added fast **Out-of-Scope Intent Classification** in `supervisor_agent.py` and guarded `auditor_agent.py` and `orchestrator.py` with `OUT_OF_SCOPE_RESPONSE_TEMPLATE`, returning an immediate statutory abstention notice without querying banking vectors.
+
+---
+
+### 12. GenAIOps Grafana Command Center & Zero-Baseline Metric Handling
+
+#### Architectural Pillars:
+* **Row 1:** 5-Second Executive Health Status Bar (Availability 100%, P95 Latency 96.8ms, 0% 5xx, Quality 93.6%, Safety 100%, Daily Spend).
+* **Row 2:** Multi-Model Traffic & Gateway 429 Throttling Rate with `$model` and `$department` variable filters.
+* **Row 3:** OpenTelemetry Latency Waterfall Spans (Qdrant Retrieval, Cache Lookup, TTFT, Generation).
+* **Row 4:** RAGOps Quality & Groundedness with Soft **Green ($\ge 4.0$) / Yellow / Red** reference bands.
+* **Row 5:** BFSI Safety & DPDP Governance (PII Redaction Counters & 100% Adversarial Jailbreak Defense).
+* **Row 6:** AI FinOps (Token Velocity, Spend by Model, and Semantic Cache Dollar Savings).
+* **Zero-Baseline Fix:** Added `or vector(0)` across all Prometheus queries so empty event windows render clean 0 baselines instead of `"No data"` boxes.
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
 | :--- | :--- | :--- |
+| **PR Titles** | Follow Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`. | Check PR title on GitHub UI. |
 | **File Encoding** | Always save JSON/YAML/HCL as UTF-8 **without BOM**. | `$b = [System.IO.File]::ReadAllBytes('file'); $b[0..2]` |
 | **GHA CI/CD** | Use `$GITHUB_OUTPUT` + `steps.<id>.outputs` for inter-step data. | Check workflow logs for context warnings. |
 | **K8s Deployments** | Always use `imagePullPolicy: Always` and commit SHA tags. | `kubectl get deployment bankc-backend -o yaml \| grep image:` |
 | **Public APIs** | Always front AKS HTTP services with Azure APIM for SSL/CORS. | `curl -i https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz` |
 | **Azure OpenAI** | Always verify REST `api-version` format (`YYYY-MM-DD`). | Test raw curl with `?api-version=2024-06-01` |
 | **Reasoning Models** | Use `max_completion_tokens` instead of `max_tokens`. | Check LiteLLM pod logs for 400 parameter errors. |
+| **GenAIOps Panels** | Wrap Prometheus metric queries with `or vector(0)`. | Verify no "No data" boxes appear on Grafana. |
 
 ---
 

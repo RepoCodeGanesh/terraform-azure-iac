@@ -190,18 +190,17 @@ Keep Terraform roots separate. Do not merge state:
 
 ---
 
-## 📚 CI/CD & Governance Guides
+## 📚 Documentation & Governance Reference Hub
 
 - **Master Documentation Index:** [docs/README.md](README.md)
-- **Git Branching Strategy:** [docs/BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md)
-- **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)
-- **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)
-- **BankCompliance Troubleshooting & Learnings:** [docs/BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md](BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md)
-- **Raw Regulatory Lake & Split-Screen Plan (Phase 10):** [docs/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md](RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
-- **AKS Hybrid Observability Guide:** [docs/AKS_HYBRID_OBSERVABILITY_GUIDE.md](AKS_HYBRID_OBSERVABILITY_GUIDE.md)
-- **Azure RAG Architectural Patterns Guide:** [docs/platform-guide/08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)
-- **Multi-Cloud AI Gateway & Fallback Guide:** [docs/platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md](platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md)
-- **AI Engineering Roadmap & Gap Analysis Guide:** [docs/platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)
+- **Confluence Enterprise Suite:** [docs/confluence/README.md](confluence/README.md)
+- **Platform Operations Guides (12 Modules):** [docs/platform-guide/README.md](platform-guide/README.md)
+- **Git Branching Strategy:** [docs/workflows-and-governance/BRANCHING_STRATEGY.md](workflows-and-governance/BRANCHING_STRATEGY.md)
+- **Automated Versioning (SemVer) Guide:** [docs/workflows-and-governance/AUTOMATED_VERSIONING_GUIDE.md](workflows-and-governance/AUTOMATED_VERSIONING_GUIDE.md)
+- **Reusable App Workflow Guide:** [docs/workflows-and-governance/REUSABLE_APP_WORKFLOW_GUIDE.md](workflows-and-governance/REUSABLE_APP_WORKFLOW_GUIDE.md)
+- **AKS Hybrid Observability Guide:** [docs/workflows-and-governance/AKS_HYBRID_OBSERVABILITY_GUIDE.md](workflows-and-governance/AKS_HYBRID_OBSERVABILITY_GUIDE.md)
+- **BankCompliance Troubleshooting & Learnings:** [docs/confluence/11-bank-compliance-troubleshooting-learnings.md](confluence/11-bank-compliance-troubleshooting-learnings.md)
+- **Milestone Archives (Phases 9 & 10):** [docs/archive/README.md](archive/README.md)
 
 ---
 

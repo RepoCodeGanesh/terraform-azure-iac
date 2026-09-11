@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > **Monorepo Migration Notice:**
-> The `bank-compliance-ai-app` codebase has been integrated directly into this monorepo under [`app/bank-compliance/`](../app/bank-compliance/).
-> Please refer to [`app/bank-compliance/README.md`](../app/bank-compliance/README.md) and [`docs/PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) for the active production architecture. This document is retained for historical decoupling and architectural reference.
+> The `bank-compliance-ai-app` codebase has been integrated directly into this monorepo under [`app/bank-compliance/`](../../app/bank-compliance/).
+> Please refer to [`app/bank-compliance/README.md`](../../app/bank-compliance/README.md) and [`docs/PROJECT_CONTEXT.md`](../PROJECT_CONTEXT.md) for the active production architecture. This document is retained for historical decoupling and architectural reference.
 
 ---
 

@@ -16,8 +16,10 @@ Start here:
 - [docs/README.md](docs/README.md) - **Master Documentation Hub** (Architecture, CI/CD, Platform Runbooks, and Standards).
 - [docs/confluence/README.md](docs/confluence/README.md) - **Confluence Wiki Suite** ([Live on Atlassian](https://happytechies.atlassian.net/wiki/spaces/HT/overview)).
 - [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) - Canonical project context, subscription map, deployment sequence, and cost matrix.
-- [docs/platform-guide/README.md](docs/platform-guide/README.md) - Platform Guide Visual Documentation Suite (Mermaid topology, IaC guide, CI/CD pipelines, CAF naming, Blue-Green deployments, & telemetry).
-- [AGENTS.md](AGENTS.md) - Concise rules for AI agents working in this repository.
+- [docs/platform-guide/README.md](docs/platform-guide/README.md) - Platform Guide Visual Documentation Suite (12 Guides with Mermaid diagrams).
+- [docs/workflows-and-governance/README.md](docs/workflows-and-governance/README.md) - Git branching, SemVer, reusable GHA workflows & AKS observability.
+- [docs/archive/README.md](docs/archive/README.md) - Completed Phase 9/10 execution blueprints and architectural history.
+- [.agents/AGENTS.md](.agents/AGENTS.md) - Rules and context for AI agents working in this repository.
 
 ## Terraform Roots
 
