@@ -112,11 +112,11 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 
 ---
 
-## 🏆 Phase 11: LLMOps Skill Bridge — Lead AI Platform / LLMOps Architect Transition
+## 🏆 Phase 11: LLMOps Skill Bridge Phase 1 — Lead AI Platform / LLMOps Architect Transition
 **Goal:** Implement 8 additive LLMOps capabilities to bridge from Senior Azure DevOps Engineer to Lead AI Platform / LLMOps Architect (₹60L–₹85L+ CTC). **Total Cost: ₹0.**
 
 ### Track S: Security Hardening
-* [x] **S3 — Trivy Container CVE Scan:** Added `aquasecurity/trivy-action@0.28.0` after `docker push` in `.github/workflows/app-bank-compliance.yml`. SARIF output uploaded to GitHub Security Code Scanning. `exit-code: 0` (non-blocking). Added `security-events: write` + `actions: read` permissions.
+* [x] **S3 — Trivy Container CVE Scan:** Added `aquasecurity/trivy-action@v0.36.0` after `docker push` in `.github/workflows/app-bank-compliance.yml`. SARIF output uploaded to GitHub Security Code Scanning. `exit-code: 0` (non-blocking). Added `security-events: write` + `actions: read` permissions.
 * [x] **S1 (Safe Half) — Pod SecurityContext:** Added `runAsNonRoot: true`, `runAsUser: 1000`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]` to `k8s/backend-deployment.yaml`. `readOnlyRootFilesystem` intentionally omitted (breaks Qdrant + LiteLLM).
 
 ### Track O: Observability
@@ -124,22 +124,14 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 * [x] **O1 — Langfuse LLM Tracing:** Added `langfuse>=2.0.0` to `requirements.txt`. Created `backend/app/services/telemetry.py` with full graceful degradation (all SDK calls try/except). Added `bankc-langfuse-secret` secretRef (`optional: true`) to `backend-deployment.yaml`. Added `LANGFUSE_HOST` to `backend-configmap.yaml`.
 
 ### Track A: AI Capabilities
-* [x] **A3 Phase 1 — Ollama CPU SLM (qwen2.5:0.5b):** Updated `k8s/inference/private-slm-deployment.yaml` with `initContainer` that pre-pulls `qwen2.5:0.5b` into shared emptyDir volume before main Ollama server starts. Guarantees sub-second cold-start after initial 60s model pull. Service `private-slm-inference:11434` unchanged.
-* [x] **A2 — FastMCP Regulatory Search Server:** Created `backend/app/services/mcp_server.py` with FastMCP exposing `search_rbi_regulations(query, top_k)` and `list_regulatory_domains()` tools. Created `k8s/inference/mcp-deployment.yaml` (ClusterIP `bankc-mcp-server:8080`, SSE transport). Added `fastmcp>=0.1.0` to `requirements.txt`.
+* [x] **A3 Phase 1 — Ollama CPU SLM (qwen2.5:0.5b):** Created `k8s/inference/private-slm-deployment.yaml` with `initContainer` that pre-pulls `qwen2.5:0.5b` into shared emptyDir volume before main Ollama server starts. Right-sized CPU requests to `10m` to avoid single-node scheduling deadlocks. Service `private-slm-inference:11434` live and verified.
+* [x] **A2 — FastMCP Regulatory Search Server:** Created `backend/app/services/mcp_server.py` with FastMCP exposing `search_rbi_regulations(query, top_k)` and `list_regulatory_domains()` tools. Created `k8s/inference/mcp-deployment.yaml` (ClusterIP `bankc-mcp-server:8080`, SSE transport, explicit binding to `0.0.0.0:8080`). Added `fastmcp>=0.1.0` to `requirements.txt`.
 
 ### Track G: Governance
-* [x] **G2 — AI Token Budget Circuit Breaker:** Added in-memory daily token counter (`_TOKEN_BUDGET_DAILY=500000`, auto-resets UTC midnight) to `orchestrator.py`. Pre-flight check blocks requests when budget exhausted with user-friendly message. Added `DAILY_TOKEN_BUDGET: "500000"` to `backend-configmap.yaml`.
+* [x] **G2 — AI Token Budget Circuit Breaker:** Added in-memory daily token counter (`_TOKEN_BUDGET_DAILY=500000`, auto-resets UTC midnight) to `orchestrator.py` & `orchestrator_v2.py`. Pre-flight check blocks requests when budget exhausted with user-friendly message. Added `DAILY_TOKEN_BUDGET: "500000"` to `backend-configmap.yaml`.
 
 ### Track S5: AI Red-Teaming
 * [x] **S5 — AI Red-Team Assessment:** Created `scripts/red_team/run_pyrit.py` with 10 attack patterns across 6 categories (Jailbreak, Prompt Injection, Domain Evasion, Hallucination Induction, Context Poisoning, Obfuscation). Supports `--mode dry-run` (documentation) and `--mode live` (HTTP testing). Created `docs/ai-red-team-report.md` — full assessment documenting 4-layer defence-in-depth with 100% interception rate.
-
-### Resume Upgrade (Phase 11 Complete)
-```
-Enterprise AI Platform & LLMOps Architect
-Azure (AKS • LiteLLM • Qdrant • MCP) | Terraform | Langfuse | Trivy | Red-Teaming
-9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
-Live: bank.mytaxbot.site | mytaxbot.site
-```
 
 ---
 
@@ -149,11 +141,12 @@ Live: bank.mytaxbot.site | mytaxbot.site
 ### Track A1: LangGraph Multi-Agent StateGraph
 * [x] **A1 — Cyclic StateGraph Orchestrator (`orchestrator_v2.py`):**
   - Created `app/bank-compliance/backend/app/services/agents/orchestrator_v2.py` implementing `StateGraph(AgentExecutionState)`.
-  - Micro-agent nodes: `supervisor_node`, `retriever_node`, `auditor_node` (statutory reflection), `synthesizer_node` (LiteLLM multi-model fallback), `greeting_node`, `out_of_scope_node`.
+  - Micro-agent nodes: `supervisor_node`, `retriever_node`, `auditor_node` (statutory reflection critic), `synthesizer_node` (LiteLLM multi-model fallback), `greeting_node`, `out_of_scope_node`.
   - Reflection loop: Conditional edge on auditor evaluation verdict (loops back to retriever if validation fails, max 2 iterations).
   - Production resilience: Integrated G2 token budget circuit breaker pre-flight check and graceful degradation fallback to `MultiAgentOrchestrator`.
   - Dual REST routing: Mounted `/api/v2` router prefix in `main.py` and dual endpoints `/compliance/query/v2` & `/v2/compliance/query` in `routes.py`.
   - Dependency: Added `langgraph>=0.2.0,<1.0.0` to `requirements.txt`.
+  - Live Validation: Verified `/api/v2/compliance/query` returning HTTP 200 with 3 verified citations on live AKS cluster.
 
 ### Track A3 Phase 2: Sovereign GPU vLLM Inference Tier
 * [x] **A3 Phase 2 — On-Demand GPU Node Pool & vLLM Benchmark:**
@@ -162,11 +155,25 @@ Live: bank.mytaxbot.site | mytaxbot.site
   - Created `scripts/benchmark_vllm.py`: Automated benchmarking harness measuring TTFT, tokens/sec, and latency percentiles (P50/P95/P99).
   - Benchmark findings (`docs/benchmark/vllm_benchmark_results.json`): GPU vLLM achieves **5.88x higher throughput** (142.8 vs 24.3 tokens/s) and **85.1% lower TTFT** (42.6ms vs 285ms) compared to CPU SLM at ₹35 one-time cost.
 
-### Resume Upgrade (Phase 12 Complete)
+---
+
+## 🏛️ Architectural Decisions & Interview Talking Points
+
+| Item | Status | Strategic / Interview Justification |
+|:---|:---|:---|
+| **S2 — NetworkPolicy** | Documented | Topology mapped: `backend ➔ qdrant:6333`, `backend ➔ litellm:4000`, `litellm ➔ external AI endpoints`. In enterprise banking, enforce deny-by-default with explicit allow egress rules. |
+| **G1 — OPA Gatekeeper** | Concept Live | `azure_policy_enabled = true` is active on AKS; Gatekeeper admission controller webhook is live. In enterprise, add ConstraintTemplates for registry allowlists and `runAsNonRoot` enforcement. |
+| **S1 (ReadOnlyRootFS)** | Omitted | Intentionally skipped `readOnlyRootFilesystem: true` because it breaks Qdrant local write buffers and LiteLLM socket logging. Non-root user 1000 + drop ALL capabilities provides full CIS compliance without runtime crashes. |
+| **FinOps Teardown** | Verified | Strict declarative destruction (`terraform destroy -var-file="prod.tfvars" -auto-approve`) of `rg-ht-bankc-p-cin-01`. State cleanly preserved in `sthtbootpcin01`; 0 active cloud cost when idle. |
+
+---
+
+## 🎖️ Updated Master Resume Headline (Post Phase 12)
 ```
 Lead Enterprise AI Platform & LLMOps Architect
-Azure (AKS • LiteLLM • Qdrant • vLLM) | LangGraph | Langfuse | MCP | Terraform | Trivy | Red-Teaming
+Azure (AKS • LiteLLM • Qdrant • vLLM) | LangGraph | Langfuse | FastMCP | Terraform | Trivy | Red-Teaming
 9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
 Live: bank.mytaxbot.site | mytaxbot.site
 ```
+
 

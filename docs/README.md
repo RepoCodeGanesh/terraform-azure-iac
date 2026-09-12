@@ -8,7 +8,7 @@ Welcome to the **Enterprise Azure AI Landing Zone** documentation repository. Th
 
 ### 1. 🏗️ Architecture & Single Source of Truth
 * **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)**: **The primary repository source of truth**. Contains subscription IDs, Entra ID app registrations, dual CI/CD auth mappings (WIF), network CIDR subnets, cost optimization matrix, and multi-root Terraform state rules.
-* **[ROADMAP.md](../ROADMAP.md)**: Master 10-phase delivery roadmap (Phases 1–10 Complete).
+* **[ROADMAP.md](../ROADMAP.md)**: Master 12-phase technical delivery roadmap (Phases 1–12 Complete).
 * **[Confluence Documentation Suite](confluence/README.md)**: Published 12-document enterprise engineering suite on [HappyTechies Atlassian Confluence](https://happytechies.atlassian.net/wiki/spaces/HT/overview).
 * **[Platform Guide Visual Suite](platform-guide/README.md)**: Complete 12-module operational runbook suite with interactive Mermaid architecture diagrams.
 

@@ -61,10 +61,37 @@ graph TD
 
 ---
 
-### 🔴 Phase 4: Zero-Trust Enterprise Lockdown (Status: ⏸️ Deferred for FinOps)
+### 🟢 Phase 5: LLMOps Skill Bridge Phase 1 — Production Hardening (Status: ✅ Completed)
+* **Objective:** DevSecOps image scanning, CIS pod security, advanced KQL telemetry, in-cluster sovereign SLM, and AI red-teaming.
+* **Cost:** **$0.00 / month** (Using existing AKS Free Tier compute).
+* **Deliverables:**
+  1. **Trivy Container CVE Scan (S3):** Pinned `aquasecurity/trivy-action@v0.36.0` scanning GHCR images and uploading SARIF to GitHub Code Scanning.
+  2. **Pod SecurityContext Hardening (S1):** `runAsNonRoot: true`, `runAsUser: 1000`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]` on backend pods.
+  3. **Azure Monitor KQL Workbook (O2):** 4 real-time KQL panels (Request Rate, P50/P95/P99 Latency, Qdrant Activity, Pod Status Timeline).
+  4. **In-Cluster Sovereign SLM (A3 Phase 1):** Ollama `qwen2.5:0.5b` pre-pulled via `initContainer` into emptyDir volume with right-sized 10m CPU requests.
+  5. **Langfuse LLM Tracing (O1):** Waterfall distributed tracing with graceful degradation try/except wrappers in `telemetry.py`.
+  6. **Token Budget Circuit Breaker (G2):** Daily in-memory token circuit breaker (500k tokens, auto-resets UTC midnight).
+  7. **FastMCP Regulatory Search Server (A2):** Model Context Protocol server exposing `search_rbi_regulations` tool on `0.0.0.0:8080`.
+  8. **AI Red-Team Robustness Assessment (S5):** 10-pattern jailbreak/injection evaluation with 100% defense interception documented in `ai-red-team-report.md`.
+
+---
+
+### 🟢 Phase 6: LLMOps Skill Bridge Phase 2 — LangGraph StateGraph & GPU vLLM (Status: ✅ Completed)
+* **Objective:** Cyclic multi-agent graph with reflection, REST API v2, and sovereign GPU vLLM benchmarking.
+* **Cost:** **$0.00 idle / ₹35 one-time benchmark**.
+* **Deliverables:**
+  1. **LangGraph StateGraph Multi-Agent Orchestrator (A1):** Built `orchestrator_v2.py` implementing `StateGraph(AgentExecutionState)` with Supervisor, Retriever, Auditor reflection critic, and Synthesizer nodes.
+  2. **Dual REST API v2 Routing (A1):** Mounted `/api/v2` router prefix and `/compliance/query/v2` endpoints.
+  3. **On-Demand GPU Spot Node Pool IaC (A3 Phase 2):** Declared `Standard_NC4as_T4_v3` Spot pool (`sku=gpu:NoSchedule` taint, default `false`) in `aks_cluster.tf`.
+  4. **High-Throughput GPU vLLM Benchmark (A3 Phase 2):** Created `vllm-benchmark.yaml` and `scripts/benchmark_vllm.py`, demonstrating 5.88x higher throughput (142.8 vs 24.3 tokens/s) and 85.1% lower TTFT over CPU SLM.
+  5. **FinOps Clean Teardown:** Declarative destruction of BankCompliance RG (`rg-ht-bankc-p-cin-01`) preserving remote state integrity.
+
+---
+
+### 🔴 Phase 7: Zero-Trust Enterprise Lockdown (Status: ⏸️ Deferred for FinOps)
 * **Objective:** Complete perimeter isolation for high-security banking workloads.
 * **Cost:** **$$$ Cost-Sensitive (Hourly Private Link & Firewall Charges)**.
-* **Why Deferred to Phase 4:**
+* **Why Deferred:**
   * Azure Private Endpoints incur a continuous hourly rate per endpoint (~$7.30/month per endpoint $\times$ 5 endpoints ~ $36.50/month).
   * Azure Firewall compute costs ~$1.25/hour (~$900/month if left running).
   * *Policy:* We keep `public_network_access_enabled = true` (protected by Entra ID RBAC) during development and maintain a strict $0.00/month idle cost policy.
@@ -84,9 +111,11 @@ graph TD
 | **Automated Ingestion Pipeline** | **Phase 2** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Core Data Engineering) |
 | **Live Content Safety Guardrails** | **Phase 2** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐ (DevSecOps) |
 | **CI/CD Quality Evals Gate** | **Phase 2** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (LLMOps) |
-| **Multi-Agent Orchestration & Split-Screen UI** | **Phase 3 / 10** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Frontier AI) |
+| **Multi-Agent Orchestration & Split-Screen UI** | **Phase 3** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Frontier AI) |
 | **Prometheus & Grafana GenAIOps** | **Phase 3** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐ (Observability) |
-| **Zero-Trust Private Endpoints** | **Phase 4** | ⏸️ **Deferred (FinOps)** | **$$$ Costly** | ⭐⭐⭐⭐ (Network Security) |
+| **LLMOps Skill Bridge Phase 1 (Trivy, SLM, MCP, Red-Team)** | **Phase 5** | ✅ **Completed** | **$0.00** | ⭐⭐⭐⭐⭐ (Architect Skill) |
+| **LLMOps Skill Bridge Phase 2 (LangGraph, GPU vLLM Benchmark)** | **Phase 6** | ✅ **Completed** | **$0.00 / ₹35 one-time** | ⭐⭐⭐⭐⭐ (Lead Architect) |
+| **Zero-Trust Private Endpoints** | **Phase 7** | ⏸️ **Deferred (FinOps)** | **$$$ Costly** | ⭐⭐⭐⭐ (Network Security) |
 
 
 ---
