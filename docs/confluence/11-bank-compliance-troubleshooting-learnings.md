@@ -463,6 +463,32 @@ resp = await client.post(
 
 ---
 
+### 18. Silent Fallback Bug in Client-Side Document Auditing & Enterprise SPA Dual-Pane URL Routing
+
+#### Symptom:
+* In Policy Redliner (`RedlineStudio.jsx`), clearing the editor or typing new draft text continued evaluating to a failing 10% RED score (5 violations). Furthermore, refreshing the page or using browser Back/Forward buttons reset the workspace back to the initial tab because state was monolithic without deep-linkable URL routing.
+
+#### Root Cause:
+1. **Silent Fallback Bug:** `runRedlineAudit` had `const currentText = contractText || sampleAgreement`. When `contractText` was empty or cleared, JavaScript truthiness silently audited `sampleAgreement` which contained 5 intentional statutory breaches, triggering a false-positive failure.
+2. **Monolithic State:** Navigation pillars lacked HTML5 History (`pushState` / `popstate`) synchronization. Visiting `https://bank.mytaxbot.site/redline` returned to `/copilot`.
+3. **Vertical Layout Fatigue:** The legacy layout was vertically stacked (>2,000px high), forcing continuous scrolling between the draft editor and redline diff cards.
+
+#### Resolution:
+1. **Default 100% Green State & Dual Sample Loaders:**
+   * Provided dual sample loaders:
+     * `🟢 Load 100% Compliant Agreement`: Evaluates to 100% Green (0 violations) across all 6 statutory regex rules.
+     * `🔴 Load High-Risk SOW (5 Violations)`: Loads the high-risk vendor contract for vulnerability testing.
+     * `🧹 Clear Editor`: Resets to a clean state with zero silent fallback.
+2. **Deep-Linkable HTML5 URL Routing:**
+   * Synchronized navigation with HTML5 History API across `/copilot`, `/command`, `/governance`, `/monitoring`, `/redline`.
+   * Handled browser Back/Forward buttons via `popstate` event listeners.
+   * Leveraged Azure Static Web Apps `navigationFallback.rewrite = "/index.html"` for direct deep-linking.
+3. **Side-by-Side Dual-Pane Workspace:**
+   * Left Pane (48% width): Contract Source Editor with word, line, and clause counters.
+   * Right Pane (52% width): Sticky Score HUD & scrollable Redline Diff Cards with One-Click Copy and Audit Certificate export.
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |

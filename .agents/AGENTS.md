@@ -266,6 +266,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** In React JSX, conditional ternary branches evaluating an immediately invoked function expression (IIFE) must follow `condition ? (<Component />) : (() => { ... })()`. Adding an extraneous curly brace `{(() => { ... })()}` inside the ternary branch violates JSX grammar because the ternary expression is already embedded within an active JSX expression block.
 * **Resolution:** Remove the extraneous `{` and `}` surrounding the IIFE call: format ternary branch strictly as `) : (() => { const ...; return (<Component />); })()`.
 
+### 31. Silent Fallback Bug in Client-Side Document Auditing & Enterprise SPA Dual-Pane URL Routing
+* **Symptom:** In Policy Redliner (`RedlineStudio.jsx`), clearing the editor or typing new text continued evaluating to a failing 10% RED score (5 violations). Furthermore, refreshing the page or using browser Back/Forward buttons reset the workspace back to the initial tab because state was monolithic without URL routing.
+* **Root Cause:** (1) `runRedlineAudit` used `const currentText = contractText || sampleAgreement`. When `contractText` was empty or cleared, JavaScript truthiness silently fell back to `sampleAgreement` which contained 5 intentional statutory breaches, giving a false-positive failure. (2) Navigation pillars lacked HTML5 History (`pushState` / `popstate`) synchronization. (3) The legacy layout was vertically stacked (>2,000px high), forcing continuous scrolling between editor and diff cards.
+* **Resolution:** (1) Provided dual sample loaders: `🟢 Load 100% Compliant Agreement` (passes all 6 statutory regex rules with 0 violations and 100% score) and `🔴 Load High-Risk SOW (5 Violations)`. Empty text now resets cleanly to an empty prompt state rather than silently failing. (2) Implemented deep-linkable HTML5 URL routing (`/copilot`, `/command`, `/governance`, `/monitoring`, `/redline`) supported by Azure SWA `navigationFallback.rewrite = "/index.html"`. (3) Redesigned `RedlineStudio.jsx` into a high-density side-by-side dual-pane workspace (Left: Source Editor; Right: Sticky Score HUD & Live Redline Diffs with one-click copy buttons).
+
 ---
 
 
