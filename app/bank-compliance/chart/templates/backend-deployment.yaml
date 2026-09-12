@@ -50,6 +50,18 @@ spec:
             - secretRef:
                 name: litellm-secret
                 optional: true
+            # O1: Langfuse LLM Tracing credentials (50k free traces/month)
+            - secretRef:
+                name: bankc-langfuse-secret
+                optional: true
+          # S1: CIS Kubernetes Benchmark — Pod Security Context
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
           # Liveness Probe: Restarts container if deadlock occurs

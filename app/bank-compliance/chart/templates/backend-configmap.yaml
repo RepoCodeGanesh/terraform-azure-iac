@@ -14,3 +14,8 @@ data:
   QDRANT_COLLECTION: {{ .Values.backend.env.qdrantCollection | quote }}
   ALLOWED_ORIGINS: {{ .Values.backend.env.allowedOrigins | quote }}
   ENVIRONMENT: {{ .Values.backend.env.environment | quote }}
+  # O1: Langfuse Tracing Configuration
+  LANGFUSE_HOST: {{ .Values.backend.env.langfuseHost | default "https://cloud.langfuse.com" | quote }}
+  LANGFUSE_TRACING_ENABLED: {{ .Values.backend.env.langfuseTracingEnabled | default "true" | quote }}
+  # G2: Token Budget Circuit Breaker
+  DAILY_TOKEN_BUDGET: {{ .Values.backend.env.dailyTokenBudget | default "500000" | quote }}

@@ -243,6 +243,12 @@ jobs:
             --wait \
             --timeout 10m
 
+          # ── A2 & A3: Deploy FastMCP Server & Private SLM Inference Pods ─────
+          if [ -d "./app/bank-compliance/k8s/inference" ]; then
+            echo "🤖 Deploying FastMCP Regulatory Search Tool & Private SLM..."
+            kubectl apply -f ./app/bank-compliance/k8s/inference/ -n bank-compliance
+          fi
+
       - name: Collect AKS Diagnostic Logs on Failure
         if: failure()
         run: |

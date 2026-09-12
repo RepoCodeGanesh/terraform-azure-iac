@@ -39,6 +39,9 @@ backend:
     qdrantCollection: "rbi_master_directions"
     allowedOrigins: "https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
     environment: "production"
+    langfuseHost: "https://cloud.langfuse.com"
+    langfuseTracingEnabled: "true"
+    dailyTokenBudget: "500000"
 
 # LiteLLM AI Gateway Proxy
 litellm:
