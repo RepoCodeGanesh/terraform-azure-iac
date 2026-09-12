@@ -23,8 +23,8 @@ function getSynthesizerModelName(model) {
 
 function formatAgentModelBadge(model, msgMode) {
   if (!model) return '⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ Gemini 2.0'
-  if (model === 'governance-abstention-shield') return '🛡️ Handled by: Supervisor Agent (Safety Shield)'
-  if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Router)'
+  if (model === 'governance-abstention-shield') return '🛡️ Handled by: Sovereign Guardrail (In-Memory Sieve)'
+  if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Intent Router)'
   if (model === 'governance-core') return '⚖️ BankCompliance Core'
   if (msgMode === 'sovereign' || model.includes('sovereign') || model.includes('qwen') || model.includes('private-slm')) {
     return '🛡️ Sovereign In-Cluster SLM: Qwen2.5-0.5B (Zero-Egress AKS Node)'
@@ -32,6 +32,222 @@ function formatAgentModelBadge(model, msgMode) {
   const synthName = getSynthesizerModelName(model)
   return `⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ ${synthName}`
 }
+
+function getExecutionTrace(m) {
+  const isInterception = m.model_used === 'governance-abstention-shield'
+  const isRouter = m.model_used === 'conversational-intent-router'
+  const isSovereign = m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen') || m.model_used.includes('private-slm')))
+  const synthName = getSynthesizerModelName(m.model_used)
+
+  if (isInterception) {
+    return {
+      title: 'Supervisor Agent Safety Shield Interception Trace:',
+      type: 'interception',
+      borderColor: 'rgba(245, 158, 11, 0.4)',
+      titleColor: '#fde68a',
+      pillBg: 'rgba(245, 158, 11, 0.12)',
+      pillText: '#fcd34d',
+      btnBg: 'rgba(245, 158, 11, 0.12)',
+      btnBgActive: 'rgba(245, 158, 11, 0.25)',
+      buttonLabel: `Supervisor Agent Intercept (${m.latency_ms || 2}ms)`,
+      steps: [
+        {
+          num: 1,
+          name: 'Sovereign Guardrail & DPDP Sieve',
+          status: 'ACTIVE',
+          badge: 'In-Memory (<3ms)',
+          badgeColor: '#34d399',
+          badgeBg: 'rgba(16, 185, 129, 0.2)',
+          badgeBorder: 'rgba(16, 185, 129, 0.3)',
+          subtext: 'Executed Layer-1 Mathematical Vector Centroid Sieve (<3ms). Intercepted non-banking off-topic query and enforced statutory domain boundary with zero cloud egress.'
+        },
+        {
+          num: 2,
+          name: 'Retriever Agent (Qdrant Vector Lake)',
+          status: 'BYPASSED',
+          badge: 'BYPASSED',
+          subtext: 'Bypassed: Vector retrieval skipped for non-regulatory questions to save compute & latency.'
+        },
+        {
+          num: 3,
+          name: 'Statutory Auditor Gate',
+          status: 'BYPASSED',
+          badge: 'BYPASSED',
+          subtext: 'Bypassed: No regulatory citations to audit for out-of-scope intent.'
+        },
+        {
+          num: 4,
+          name: 'Synthesizer Agent (Statutory Legal Advisor)',
+          status: 'BYPASSED',
+          badge: 'BYPASSED',
+          subtext: 'Bypassed: Pre-compiled statutory domain boundary shield response returned without consuming LLM inference tokens.'
+        }
+      ]
+    }
+  }
+
+  if (isRouter) {
+    return {
+      title: 'Supervisor Agent Conversational Dialogue Routing Trace:',
+      type: 'router',
+      borderColor: 'rgba(99, 102, 241, 0.4)',
+      titleColor: '#c7d2fe',
+      pillBg: 'rgba(99, 102, 241, 0.12)',
+      pillText: '#c7d2fe',
+      btnBg: 'rgba(99, 102, 241, 0.12)',
+      btnBgActive: 'rgba(99, 102, 241, 0.25)',
+      buttonLabel: `Conversational Router (${m.latency_ms || 5}ms)`,
+      steps: [
+        {
+          num: 1,
+          name: 'Supervisor Agent (Intent Classifier & Router)',
+          status: 'ACTIVE',
+          badge: 'In-Memory Router (<5ms)',
+          badgeColor: '#818cf8',
+          badgeBg: 'rgba(99, 102, 241, 0.2)',
+          badgeBorder: 'rgba(99, 102, 241, 0.3)',
+          subtext: 'Identified general conversational intent / platform capability query; routed to introductory dialogue pipeline.'
+        },
+        {
+          num: 2,
+          name: 'Retriever Agent (Qdrant Vector Lake)',
+          status: 'BYPASSED',
+          badge: 'BYPASSED',
+          subtext: 'Bypassed: Conversational greeting does not require semantic vector lake search.'
+        },
+        {
+          num: 3,
+          name: 'Statutory Auditor Gate',
+          status: 'BYPASSED',
+          badge: 'BYPASSED',
+          subtext: 'Bypassed: No statutory citations present in standard greeting dialogue.'
+        },
+        {
+          num: 4,
+          name: 'Conversational Dialogue Agent',
+          status: 'ACTIVE',
+          badge: isSovereign ? 'In-Cluster SLM' : 'Groq LPU / Gemini',
+          badgeColor: isSovereign ? '#34d399' : '#818cf8',
+          badgeBg: isSovereign ? 'rgba(16, 185, 129, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+          badgeBorder: isSovereign ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.3)',
+          subtext: 'Delivered guided capabilities overview and suggested sample banking compliance inquiries.'
+        }
+      ]
+    }
+  }
+
+  if (isSovereign) {
+    return {
+      title: 'Sovereign In-Cluster Air-Gapped Execution Pipeline Trace:',
+      type: 'sovereign',
+      borderColor: 'rgba(16, 185, 129, 0.4)',
+      titleColor: '#34d399',
+      pillBg: 'rgba(16, 185, 129, 0.14)',
+      pillText: '#34d399',
+      btnBg: 'rgba(16, 185, 129, 0.12)',
+      btnBgActive: 'rgba(16, 185, 129, 0.25)',
+      buttonLabel: `Sovereign Air-Gapped Pipeline (${m.latency_ms || 120}ms)`,
+      steps: [
+        {
+          num: 1,
+          name: 'Sovereign Guardrail & DPDP Sieve',
+          status: 'ACTIVE',
+          badge: 'In-Memory (<3ms)',
+          badgeColor: '#34d399',
+          badgeBg: 'rgba(16, 185, 129, 0.2)',
+          badgeBorder: 'rgba(16, 185, 129, 0.3)',
+          subtext: 'Executed Layer-1 Mathematical Vector Centroid Sieve (<3ms) & in-memory DPDP Act PII masking with zero cloud egress.'
+        },
+        {
+          num: 2,
+          name: 'Retriever Agent (Qdrant Vector Lake)',
+          status: 'ACTIVE',
+          badge: 'In-Cluster StatefulSet',
+          badgeColor: '#34d399',
+          badgeBg: 'rgba(16, 185, 129, 0.2)',
+          badgeBorder: 'rgba(16, 185, 129, 0.3)',
+          subtext: 'Executed local 768-dim semantic cosine search over indexed RBI Master Directions inside private AKS cluster network.'
+        },
+        {
+          num: 3,
+          name: 'Statutory Auditor Gate',
+          status: 'ACTIVE',
+          badge: 'Deterministic Ground Truth Gate',
+          badgeColor: '#34d399',
+          badgeBg: 'rgba(16, 185, 129, 0.2)',
+          badgeBorder: 'rgba(16, 185, 129, 0.3)',
+          subtext: 'Validated statutory citations deterministically against ground-truth corpus without external LLM API calls.'
+        },
+        {
+          num: 4,
+          name: 'Sovereign Synthesizer Agent (In-Cluster SLM)',
+          status: 'ACTIVE',
+          badge: 'Qwen 2.5 0.5B (AKS CPU Node)',
+          badgeColor: '#34d399',
+          badgeBg: 'rgba(16, 185, 129, 0.2)',
+          badgeBorder: 'rgba(16, 185, 129, 0.3)',
+          subtext: 'Synthesized legally auditable determination on zero-egress in-cluster Ollama instance running inside the AKS tenant boundary.'
+        }
+      ]
+    }
+  }
+
+  // Standard Multi-Cloud Fleet (Default)
+  return {
+    title: 'Multi-Cloud Autonomous Agent Execution Pipeline Trace:',
+    type: 'cloud',
+    borderColor: 'rgba(99, 102, 241, 0.4)',
+    titleColor: '#a5b4fc',
+    pillBg: 'rgba(99, 102, 241, 0.14)',
+    pillText: '#c7d2fe',
+    btnBg: 'rgba(99, 102, 241, 0.12)',
+    btnBgActive: 'rgba(99, 102, 241, 0.25)',
+    buttonLabel: `4-Agent Pipeline (${m.latency_ms || 18}ms)`,
+    steps: [
+      {
+        num: 1,
+        name: 'Supervisor Agent (Router & Safety Shield)',
+        status: 'ACTIVE',
+        badge: 'In-Memory Sieve + Router',
+        badgeColor: '#c7d2fe',
+        badgeBg: 'rgba(99, 102, 241, 0.2)',
+        badgeBorder: 'rgba(99, 102, 241, 0.3)',
+        subtext: 'Executed Layer-1 Vector Centroid Sieve (<3ms), checked DPDP PII guardrails, and decomposed intent into statutory sub-tasks.'
+      },
+      {
+        num: 2,
+        name: 'Retriever Agent (Qdrant Vector Lake)',
+        status: 'ACTIVE',
+        badge: 'Qdrant 768-dim DB',
+        badgeColor: '#34d399',
+        badgeBg: 'rgba(16, 185, 129, 0.2)',
+        badgeBorder: 'rgba(16, 185, 129, 0.3)',
+        subtext: 'Performed 768-dim semantic cosine search over 14 RBI Master Directions and retrieved top statutory evidence with SHA-256 hashes.'
+      },
+      {
+        num: 3,
+        name: 'Statutory Auditor Gate',
+        status: 'ACTIVE',
+        badge: 'Gemini 2.0 Flash-Thinking',
+        badgeColor: '#fcd34d',
+        badgeBg: 'rgba(245, 158, 11, 0.2)',
+        badgeBorder: 'rgba(245, 158, 11, 0.3)',
+        subtext: 'Audited retrieved clauses against circular numbers (e.g. RBI/2023-24/102). Evaluated groundedness & citation integrity (Gate: PASS).'
+      },
+      {
+        num: 4,
+        name: 'Synthesizer Agent (Statutory Legal Advisor)',
+        status: 'ACTIVE',
+        badge: synthName,
+        badgeColor: '#93c5fd',
+        badgeBg: 'rgba(59, 130, 246, 0.2)',
+        badgeBorder: 'rgba(59, 130, 246, 0.3)',
+        subtext: `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${synthName}.`
+      }
+    ]
+  }
+}
+
 
 export default function ChatWindow({ selectedCircular, onSelectCitation, inferenceMode: propInferenceMode, onToggleInferenceMode }) {
   const [internalInferenceMode, setInternalInferenceMode] = useState('cloud')
@@ -306,25 +522,15 @@ Approved for CCO / Internal Audit Review.`
                           <Zap size={10} /> Semantic Cache Hit ({m.latency_ms}ms • $0.00)
                         </span>
                       ) : (() => {
-                        const isSovereignMsg = m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen') || m.model_used.includes('private-slm')))
+                        const trace = getExecutionTrace(m)
                         return (
                           <button
                             type="button"
                             onClick={() => toggleTrace(idx)}
                             style={{
-                              background: m.model_used === 'governance-abstention-shield'
-                                ? (expandedTraces[idx] ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.12)')
-                                : isSovereignMsg
-                                  ? (expandedTraces[idx] ? 'rgba(16, 185, 129, 0.25)' : 'rgba(16, 185, 129, 0.12)')
-                                  : (expandedTraces[idx] ? 'rgba(99, 102, 241, 0.25)' : 'rgba(99, 102, 241, 0.12)'),
-                              border: m.model_used === 'governance-abstention-shield'
-                                ? '1px solid rgba(245, 158, 11, 0.4)'
-                                : isSovereignMsg
-                                  ? '1px solid rgba(16, 185, 129, 0.4)'
-                                  : '1px solid rgba(99, 102, 241, 0.4)',
-                              color: m.model_used === 'governance-abstention-shield'
-                                ? '#fcd34d'
-                                : isSovereignMsg ? '#34d399' : '#c7d2fe',
+                              background: expandedTraces[idx] ? trace.btnBgActive : trace.btnBg,
+                              border: `1px solid ${trace.borderColor}`,
+                              color: trace.titleColor,
                               fontSize: '0.7rem',
                               fontWeight: 600,
                               padding: '3px 10px',
@@ -337,22 +543,14 @@ Approved for CCO / Internal Audit Review.`
                             }}
                             title="Click to view step-by-step execution trace"
                           >
-                            {m.model_used === 'governance-abstention-shield' ? (
-                              <>
-                                <ShieldAlert size={11} />
-                                <span>Supervisor Agent Intercept ({m.latency_ms}ms)</span>
-                              </>
-                            ) : isSovereignMsg ? (
-                              <>
-                                <ShieldCheck size={11} />
-                                <span>Sovereign Air-Gapped Pipeline ({m.latency_ms}ms)</span>
-                              </>
+                            {trace.type === 'interception' ? (
+                              <ShieldAlert size={11} />
+                            ) : trace.type === 'sovereign' ? (
+                              <ShieldCheck size={11} />
                             ) : (
-                              <>
-                                <Cpu size={11} />
-                                <span>4-Agent Pipeline ({m.latency_ms}ms)</span>
-                              </>
+                              <Cpu size={11} />
                             )}
+                            <span>{trace.buttonLabel}</span>
                             {expandedTraces[idx] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                           </button>
                         )
@@ -360,43 +558,33 @@ Approved for CCO / Internal Audit Review.`
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{
-                        fontSize: '0.72rem',
-                        color: m.model_used === 'governance-abstention-shield'
-                          ? '#fcd34d'
-                          : (m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen'))))
-                            ? '#34d399'
-                            : '#c7d2fe',
-                        background: m.model_used === 'governance-abstention-shield'
-                          ? 'rgba(245, 158, 11, 0.12)'
-                          : (m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen'))))
-                            ? 'rgba(16, 185, 129, 0.14)'
-                            : 'rgba(99, 102, 241, 0.14)',
-                        border: m.model_used === 'governance-abstention-shield'
-                          ? '1px solid rgba(245, 158, 11, 0.35)'
-                          : (m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen'))))
-                            ? '1px solid rgba(16, 185, 129, 0.35)'
-                            : '1px solid rgba(99, 102, 241, 0.3)',
-                        padding: '3px 9px',
-                        borderRadius: '6px',
-                        fontWeight: 600
-                      }}>
-                        {formatAgentModelBadge(m.model_used, m.inferenceMode)}
-                      </span>
+                      {(() => {
+                        const trace = getExecutionTrace(m)
+                        return (
+                          <span style={{
+                            fontSize: '0.72rem',
+                            color: trace.pillText,
+                            background: trace.pillBg,
+                            border: `1px solid ${trace.borderColor}`,
+                            padding: '3px 9px',
+                            borderRadius: '6px',
+                            fontWeight: 600
+                          }}>
+                            {formatAgentModelBadge(m.model_used, m.inferenceMode)}
+                          </span>
+                        )
+                      })()}
                     </div>
                   </div>
 
                   {/* ── Expandable Multi-Agent Execution Trace ───────────────────── */}
                   {!m.cached && expandedTraces[idx] && (() => {
-                    const isSovereignMsg = m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen') || m.model_used.includes('private-slm')))
+                    const trace = getExecutionTrace(m)
+                    const isInterception = trace.type === 'interception'
                     return (
                       <div style={{
                         background: 'rgba(15, 23, 42, 0.7)',
-                        border: m.model_used === 'governance-abstention-shield'
-                          ? '1px solid rgba(245, 158, 11, 0.35)'
-                          : isSovereignMsg
-                            ? '1px solid rgba(16, 185, 129, 0.35)'
-                            : '1px solid rgba(99, 102, 241, 0.3)',
+                        border: `1px solid ${trace.borderColor}`,
                         borderRadius: '10px',
                         padding: '14px 16px',
                         marginBottom: '14px',
@@ -405,156 +593,62 @@ Approved for CCO / Internal Audit Review.`
                       }}>
                         <div style={{
                           fontWeight: 700,
-                          color: m.model_used === 'governance-abstention-shield'
-                            ? '#fde68a'
-                            : isSovereignMsg ? '#34d399' : '#a5b4fc',
+                          color: trace.titleColor,
                           marginBottom: '10px',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px'
                         }}>
-                          {m.model_used === 'governance-abstention-shield' ? (
+                          {isInterception ? (
                             <ShieldAlert size={13} />
-                          ) : isSovereignMsg ? (
+                          ) : trace.type === 'sovereign' ? (
                             <ShieldCheck size={13} />
                           ) : (
                             <Cpu size={13} />
                           )}
-                          <span>
-                            {m.model_used === 'governance-abstention-shield'
-                              ? 'Supervisor Agent Safety Shield Interception Trace:'
-                              : isSovereignMsg
-                                ? 'Sovereign In-Cluster Air-Gapped Execution Pipeline Trace:'
-                                : 'Multi-Cloud Autonomous Agent Execution Pipeline Trace:'}
-                          </span>
+                          <span>{trace.title}</span>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {/* Step 1: Guardrail / Supervisor */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
-                            <div>
-                              <div style={{ fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                                <span>1. {isSovereignMsg ? 'Sovereign Guardrail & DPDP Sieve' : 'Supervisor Agent (Router & Safety Shield)'} — <span style={{ color: '#34d399' }}>ACTIVE</span></span>
-                                <span style={{
-                                  background: isSovereignMsg ? 'rgba(16, 185, 129, 0.2)' : 'rgba(99, 102, 241, 0.2)',
-                                  border: isSovereignMsg ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
-                                  color: isSovereignMsg ? '#34d399' : '#c7d2fe',
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  fontSize: '0.66rem'
-                                }}>
-                                  {isSovereignMsg ? 'In-Memory (<3ms)' : 'Gemini 2.0 Flash-Lite'}
-                                </span>
-                              </div>
-                              <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: '2px' }}>
-                                {m.model_used === 'governance-abstention-shield'
-                                  ? 'Executed Layer-1 Vector Centroid Sieve (<3ms). Intercepted non-banking off-topic query and enforced domain boundary.'
-                                  : isSovereignMsg
-                                    ? 'Executed Layer-1 Mathematical Vector Centroid Sieve (<3ms) & in-memory DPDP Act PII masking with zero cloud egress.'
-                                    : 'Executed Layer-1 Vector Centroid Sieve (<3ms), checked DPDP PII guardrails, and decomposed intent into statutory sub-tasks.'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Step 2: Retriever */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            {m.model_used === 'governance-abstention-shield' ? (
-                              <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
-                            ) : (
-                              <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
-                            )}
-                            <div>
-                              <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                                <span>2. Retriever Agent (Qdrant Vector Lake) — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
-                                {m.model_used !== 'governance-abstention-shield' && (
-                                  <span style={{
-                                    background: 'rgba(16, 185, 129, 0.2)',
-                                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                                    color: '#34d399',
-                                    padding: '1px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.66rem'
-                                  }}>
-                                    {isSovereignMsg ? 'In-Cluster StatefulSet' : 'Qdrant 768-dim DB'}
-                                  </span>
+                          {trace.steps.map((step) => {
+                            const isBypassed = step.status === 'BYPASSED'
+                            return (
+                              <div key={step.num} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                {isBypassed ? (
+                                  <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
+                                ) : (
+                                  <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
                                 )}
-                              </div>
-                              <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '2px' }}>
-                                {m.model_used === 'governance-abstention-shield'
-                                  ? 'Bypassed: Vector retrieval skipped for non-regulatory questions to save compute & latency.'
-                                  : isSovereignMsg
-                                    ? 'Executed local 768-dim semantic cosine search over indexed RBI Master Directions inside private AKS cluster network.'
-                                    : 'Performed 768-dim semantic cosine search over 14 RBI Master Directions and retrieved top statutory evidence with SHA-256 hashes.'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Step 3: Auditor */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            {m.model_used === 'governance-abstention-shield' ? (
-                              <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
-                            ) : (
-                              <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
-                            )}
-                            <div>
-                              <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                                <span>3. Statutory Auditor Gate — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
-                                {m.model_used !== 'governance-abstention-shield' && (
-                                  <span style={{
-                                    background: isSovereignMsg ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                                    border: isSovereignMsg ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
-                                    color: isSovereignMsg ? '#34d399' : '#fcd34d',
-                                    padding: '1px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.66rem'
+                                <div>
+                                  <div style={{
+                                    fontWeight: 600,
+                                    color: isBypassed ? '#64748b' : '#f1f5f9',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    gap: '6px'
                                   }}>
-                                    {isSovereignMsg ? 'Deterministic Ground Truth Gate' : 'Gemini 2.0 Flash-Thinking'}
-                                  </span>
-                                )}
+                                    <span>{step.num}. {step.name} — {isBypassed ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
+                                    {!isBypassed && step.badge && (
+                                      <span style={{
+                                        background: step.badgeBg,
+                                        border: `1px solid ${step.badgeBorder}`,
+                                        color: step.badgeColor,
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        fontSize: '0.66rem'
+                                      }}>
+                                        {step.badge}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div style={{ color: isBypassed ? '#64748b' : '#94a3b8', fontSize: '0.72rem', marginTop: '2px' }}>
+                                    {step.subtext}
+                                  </div>
+                                </div>
                               </div>
-                              <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '2px' }}>
-                                {m.model_used === 'governance-abstention-shield'
-                                  ? 'Bypassed: No regulatory citations to audit for out-of-scope intent.'
-                                  : isSovereignMsg
-                                    ? 'Validated statutory citations deterministically against ground-truth corpus without external LLM API calls.'
-                                    : 'Audited retrieved clauses against circular numbers (e.g. RBI/2023-24/102). Evaluated groundedness & citation integrity (Gate: PASS).'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Step 4: Synthesizer */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            {m.model_used === 'governance-abstention-shield' ? (
-                              <MinusCircle size={14} style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
-                            ) : (
-                              <CheckCircle2 size={14} style={{ color: '#34d399', marginTop: '2px', flexShrink: 0 }} />
-                            )}
-                            <div>
-                              <div style={{ fontWeight: 600, color: m.model_used === 'governance-abstention-shield' ? '#64748b' : '#f1f5f9', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                                <span>4. {isSovereignMsg ? 'Sovereign Synthesizer Agent (In-Cluster SLM)' : 'Synthesizer Agent (Statutory Legal Advisor)'} — {m.model_used === 'governance-abstention-shield' ? <span style={{ color: '#94a3b8' }}>BYPASSED</span> : <span style={{ color: '#34d399' }}>ACTIVE</span>}</span>
-                                {m.model_used !== 'governance-abstention-shield' && (
-                                  <span style={{
-                                    background: isSovereignMsg ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                                    border: isSovereignMsg ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)',
-                                    color: isSovereignMsg ? '#34d399' : '#93c5fd',
-                                    padding: '1px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.66rem'
-                                  }}>
-                                    {isSovereignMsg ? 'Qwen 2.5 0.5B (AKS CPU Node)' : getSynthesizerModelName(m.model_used)}
-                                  </span>
-                                )}
-                              </div>
-                              <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '2px' }}>
-                                {m.model_used === 'governance-abstention-shield'
-                                  ? 'Bypassed: Pre-compiled statutory domain boundary shield response returned.'
-                                  : isSovereignMsg
-                                    ? 'Synthesized legally auditable determination on zero-egress in-cluster Ollama instance running inside the AKS tenant boundary.'
-                                    : `Synthesized legally auditable determination with statutory caveats, action points, and escalation guidance via ${getSynthesizerModelName(m.model_used)}.`}
-                              </div>
-                            </div>
-                          </div>
+                            )
+                          })}
                         </div>
                       </div>
                     )
