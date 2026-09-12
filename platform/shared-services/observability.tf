@@ -55,34 +55,34 @@ resource "azurerm_application_insights_workbook" "platform_overview" {
         type    = 1
         name    = "platform-title"
         content = {
-          json = "## HappyTechies Cloud & AI Platform — Enterprise Observability\n\nReal-time monitoring for **TaxBot India** and **BankCompliance AI** workloads.\n\n> **Workspace:** `law-ht-ss-p-cin-01` (Shared-Services Subscription)"
+          json = "## HappyTechies Cloud & AI Platform — Enterprise Observability\n\nCentralized monitoring for **TaxBot India** and **BankCompliance AI**.\n\n* **Log Analytics Workspace:** `law-ht-ss-p-cin-01` (Central India)\n* **AKS Cluster:** `aks-ht-bankc-p-cin-01` (Workload: BankCompliance)\n* **Status:** Operational"
         }
       },
 
-      # ── Panel 1: AI Request Rate & Error Rate (5-min timechart) ──────────────
+      # ── Panel 1: TaxBot AI Application Requests & Errors ─────────────────────
       {
         type    = 3
-        name    = "ai-request-rate-error-rate"
+        name    = "ai-request-rate"
         content = {
-          version = "KqlItem/1.0"
-          query   = <<-KQL
-            ContainerLog
-            | where LogEntry has "POST /api/v1/compliance" or LogEntry has "status_code"
-            | extend IsError = LogEntry has "ERROR" or LogEntry has "HTTP 5" or LogEntry has "status=5"
+          version                  = "KqlItem/1.0"
+          query                    = <<-KQL
+            AppRequests
             | summarize
                 TotalRequests = count(),
-                Errors = countif(IsError)
-              by bin(TimeGenerated, 5m)
+                Errors = countif(Success == false),
+                AvgLatencyMs = round(avg(DurationMs), 1)
+              by bin(TimeGenerated, 1h)
             | extend SuccessRate = round((TotalRequests - Errors) * 100.0 / TotalRequests, 1)
-            | project TimeGenerated, TotalRequests, Errors, SuccessRate
+            | project TimeGenerated, TotalRequests, Errors, AvgLatencyMs
             | order by TimeGenerated asc
           KQL
-          size        = 0
-          title       = "AI Request Rate & Error Rate (5-min buckets)"
-          timeContext = { durationMs = 3600000 }
-          queryType   = 0
-          resourceType = "microsoft.operationalinsights/workspaces"
-          visualization = "timechart"
+          size                     = 0
+          title                    = "TaxBot AI Application Requests & Errors (Hourly)"
+          timeContext              = { durationMs = 604800000 }
+          queryType                = 0
+          resourceType             = "microsoft.operationalinsights/workspaces"
+          crossComponentResources  = [module.shared_log_analytics.id]
+          visualization            = "timechart"
           chartSettings = {
             yAxis = [
               { column = "TotalRequests", label = "Requests", color = "blue-2" },
@@ -92,98 +92,49 @@ resource "azurerm_application_insights_workbook" "platform_overview" {
         }
       },
 
-      # ── Panel 2: Response Latency P50 / P95 / P99 (15-min timechart) ─────────
+      # ── Panel 2: AKS Control Plane Diagnostics & Audit Events ────────────────
       {
         type    = 3
-        name    = "latency-percentiles"
+        name    = "aks-control-plane"
         content = {
-          version = "KqlItem/1.0"
-          query   = <<-KQL
-            ContainerLog
-            | where LogEntry matches regex @"duration_ms=[0-9]+"
-            | extend LatencyMs = todouble(extract(@"duration_ms=([0-9]+\.?[0-9]*)", 1, LogEntry))
-            | where isnotnull(LatencyMs) and LatencyMs > 0
-            | summarize
-                P50 = percentile(LatencyMs, 50),
-                P95 = percentile(LatencyMs, 95),
-                P99 = percentile(LatencyMs, 99)
-              by bin(TimeGenerated, 15m)
+          version                  = "KqlItem/1.0"
+          query                    = <<-KQL
+            AzureDiagnostics
+            | where ResourceType == "MANAGEDCLUSTERS"
+            | summarize OperationCount = count() by bin(TimeGenerated, 1h), Category
             | order by TimeGenerated asc
           KQL
-          size        = 0
-          title       = "Agent Response Latency — P50 / P95 / P99 (15-min buckets)"
-          timeContext = { durationMs = 14400000 }
-          queryType   = 0
-          resourceType = "microsoft.operationalinsights/workspaces"
-          visualization = "timechart"
-          chartSettings = {
-            yAxis = [
-              { column = "P50", label = "P50 (ms)", color = "green-2" },
-              { column = "P95", label = "P95 (ms)", color = "yellow-3" },
-              { column = "P99", label = "P99 (ms)", color = "red-2" }
-            ]
-          }
+          size                     = 0
+          title                    = "AKS Control Plane Diagnostics & Audit Events (Hourly)"
+          timeContext              = { durationMs = 86400000 }
+          queryType                = 0
+          resourceType             = "microsoft.operationalinsights/workspaces"
+          crossComponentResources  = [module.shared_log_analytics.id]
+          visualization            = "timechart"
         }
       },
 
-      # ── Panel 3: Qdrant Vector Search Activity (10-min barchart) ─────────────
-      {
-        type    = 3
-        name    = "qdrant-activity"
-        content = {
-          version = "KqlItem/1.0"
-          query   = <<-KQL
-            ContainerLog
-            | where ContainerName has "qdrant" or LogEntry has "qdrant" or LogEntry has "vector_search"
-            | where LogEntry has "search" or LogEntry has "retrieved" or LogEntry has "clauses"
-            | extend IsHit  = LogEntry has "retrieved" or LogEntry has "clauses found"
-            | extend IsMiss = LogEntry has "No clauses" or LogEntry has "0 results"
-            | summarize
-                SearchCalls = count(),
-                CacheHits   = countif(IsHit),
-                CacheMisses = countif(IsMiss)
-              by bin(TimeGenerated, 10m)
-            | order by TimeGenerated asc
-          KQL
-          size        = 0
-          title       = "Qdrant Vector Search Activity — Calls / Hits / Misses (10-min)"
-          timeContext = { durationMs = 7200000 }
-          queryType   = 0
-          resourceType = "microsoft.operationalinsights/workspaces"
-          visualization = "barchart"
-        }
-      },
-
-      # ── Panel 4: Pod Status Timeline (bank-compliance namespace) ─────────────
+      # ── Panel 3: AKS Kubernetes Pod Inventory & Health Timeline ──────────────
       {
         type    = 3
         name    = "pod-status-timeline"
         content = {
-          version = "KqlItem/1.0"
-          query   = <<-KQL
+          version                  = "KqlItem/1.0"
+          query                    = <<-KQL
             KubePodInventory
-            | where Namespace == "bank-compliance"
             | summarize
-                RunningPods   = countif(PodStatus == "Running"),
-                PendingPods   = countif(PodStatus == "Pending"),
-                FailedPods    = countif(PodStatus == "Failed"),
-                UnknownPods   = countif(PodStatus !in ("Running", "Pending", "Succeeded", "Failed"))
-              by bin(TimeGenerated, 5m), Name
+                RunningPods = countif(PodStatus == "Running"),
+                PendingPods = countif(PodStatus == "Pending")
+              by bin(TimeGenerated, 1h), Namespace
             | order by TimeGenerated asc
           KQL
-          size        = 0
-          title       = "Pod Status Timeline — bank-compliance Namespace"
-          timeContext = { durationMs = 3600000 }
-          queryType   = 0
-          resourceType = "microsoft.operationalinsights/workspaces"
-          visualization = "timechart"
-          chartSettings = {
-            yAxis = [
-              { column = "RunningPods",  label = "Running",  color = "green-2" },
-              { column = "PendingPods",  label = "Pending",  color = "yellow-2" },
-              { column = "FailedPods",   label = "Failed",   color = "red-3" }
-            ]
-          }
+          size                     = 0
+          title                    = "AKS Kubernetes Pod Inventory & Health Timeline"
+          timeContext              = { durationMs = 604800000 }
+          queryType                = 0
+          resourceType             = "microsoft.operationalinsights/workspaces"
+          crossComponentResources  = [module.shared_log_analytics.id]
+          visualization            = "barchart"
         }
       }
     ]
