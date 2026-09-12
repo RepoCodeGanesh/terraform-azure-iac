@@ -489,6 +489,25 @@ resp = await client.post(
 
 ---
 
+### 19. Eliminating Documentation Sidebar & Split-Screen View Clutter in Enterprise Conversational Copilots
+
+#### Symptom:
+* The Regulatory Copilot interface felt visually congested. The conversational chat was constrained into a narrow central column flanked by a 275px left sidebar (listing Master Directions and sector filters), a secondary sub-toolbar with layout switches, and a right-hand document reader pane. Furthermore, secondary sub-headers inside the chat duplicated global controls already established in the top navigation bar.
+
+#### Root Cause:
+* Architectural coupling of two distinct user journeys within the same view: (1) Conversational ad-hoc regulatory inquiries, and (2) Statutory documentation browsing/auditing. In enterprise landing zone applications, comprehensive documentation catalogs belong in dedicated Governance / Compliance Centers, whereas conversational copilots deliver peak usability when provided as an expansive, distraction-free canvas.
+
+#### Resolution:
+1. **Full-Width Conversational Canvas:**
+   * Removed the 275px Master Directions directory sidebar and split `<DocumentViewer>` from the Copilot tab (`App.jsx`).
+   * Scaled `<ChatWindow>` to full viewport width with centered reading boundaries (`maxWidth: 880px`).
+2. **Eliminated Redundant Headers:**
+   * Removed duplicate `REGULATORY SCOPE` and `Inference Mode` subheaders from `ChatWindow.jsx`, relying on the top master executive navigation bar.
+3. **Preserved Complete Regulatory Coverage:**
+   * Full statutory coverage, clause counts, and SHA-256 provenance hashes remain housed in Pillar 3 (`/governance`), while administrative data lake sync operations remain in Pillar 2 (`/command`).
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
