@@ -124,3 +124,84 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diagnostics" {
     category = "AllMetrics"
   }
 }
+
+# ─── Container Insights Data Collection Rule (Azure Monitor Agent AMA) ─────────
+resource "azurerm_monitor_data_collection_rule" "container_insights" {
+  count               = var.log_analytics_workspace_id != null ? 1 : 0
+  name                = "MSCI-${var.name}-${var.location}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  destinations {
+    log_analytics {
+      workspace_resource_id = var.log_analytics_workspace_id
+      name                  = "ciworkspace"
+    }
+  }
+
+  data_flow {
+    streams      = [
+      "Microsoft-ContainerLogV2",
+      "Microsoft-ContainerLog",
+      "Microsoft-ContainerInventory",
+      "Microsoft-KubeEvents",
+      "Microsoft-KubePodInventory",
+      "Microsoft-KubeNodeInventory",
+      "Microsoft-KubeServices",
+      "Microsoft-KubePVInventory",
+      "Microsoft-Perf",
+      "Microsoft-InsightsMetrics"
+    ]
+    destinations = ["ciworkspace"]
+  }
+
+  data_sources {
+    extension {
+      extension_name     = "ContainerInsights"
+      name               = "ContainerInsightsExtension"
+      streams            = [
+        "Microsoft-ContainerLogV2",
+        "Microsoft-ContainerLog",
+        "Microsoft-ContainerInventory",
+        "Microsoft-KubeEvents",
+        "Microsoft-KubePodInventory",
+        "Microsoft-KubeNodeInventory",
+        "Microsoft-KubeServices",
+        "Microsoft-KubePVInventory",
+        "Microsoft-Perf",
+        "Microsoft-InsightsMetrics"
+      ]
+      extension_json = jsonencode({
+        dataCollectionSettings = {
+          interval               = "1m"
+          namespaceFilteringMode = "Off"
+          enableContainerLogV2   = true
+        }
+      })
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "azurerm_monitor_data_collection_rule_association" "container_insights" {
+  count                   = var.log_analytics_workspace_id != null ? 1 : 0
+  name                    = "ContainerInsightsExtension"
+  target_resource_id      = azurerm_kubernetes_cluster.this.id
+  data_collection_rule_id = azurerm_monitor_data_collection_rule.container_insights[0].id
+}
+
+resource "azurerm_role_assignment" "aks_dcr_publisher" {
+  count                = var.enable_role_assignments && var.log_analytics_workspace_id != null ? 1 : 0
+  scope                = azurerm_monitor_data_collection_rule.container_insights[0].id
+  role_definition_name = "Monitoring Metrics Publisher"
+  principal_id         = azurerm_kubernetes_cluster.this.kubelet_identity[0].object_id
+}
+
+resource "azurerm_role_assignment" "aks_law_publisher" {
+  count                = var.enable_role_assignments && var.log_analytics_workspace_id != null ? 1 : 0
+  scope                = var.log_analytics_workspace_id
+  role_definition_name = "Monitoring Metrics Publisher"
+  principal_id         = azurerm_kubernetes_cluster.this.kubelet_identity[0].object_id
+}
+

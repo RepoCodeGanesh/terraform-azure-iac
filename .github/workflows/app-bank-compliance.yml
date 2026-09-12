@@ -240,6 +240,12 @@ jobs:
           # FinOps & Compute Right-Sizing: Deploy Tuned Ingress-NGINX (1m CPU)
           kubectl apply -f ./app/bank-compliance/k8s/nginx/ingress-nginx.yaml
 
+          # FinOps & Single-Node Optimizer: Pin System Add-ons to 1 Replica
+          if [ -f "./app/bank-compliance/k8s/finops-single-node-tuner.yaml" ]; then
+            echo "⚡ Applying FinOps Single-Node Tuner..."
+            kubectl apply -f ./app/bank-compliance/k8s/finops-single-node-tuner.yaml
+          fi
+
           # Wait for Ingress-NGINX LoadBalancer IP to be assigned before Helm
           echo "⏳ Waiting for Ingress-NGINX LoadBalancer IP..."
           for i in $(seq 1 24); do

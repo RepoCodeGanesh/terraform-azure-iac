@@ -1,0 +1,93 @@
+# ==============================================================================
+# FinOps Single-Node AKS Optimizer & Reconciler
+# Purpose: Guarantees managed system add-ons (Gatekeeper, KEDA, Metrics Server)
+#          remain pinned to 1 replica on single-node clusters, preventing
+#          unwanted HA multi-replica overhead and CPU scheduling deadlocks.
+# ==============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: finops-single-node-tuner-sa
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: finops-single-node-tuner-role
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "watch", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: finops-single-node-tuner-binding
+subjects:
+- kind: ServiceAccount
+  name: finops-single-node-tuner-sa
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: finops-single-node-tuner-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: finops-single-node-tuner
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: finops-single-node-tuner
+    app.kubernetes.io/part-of: happytechies-finops
+spec:
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app: finops-single-node-tuner
+        spec:
+          serviceAccountName: finops-single-node-tuner-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: tuner
+            image: ghcr.io/repocodeganesh/bank-compliance-backend:latest
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 5m
+                memory: 16Mi
+              limits:
+                cpu: 50m
+                memory: 64Mi
+            command: ["python", "-c"]
+            args:
+            - |
+              import urllib.request, ssl, json
+              token = open('/var/run/secrets/kubernetes.io/serviceaccount/token').read()
+              headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/merge-patch+json'}
+              ctx = ssl.create_default_context(cafile='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt')
+              targets = [
+                  ('gatekeeper-system', 'gatekeeper-controller'),
+                  ('kube-system', 'keda-operator'),
+                  ('kube-system', 'keda-operator-metrics-apiserver'),
+                  ('kube-system', 'keda-admission-webhooks'),
+                  ('kube-system', 'azure-wi-webhook-controller-manager'),
+                  ('kube-system', 'metrics-server')
+              ]
+              print("=== FinOps Single-Node AKS Reconciliation ===")
+              for ns, dep in targets:
+                  url = f'https://kubernetes.default.svc/apis/apps/v1/namespaces/{ns}/deployments/{dep}/scale'
+                  req = urllib.request.Request(url, data=b'{"spec":{"replicas":1}}', headers=headers, method='PATCH')
+                  try:
+                      with urllib.request.urlopen(req, context=ctx) as resp:
+                          print(f"[OK] Scaled {ns}/{dep} to 1 replica (HTTP {resp.status})")
+                  except Exception as e:
+                      print(f"[NOTICE] {ns}/{dep}: {e}")
+              print("Reconciliation completed successfully.")

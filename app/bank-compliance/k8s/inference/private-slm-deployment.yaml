@@ -23,7 +23,7 @@ metadata:
     skill-bridge/phase: "A3-phase1"
     skill-bridge/model: "qwen2.5:0.5b"
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: RollingUpdate
     rollingUpdate:
