@@ -343,6 +343,65 @@ resp = await client.post(
 
 ---
 
+### 13. APIM Route Registration for Multi-Agent v2 (LangGraph)
+
+#### Symptom:
+* Direct in-cluster calls to `/api/v2/compliance/query` succeeded, but external requests through Azure API Management (`https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v2/compliance/query`) failed with `HTTP 404 Resource not found`.
+
+#### Root Cause:
+* Azure API Management enforces strict declarative operation whitelisting. Only `/api/v1/compliance/query`, `/healthz`, and `/api/v1/compliance/circulars` were declared under `operations` in `workloads/bank-compliance-ai-aks/apim.tf`.
+
+#### Resolution:
+* Added the `compliance-query-v2-post` operation into `workloads/bank-compliance-ai-aks/apim.tf`:
+  ```hcl
+  "compliance-query-v2-post" = {
+    display_name = "Query Compliance v2 (LangGraph)"
+    method       = "POST"
+    url_template = "/api/v2/compliance/query"
+    description  = "Submit regulatory compliance question using LangGraph cyclic StateGraph"
+  }
+  ```
+* Applied cleanly via Terraform: `terraform apply -target="module.bankc_apim_api" -var-file="prod.tfvars" -auto-approve`.
+
+---
+
+### 14. LiteLLM Kubernetes Health Probe Storm & Timeout (`/health` vs `/health/liveness`)
+
+#### Symptom:
+* `litellm-proxy` pod went into `0/1 Running` with readiness probe failing: `context deadline exceeded (Client.Timeout exceeded while awaiting headers)`.
+
+#### Root Cause:
+* The Kubernetes deployment liveness and readiness probes queried `/health`.
+* In LiteLLM Proxy, `/health` triggers synchronous test completions against **every registered backend model** in `model_list` (Gemini, Groq, Azure OpenAI, Ollama). Hitting all upstream models exceeded the 5-second probe timeout.
+
+#### Resolution:
+* Replaced heavy `/health` with lightweight native endpoints in `chart/templates/litellm-deployment.yaml`:
+  * `livenessProbe.httpGet.path: /health/liveness` (returns `"I'm alive!"` in <10ms).
+  * `readinessProbe.httpGet.path: /health/readiness` (returns instant status JSON in <15ms).
+
+---
+
+### 15. Sovereign SLM (`qwen2.5:0.5b`) Helm Chart Model List Alignment
+
+#### Symptom:
+* Invoking `model: "private-slm"` via LiteLLM failed with `HTTP 400 Bad Request: Invalid model name passed in model=private-slm`.
+
+#### Root Cause:
+* `private-slm` was configured in `app/bank-compliance/k8s/litellm/config.yaml`, but the production Helm chart template `app/bank-compliance/chart/templates/litellm-configmap.yaml` was missing the `private-slm` model entry.
+
+#### Resolution:
+* Synchronized `app/bank-compliance/chart/templates/litellm-configmap.yaml` with the complete sovereign SLM definition and updated fallbacks:
+  ```yaml
+  - model_name: private-slm
+    litellm_params:
+      model: openai/qwen2.5:0.5b
+      api_base: "http://private-slm-inference.bank-compliance.svc.cluster.local:11434/v1"
+      api_key: "na"
+  ```
+* Added `private-slm` to all router fallback cascades across Gemini, Groq, and Azure OpenAI.
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
@@ -355,6 +414,8 @@ resp = await client.post(
 | **Azure OpenAI** | Always verify REST `api-version` format (`YYYY-MM-DD`). | Test raw curl with `?api-version=2024-06-01` |
 | **Reasoning Models** | Use `max_completion_tokens` instead of `max_tokens`. | Check LiteLLM pod logs for 400 parameter errors. |
 | **GenAIOps Panels** | Wrap Prometheus metric queries with `or vector(0)`. | Verify no "No data" boxes appear on Grafana. |
+| **LiteLLM Probes** | Use `/health/liveness` and `/health/readiness`, never `/health`. | `kubectl describe pod litellm-proxy -n bank-compliance` |
+| **APIM Operations** | Explicitly register all `/api/v2` endpoints in `apim.tf`. | `az apim api operation list --api-id bankc-compliance-api` |
 
 ---
 
