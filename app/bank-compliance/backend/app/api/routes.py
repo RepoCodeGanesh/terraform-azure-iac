@@ -20,6 +20,7 @@ from app.services.citation_validator import (
     ABSTAIN_RESPONSE_TEMPLATE
 )
 from app.services.agents.orchestrator import MultiAgentOrchestrator
+from app.services.agents.orchestrator_v2 import LangGraphOrchestrator
 
 try:
     from prometheus_client import Counter, Gauge
@@ -147,6 +148,99 @@ async def query_compliance(request: QueryRequest):
     ]
 
     # 4. Store in Semantic Cache for Future Instant Retrieval (Only for valid compliance answers)
+    if raw_citations:
+        store_semantic_cache(
+            query=sanitized_prompt,
+            answer=answer,
+            citations=[c.model_dump() for c in formatted_citations],
+            pii_redacted=pii_detected,
+            model_used=model_used,
+            department=request.department or "compliance",
+            corpus_version=CURRENT_CORPUS_VERSION
+        )
+
+    latency = round((time.time() - start_time) * 1000, 2)
+
+    return QueryResponse(
+        answer=answer,
+        citations=formatted_citations,
+        suggested_queries=suggested_queries,
+        pii_redacted=pii_detected,
+        model_used=model_used,
+        cached=False,
+        latency_ms=latency,
+        corpus_version=CURRENT_CORPUS_VERSION
+    )
+
+@router.post("/compliance/query/v2", response_model=QueryResponse)
+@router.post("/v2/compliance/query", response_model=QueryResponse)
+async def query_compliance_v2(request: QueryRequest):
+    """
+    Skill Bridge Phase 2 (A1): LangGraph Cyclic StateGraph Orchestrator.
+    Coordinating Supervisor, Retriever, Auditor (reflection loop), and Synthesizer nodes.
+    """
+    start_time = time.time()
+
+    # 1. PII Redaction
+    sanitized_prompt, pii_detected = redact_pii(request.query)
+    if PII_COUNTER and pii_detected:
+        for p_type in pii_detected:
+            try:
+                PII_COUNTER.labels(entity_type=p_type).inc()
+            except Exception:
+                pass
+
+    # 2. Governed Semantic Vector Cache Lookup
+    cached_result = lookup_semantic_cache(
+        query=sanitized_prompt,
+        department=request.department or "compliance",
+        corpus_version=CURRENT_CORPUS_VERSION
+    )
+
+    if cached_result:
+        if CACHE_SAVINGS_COUNTER:
+            try:
+                CACHE_SAVINGS_COUNTER.inc(0.0035)
+            except Exception:
+                pass
+        latency = round((time.time() - start_time) * 1000, 2)
+        return QueryResponse(
+            answer=cached_result["answer"],
+            citations=[Citation(**c) for c in cached_result["citations"]],
+            pii_redacted=pii_detected,
+            model_used=f"{cached_result['model_used']}:cache-v2",
+            cached=True,
+            latency_ms=latency,
+            corpus_version=CURRENT_CORPUS_VERSION
+        )
+
+    # 3. LangGraph Multi-Agent StateGraph Execution
+    agent_output = await LangGraphOrchestrator.run(
+        sanitized_query=sanitized_prompt,
+        department=request.department or "compliance",
+        session_id=request.session_id or "default-session",
+        history=request.history
+    )
+
+    answer = agent_output["answer"]
+    model_used = agent_output["model_used"]
+    raw_citations = agent_output["citations"]
+    suggested_queries = agent_output.get("suggested_queries", [])
+
+    formatted_citations = [
+        Citation(
+            circular_no=c.get("circular_no", "RBI/Master-Direction"),
+            title=c.get("title", "Reserve Bank of India Compliance Framework"),
+            clause=c.get("clause", "Regulatory Requirement"),
+            text=c.get("text", ""),
+            score=c.get("score", 0.95),
+            provenance_hash=c.get("provenance_hash", "verified-agent"),
+            verified=c.get("verified", True)
+        )
+        for c in raw_citations
+    ]
+
+    # 4. Store in Semantic Cache for Future Instant Retrieval
     if raw_citations:
         store_semantic_cache(
             query=sanitized_prompt,

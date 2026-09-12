@@ -40,6 +40,10 @@ spec:
           env:
             - name: MCP_TRANSPORT
               value: "sse"  # Server-Sent Events transport for HTTP MCP clients
+            - name: MCP_HOST
+              value: "0.0.0.0"
+            - name: MCP_PORT
+              value: "8080"
           ports:
             - containerPort: 8080
               name: mcp

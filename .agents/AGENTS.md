@@ -251,6 +251,21 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** In the inline bash script for auto-recovering stuck Helm releases, an outer loop `for STUCK_STATUS in ...; do` was opened but lacked a closing `done` before proceeding to the FinOps quota scaling block.
 * **Resolution:** Ensure all `for` loops in CI/CD inline shell scripts have corresponding `done` terminators. Always match `do ... done` pairs before adding downstream execution stages.
 
+### 27. FastMCP Server Host & Interface Binding in Kubernetes (`connection refused` on 8080)
+* **Symptom:** FastMCP pod `bankc-mcp-server` enters CrashLoopBackOff or fails readiness/liveness probes (`dial tcp 10.244.0.X:8080: connect: connection refused`).
+* **Root Cause:** FastMCP SSE transport defaults to binding `127.0.0.1:8000`. Kubernetes kubelet probes connect from outside localhost via the pod's container IP. When probe targets port 8080 while FastMCP binds `127.0.0.1:8000`, the connection is actively refused.
+* **Resolution:** In `mcp_server.py`, pass `host=os.getenv("MCP_HOST", "0.0.0.0")` and `port=int(os.getenv("MCP_PORT", "8080"))` to `mcp.run(transport="sse", host=host, port=port)`. In `mcp-deployment.yaml`, set `MCP_HOST: "0.0.0.0"` and `MCP_PORT: "8080"`.
+
+### 28. In-Cluster Sovereign SLM CPU Scheduling Deadlock on Single-Node AKS (`Insufficient cpu`)
+* **Symptom:** Ollama SLM pod `private-slm-inference` remains in `Pending` state indefinitely with `0/1 nodes are available: 1 Insufficient cpu`.
+* **Root Cause:** On single-node `Standard_B2ms` (2 vCPUs = 2000m), system daemonsets (OMS agent, Azure CNI, Ingress) consume ~1840m. Configuring `requests.cpu: 250m` in `ollama-deployment.yaml` exceeds schedulable capacity.
+* **Resolution:** Right-size `requests.cpu: "10m"` and `requests.memory: "128Mi"` with burst limits `1000m` / `1536Mi` on both `initContainer` (model puller) and main Ollama engine. Pod schedules instantly and completes model initialization in <60s.
+
+### 29. LangGraph Cyclic StateGraph Orchestration with Graceful Fallback
+* **Symptom:** Potential failure of multi-agent execution if optional `langgraph` library is missing or fails compilation during rolling updates.
+* **Root Cause:** Graph-based agent frameworks introduce additional runtime dependencies that could block query processing if initialization errors occur.
+* **Resolution:** In `orchestrator_v2.py`, wrap LangGraph import and compilation in try/except with `LANGGRAPH_AVAILABLE` flag. If uncompiled, `LangGraphOrchestrator.run()` gracefully delegates execution to `MultiAgentOrchestrator.run()`, ensuring 100% zero-downtime backward compatibility.
+
 ---
 
 

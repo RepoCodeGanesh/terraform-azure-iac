@@ -16,3 +16,5 @@ azure-storage-blob>=12.19.0
 langfuse>=2.0.0,<3.0.0
 # A2: FastMCP — MCP Server for Regulatory Search Tool
 fastmcp>=0.1.0
+# A1: LangGraph StateGraph Orchestrator (Multi-Agent Cyclic Graph)
+langgraph>=0.2.0,<1.0.0

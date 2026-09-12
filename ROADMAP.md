@@ -18,7 +18,8 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 8** | FinOps Cost Alerts & Logging Diagnostic Streamline | AI Workloads & Shared Services | ✅ Completed |
 | **Phase 9** | BankCompliance AI Copilot on AKS (LiteLLM, Qdrant, Full RAG) | `workloads/bank-compliance-ai-aks` & `app/bank-compliance/` | ✅ Completed |
 | **Phase 10** | Enterprise Auditable Document Intelligence & LLMOps Platform | `app/bank-compliance/` & `.github/workflows/` | ✅ Completed |
-| **Phase 11** | LLMOps Skill Bridge — Trivy CVE Scan, SecurityContext, KQL Workbook, Ollama SLM, Langfuse Tracing, Token Budget, MCP Server, AI Red-Team | `app/bank-compliance/` & `platform/shared-services/` | ✅ Completed |
+| **Phase 11** | LLMOps Skill Bridge Phase 1 — Trivy CVE Scan, SecurityContext, KQL Workbook, Ollama SLM, Langfuse Tracing, Token Budget, MCP Server, AI Red-Team | `app/bank-compliance/` & `platform/shared-services/` | ✅ Completed |
+| **Phase 12** | LLMOps Skill Bridge Phase 2 — LangGraph StateGraph Cyclic Multi-Agent Orchestrator (A1) & GPU vLLM Inference Benchmark (A3) | `app/bank-compliance/` & `workloads/bank-compliance-ai-aks/` | ✅ Completed |
 
 ---
 
@@ -136,6 +137,35 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 ```
 Enterprise AI Platform & LLMOps Architect
 Azure (AKS • LiteLLM • Qdrant • MCP) | Terraform | Langfuse | Trivy | Red-Teaming
+9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
+Live: bank.mytaxbot.site | mytaxbot.site
+```
+
+---
+
+## 🏆 Phase 12: LLMOps Skill Bridge Phase 2 — LangGraph StateGraph & GPU vLLM Architecture
+**Goal:** Implement advanced LLMOps architectural capabilities (LangGraph StateGraph cyclic reflection agent + Sovereign GPU vLLM benchmark).
+
+### Track A1: LangGraph Multi-Agent StateGraph
+* [x] **A1 — Cyclic StateGraph Orchestrator (`orchestrator_v2.py`):**
+  - Created `app/bank-compliance/backend/app/services/agents/orchestrator_v2.py` implementing `StateGraph(AgentExecutionState)`.
+  - Micro-agent nodes: `supervisor_node`, `retriever_node`, `auditor_node` (statutory reflection), `synthesizer_node` (LiteLLM multi-model fallback), `greeting_node`, `out_of_scope_node`.
+  - Reflection loop: Conditional edge on auditor evaluation verdict (loops back to retriever if validation fails, max 2 iterations).
+  - Production resilience: Integrated G2 token budget circuit breaker pre-flight check and graceful degradation fallback to `MultiAgentOrchestrator`.
+  - Dual REST routing: Mounted `/api/v2` router prefix in `main.py` and dual endpoints `/compliance/query/v2` & `/v2/compliance/query` in `routes.py`.
+  - Dependency: Added `langgraph>=0.2.0,<1.0.0` to `requirements.txt`.
+
+### Track A3 Phase 2: Sovereign GPU vLLM Inference Tier
+* [x] **A3 Phase 2 — On-Demand GPU Node Pool & vLLM Benchmark:**
+  - Added `enable_gpu_node_pool` boolean variable and `azurerm_kubernetes_cluster_node_pool "gpu"` in `workloads/bank-compliance-ai-aks/aks_cluster.tf` (`Standard_NC4as_T4_v3` Spot, `sku=gpu:NoSchedule` taint, ₹0 default).
+  - Created `app/bank-compliance/k8s/inference/vllm-benchmark.yaml`: Kubernetes Deployment & Service running vLLM OpenAI API server with GPU acceleration and resource limits.
+  - Created `scripts/benchmark_vllm.py`: Automated benchmarking harness measuring TTFT, tokens/sec, and latency percentiles (P50/P95/P99).
+  - Benchmark findings (`docs/benchmark/vllm_benchmark_results.json`): GPU vLLM achieves **5.88x higher throughput** (142.8 vs 24.3 tokens/s) and **85.1% lower TTFT** (42.6ms vs 285ms) compared to CPU SLM at ₹35 one-time cost.
+
+### Resume Upgrade (Phase 12 Complete)
+```
+Lead Enterprise AI Platform & LLMOps Architect
+Azure (AKS • LiteLLM • Qdrant • vLLM) | LangGraph | Langfuse | MCP | Terraform | Trivy | Red-Teaming
 9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
 Live: bank.mytaxbot.site | mytaxbot.site
 ```

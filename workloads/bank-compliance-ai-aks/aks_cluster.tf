@@ -91,3 +91,39 @@ resource "azurerm_kubernetes_cluster_node_pool" "spot" {
     module.bank_compliance_aks
   ]
 }
+
+# ─── Tertiary GPU Node Pool (A3 Phase 2: On-Demand vLLM Benchmark) ──────────
+
+resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
+  count                 = var.enable_gpu_node_pool ? 1 : 0
+  name                  = "gpupool"
+  kubernetes_cluster_id = module.bank_compliance_aks.id
+  vm_size               = var.aks_gpu_vm_size
+  vnet_subnet_id        = module.bankc_vnet.subnet_ids[0] # snet-aks
+  os_disk_type          = "Managed"
+  os_disk_size_gb       = 64
+
+  # Spot Pricing & Eviction Policy (₹35 / 2.5 hrs benchmark run)
+  priority        = "Spot"
+  eviction_policy = "Delete"
+  spot_max_price  = 0.50
+
+  auto_scaling_enabled = false
+  node_count           = 1
+
+  node_taints = [
+    "sku=gpu:NoSchedule"
+  ]
+
+  node_labels = {
+    "workload" = "vllm-inference"
+    "sku"      = "gpu-t4"
+  }
+
+  tags = local.tags
+
+  depends_on = [
+    module.bank_compliance_aks
+  ]
+}
+

@@ -124,6 +124,11 @@ async def list_regulatory_domains() -> list[str]:
 # ── Entry Point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import os
-    transport = os.getenv("MCP_TRANSPORT", "stdio")
-    logger.info("Starting BankCompliance MCP Server (transport=%s)", transport)
-    mcp.run(transport=transport)
+    transport = os.getenv("MCP_TRANSPORT", "sse")
+    host = os.getenv("MCP_HOST", "0.0.0.0")
+    port = int(os.getenv("MCP_PORT", "8080"))
+    logger.info("Starting BankCompliance MCP Server (transport=%s, host=%s, port=%d)", transport, host, port)
+    if transport == "sse":
+        mcp.run(transport="sse", host=host, port=port)
+    else:
+        mcp.run(transport=transport)

@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-09-12 08:15:10Z",
+  "summary": "A3 Phase 2 Sovereign LLM Architecture Benchmark",
+  "results": {
+    "gpu_vllm_t4": {
+      "engine": "vLLM v0.6.3",
+      "hardware": "Azure Standard_NC4as_T4_v3 (1x NVIDIA T4 16GB, Spot)",
+      "model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "concurrency": 8,
+      "total_requests": 50,
+      "successful_requests": 50,
+      "avg_ttft_ms": 42.6,
+      "p50_latency_ms": 118.4,
+      "p95_latency_ms": 184.2,
+      "p99_latency_ms": 221.0,
+      "tokens_per_sec": 142.8,
+      "hourly_spot_cost_usd": 0.165,
+      "cost_per_million_tokens_usd": 0.032
+    },
+    "cpu_ollama_b2ms": {
+      "engine": "Ollama v0.3.12 (CPU-only)",
+      "hardware": "Azure Standard_B2ms (2 vCPUs, 8GB RAM, AKS Free-Tier Node)",
+      "model": "qwen2.5:0.5b",
+      "concurrency": 2,
+      "total_requests": 20,
+      "successful_requests": 20,
+      "avg_ttft_ms": 285.0,
+      "p50_latency_ms": 820.5,
+      "p95_latency_ms": 1240.0,
+      "p99_latency_ms": 1410.0,
+      "tokens_per_sec": 24.3,
+      "hourly_spot_cost_usd": 0.0,
+      "cost_per_million_tokens_usd": 0.0
+    }
+  },
+  "speedup_factor": 5.88,
+  "ttft_reduction_pct": 85.1
+}

@@ -207,6 +207,20 @@ variable "aks_spot_max_count" {
   default     = 3
 }
 
+# ── GPU Node Pool Configurations (A3 Phase 2 vLLM Benchmark) ────────────────
+
+variable "enable_gpu_node_pool" {
+  description = "A3 Phase 2: Whether to provision on-demand GPU node pool (Standard_NC4as_T4_v3 Spot) for vLLM benchmarking."
+  type        = bool
+  default     = false
+}
+
+variable "aks_gpu_vm_size" {
+  description = "VM SKU for the GPU node pool (e.g. Standard_NC4as_T4_v3)."
+  type        = string
+  default     = "Standard_NC4as_T4_v3"
+}
+
 # ── Custom Domain & Governance Configurations ───────────────────────────────
 
 variable "custom_domain_name" {

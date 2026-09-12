@@ -227,10 +227,30 @@ The following capabilities were added as part of the LLMOps Skill Bridge to qual
 | **A2 — FastMCP Server** | `search_rbi_regulations` + `list_regulatory_domains` MCP tools | `backend/app/services/mcp_server.py` |
 | **S5 — AI Red-Team Report** | 10 attack patterns, 4-layer defence documented, 100% interception | `docs/ai-red-team-report.md` |
 
-### New Resume Headline
+### New Resume Headline (Phase 11)
 ```
 Enterprise AI Platform & LLMOps Architect
 Azure (AKS • LiteLLM • Qdrant • MCP) | Terraform | Langfuse | Trivy | Red-Teaming
+9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
+Live: bank.mytaxbot.site | mytaxbot.site
+```
+
+---
+
+## 🏆 Phase 12 LLMOps Capabilities (Skill Bridge Phase 2 — September 2026)
+
+| Capability | Component | File(s) |
+|---|---|---|
+| **A1 — LangGraph StateGraph Orchestrator** | Multi-agent cyclic graph with Supervisor, Retriever, Auditor (reflection loop), and Synthesizer nodes | `backend/app/services/agents/orchestrator_v2.py` |
+| **A1 — REST API v2 Routing** | Dual `/api/v2` router prefix and `/v2/compliance/query` endpoints | `backend/app/api/routes.py` & `main.py` |
+| **A3 Phase 2 — GPU Node Pool IaC** | On-demand `Standard_NC4as_T4_v3` Spot pool (`sku=gpu:NoSchedule` taint, ₹0 default) | `workloads/bank-compliance-ai-aks/aks_cluster.tf` |
+| **A3 Phase 2 — vLLM Benchmark Manifest** | High-throughput GPU inference serving Qwen2.5-0.5B / Llama-3.2-1B | `k8s/inference/vllm-benchmark.yaml` |
+| **A3 Phase 2 — Inference Benchmarking Harness** | Measures TTFT, throughput (tokens/s), latency P50/P95/P99 across concurrency | `scripts/benchmark_vllm.py` |
+
+### New Resume Headline (Phase 12 Lead Architect)
+```
+Lead Enterprise AI Platform & LLMOps Architect
+Azure (AKS • LiteLLM • Qdrant • vLLM) | LangGraph | Langfuse | MCP | Terraform | Trivy | Red-Teaming
 9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
 Live: bank.mytaxbot.site | mytaxbot.site
 ```

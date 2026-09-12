@@ -1,0 +1,111 @@
+# ==============================================================================
+# A3 Phase 2: High-Throughput Sovereign GPU vLLM Inference Benchmark
+# Workload:    BankCompliance AI — High-Speed Sovereign LLM Tier
+# Model:       Qwen/Qwen2.5-0.5B-Instruct (or meta-llama/Llama-3.2-1B-Instruct)
+# Node SKU:    Standard_NC4as_T4_v3 (1x NVIDIA T4 16GB, Spot ~$0.15/hr)
+# Namespace:   bank-compliance
+# Service:     vllm-benchmark-inference:8000 (ClusterIP)
+# FinOps:      One-time ₹35 benchmark run; scale-to-zero when idle
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-benchmark-inference
+  namespace: bank-compliance
+  labels:
+    app.kubernetes.io/name: vllm-benchmark-inference
+    app.kubernetes.io/part-of: bank-compliance-ai
+    app.kubernetes.io/component: gpu-inference
+  annotations:
+    skill-bridge/phase: "A3-phase2"
+    skill-bridge/engine: "vLLM"
+    skill-bridge/accelerator: "NVIDIA-T4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-benchmark-inference
+  template:
+    metadata:
+      labels:
+        app: vllm-benchmark-inference
+        app.kubernetes.io/part-of: bank-compliance-ai
+    spec:
+      # Schedule exclusively on GPU Spot node pool
+      nodeSelector:
+        workload: vllm-inference
+        sku: gpu-t4
+      tolerations:
+        - key: "sku"
+          operator: "Equal"
+          value: "gpu"
+          effect: "NoSchedule"
+      containers:
+        - name: vllm-server
+          image: vllm/vllm-openai:v0.6.3
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - -m
+            - vllm.entrypoints.openai.api_server
+            - --model
+            - Qwen/Qwen2.5-0.5B-Instruct
+            - --port
+            - "8000"
+            - --max-model-len
+            - "4096"
+            - --gpu-memory-utilization
+            - "0.85"
+            - --dtype
+            - half
+          ports:
+            - name: http-inference
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: MODEL_NAME
+              value: "Qwen/Qwen2.5-0.5B-Instruct"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "4"
+              memory: "14Gi"
+              nvidia.com/gpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-benchmark-inference
+  namespace: bank-compliance
+  labels:
+    app: vllm-benchmark-inference
+    app.kubernetes.io/part-of: bank-compliance-ai
+  annotations:
+    skill-bridge/access: "cluster-internal-only"
+spec:
+  type: ClusterIP
+  selector:
+    app: vllm-benchmark-inference
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
