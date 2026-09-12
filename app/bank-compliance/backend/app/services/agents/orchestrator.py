@@ -217,9 +217,9 @@ class MultiAgentOrchestrator:
             litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
             api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
 
-            # ── Multi-Cloud Priority: Primary (Gemini/Groq $0) ➔ Standby DR (Azure OpenAI) ──
+            # ── Multi-Cloud Priority: Primary (Gemini/Groq $0) ➔ Standby DR (Azure OpenAI) ➔ Sovereign SLM ──
             candidate_models = []
-            for candidate in [primary_model, "gemini-2.0-flash", "groq-llama-70b", "gpt-5.4-nano"]:
+            for candidate in [primary_model, "gemini-2.0-flash", "groq-llama-70b", "gpt-5.4-nano", "private-slm"]:
                 if candidate and candidate not in candidate_models:
                     candidate_models.append(candidate)
 

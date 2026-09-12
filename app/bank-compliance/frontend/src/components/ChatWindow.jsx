@@ -17,6 +17,7 @@ function getSynthesizerModelName(model) {
   if (model.includes('gemini-2.0-flash')) return 'Google Gemini (2.0 Flash)'
   if (model.includes('120b')) return 'Groq LPU (GPT-OSS-120B)'
   if (model.includes('groq') || model.includes('llama')) return 'Groq LPU (Llama-70B)'
+  if (model.includes('qwen') || model.includes('private-slm')) return 'Sovereign SLM (Qwen2.5-0.5B)'
   return model
 }
 
