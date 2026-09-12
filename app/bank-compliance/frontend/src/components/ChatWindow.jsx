@@ -377,84 +377,17 @@ Approved for CCO / Internal Audit Review.`
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
-      {/* ── Chat Context & Active Engine Status Bar ─────────────────────────── */}
-      <div style={{
-        padding: '10px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'rgba(15, 23, 42, 0.7)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        backdropFilter: 'blur(12px)',
-        zIndex: 5,
-        flexWrap: 'wrap',
-        gap: '10px'
-      }}>
-        {/* Left: Active Regulatory Scope Context */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-            REGULATORY SCOPE:
-          </span>
-          <span style={{
-            fontSize: '0.74rem',
-            color: '#e2e8f0',
-            background: 'rgba(99, 102, 241, 0.12)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            padding: '3px 10px',
-            borderRadius: '6px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <BookOpen size={12} color="#818cf8" />
-            <span>{selectedCircular === 'All' ? 'All 12 RBI Master Directions' : selectedCircular}</span>
-          </span>
-        </div>
-
-        {/* Right: Active Engine Status Badge (Driven by Top Master Switch) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {inferenceMode === 'sovereign' ? (
-            <span style={{
-              fontSize: '0.72rem',
-              color: '#34d399',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              padding: '3px 10px',
-              borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
-            }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
-              <ShieldCheck size={12} />
-              <span>Sovereign SLM Active (Qwen 2.5 CPU • Zero Egress)</span>
-            </span>
-          ) : (
-            <span style={{
-              fontSize: '0.72rem',
-              color: '#93c5fd',
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.28)',
-              padding: '3px 10px',
-              borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
-            }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#60a5fa', display: 'inline-block' }} />
-              <Zap size={12} />
-              <span>Multi-Cloud Fleet Active (Groq LPU + Gemini 2.0 Flash)</span>
-            </span>
-          )}
-        </div>
-      </div>
-
       {/* Messages Scroll Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {messages.map((m, idx) => (
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
+        <div style={{
+          maxWidth: '880px',
+          width: '100%',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          {messages.map((m, idx) => (
           <div key={idx} className="animate-fade-in" style={{
             display: 'flex',
             gap: '14px',
@@ -708,110 +641,119 @@ Approved for CCO / Internal Audit Review.`
             <span>Multi-Agent Fleet auditing RBI Master Directions against vector lake...</span>
           </div>
         )}
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Suggested Follow-up Prompt Chips */}
       {activeSuggestions && activeSuggestions.length > 0 && !loading && (
         <div style={{
-          padding: '10px 24px',
+          padding: '10px 20px',
           background: 'rgba(10, 14, 22, 0.65)',
-          borderTop: '1px solid var(--border-subtle)',
-          display: 'flex',
-          gap: '8px',
-          overflowX: 'auto',
-          alignItems: 'center'
+          borderTop: '1px solid var(--border-subtle)'
         }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            Suggested:
-          </span>
-          {activeSuggestions.slice(0, 3).map((s, sIdx) => (
-            <button
-              key={sIdx}
-              onClick={() => submitQuery(s)}
-              style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '9999px',
-                padding: '5px 12px',
-                color: 'var(--text-secondary)',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                transition: 'all 0.18s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.18)'
-                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)'
-                e.currentTarget.style.color = '#ffffff'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
-                e.currentTarget.style.borderColor = 'var(--border-subtle)'
-                e.currentTarget.style.color = 'var(--text-secondary)'
-              }}
-            >
-              <span>{s}</span>
-              <ArrowRight size={11} />
-            </button>
-          ))}
+          <div style={{
+            maxWidth: '880px',
+            width: '100%',
+            margin: '0 auto',
+            display: 'flex',
+            gap: '8px',
+            overflowX: 'auto',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Suggested:
+            </span>
+            {activeSuggestions.slice(0, 3).map((s, sIdx) => (
+              <button
+                key={sIdx}
+                onClick={() => submitQuery(s)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '9999px',
+                  padding: '5px 12px',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.18)'
+                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)'
+                  e.currentTarget.style.color = '#ffffff'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                  e.currentTarget.style.color = 'var(--text-secondary)'
+                }}
+              >
+                <span>{s}</span>
+                <ArrowRight size={11} />
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Floating Modern Command Bar Input */}
-      <div style={{ padding: '16px 24px', background: 'rgba(10, 14, 22, 0.85)', borderTop: '1px solid var(--border-subtle)' }}>
-        <form onSubmit={handleSend} style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          background: 'rgba(15, 23, 42, 0.75)',
-          borderRadius: '14px',
-          border: '1px solid var(--border-glass)',
-          padding: '6px 8px 6px 16px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-          transition: 'all 0.2s ease'
-        }}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask an RBI compliance question (e.g. KYC for NRIs, IT data localization, CoFT tokenisation)..."
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              color: '#ffffff',
-              fontSize: '0.9rem',
-              outline: 'none',
-              fontFamily: 'inherit'
-            }}
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            style={{
-              background: input.trim() ? 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)' : 'rgba(255, 255, 255, 0.08)',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '10px 18px',
-              color: input.trim() ? '#ffffff' : 'var(--text-muted)',
-              cursor: input.trim() ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              transition: 'all 0.2s ease',
-              boxShadow: input.trim() ? '0 0 12px rgba(79, 70, 229, 0.4)' : 'none'
-            }}
-          >
-            <span>Send</span>
-            <Send size={14} />
-          </button>
-        </form>
+      <div style={{ padding: '16px 20px', background: 'rgba(10, 14, 22, 0.85)', borderTop: '1px solid var(--border-subtle)' }}>
+        <div style={{ maxWidth: '880px', width: '100%', margin: '0 auto' }}>
+          <form onSubmit={handleSend} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: 'rgba(15, 23, 42, 0.75)',
+            borderRadius: '14px',
+            border: '1px solid var(--border-glass)',
+            padding: '6px 8px 6px 16px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+            transition: 'all 0.2s ease'
+          }}>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask an RBI compliance question (e.g. KYC for NRIs, IT data localization, CoFT tokenisation)..."
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                color: '#ffffff',
+                fontSize: '0.9rem',
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              style={{
+                background: input.trim() ? 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)' : 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '10px 18px',
+                color: input.trim() ? '#ffffff' : 'var(--text-muted)',
+                cursor: input.trim() ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                transition: 'all 0.2s ease',
+                boxShadow: input.trim() ? '0 0 12px rgba(79, 70, 229, 0.4)' : 'none'
+              }}
+            >
+              <span>Send</span>
+              <Send size={14} />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
