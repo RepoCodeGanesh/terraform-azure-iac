@@ -338,8 +338,7 @@ Approved for CCO / Internal Audit Review.`
                         }}>
                           <Zap size={10} /> Semantic Cache Hit ({m.latency_ms}ms • $0.00)
                         </span>
-                      ) : (
-                      {(() => {
+                      ) : (() => {
                         const isSovereignMsg = m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen') || m.model_used.includes('private-slm')))
                         return (
                           <button
