@@ -430,6 +430,39 @@ resp = await client.post(
 
 ---
 
+### 17. Client-Side Undeclared JSX Component Runtime Exception (`Uncaught ReferenceError: <Component> is not defined`) & Blank Screen Prevention
+
+#### Symptom:
+* Navigating to `https://bank.mytaxbot.site` loads the page title and HTML structure, but the body displays a completely blank/dark screen (`--bg-dark: #07090e`) with no UI elements visible.
+
+#### Root Cause:
+* In plain JSX projects (without strict TypeScript compilation enforcing identifier declarations at build time), Vite/Rollup tree-shaking will bundle undeclared identifiers used inside JSX tags (e.g. `<BookOpen />` without `import { BookOpen } from 'lucide-react'`) as references to the global window scope.
+* At browser runtime, React executes `React.createElement(BookOpen, ...)`: since `window.BookOpen` is `undefined`, the browser throws `Uncaught ReferenceError: BookOpen is not defined`.
+* In React 18, an unhandled render error in any child component causes the entire React root tree to unmount, leaving `<div id="root"></div>` completely empty.
+
+#### Resolution:
+1. **Fix Missing Component Imports:**
+   * Always import all JSX components and Lucide icons explicitly at the top of the file:
+     ```javascript
+     import { Send, Bot, Sparkles, BookOpen } from 'lucide-react'
+     ```
+2. **Implement React Error Boundary (`ErrorBoundary.jsx`):**
+   * Wrap the root `<App />` inside a class-based `ErrorBoundary` component in `main.jsx`.
+   * If any client-side exception is thrown during rendering, the Error Boundary intercepts the error and presents a sleek enterprise diagnostic card with **"Reload Application"** and **"Reset Local Cache"** buttons along with a collapsible error stack rather than crashing to a pitch-black screen:
+     ```jsx
+     ReactDOM.createRoot(document.getElementById('root')).render(
+       <React.StrictMode>
+         <ErrorBoundary>
+           <App />
+         </ErrorBoundary>
+       </React.StrictMode>
+     )
+     ```
+3. **Automate Import Scanning in CI/CD:**
+   * Run an automated JSX import validator script across `src/**/*.jsx` prior to deployment to verify that all PascalCase JSX tags match either an explicit ES module import, a standard HTML tag, or a local declaration.
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
