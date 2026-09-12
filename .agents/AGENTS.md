@@ -281,6 +281,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Citation cards rendered raw statutory documentation markdown (`citation.text`) uncollapsed directly in the chat bubble. Message headers had not been unified, displaying both an execution trace launcher and an agent model badge that stated identical pipeline details.
 * **Resolution:** (1) Transformed `CitationCard.jsx` into a sleek 1-line collapsible statutory reference badge (`📜 RBI/2023-24/102 • Clause 5.2 | sha256:... ▾`), collapsed by default with zero documentation clutter, expandable on-demand with 1 click. (2) Unified message header into a single clean agent badge on the left and a compact latency/trace toggle on the right (`18ms • Trace ▾`), eliminating all visual redundancy. (3) Purged dead `DocumentViewer.jsx` and unused props (`selectedCircular`, `onSelectCitation`).
 
+### 34. Azure Monitor Workbook Rendering Blank (`serializedData: null` & Missing `crossComponentResources` Workspace Binding)
+* **Symptom:** Opening the centralized Azure Monitor Workbook (`2d689b14-8f92-4f3a-96e2-54911d7e8b91` in `rg-ht-ss-p-cin-01`) displays the title banner but leaves the remainder of the page completely blank with no charts or query results.
+* **Root Cause:** (1) The resource in Azure was initially created with `properties.serializedData: null` (an empty shell) because `platform/shared-services` Terraform apply was not executed after the workbook items were defined. (2) When Azure Monitor Workbooks are created at the Resource Group scope rather than inside a Log Analytics Workspace blade, each KQL query item (`queryType: 0`, `resourceType: "microsoft.operationalinsights/workspaces"`) evaluates against the parent Resource Group (which has no KQL provider) and renders blank unless explicitly bound to a workspace via `crossComponentResources: [ "<log-analytics-workspace-id>" ]`.
+* **Resolution:** (1) Add `crossComponentResources = [module.shared_log_analytics.id]` to all KQL query items in `platform/shared-services/observability.tf`. (2) Use verified live telemetry tables (`AppRequests`, `AzureDiagnostics`, `KubePodInventory`) rather than obsolete table names. (3) Synchronize the live workbook resource via `az rest` / Terraform apply.
+
 ---
 
 
