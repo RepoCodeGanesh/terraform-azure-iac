@@ -29,6 +29,16 @@ import RedlineStudio from './components/RedlineStudio'
 import CommandCenter from './components/CommandCenter'
 import GovernanceCenter from './components/GovernanceCenter'
 
+const VALID_PILLARS = ['copilot', 'command', 'governance', 'monitoring', 'redline']
+
+function getPillarFromPath(pathname) {
+  const clean = (pathname || '').toLowerCase().replace(/^\/+/, '').split('/')[0]
+  if (VALID_PILLARS.includes(clean)) {
+    return clean
+  }
+  return 'copilot'
+}
+
 export default function App() {
   const [selectedCircular, setSelectedCircular] = useState('All')
   const [activeSector, setActiveSector] = useState('All')
@@ -37,9 +47,39 @@ export default function App() {
   const [ingestSuccess, setIngestSuccess] = useState(null)
   const [lakeStats, setLakeStats] = useState({ total_circulars: 12, total_indexed_clauses: 120 })
 
-  // ── Global Enterprise Architecture Navigation ────────────────────────────────
+  // ── Global Enterprise Architecture Navigation & URL Deep-Linking ───────────
   // activePillar: 'copilot' | 'command' | 'governance' | 'monitoring' | 'redline'
-  const [activePillar, setActivePillar] = useState('copilot')
+  const [activePillar, setActivePillar] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return getPillarFromPath(window.location.pathname)
+    }
+    return 'copilot'
+  })
+
+  // Deep-linkable HTML5 history routing helper
+  const navigateToPillar = (pillar, replace = false) => {
+    setActivePillar(pillar)
+    if (typeof window !== 'undefined') {
+      const targetPath = pillar === 'copilot' ? '/' : `/${pillar}`
+      if (window.location.pathname !== targetPath) {
+        if (replace) {
+          window.history.replaceState({ pillar }, '', targetPath)
+        } else {
+          window.history.pushState({ pillar }, '', targetPath)
+        }
+      }
+    }
+  }
+
+  // Synchronize browser Back / Forward history navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const pillar = getPillarFromPath(window.location.pathname)
+      setActivePillar(pillar)
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   // Copilot Sub-Views: 'split' | 'chat-only' | 'doc-only'
   const [copilotView, setCopilotView] = useState('split')
@@ -77,7 +117,7 @@ export default function App() {
     setSelectedDocId(item.id)
     setHighlightClause('')
     if (activePillar !== 'copilot') {
-      setActivePillar('copilot')
+      navigateToPillar('copilot')
     }
     if (copilotView === 'chat-only') {
       setCopilotView('split')
@@ -103,7 +143,7 @@ export default function App() {
     setSelectedDocId(targetDocId)
     setHighlightClause(citation.clause || citation.text?.slice(0, 30) || '')
     if (activePillar !== 'copilot') {
-      setActivePillar('copilot')
+      navigateToPillar('copilot')
     }
     if (copilotView === 'chat-only') {
       setCopilotView('split')
@@ -180,7 +220,7 @@ export default function App() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {/* Pillar 1: Copilot */}
           <button
-            onClick={() => setActivePillar('copilot')}
+            onClick={() => navigateToPillar('copilot')}
             style={{
               background: activePillar === 'copilot' ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(6, 182, 212, 0.2))' : 'transparent',
               border: activePillar === 'copilot' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
@@ -202,7 +242,7 @@ export default function App() {
 
           {/* Pillar 2: Command Center */}
           <button
-            onClick={() => setActivePillar('command')}
+            onClick={() => navigateToPillar('command')}
             style={{
               background: activePillar === 'command' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
               border: activePillar === 'command' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
@@ -224,7 +264,7 @@ export default function App() {
 
           {/* Pillar 3: Governance Center */}
           <button
-            onClick={() => setActivePillar('governance')}
+            onClick={() => navigateToPillar('governance')}
             style={{
               background: activePillar === 'governance' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 182, 212, 0.2))' : 'transparent',
               border: activePillar === 'governance' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
@@ -246,7 +286,7 @@ export default function App() {
 
           {/* Pillar 4: Live Monitoring */}
           <button
-            onClick={() => setActivePillar('monitoring')}
+            onClick={() => navigateToPillar('monitoring')}
             style={{
               background: activePillar === 'monitoring' ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.2))' : 'transparent',
               border: activePillar === 'monitoring' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid transparent',
@@ -268,7 +308,7 @@ export default function App() {
 
           {/* Pillar 5: Policy Redliner */}
           <button
-            onClick={() => setActivePillar('redline')}
+            onClick={() => navigateToPillar('redline')}
             style={{
               background: activePillar === 'redline' ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
               border: activePillar === 'redline' ? '1px solid rgba(236, 72, 153, 0.5)' : '1px solid transparent',
@@ -369,7 +409,7 @@ export default function App() {
           <CommandCenter
             inferenceMode={inferenceMode}
             setInferenceMode={setInferenceMode}
-            onNavigateToCopilot={() => setActivePillar('copilot')}
+            onNavigateToCopilot={() => navigateToPillar('copilot')}
             lakeStats={lakeStats}
             onTriggerSync={triggerDataLakeSync}
           />
@@ -385,7 +425,7 @@ export default function App() {
 
         {/* Pillar 4: Live Monitoring Mode */}
         {activePillar === 'monitoring' && (
-          <GenAIOpsDashboard onBackToChat={() => setActivePillar('copilot')} />
+          <GenAIOpsDashboard onBackToChat={() => navigateToPillar('copilot')} />
         )}
 
         {/* Pillar 5: Policy Redliner Mode */}
