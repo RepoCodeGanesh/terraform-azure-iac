@@ -172,6 +172,9 @@ This document tracks the progress, completed milestones, and upcoming phases of 
   - Model-scoped semantic vector cache (`semantic_cache.py` & `routes.py`) preventing cross-contamination between public cloud and sovereign SLM responses.
 * [x] **Resource Optimization & Cluster Health:**
   - Scaled `vllm-benchmark-inference` deployment to 0 replicas on CPU-only cluster, eliminating pending scheduler warnings while keeping active sovereign SLM (`private-slm-inference`) 1/1 Running.
+* [x] **Kubernetes Daily Operations Runbook & Triage Standards:**
+  - Codified [Platform Guide 13: Enterprise Kubernetes Daily Operations Runbook](docs/platform-guide/13-kubernetes-daily-operations-runbook.md) across 10 operational tiers (Auth, Health, Pod Lifecycle, Deep Diagnostics, Zero-Trust Port-Forwarding, Helm Release Recovery, FinOps Scaling, Secrets/Storage, Networking, and 5-minute Emergency Triage).
+  - Synchronized command cheatsheets into `app/bank-compliance/README.md` and documentation hubs.
 
 ---
 

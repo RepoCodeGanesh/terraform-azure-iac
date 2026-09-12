@@ -42,6 +42,7 @@ Detailed step-by-step operational guides for provisioning and operating the Azur
 | **[10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)** | Enterprise AI Platform Engineering Roadmap & Phased Gap Analysis. |
 | **[11-enterprise-genai-evaluation-and-testing-framework.md](platform-guide/11-enterprise-genai-evaluation-and-testing-framework.md)** | **Enterprise GenAI Evaluation, Ragas Triad, Golden Benchmarks & Testing Pyramid Runbook**. |
 | **[12-fine-tuning-and-private-slm-guide.md](platform-guide/12-fine-tuning-and-private-slm-guide.md)** | **PEFT/LoRA Fine-Tuning, Sovereign In-Cluster SLMs & Decoupled MLOps Architecture Runbook**. |
+| **[13-kubernetes-daily-operations-runbook.md](platform-guide/13-kubernetes-daily-operations-runbook.md)** | **Enterprise Kubernetes Daily Operations Runbook (kubectl/helm commands with purpose & 10 triage tiers)**. |
 
 ---
 

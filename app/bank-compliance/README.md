@@ -162,3 +162,28 @@ npm run dev
 python eval/evaluate.py --mode fast
 python training/eval_fine_tuned.py
 ```
+
+---
+
+## 🛠️ Daily Kubernetes Operations & Diagnostic Cheatsheet
+
+> Complete 10-tier operational runbook available at: **[Platform Guide 13: Kubernetes Daily Operations Runbook](../../docs/platform-guide/13-kubernetes-daily-operations-runbook.md)**
+
+| Operation / Task | Exact CLI Command | Operational Purpose |
+|:---|:---|:---|
+| **Cluster Auth** | `az aks get-credentials --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01 --overwrite-existing` | Merges Entra ID credentials and cluster context into `~/.kube/config`. |
+| **Namespace Focus** | `kubectl config set-context --current --namespace=bank-compliance` | Sets default namespace to avoid typing `-n bank-compliance` on every command. |
+| **Workload Health** | `kubectl get pods -n bank-compliance -o wide` | Verifies running status, restarts, age, and IP addresses of all application pods. |
+| **Resource Headroom** | `kubectl top nodes && kubectl top pods -n bank-compliance` | Measures real-time CPU & Memory consumption to detect node throttling or OOM risks. |
+| **Rolling Restart** | `kubectl rollout restart deployment/bankc-backend -n bank-compliance` | Triggers zero-downtime rolling restart to reload secrets, config, or clear caches. |
+| **Rollout Rollback** | `kubectl rollout undo deployment/bankc-backend -n bank-compliance` | Instantly rolls back to the previous deployment revision if errors are detected. |
+| **Backend Logs** | `kubectl logs -n bank-compliance -l app=bankc-backend -f --tail=100` | Streams live FastAPI request logs, agent execution traces, and PII redactions. |
+| **LiteLLM Gateway Logs**| `kubectl logs -n bank-compliance -l app=litellm-proxy -f --tail=50` | Observes multi-cloud model routing (Gemini 2.0 Flash primary vs Azure OpenAI DR). |
+| **SLM Init Logs** | `kubectl logs -n bank-compliance -l app=private-slm-inference -c init-model-puller` | Debugs model download during container startup if pod is stuck in `Init`. |
+| **Previous Crash Logs** | `kubectl logs -n bank-compliance <pod-name> --previous --tail=100` | Fetches exit traceback and stdout of terminated containers before restart. |
+| **Grafana Tunnel** | `kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring` | Secure local access to Prometheus & Grafana dashboard (`localhost:3000`). |
+| **Qdrant DB Tunnel** | `kubectl port-forward svc/qdrant 6333:6333 -n bank-compliance` | Direct access to Qdrant vector database web UI (`localhost:6333/dashboard`). |
+| **LiteLLM Proxy Tunnel**| `kubectl port-forward svc/litellm-proxy 4000:4000 -n bank-compliance` | Direct access to test model routing endpoints (`localhost:4000/v1/models`). |
+| **Stuck Helm Unlock** | `kubectl delete secret -l owner=helm,name=bank-compliance,status=failed -n bank-compliance` | Clears orphan lock secret to unblock failed or stuck Helm deployments. |
+| **FinOps Scale-to-0** | `kubectl scale deploy/vllm-benchmark-inference --replicas=0 -n bank-compliance` | Shuts down GPU/heavy inference benchmark pods to conserve node capacity. |
+| **Cache Invalidation** | `kubectl exec -it deploy/bankc-backend -n bank-compliance -- curl -X POST http://localhost:8000/api/v1/compliance/cache/invalidate` | Purges semantic vector cache in Qdrant after uploading new RBI circulars. |

@@ -83,6 +83,7 @@ Click any guide below for detailed specs, operational runbooks, and deep-dive te
 | **10** | **AI Engineering Roadmap** | 4-Phase Roadmap & Gap Analysis (Core, Ingestion, Multi-Agent, Private Lockdown). | [10-enterprise-ai-engineering-backlog-and-roadmap.md](10-enterprise-ai-engineering-backlog-and-roadmap.md) |
 | **11** | **GenAI Evaluation & Testing** | 6-Tier testing pyramid, Ragas triad, golden datasets, red teaming, FinOps token caps. | [11-enterprise-genai-evaluation-and-testing-framework.md](11-enterprise-genai-evaluation-and-testing-framework.md) |
 | **12** | **PEFT/LoRA Fine-Tuning & Sovereign SLMs** | LoRA SFT training engine, in-cluster private SLMs (CPU), RAG vs LoRA tradeoff matrix. | [12-fine-tuning-and-private-slm-guide.md](12-fine-tuning-and-private-slm-guide.md) |
+| **13** | **Kubernetes Daily Operations Runbook** | Daily `kubectl`/`helm` commands with operational purposes, 10 triage tiers, triage cards. | [13-kubernetes-daily-operations-runbook.md](13-kubernetes-daily-operations-runbook.md) |
 
 ---
 
