@@ -49,16 +49,50 @@ Every command in this guide includes:
 ## 🔐 Tier 1: Cluster Access, Context & Entra ID Identity
 
 ### 1.1 Connect to Production AKS Cluster
+
+**Single-Line (Recommended across Windows PowerShell, macOS & Linux):**
+```bash
+az aks get-credentials --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01 --overwrite-existing
+```
+
+**PowerShell Multi-Line (Windows):**
+```powershell
+az aks get-credentials `
+  --resource-group rg-ht-bankc-p-cin-01 `
+  --name aks-ht-bankc-p-cin-01 `
+  --overwrite-existing
+```
+
+**Bash / Linux / Azure Cloud Shell Multi-Line:**
 ```bash
 az aks get-credentials \
   --resource-group rg-ht-bankc-p-cin-01 \
   --name aks-ht-bankc-p-cin-01 \
   --overwrite-existing
 ```
+> [!NOTE]
+> **PowerShell Line Continuation Syntax:** Windows PowerShell uses the backtick (`` ` ``) for line continuations, whereas Linux/macOS uses the backslash (`\`). Pasting multi-line commands with `\` into PowerShell will fail with `Missing expression after unary operator '--'`. Use the single-line command or backtick syntax in PowerShell.
+
 * **Purpose**: Fetches the `kubeconfig` context and merges it into `~/.kube/config`, configuring Entra ID authentication and cluster API endpoint certificates.
 * **When to Use**: Beginning a shift, switching workstations, or after credentials expire.
 
 ### 1.2 Connect with Azure RBAC Admin Credentials (Break-Glass Mode)
+
+**Single-Line (PowerShell & Bash):**
+```bash
+az aks get-credentials --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01 --admin --overwrite-existing
+```
+
+**PowerShell Multi-Line (Windows):**
+```powershell
+az aks get-credentials `
+  --resource-group rg-ht-bankc-p-cin-01 `
+  --name aks-ht-bankc-p-cin-01 `
+  --admin `
+  --overwrite-existing
+```
+
+**Bash Multi-Line:**
 ```bash
 az aks get-credentials \
   --resource-group rg-ht-bankc-p-cin-01 \

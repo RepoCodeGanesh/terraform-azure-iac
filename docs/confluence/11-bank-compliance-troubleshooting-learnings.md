@@ -402,6 +402,34 @@ resp = await client.post(
 
 ---
 
+### 16. Windows PowerShell Line Continuation vs Bash Backslash (`Missing expression after unary operator '--'`)
+
+#### Symptom:
+* Pasting multi-line Azure CLI or kubectl commands from documentation into Windows PowerShell errors with:
+  ```text
+  Missing expression after unary operator '--'.
+  Unexpected token 'resource-group' in expression or statement.
+  ```
+
+#### Root Cause:
+* In Linux/Bash, `\` is the standard line-continuation delimiter. In Windows PowerShell, `\` is treated as a literal argument. PowerShell executes the first line (`az aks get-credentials \`) immediately without its required arguments, and then treats subsequent lines starting with `--flag` as syntax errors (unary negation operators).
+
+#### Resolution:
+* In PowerShell, use the **backtick** (`` ` ``) for line continuations, or paste the command as a **single unbroken line**:
+  ```powershell
+  az aks get-credentials --resource-group rg-ht-bankc-p-cin-01 --name aks-ht-bankc-p-cin-01 --overwrite-existing
+  ```
+* Multi-line syntax in Windows PowerShell:
+  ```powershell
+  az aks get-credentials `
+    --resource-group rg-ht-bankc-p-cin-01 `
+    --name aks-ht-bankc-p-cin-01 `
+    --overwrite-existing
+  ```
+* All runbooks in `docs/confluence/` and `docs/platform-guide/` are dual-formatted with single-line, PowerShell backtick, and Bash snippets.
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |
