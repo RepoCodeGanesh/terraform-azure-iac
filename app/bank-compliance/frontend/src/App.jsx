@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Shield,
   Building2,
@@ -14,7 +14,6 @@ import {
   Sparkles,
   Cpu,
   Layers,
-  Upload,
   FileCheck,
   Search,
   Filter,
@@ -35,10 +34,8 @@ export default function App() {
   const [activeSector, setActiveSector] = useState('All')
   const [searchFilter, setSearchFilter] = useState('')
   const [ingesting, setIngesting] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [ingestSuccess, setIngestSuccess] = useState(null)
   const [lakeStats, setLakeStats] = useState({ total_circulars: 12, total_indexed_clauses: 120 })
-  const fileInputRef = useRef(null)
 
   // ── Global Enterprise Architecture Navigation ────────────────────────────────
   // activePillar: 'copilot' | 'command' | 'governance' | 'monitoring' | 'redline'
@@ -138,56 +135,6 @@ export default function App() {
     }
   }
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      alert('Please upload an official RBI PDF document (.pdf).')
-      return
-    }
-
-    setUploading(true)
-    setIngestSuccess(null)
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      const defaultEndpoint = isLocal
-        ? 'http://localhost:8000/api/v1/compliance/upload-pdf'
-        : 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/upload-pdf'
-      const apiEndpoint = import.meta.env.VITE_API_URL
-        ? `${import.meta.env.VITE_API_URL.replace('/compliance/query', '')}/compliance/upload-pdf`
-        : defaultEndpoint
-
-      const res = await fetch(apiEndpoint, {
-        method: 'POST',
-        body: formData
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setIngestSuccess(`✅ Ingested "${data.title || file.name}" (${data.clauses_extracted} clauses indexed)`)
-        setLakeStats(prev => ({
-          total_circulars: (prev.total_circulars || 12) + 1,
-          total_indexed_clauses: data.total_corpus_clauses || ((prev.total_indexed_clauses || 120) + data.clauses_extracted)
-        }))
-        if (data.document_id) {
-          setSelectedDocId(data.document_id)
-        }
-      } else {
-        const err = await res.json()
-        alert(`PDF upload failed: ${err.detail || 'Unknown error'}`)
-      }
-    } catch (err) {
-      console.warn('PDF upload fallback:', err)
-      setIngestSuccess(`✅ Uploaded & Indexed ${file.name}`)
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-      setTimeout(() => setIngestSuccess(null), 5000)
-    }
-  }
-
   const filteredCirculars = CIRCULAR_MAP.filter(c => {
     const matchesSector = activeSector === 'All' || c.sector === activeSector || c.isAll
     const matchesSearch = c.label.toLowerCase().includes(searchFilter.toLowerCase())
@@ -196,9 +143,9 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-dark)' }}>
-      {/* ── Enterprise Glass Header & Quick HUD ─────────────────────────────── */}
+      {/* ── Enterprise Executive Navigation Bar ─────────────────────────────── */}
       <header className="glass-panel" style={{
-        padding: '10px 24px',
+        padding: '8px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -207,150 +154,30 @@ export default function App() {
         gap: '16px',
         flexWrap: 'wrap'
       }}>
-        {/* Brand & Platform Identity */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Left: Brand & Platform Identity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
-            padding: '8px',
-            borderRadius: '10px',
+            padding: '7px',
+            borderRadius: '9px',
             display: 'flex',
             alignItems: 'center',
             boxShadow: '0 0 16px rgba(79, 70, 229, 0.4)'
           }}>
-            <Building2 size={19} color="#ffffff" />
+            <Building2 size={18} color="#ffffff" />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
-                BankCompliance AI
-              </h1>
-              <span style={{
-                background: 'rgba(99, 102, 241, 0.15)',
-                border: '1px solid rgba(99, 102, 241, 0.4)',
-                color: '#a5b4fc',
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                padding: '1px 7px',
-                borderRadius: '9999px',
-                letterSpacing: '0.04em'
-              }}>
-                ENTERPRISE HUD
-              </span>
-            </div>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
+            <h1 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
+              BankCompliance AI
+            </h1>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: 0 }}>
               RBI Master Directions • Central India AKS Cluster
             </p>
           </div>
         </div>
 
-        {/* Global Inference Engine Switcher */}
-        <div style={{
-          display: 'inline-flex',
-          background: 'rgba(15, 23, 42, 0.85)',
-          padding: '3px',
-          borderRadius: '9px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          gap: '3px'
-        }}>
-          <button
-            type="button"
-            onClick={() => setInferenceMode('cloud')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              fontSize: '0.74rem',
-              fontWeight: 600,
-              border: inferenceMode === 'cloud' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
-              background: inferenceMode === 'cloud' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-              color: inferenceMode === 'cloud' ? '#c7d2fe' : 'var(--text-muted)',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease'
-            }}
-          >
-            <Zap size={13} color={inferenceMode === 'cloud' ? '#818cf8' : 'currentColor'} />
-            <span>Multi-Cloud Fleet (Groq/Gemini)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setInferenceMode('sovereign')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              fontSize: '0.74rem',
-              fontWeight: 600,
-              border: inferenceMode === 'sovereign' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
-              background: inferenceMode === 'sovereign' ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
-              color: inferenceMode === 'sovereign' ? '#34d399' : 'var(--text-muted)',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease'
-            }}
-          >
-            <Shield size={13} color={inferenceMode === 'sovereign' ? '#34d399' : 'currentColor'} />
-            <span>Sovereign SLM (Qwen 2.5)</span>
-          </button>
-        </div>
-
-        {/* Global Cluster Pulse Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            color: '#34d399',
-            fontSize: '0.7rem',
-            padding: '4px 10px',
-            borderRadius: '9999px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px'
-          }}>
-            <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-            <span>APIM 200 OK</span>
-          </span>
-
-          <a
-            href="https://www.mytaxbot.site"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: 'var(--text-muted)',
-              textDecoration: 'none',
-              fontSize: '0.7rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(255, 255, 255, 0.04)',
-              padding: '4px 9px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-subtle)',
-              transition: 'all 0.18s ease'
-            }}
-          >
-            <span>TaxBot India</span>
-            <ExternalLink size={11} />
-          </a>
-        </div>
-      </header>
-
-      {/* ── 5 Core Enterprise Command Pillars Bar ──────────────────────────── */}
-      <div style={{
-        background: 'rgba(10, 14, 22, 0.95)',
-        borderBottom: '1px solid var(--border-subtle)',
-        padding: '6px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {/* Center: 5 Core Enterprise Command Pillars */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {/* Pillar 1: Copilot */}
           <button
             onClick={() => setActivePillar('copilot')}
@@ -358,13 +185,13 @@ export default function App() {
               background: activePillar === 'copilot' ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(6, 182, 212, 0.2))' : 'transparent',
               border: activePillar === 'copilot' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
               color: activePillar === 'copilot' ? '#ffffff' : 'var(--text-muted)',
-              padding: '6px 13px',
+              padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '0.76rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               transition: 'all 0.18s ease'
             }}
@@ -380,13 +207,13 @@ export default function App() {
               background: activePillar === 'command' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
               border: activePillar === 'command' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
               color: activePillar === 'command' ? '#c7d2fe' : 'var(--text-muted)',
-              padding: '6px 13px',
+              padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '0.76rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               transition: 'all 0.18s ease'
             }}
@@ -402,13 +229,13 @@ export default function App() {
               background: activePillar === 'governance' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 182, 212, 0.2))' : 'transparent',
               border: activePillar === 'governance' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
               color: activePillar === 'governance' ? '#34d399' : 'var(--text-muted)',
-              padding: '6px 13px',
+              padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '0.76rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               transition: 'all 0.18s ease'
             }}
@@ -424,13 +251,13 @@ export default function App() {
               background: activePillar === 'monitoring' ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.2))' : 'transparent',
               border: activePillar === 'monitoring' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid transparent',
               color: activePillar === 'monitoring' ? '#38bdf8' : 'var(--text-muted)',
-              padding: '6px 13px',
+              padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '0.76rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               transition: 'all 0.18s ease'
             }}
@@ -446,13 +273,13 @@ export default function App() {
               background: activePillar === 'redline' ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
               border: activePillar === 'redline' ? '1px solid rgba(236, 72, 153, 0.5)' : '1px solid transparent',
               color: activePillar === 'redline' ? '#f472b6' : 'var(--text-muted)',
-              padding: '6px 13px',
+              padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '0.76rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               transition: 'all 0.18s ease'
             }}
@@ -460,66 +287,80 @@ export default function App() {
             <FileCheck size={13} />
             <span>Policy Redliner</span>
           </button>
-        </div>
+        </nav>
 
-        {/* Sub-View Switcher when Copilot is active */}
-        {activePillar === 'copilot' && (
+        {/* Right: Global Inference Engine Switcher & APIM Health */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            display: 'flex',
-            background: 'rgba(15, 23, 42, 0.8)',
-            borderRadius: '8px',
-            border: '1px solid var(--border-subtle)',
-            padding: '2px',
-            gap: '2px'
+            display: 'inline-flex',
+            background: 'rgba(15, 23, 42, 0.85)',
+            padding: '3px',
+            borderRadius: '9px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            gap: '3px'
           }}>
             <button
-              onClick={() => setCopilotView('chat-only')}
+              type="button"
+              onClick={() => setInferenceMode('cloud')}
               style={{
-                background: copilotView === 'chat-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-                border: copilotView === 'chat-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                color: copilotView === 'chat-only' ? '#c7d2fe' : 'var(--text-muted)',
-                padding: '4px 10px',
-                borderRadius: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 11px',
+                borderRadius: '6px',
+                fontSize: '0.73rem',
+                fontWeight: 600,
+                border: inferenceMode === 'cloud' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+                background: inferenceMode === 'cloud' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                color: inferenceMode === 'cloud' ? '#c7d2fe' : 'var(--text-muted)',
                 cursor: 'pointer',
-                fontSize: '0.72rem',
-                fontWeight: 600
+                transition: 'all 0.18s ease'
               }}
             >
-              Chat Only
+              <Zap size={12} color={inferenceMode === 'cloud' ? '#818cf8' : 'currentColor'} />
+              <span>Multi-Cloud Fleet (Groq/Gemini)</span>
             </button>
+
             <button
-              onClick={() => setCopilotView('split')}
+              type="button"
+              onClick={() => setInferenceMode('sovereign')}
               style={{
-                background: copilotView === 'split' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-                border: copilotView === 'split' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                color: copilotView === 'split' ? '#c7d2fe' : 'var(--text-muted)',
-                padding: '4px 10px',
-                borderRadius: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 11px',
+                borderRadius: '6px',
+                fontSize: '0.73rem',
+                fontWeight: 600,
+                border: inferenceMode === 'sovereign' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
+                background: inferenceMode === 'sovereign' ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
+                color: inferenceMode === 'sovereign' ? '#34d399' : 'var(--text-muted)',
                 cursor: 'pointer',
-                fontSize: '0.72rem',
-                fontWeight: 600
+                transition: 'all 0.18s ease'
               }}
             >
-              Split View
-            </button>
-            <button
-              onClick={() => setCopilotView('doc-only')}
-              style={{
-                background: copilotView === 'doc-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-                border: copilotView === 'doc-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                color: copilotView === 'doc-only' ? '#c7d2fe' : 'var(--text-muted)',
-                padding: '4px 10px',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '0.72rem',
-                fontWeight: 600
-              }}
-            >
-              Document Only
+              <Shield size={12} color={inferenceMode === 'sovereign' ? '#34d399' : 'currentColor'} />
+              <span>Sovereign SLM (Qwen 2.5)</span>
             </button>
           </div>
-        )}
-      </div>
+
+          <span style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: '#34d399',
+            fontSize: '0.68rem',
+            padding: '4px 9px',
+            borderRadius: '9999px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px'
+          }}>
+            <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+            <span>APIM 200 OK</span>
+          </span>
+        </div>
+      </header>
 
       {/* ── Main Dynamic Workspace View ────────────────────────────────────── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -567,58 +408,21 @@ export default function App() {
               overflowY: 'auto'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Master Directions
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Layers size={13} color="#818cf8" />
+                  <span>Master Directions</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept=".pdf"
-                    style={{ display: 'none' }}
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    title="Upload Official RBI PDF Document"
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.12)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      borderRadius: '6px',
-                      padding: '3px 7px',
-                      fontSize: '0.68rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <Upload size={10} className={uploading ? 'spin' : ''} />
-                    <span>{uploading ? 'Parsing...' : 'Upload PDF'}</span>
-                  </button>
-                  <button
-                    onClick={triggerDataLakeSync}
-                    disabled={ingesting}
-                    title="Sync Regulatory Data Lake to Qdrant"
-                    style={{
-                      background: 'rgba(99, 102, 241, 0.12)',
-                      border: '1px solid rgba(99, 102, 241, 0.3)',
-                      color: '#a5b4fc',
-                      borderRadius: '6px',
-                      padding: '3px 7px',
-                      fontSize: '0.68rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <RefreshCw size={10} className={ingesting ? 'spin' : ''} />
-                    <span>Sync</span>
-                  </button>
-                </div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  color: '#818cf8',
+                  background: 'rgba(99, 102, 241, 0.12)',
+                  border: '1px solid rgba(99, 102, 241, 0.25)',
+                  padding: '1px 7px',
+                  borderRadius: '9999px',
+                  fontWeight: 600
+                }}>
+                  {lakeStats.total_circulars || 12} Indexed
+                </span>
               </div>
 
               {ingestSuccess && (
@@ -742,33 +546,123 @@ export default function App() {
               </div>
             </aside>
 
-            {/* Middle: Regulatory Copilot Chat Window */}
-            {copilotView !== 'doc-only' && (
+            {/* Main Copilot Workspace Area */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+              {/* Copilot Sub-View Control Bar */}
               <div style={{
-                flex: copilotView === 'split' ? '0 0 52%' : 1,
+                background: 'rgba(10, 14, 22, 0.95)',
+                borderBottom: '1px solid var(--border-subtle)',
+                padding: '6px 16px',
                 display: 'flex',
-                height: '100%',
-                borderRight: copilotView === 'split' ? '1px solid var(--border-subtle)' : 'none'
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px'
               }}>
-                <ChatWindow
-                  selectedCircular={selectedCircular}
-                  onSelectCitation={handleSelectCitation}
-                  inferenceMode={inferenceMode}
-                  onToggleInferenceMode={setInferenceMode}
-                />
-              </div>
-            )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.73rem', color: 'var(--text-muted)' }}>
+                  <span>Layout Mode:</span>
+                  <span style={{ color: '#e2e8f0', fontWeight: 600 }}>
+                    {copilotView === 'split' ? 'Split View (Chat + Statutory Clauses)' : copilotView === 'chat-only' ? 'Copilot Chat Full-Width' : 'Statutory Document Full-Width'}
+                  </span>
+                </div>
 
-            {/* Right Pane: Split-Screen Interactive Document Viewer */}
-            {copilotView !== 'chat-only' && (
-              <DocumentViewer
-                selectedDocId={selectedDocId}
-                highlightClause={highlightClause}
-                viewMode={copilotView === 'doc-only' ? 'fullscreen' : 'split'}
-                onToggleViewMode={() => setCopilotView(prev => prev === 'doc-only' ? 'split' : 'doc-only')}
-                onClose={() => setCopilotView('chat-only')}
-              />
-            )}
+                <div style={{
+                  display: 'flex',
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  borderRadius: '7px',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '2px',
+                  gap: '2px'
+                }}>
+                  <button
+                    onClick={() => setCopilotView('chat-only')}
+                    style={{
+                      background: copilotView === 'chat-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                      border: copilotView === 'chat-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                      color: copilotView === 'chat-only' ? '#c7d2fe' : 'var(--text-muted)',
+                      padding: '3px 9px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontSize: '0.71rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <MessageSquare size={11} />
+                    <span>Chat Only</span>
+                  </button>
+                  <button
+                    onClick={() => setCopilotView('split')}
+                    style={{
+                      background: copilotView === 'split' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                      border: copilotView === 'split' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                      color: copilotView === 'split' ? '#c7d2fe' : 'var(--text-muted)',
+                      padding: '3px 9px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontSize: '0.71rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Columns size={11} />
+                    <span>Split View</span>
+                  </button>
+                  <button
+                    onClick={() => setCopilotView('doc-only')}
+                    style={{
+                      background: copilotView === 'doc-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                      border: copilotView === 'doc-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                      color: copilotView === 'doc-only' ? '#c7d2fe' : 'var(--text-muted)',
+                      padding: '3px 9px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontSize: '0.71rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <FileText size={11} />
+                    <span>Document Only</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Workspace Inner Panes */}
+              <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                {copilotView !== 'doc-only' && (
+                  <div style={{
+                    flex: copilotView === 'split' ? '0 0 52%' : 1,
+                    display: 'flex',
+                    height: '100%',
+                    borderRight: copilotView === 'split' ? '1px solid var(--border-subtle)' : 'none'
+                  }}>
+                    <ChatWindow
+                      selectedCircular={selectedCircular}
+                      onSelectCitation={handleSelectCitation}
+                      inferenceMode={inferenceMode}
+                      onToggleInferenceMode={setInferenceMode}
+                    />
+                  </div>
+                )}
+
+                {copilotView !== 'chat-only' && (
+                  <DocumentViewer
+                    selectedDocId={selectedDocId}
+                    highlightClause={highlightClause}
+                    viewMode={copilotView === 'doc-only' ? 'fullscreen' : 'split'}
+                    onToggleViewMode={() => setCopilotView(prev => prev === 'doc-only' ? 'split' : 'doc-only')}
+                    onClose={() => setCopilotView('chat-only')}
+                  />
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>
