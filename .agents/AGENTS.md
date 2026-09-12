@@ -261,12 +261,13 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** On single-node `Standard_B2ms` (2 vCPUs = 2000m), system daemonsets (OMS agent, Azure CNI, Ingress) consume ~1840m. Configuring `requests.cpu: 250m` in `ollama-deployment.yaml` exceeds schedulable capacity.
 * **Resolution:** Right-size `requests.cpu: "10m"` and `requests.memory: "128Mi"` with burst limits `1000m` / `1536Mi` on both `initContainer` (model puller) and main Ollama engine. Pod schedules instantly and completes model initialization in <60s.
 
-### 29. LangGraph Cyclic StateGraph Orchestration with Graceful Fallback
-* **Symptom:** Potential failure of multi-agent execution if optional `langgraph` library is missing or fails compilation during rolling updates.
-* **Root Cause:** Graph-based agent frameworks introduce additional runtime dependencies that could block query processing if initialization errors occur.
-* **Resolution:** In `orchestrator_v2.py`, wrap LangGraph import and compilation in try/except with `LANGGRAPH_AVAILABLE` flag. If uncompiled, `LangGraphOrchestrator.run()` gracefully delegates execution to `MultiAgentOrchestrator.run()`, ensuring 100% zero-downtime backward compatibility.
+### 30. React JSX Ternary IIFE Expression Syntax Parsing Failure (`Expected identifier but found '('`)
+* **Symptom:** Vite SPA production build fails in GitHub Actions CI/CD with `[vite:esbuild] Transform failed with 1 error: ... ChatWindow.jsx:342:23: ERROR: Expected identifier but found "("`.
+* **Root Cause:** In React JSX, conditional ternary branches evaluating an immediately invoked function expression (IIFE) must follow `condition ? (<Component />) : (() => { ... })()`. Adding an extraneous curly brace `{(() => { ... })()}` inside the ternary branch violates JSX grammar because the ternary expression is already embedded within an active JSX expression block.
+* **Resolution:** Remove the extraneous `{` and `}` surrounding the IIFE call: format ternary branch strictly as `) : (() => { const ...; return (<Component />); })()`.
 
 ---
+
 
 
 ## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
