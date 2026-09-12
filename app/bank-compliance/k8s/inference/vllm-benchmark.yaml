@@ -21,7 +21,7 @@ metadata:
     skill-bridge/engine: "vLLM"
     skill-bridge/accelerator: "NVIDIA-T4"
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: vllm-benchmark-inference

@@ -55,8 +55,14 @@ class AuditorAgent:
             state["audit_passed"] = True
             state["citations"] = validated_citations
             return state
-            
-        # 3. LLM-Assisted Chain-of-Thought Audit via gemini-2.0-flash-thinking
+
+        # 3. Sovereign Air-Gapped Guard: Zero External Cloud Egress when running in-cluster SLM
+        if state.get("target_model") == "private-slm":
+            state["audit_passed"] = is_valid
+            state["citations"] = validated_citations
+            return state
+
+        # 4. LLM-Assisted Chain-of-Thought Audit via gemini-2.0-flash-thinking (Cloud Fleet only)
         if httpx and evidence:
             try:
                 litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")

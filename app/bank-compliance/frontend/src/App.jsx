@@ -1,9 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Shield, Building2, BookOpen, ExternalLink, Database, RefreshCw, CheckCircle2, Columns, MessageSquare, FileText, Activity, Sparkles, Cpu, Layers, Upload, FileCheck, Search, Filter } from 'lucide-react'
+import {
+  Shield,
+  Building2,
+  BookOpen,
+  ExternalLink,
+  Database,
+  RefreshCw,
+  CheckCircle2,
+  Columns,
+  MessageSquare,
+  FileText,
+  Activity,
+  Sparkles,
+  Cpu,
+  Layers,
+  Upload,
+  FileCheck,
+  Search,
+  Filter,
+  Sliders,
+  Lock,
+  Zap,
+  Radio
+} from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import DocumentViewer from './components/DocumentViewer'
 import GenAIOpsDashboard from './components/GenAIOpsDashboard'
 import RedlineStudio from './components/RedlineStudio'
+import CommandCenter from './components/CommandCenter'
+import GovernanceCenter from './components/GovernanceCenter'
 
 export default function App() {
   const [selectedCircular, setSelectedCircular] = useState('All')
@@ -14,11 +39,20 @@ export default function App() {
   const [ingestSuccess, setIngestSuccess] = useState(null)
   const [lakeStats, setLakeStats] = useState({ total_circulars: 12, total_indexed_clauses: 120 })
   const fileInputRef = useRef(null)
-  
-  // Split-Screen & Mode State
+
+  // ── Global Enterprise Architecture Navigation ────────────────────────────────
+  // activePillar: 'copilot' | 'command' | 'governance' | 'monitoring' | 'redline'
+  const [activePillar, setActivePillar] = useState('copilot')
+
+  // Copilot Sub-Views: 'split' | 'chat-only' | 'doc-only'
+  const [copilotView, setCopilotView] = useState('split')
+
+  // Global Inference Engine Mode: 'cloud' | 'sovereign'
+  const [inferenceMode, setInferenceMode] = useState('cloud')
+
+  // Split-Screen & Document Selection State
   const [selectedDocId, setSelectedDocId] = useState('01-rbi-master-direction-kyc-aml-vcip')
   const [highlightClause, setHighlightClause] = useState('')
-  const [viewMode, setViewMode] = useState('split') // 'split' | 'chat-only' | 'doc-only' | 'telemetry' | 'redline'
 
   const CIRCULAR_MAP = [
     { label: "All Master Directions", id: "01-rbi-master-direction-kyc-aml-vcip", sector: "All", isAll: true, count: 120, icon: Layers },
@@ -41,14 +75,15 @@ export default function App() {
     { label: "Safe Deposit Lockers Norms", id: "12-rbi-master-direction-bank-lockers-safe-custody", sector: "Forex & Payments", count: 8, icon: Shield }
   ]
 
-
-
   const handleSelectCircular = (item) => {
     setSelectedCircular(item.isAll ? 'All' : item.label)
     setSelectedDocId(item.id)
     setHighlightClause('')
-    if (viewMode === 'chat-only') {
-      setViewMode('split')
+    if (activePillar !== 'copilot') {
+      setActivePillar('copilot')
+    }
+    if (copilotView === 'chat-only') {
+      setCopilotView('split')
     }
   }
 
@@ -70,8 +105,11 @@ export default function App() {
 
     setSelectedDocId(targetDocId)
     setHighlightClause(citation.clause || citation.text?.slice(0, 30) || '')
-    if (viewMode === 'chat-only') {
-      setViewMode('split')
+    if (activePillar !== 'copilot') {
+      setActivePillar('copilot')
+    }
+    if (copilotView === 'chat-only') {
+      setCopilotView('split')
     }
   }
 
@@ -89,11 +127,11 @@ export default function App() {
 
       const res = await fetch(apiEndpoint, { method: 'POST' })
       const data = await res.json()
-      setIngestSuccess(`Synced ${data.total_circulars || 6} Directions (${data.total_clauses || 24} clauses)`)
-      setLakeStats({ total_circulars: data.total_circulars || 6, total_indexed_clauses: data.total_clauses || 24 })
+      setIngestSuccess(`Synced ${data.total_circulars || 12} Directions (${data.total_clauses || 120} clauses)`)
+      setLakeStats({ total_circulars: data.total_circulars || 12, total_indexed_clauses: data.total_clauses || 120 })
     } catch (err) {
       console.warn('Ingestion sync fallback:', err)
-      setIngestSuccess('✅ 6 Master Directions Synced to Qdrant')
+      setIngestSuccess('✅ 12 Master Directions Synced to Qdrant')
     } finally {
       setIngesting(false)
       setTimeout(() => setIngestSuccess(null), 4000)
@@ -130,8 +168,8 @@ export default function App() {
         const data = await res.json()
         setIngestSuccess(`✅ Ingested "${data.title || file.name}" (${data.clauses_extracted} clauses indexed)`)
         setLakeStats(prev => ({
-          total_circulars: (prev.total_circulars || 6) + 1,
-          total_indexed_clauses: data.total_corpus_clauses || ((prev.total_indexed_clauses || 24) + data.clauses_extracted)
+          total_circulars: (prev.total_circulars || 12) + 1,
+          total_indexed_clauses: data.total_corpus_clauses || ((prev.total_indexed_clauses || 120) + data.clauses_extracted)
         }))
         if (data.document_id) {
           setSelectedDocId(data.document_id)
@@ -150,455 +188,590 @@ export default function App() {
     }
   }
 
+  const filteredCirculars = CIRCULAR_MAP.filter(c => {
+    const matchesSector = activeSector === 'All' || c.sector === activeSector || c.isAll
+    const matchesSearch = c.label.toLowerCase().includes(searchFilter.toLowerCase())
+    return matchesSector && matchesSearch
+  })
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-dark)' }}>
-      {/* 2026 Sleek Glass Header */}
+      {/* ── Enterprise Glass Header & Quick HUD ─────────────────────────────── */}
       <header className="glass-panel" style={{
-        padding: '12px 24px',
+        padding: '10px 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottom: '1px solid var(--border-subtle)',
-        zIndex: 20
+        zIndex: 30,
+        gap: '16px',
+        flexWrap: 'wrap'
       }}>
+        {/* Brand & Platform Identity */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{
             background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
-            padding: '9px',
-            borderRadius: '12px',
+            padding: '8px',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             boxShadow: '0 0 16px rgba(79, 70, 229, 0.4)'
           }}>
-            <Building2 size={20} color="#ffffff" />
+            <Building2 size={19} color="#ffffff" />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
+              <h1 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
                 BankCompliance AI
               </h1>
               <span style={{
                 background: 'rgba(99, 102, 241, 0.15)',
                 border: '1px solid rgba(99, 102, 241, 0.4)',
                 color: '#a5b4fc',
-                fontSize: '0.65rem',
+                fontSize: '0.62rem',
                 fontWeight: 700,
                 padding: '1px 7px',
                 borderRadius: '9999px',
                 letterSpacing: '0.04em'
               }}>
-                v2026.1
+                ENTERPRISE HUD
               </span>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
-              RBI Regulatory Copilot • Multi-Agent State Graph on AKS
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
+              RBI Master Directions • Central India AKS Cluster
             </p>
           </div>
         </div>
 
-        {/* View Mode Controls & Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Segmented View Switcher */}
-          <div style={{
-            display: 'flex',
-            background: 'rgba(15, 23, 42, 0.8)',
-            borderRadius: '10px',
-            border: '1px solid var(--border-subtle)',
-            padding: '3px',
-            gap: '2px'
-          }}>
-            <button
-              onClick={() => setViewMode('chat-only')}
-              title="Chat Only Mode"
-              style={{
-                background: viewMode === 'chat-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-                border: viewMode === 'chat-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                color: viewMode === 'chat-only' ? '#c7d2fe' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: '7px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <MessageSquare size={13} />
-              <span>Chat</span>
-            </button>
-            <button
-              onClick={() => setViewMode('split')}
-              title="Split-Screen Copilot & Document Viewer"
-              style={{
-                background: viewMode === 'split' ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(6, 182, 212, 0.2))' : 'transparent',
-                border: viewMode === 'split' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
-                color: viewMode === 'split' ? '#ffffff' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: '7px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <Columns size={13} />
-              <span>Split View</span>
-            </button>
-            <button
-              onClick={() => setViewMode('doc-only')}
-              title="Document Viewer Only"
-              style={{
-                background: viewMode === 'doc-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-                border: viewMode === 'doc-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                color: viewMode === 'doc-only' ? '#c7d2fe' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: '7px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <FileText size={13} />
-              <span>Clause Viewer</span>
-            </button>
-            <button
-              onClick={() => setViewMode('redline')}
-              title="Automated Policy & Contract Redline Studio"
-              style={{
-                background: viewMode === 'redline' ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.35), rgba(139, 92, 246, 0.25))' : 'transparent',
-                border: viewMode === 'redline' ? '1px solid rgba(236, 72, 153, 0.5)' : '1px solid transparent',
-                color: viewMode === 'redline' ? '#f472b6' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: '7px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <FileCheck size={13} />
-              <span>Policy Redliner</span>
-            </button>
-            <button
-              onClick={() => setViewMode('telemetry')}
-              title="GenAIOps Command Center & Observability"
-              style={{
-                background: viewMode === 'telemetry' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 182, 212, 0.2))' : 'transparent',
-                border: viewMode === 'telemetry' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid transparent',
-                color: viewMode === 'telemetry' ? '#6ee7b7' : 'var(--text-muted)',
-                padding: '6px 12px',
-                borderRadius: '7px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <Activity size={13} />
-              <span>GenAIOps Dashboard</span>
-            </button>
-          </div>
+        {/* Global Inference Engine Switcher */}
+        <div style={{
+          display: 'inline-flex',
+          background: 'rgba(15, 23, 42, 0.85)',
+          padding: '3px',
+          borderRadius: '9px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          gap: '3px'
+        }}>
+          <button
+            type="button"
+            onClick={() => setInferenceMode('cloud')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              border: inferenceMode === 'cloud' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+              background: inferenceMode === 'cloud' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+              color: inferenceMode === 'cloud' ? '#c7d2fe' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <Zap size={13} color={inferenceMode === 'cloud' ? '#818cf8' : 'currentColor'} />
+            <span>Multi-Cloud Fleet (Groq/Gemini)</span>
+          </button>
 
+          <button
+            type="button"
+            onClick={() => setInferenceMode('sovereign')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              border: inferenceMode === 'sovereign' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
+              background: inferenceMode === 'sovereign' ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
+              color: inferenceMode === 'sovereign' ? '#34d399' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <Shield size={13} color={inferenceMode === 'sovereign' ? '#34d399' : 'currentColor'} />
+            <span>Sovereign SLM (Qwen 2.5)</span>
+          </button>
+        </div>
 
+        {/* Global Cluster Pulse Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{
             background: 'rgba(16, 185, 129, 0.1)',
             border: '1px solid rgba(16, 185, 129, 0.35)',
             color: '#34d399',
-            fontSize: '0.72rem',
-            padding: '5px 12px',
+            fontSize: '0.7rem',
+            padding: '4px 10px',
             borderRadius: '9999px',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '5px'
           }}>
             <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-            <Shield size={12} /> DPDP Shield Active
+            <span>APIM 200 OK</span>
           </span>
-          
+
           <a
             href="https://www.mytaxbot.site"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             style={{
               color: 'var(--text-muted)',
               textDecoration: 'none',
-              fontSize: '0.8rem',
+              fontSize: '0.7rem',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              padding: '6px 10px',
-              borderRadius: '8px',
-              border: '1px solid transparent',
-              transition: 'all 0.2s'
+              background: 'rgba(255, 255, 255, 0.04)',
+              padding: '4px 9px',
+              borderRadius: '6px',
+              border: '1px solid var(--border-subtle)',
+              transition: 'all 0.18s ease'
             }}
           >
             <span>TaxBot India</span>
-            <ExternalLink size={12} />
+            <ExternalLink size={11} />
           </a>
         </div>
       </header>
 
-      {/* Main Body */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sleek Sidebar */}
-        <aside style={{
-          width: '275px',
-          background: 'rgba(10, 14, 22, 0.95)',
-          borderRight: '1px solid var(--border-subtle)',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          overflowY: 'auto'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Master Directions
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept=".pdf"
-                style={{ display: 'none' }}
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                title="Upload Official RBI PDF Document"
-                style={{
-                  background: 'rgba(56, 189, 248, 0.12)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  color: '#38bdf8',
-                  borderRadius: '6px',
-                  padding: '3px 7px',
-                  fontSize: '0.68rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Upload size={10} className={uploading ? 'animate-bounce' : ''} />
-                <span>{uploading ? 'Parsing...' : 'Upload PDF'}</span>
-              </button>
-              <button
-                onClick={triggerDataLakeSync}
-                disabled={ingesting}
-                title="Sync Regulatory Data Lake to Qdrant"
-                style={{
-                  background: 'rgba(99, 102, 241, 0.12)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  color: '#a5b4fc',
-                  borderRadius: '6px',
-                  padding: '3px 7px',
-                  fontSize: '0.68rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <RefreshCw size={10} className={ingesting ? 'animate-spin' : ''} />
-                <span>Sync</span>
-              </button>
-            </div>
-          </div>
-
-          {ingestSuccess && (
-            <div className="animate-fade-in" style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
+      {/* ── 5 Core Enterprise Command Pillars Bar ──────────────────────────── */}
+      <div style={{
+        background: 'rgba(10, 14, 22, 0.95)',
+        borderBottom: '1px solid var(--border-subtle)',
+        padding: '6px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Pillar 1: Copilot */}
+          <button
+            onClick={() => setActivePillar('copilot')}
+            style={{
+              background: activePillar === 'copilot' ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(6, 182, 212, 0.2))' : 'transparent',
+              border: activePillar === 'copilot' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+              color: activePillar === 'copilot' ? '#ffffff' : 'var(--text-muted)',
+              padding: '6px 13px',
               borderRadius: '8px',
-              padding: '8px 10px',
-              fontSize: '0.72rem',
-              color: '#34d399',
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
-            }}>
-              <CheckCircle2 size={13} />
-              <span>{ingestSuccess}</span>
-            </div>
-          )}
+              gap: '6px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <MessageSquare size={13} />
+            <span>Regulatory Copilot</span>
+          </button>
 
-          {/* Sector Filter Chips */}
-          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }}>
-            {['All', 'Cyber & IT', 'KYC & Fraud', 'Lending & Cards', 'Capital & Basel', 'Forex & Payments'].map((sector) => (
-              <button
-                key={sector}
-                onClick={() => setActiveSector(sector)}
-                style={{
-                  background: activeSector === sector ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.03)',
-                  border: activeSector === sector ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                  color: activeSector === sector ? '#c7d2fe' : 'var(--text-muted)',
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  padding: '2px 7px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {sector}
-              </button>
-            ))}
-          </div>
+          {/* Pillar 2: Command Center */}
+          <button
+            onClick={() => setActivePillar('command')}
+            style={{
+              background: activePillar === 'command' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
+              border: activePillar === 'command' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+              color: activePillar === 'command' ? '#c7d2fe' : 'var(--text-muted)',
+              padding: '6px 13px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <Sliders size={13} />
+            <span>Command Center</span>
+          </button>
 
-          {/* Search Input */}
+          {/* Pillar 3: Governance Center */}
+          <button
+            onClick={() => setActivePillar('governance')}
+            style={{
+              background: activePillar === 'governance' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 182, 212, 0.2))' : 'transparent',
+              border: activePillar === 'governance' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
+              color: activePillar === 'governance' ? '#34d399' : 'var(--text-muted)',
+              padding: '6px 13px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <Shield size={13} />
+            <span>Governance & DPDP</span>
+          </button>
+
+          {/* Pillar 4: Live Monitoring */}
+          <button
+            onClick={() => setActivePillar('monitoring')}
+            style={{
+              background: activePillar === 'monitoring' ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.2))' : 'transparent',
+              border: activePillar === 'monitoring' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid transparent',
+              color: activePillar === 'monitoring' ? '#38bdf8' : 'var(--text-muted)',
+              padding: '6px 13px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <Activity size={13} />
+            <span>Live Monitoring</span>
+          </button>
+
+          {/* Pillar 5: Policy Redliner */}
+          <button
+            onClick={() => setActivePillar('redline')}
+            style={{
+              background: activePillar === 'redline' ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
+              border: activePillar === 'redline' ? '1px solid rgba(236, 72, 153, 0.5)' : '1px solid transparent',
+              color: activePillar === 'redline' ? '#f472b6' : 'var(--text-muted)',
+              padding: '6px 13px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <FileCheck size={13} />
+            <span>Policy Redliner</span>
+          </button>
+        </div>
+
+        {/* Sub-View Switcher when Copilot is active */}
+        {activePillar === 'copilot' && (
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(15, 23, 42, 0.6)',
-            border: '1px solid #1e293b',
-            borderRadius: '6px',
-            padding: '4px 8px',
-            gap: '6px'
+            background: 'rgba(15, 23, 42, 0.8)',
+            borderRadius: '8px',
+            border: '1px solid var(--border-subtle)',
+            padding: '2px',
+            gap: '2px'
           }}>
-            <Search size={11} color="#64748b" />
-            <input
-              type="text"
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Filter circulars..."
+            <button
+              onClick={() => setCopilotView('chat-only')}
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#f8fafc',
+                background: copilotView === 'chat-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                border: copilotView === 'chat-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                color: copilotView === 'chat-only' ? '#c7d2fe' : 'var(--text-muted)',
+                padding: '4px 10px',
+                borderRadius: '5px',
+                cursor: 'pointer',
                 fontSize: '0.72rem',
-                outline: 'none',
-                width: '100%'
+                fontWeight: 600
               }}
-            />
+            >
+              Chat Only
+            </button>
+            <button
+              onClick={() => setCopilotView('split')}
+              style={{
+                background: copilotView === 'split' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                border: copilotView === 'split' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                color: copilotView === 'split' ? '#c7d2fe' : 'var(--text-muted)',
+                padding: '4px 10px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                fontWeight: 600
+              }}
+            >
+              Split View
+            </button>
+            <button
+              onClick={() => setCopilotView('doc-only')}
+              style={{
+                background: copilotView === 'doc-only' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                border: copilotView === 'doc-only' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                color: copilotView === 'doc-only' ? '#c7d2fe' : 'var(--text-muted)',
+                padding: '4px 10px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                fontWeight: 600
+              }}
+            >
+              Document Only
+            </button>
           </div>
+        )}
+      </div>
 
-          {/* Navigation Items */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            {CIRCULAR_MAP
-              .filter(c => activeSector === 'All' || c.sector === 'All' || c.sector === activeSector)
-              .filter(c => !searchFilter || c.label.toLowerCase().includes(searchFilter.toLowerCase()))
-              .map((c, i) => {
-              const isSelected = selectedDocId === c.id || (c.isAll && selectedCircular === 'All')
-              const IconComponent = c.icon || BookOpen
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleSelectCircular(c)}
-                  style={{
-                    textAlign: 'left',
-                    background: isSelected 
-                      ? 'linear-gradient(90deg, rgba(79, 70, 229, 0.25) 0%, rgba(13, 17, 26, 0.4) 100%)' 
-                      : 'transparent',
-                    border: isSelected ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
-                    borderRadius: '8px',
-                    padding: '8px 10px',
-                    color: isSelected ? '#ffffff' : 'var(--text-secondary)',
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                    <IconComponent size={13} color={isSelected ? '#818cf8' : '#64748b'} />
-                    <span style={{ fontWeight: isSelected ? 600 : 400, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                      {c.label}
-                    </span>
-                  </div>
-                  <span style={{
-                    fontSize: '0.62rem',
-                    color: isSelected ? '#a5b4fc' : '#475569',
-                    background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                    padding: '1px 5px',
-                    borderRadius: '9999px',
-                    fontWeight: 600
-                  }}>
-                    {c.count}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Bottom Telemetry & FinOps Cards */}
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div className="glass-card" style={{ padding: '10px 12px', borderRadius: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8' }}>
-                <Database size={12} />
-                <span>Knowledge Lake</span>
-              </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                {lakeStats.total_circulars} Master Directions • {lakeStats.total_indexed_clauses} Clauses in Qdrant
-              </div>
-            </div>
-
-            <div className="glass-card" style={{ padding: '10px 12px', borderRadius: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.72rem', fontWeight: 600, color: '#f59e0b' }}>
-                <Activity size={12} />
-                <span>AKS FinOps State</span>
-              </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                Free Tier • Level 3 Redliner Active • Sub-10ms
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Telemetry Command Center Mode */}
-        {viewMode === 'telemetry' && (
-          <GenAIOpsDashboard onBackToChat={() => setViewMode('split')} />
+      {/* ── Main Dynamic Workspace View ────────────────────────────────────── */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Pillar 2: Command Center Mode */}
+        {activePillar === 'command' && (
+          <CommandCenter
+            inferenceMode={inferenceMode}
+            setInferenceMode={setInferenceMode}
+            onNavigateToCopilot={() => setActivePillar('copilot')}
+            lakeStats={lakeStats}
+            onTriggerSync={triggerDataLakeSync}
+          />
         )}
 
-        {/* Level 3: Policy & Contract Redline Studio Mode */}
-        {viewMode === 'redline' && (
+        {/* Pillar 3: Governance Center Mode */}
+        {activePillar === 'governance' && (
+          <GovernanceCenter
+            lakeStats={lakeStats}
+            onSelectCircular={handleSelectCircular}
+          />
+        )}
+
+        {/* Pillar 4: Live Monitoring Mode */}
+        {activePillar === 'monitoring' && (
+          <GenAIOpsDashboard onBackToChat={() => setActivePillar('copilot')} />
+        )}
+
+        {/* Pillar 5: Policy Redliner Mode */}
+        {activePillar === 'redline' && (
           <RedlineStudio />
         )}
 
-        {/* Center: Conversational Copilot */}
-        {viewMode !== 'doc-only' && viewMode !== 'telemetry' && viewMode !== 'redline' && (
-          <div style={{ flex: viewMode === 'split' ? '0 0 52%' : 1, display: 'flex', height: '100%', borderRight: viewMode === 'split' ? '1px solid var(--border-subtle)' : 'none' }}>
-            <ChatWindow
-              selectedCircular={selectedCircular}
-              onSelectCitation={handleSelectCitation}
-            />
-          </div>
-        )}
+        {/* Pillar 1: Regulatory Copilot Mode (Split Screen) */}
+        {activePillar === 'copilot' && (
+          <>
+            {/* Master Directions Directory Sidebar */}
+            <aside style={{
+              width: '275px',
+              background: 'rgba(10, 14, 22, 0.95)',
+              borderRight: '1px solid var(--border-subtle)',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              overflowY: 'auto'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Master Directions
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".pdf"
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    title="Upload Official RBI PDF Document"
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38bdf8',
+                      borderRadius: '6px',
+                      padding: '3px 7px',
+                      fontSize: '0.68rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Upload size={10} className={uploading ? 'spin' : ''} />
+                    <span>{uploading ? 'Parsing...' : 'Upload PDF'}</span>
+                  </button>
+                  <button
+                    onClick={triggerDataLakeSync}
+                    disabled={ingesting}
+                    title="Sync Regulatory Data Lake to Qdrant"
+                    style={{
+                      background: 'rgba(99, 102, 241, 0.12)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      color: '#a5b4fc',
+                      borderRadius: '6px',
+                      padding: '3px 7px',
+                      fontSize: '0.68rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <RefreshCw size={10} className={ingesting ? 'spin' : ''} />
+                    <span>Sync</span>
+                  </button>
+                </div>
+              </div>
 
-        {/* Right Pane: Split-Screen Interactive Document Viewer */}
-        {viewMode !== 'chat-only' && viewMode !== 'telemetry' && viewMode !== 'redline' && (
-          <DocumentViewer
-            selectedDocId={selectedDocId}
-            highlightClause={highlightClause}
-            viewMode={viewMode === 'doc-only' ? 'fullscreen' : 'split'}
-            onToggleViewMode={() => setViewMode(prev => prev === 'doc-only' ? 'split' : 'doc-only')}
-            onClose={() => setViewMode('chat-only')}
-          />
+              {ingestSuccess && (
+                <div className="animate-fade-in" style={{
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  borderRadius: '8px',
+                  padding: '8px 10px',
+                  fontSize: '0.72rem',
+                  color: '#34d399',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <CheckCircle2 size={13} />
+                  <span>{ingestSuccess}</span>
+                </div>
+              )}
+
+              {/* Sector Filter Chips */}
+              <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }}>
+                {['All', 'Cyber & IT', 'KYC & Fraud', 'Lending & Cards', 'Capital & Basel', 'Forex & Payments'].map((sector) => (
+                  <button
+                    key={sector}
+                    onClick={() => setActiveSector(sector)}
+                    style={{
+                      background: activeSector === sector ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      border: activeSector === sector ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                      color: activeSector === sector ? '#c7d2fe' : 'var(--text-muted)',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.66rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {sector}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Bar */}
+              <div style={{ position: 'relative' }}>
+                <Search size={12} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Filter RBI Master Directions..."
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '8px',
+                    padding: '6px 10px 6px 28px',
+                    fontSize: '0.75rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Circulars List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                {filteredCirculars.map((c, i) => {
+                  const isSelected = selectedCircular === (c.isAll ? 'All' : c.label)
+                  const IconComponent = c.icon || Layers
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleSelectCircular(c)}
+                      style={{
+                        background: isSelected ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(6, 182, 212, 0.15))' : 'transparent',
+                        border: isSelected ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent',
+                        color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        textAlign: 'left',
+                        fontSize: '0.74rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        transition: 'all 0.18s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        <IconComponent size={13} color={isSelected ? '#818cf8' : '#64748b'} />
+                        <span style={{ fontWeight: isSelected ? 600 : 400, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                          {c.label}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.62rem',
+                        color: isSelected ? '#a5b4fc' : '#475569',
+                        background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                        padding: '1px 5px',
+                        borderRadius: '9999px',
+                        fontWeight: 600
+                      }}>
+                        {c.count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Bottom Quick Info */}
+              <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="glass-card" style={{ padding: '10px 12px', borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8' }}>
+                    <Database size={12} />
+                    <span>Knowledge Lake</span>
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                    {lakeStats.total_circulars} Master Directions • {lakeStats.total_indexed_clauses} Clauses in Qdrant
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            {/* Middle: Regulatory Copilot Chat Window */}
+            {copilotView !== 'doc-only' && (
+              <div style={{
+                flex: copilotView === 'split' ? '0 0 52%' : 1,
+                display: 'flex',
+                height: '100%',
+                borderRight: copilotView === 'split' ? '1px solid var(--border-subtle)' : 'none'
+              }}>
+                <ChatWindow
+                  selectedCircular={selectedCircular}
+                  onSelectCitation={handleSelectCitation}
+                  inferenceMode={inferenceMode}
+                  onToggleInferenceMode={setInferenceMode}
+                />
+              </div>
+            )}
+
+            {/* Right Pane: Split-Screen Interactive Document Viewer */}
+            {copilotView !== 'chat-only' && (
+              <DocumentViewer
+                selectedDocId={selectedDocId}
+                highlightClause={highlightClause}
+                viewMode={copilotView === 'doc-only' ? 'fullscreen' : 'split'}
+                onToggleViewMode={() => setCopilotView(prev => prev === 'doc-only' ? 'split' : 'doc-only')}
+                onClose={() => setCopilotView('chat-only')}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
   )
 }
-

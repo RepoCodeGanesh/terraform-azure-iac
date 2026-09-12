@@ -137,7 +137,8 @@ class MultiAgentOrchestrator:
             "final_answer": "",
             "citations": [],
             "suggested_followups": [],
-            "model_used": "gpt-5.4-nano"
+            "model_used": "qwen2.5:0.5b" if target_model == "private-slm" else "gemini-2.0-flash",
+            "target_model": target_model
         }
 
         # ── Step 1: Supervisor / Planner Agent (Gemini 2.0 Flash-Lite) ────────
@@ -259,7 +260,10 @@ class MultiAgentOrchestrator:
                         if resp.status_code == 200:
                             data = resp.json()
                             answer = data["choices"][0]["message"]["content"]
-                            return answer, data.get("model", m)
+                            model_ret = data.get("model", m)
+                            if m == "private-slm" or "qwen" in model_ret.lower():
+                                model_ret = "qwen2.5:0.5b (sovereign-slm)"
+                            return answer, model_ret
                         elif resp.status_code == 400:
                             # Retry with max_tokens if max_completion_tokens is unsupported by model
                             payload.pop("max_completion_tokens", None)
@@ -272,7 +276,10 @@ class MultiAgentOrchestrator:
                             if resp_retry.status_code == 200:
                                 data = resp_retry.json()
                                 answer = data["choices"][0]["message"]["content"]
-                                return answer, data.get("model", m)
+                                model_ret = data.get("model", m)
+                                if m == "private-slm" or "qwen" in model_ret.lower():
+                                    model_ret = "qwen2.5:0.5b (sovereign-slm)"
+                                return answer, model_ret
                 except Exception as ex:
                     logger.debug("LiteLLM attempt on %s failed: %s", m, ex)
 

@@ -111,7 +111,7 @@ class SupervisorAgent:
         if history:
             # Multi-turn conversational session
             disambiguated = False
-            if httpx:
+            if httpx and state.get("target_model") != "private-slm":
                 try:
                     litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
                     api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")

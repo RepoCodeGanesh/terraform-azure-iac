@@ -43,3 +43,4 @@ class AgentExecutionState(TypedDict):
     citations: List[Dict[str, Any]]
     suggested_followups: List[str]
     model_used: str
+    target_model: Optional[str]

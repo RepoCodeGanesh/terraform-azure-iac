@@ -87,10 +87,11 @@ def lookup_semantic_cache(
     query: str,
     department: str = "compliance",
     threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
-    corpus_version: str = CURRENT_CORPUS_VERSION
+    corpus_version: str = CURRENT_CORPUS_VERSION,
+    model_scope: Optional[str] = "cloud"
 ) -> Optional[Dict[str, Any]]:
     """
-    Searches the semantic cache for semantically equivalent queries matching the active corpus version.
+    Searches the semantic cache for semantically equivalent queries matching the active corpus version and model scope.
     """
     bypass, reason = should_bypass_cache(query)
     if bypass:
@@ -110,6 +111,10 @@ def lookup_semantic_cache(
         if entry.get("corpus_version") != corpus_version:
             continue
 
+        # Check model scope (prevent sovereign queries from receiving public cloud cached answers)
+        if model_scope and entry.get("model_scope") != model_scope:
+            continue
+
         # Check TTL
         if now - entry.get("created_at", 0) > CACHE_TTL_SECONDS:
             continue
@@ -124,7 +129,7 @@ def lookup_semantic_cache(
             best_match = entry
 
     if best_match:
-        logger.info(f"🎯 Semantic Cache HIT (Score: {best_score:.3f} >= {threshold}) for query: '{query[:50]}...'")
+        logger.info(f"🎯 Semantic Cache HIT (Score: {best_score:.3f} >= {threshold}, Scope: {model_scope}) for query: '{query[:50]}...'")
         return {
             "answer": best_match["answer"],
             "citations": best_match["citations"],
@@ -144,7 +149,8 @@ def store_semantic_cache(
     pii_redacted: List[str],
     model_used: str,
     department: str = "compliance",
-    corpus_version: str = CURRENT_CORPUS_VERSION
+    corpus_version: str = CURRENT_CORPUS_VERSION,
+    model_scope: Optional[str] = "cloud"
 ) -> None:
     """
     Stores a validated compliance query-response pair into the semantic cache.
@@ -158,13 +164,14 @@ def store_semantic_cache(
         return
 
     entry = {
-        "id": hashlib.sha256(f"{corpus_version}:{query}".encode()).hexdigest()[:16],
+        "id": hashlib.sha256(f"{corpus_version}:{model_scope}:{query}".encode()).hexdigest()[:16],
         "query": query,
         "embedding": query_vec,
         "answer": answer,
         "citations": citations,
         "pii_redacted": pii_redacted,
         "model_used": model_used,
+        "model_scope": model_scope,
         "department": department,
         "corpus_version": corpus_version,
         "created_at": time.time()

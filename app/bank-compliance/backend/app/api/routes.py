@@ -98,11 +98,17 @@ async def query_compliance(request: QueryRequest):
             except Exception:
                 pass
 
+    # Determine model scope (Sovereign SLM vs Multi-Cloud Fleet)
+    is_sovereign = getattr(request, "model_preference", "cloud") in ["sovereign-slm", "local", "private-slm", "sovereign"]
+    model_scope = "sovereign" if is_sovereign else "cloud"
+    target_model = "private-slm" if is_sovereign else None
+
     # 2. Governed Semantic Vector Cache Lookup (FinOps & Sub-10ms Latency)
     cached_result = lookup_semantic_cache(
         query=sanitized_prompt,
         department=request.department or "compliance",
-        corpus_version=CURRENT_CORPUS_VERSION
+        corpus_version=CURRENT_CORPUS_VERSION,
+        model_scope=model_scope
     )
 
     if cached_result:
@@ -123,7 +129,6 @@ async def query_compliance(request: QueryRequest):
         )
 
     # 3. Multi-Agent Orchestration (Supervisor ➔ Retriever ➔ Auditor ➔ Synthesizer)
-    target_model = "private-slm" if getattr(request, "model_preference", "cloud") in ["sovereign-slm", "local", "private-slm", "sovereign"] else None
     agent_output = await MultiAgentOrchestrator.run(
         sanitized_query=sanitized_prompt,
         department=request.department or "compliance",
@@ -150,7 +155,7 @@ async def query_compliance(request: QueryRequest):
         for c in raw_citations
     ]
 
-    # 4. Store in Semantic Cache for Future Instant Retrieval (Only for valid compliance answers)
+    # 4. Store in Semantic Cache for Future Instant Retrieval (Scoped by sovereign vs cloud)
     if raw_citations:
         store_semantic_cache(
             query=sanitized_prompt,
@@ -159,7 +164,8 @@ async def query_compliance(request: QueryRequest):
             pii_redacted=pii_detected,
             model_used=model_used,
             department=request.department or "compliance",
-            corpus_version=CURRENT_CORPUS_VERSION
+            corpus_version=CURRENT_CORPUS_VERSION,
+            model_scope=model_scope
         )
 
     latency = round((time.time() - start_time) * 1000, 2)
