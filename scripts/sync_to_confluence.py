@@ -38,7 +38,11 @@ PAGES_MAP = [
     {"num": "10", "file": "10-incident-post-mortems-and-rca-knowledge-base.md", "title": "10. Master Incident Post-Mortems & Root Cause Analysis (RCA)"},
     {"num": "11", "file": "11-bank-compliance-troubleshooting-learnings.md", "title": "11. BankCompliance AI: Engineering Learnings & Troubleshooting"},
     {"num": "12", "file": "12-fine-tuning-and-private-slm-guide.md", "title": "12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps"},
-    {"num": "13", "file": "13-kubernetes-daily-operations-runbook.md", "title": "13. Enterprise Kubernetes Daily Operations Runbook"}
+    {"num": "13", "file": "13-kubernetes-daily-operations-runbook.md", "title": "13. Enterprise Kubernetes Daily Operations Runbook"},
+    {"num": "14", "file": "14-iam-and-rbac-security-matrix.md", "title": "14. Enterprise Identity & Access Management (IAM) & RBAC Security Matrix"},
+    {"num": "15", "file": "15-enterprise-c4-architecture-and-data-flows.md", "title": "15. Enterprise C4 Architecture & End-to-End Data Flows"},
+    {"num": "16", "file": "16-devsecops-policy-as-code-and-checkov.md", "title": "16. DevSecOps, Policy-as-Code & Checkov Security Framework"},
+    {"num": "17", "file": "17-central-observability-workbooks-and-metrics.md", "title": "17. Centralized Observability, Azure Monitor Workbooks & Telemetry Catalog"}
 ]
 
 HOMEPAGE_STORAGE = """
@@ -113,6 +117,16 @@ HOMEPAGE_STORAGE = """
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="07. Enterprise Security, Zero-Trust Architecture & Governance" /></ac:link></td>
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">DPDP Act PII Sanitizer, Azure AI Content Safety, OPA Gatekeeper</td>
         </tr>
+        <tr>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">14</td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="14. Enterprise Identity & Access Management (IAM) & RBAC Security Matrix" /></ac:link></td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">WIF OIDC Federation, Control vs Data Plane RBAC, Key Vault Policies</td>
+        </tr>
+        <tr>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">16</td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="16. DevSecOps, Policy-as-Code & Checkov Security Framework" /></ac:link></td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">Checkov Static Analysis, Trivy Container Scans, Azure Policy Deny Rules</td>
+        </tr>
     </tbody>
 </table>
 
@@ -149,6 +163,11 @@ HOMEPAGE_STORAGE = """
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="13. Enterprise Kubernetes Daily Operations Runbook" /></ac:link></td>
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">AKS Daily kubectl/helm Commands with Purpose, 10 Triage Tiers, FinOps Scaling</td>
         </tr>
+        <tr>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">17</td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="17. Centralized Observability, Azure Monitor Workbooks & Telemetry Catalog" /></ac:link></td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">Central LAW, Azure Monitor Workbooks KQL, Diagnostic Streaming</td>
+        </tr>
     </tbody>
 </table>
 
@@ -174,6 +193,11 @@ HOMEPAGE_STORAGE = """
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">12</td>
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps" /></ac:link></td>
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">LoRA SFT Training Engine, In-Cluster Sovereign SLM (CPU), RAG vs LoRA Matrix</td>
+        </tr>
+        <tr>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">15</td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="15. Enterprise C4 Architecture & End-to-End Data Flows" /></ac:link></td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">C4 Context, Container, Component Diagrams & Sequence Data Paths</td>
         </tr>
     </tbody>
 </table>
@@ -446,18 +470,45 @@ def publish_all(email: str, api_token: str):
 
     print("\nConfluence Synchronization Completed Successfully.")
 
+def dry_run_validation() -> bool:
+    docs_dir = Path(__file__).resolve().parent.parent / "docs" / "confluence"
+    print("=" * 80)
+    print("  Confluence Docs-as-Code Dry-Run Validation (17 Specifications)")
+    print("=" * 80)
+    success_count = 0
+    for item in PAGES_MAP:
+        file_path = docs_dir / item["file"]
+        if not file_path.exists():
+            print(f"[FAIL] Missing file: {item['file']}")
+            continue
+        raw_md = file_path.read_text(encoding="utf-8")
+        storage_html = markdown_to_confluence_xhtml(raw_md)
+        word_count = len(raw_md.split())
+        char_count = len(storage_html)
+        print(f"[{item['num']}] OK: {item['title'][:50]:<50} | Words: {word_count:<5} | XHTML: {char_count:<6} bytes")
+        success_count += 1
+    print("=" * 80)
+    print(f"Validation Result: {success_count}/{len(PAGES_MAP)} documents validated successfully.")
+    return success_count == len(PAGES_MAP)
+
 if __name__ == "__main__":
+    if "--dry-run" in sys.argv or "-d" in sys.argv:
+        is_valid = dry_run_validation()
+        sys.exit(0 if is_valid else 1)
+
     email = os.environ.get("CONFLUENCE_EMAIL", DEFAULT_EMAIL)
     token = os.environ.get("CONFLUENCE_API_TOKEN")
     
     if not token:
         token = get_token_from_az()
         
-    if not token and len(sys.argv) > 1:
+    if not token and len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
         token = sys.argv[1]
         
     if not token:
         print("Error: Confluence API token required via CONFLUENCE_API_TOKEN env, Key Vault, or command argument.")
+        print("Tip: Run with --dry-run to validate all 17 markdown-to-XHTML transformations locally.")
         sys.exit(1)
 
     publish_all(email, token)
+
