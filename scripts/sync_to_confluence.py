@@ -37,7 +37,8 @@ PAGES_MAP = [
     {"num": "09", "file": "09-enterprise-network-and-traffic-flow.md", "title": "09. Enterprise Network Topology, Packet Routing & DNS Spec"},
     {"num": "10", "file": "10-incident-post-mortems-and-rca-knowledge-base.md", "title": "10. Master Incident Post-Mortems & Root Cause Analysis (RCA)"},
     {"num": "11", "file": "11-bank-compliance-troubleshooting-learnings.md", "title": "11. BankCompliance AI: Engineering Learnings & Troubleshooting"},
-    {"num": "12", "file": "12-fine-tuning-and-private-slm-guide.md", "title": "12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps"}
+    {"num": "12", "file": "12-fine-tuning-and-private-slm-guide.md", "title": "12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps"},
+    {"num": "13", "file": "13-kubernetes-daily-operations-runbook.md", "title": "13. Enterprise Kubernetes Daily Operations Runbook"}
 ]
 
 HOMEPAGE_STORAGE = """
@@ -143,6 +144,11 @@ HOMEPAGE_STORAGE = """
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="11. BankCompliance AI: Engineering Learnings & Troubleshooting" /></ac:link></td>
             <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">AKS Pod Troubleshooting, APIM URL Rewriting, CSI Volume Locks</td>
         </tr>
+        <tr>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">13</td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="13. Enterprise Kubernetes Daily Operations Runbook" /></ac:link></td>
+            <td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">AKS Daily kubectl/helm Commands with Purpose, 10 Triage Tiers, FinOps Scaling</td>
+        </tr>
     </tbody>
 </table>
 
@@ -210,6 +216,7 @@ SECTION_PAGES_STORAGE = {
 <tr><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><strong>FinOps Strategy</strong></td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">Near-Zero Idle Cost ($0.00 compute idle, $0.15/mo storage)</td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="04. FinOps & Near-Zero Idle Cost Strategy" /></ac:link></td></tr>
 <tr><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><strong>Dual CI/CD</strong></td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">GitHub Actions &amp; Azure DevOps Workload Identity Federation runbook</td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="05. Dual CI/CD, Workload Identity & Operations Runbook" /></ac:link></td></tr>
 <tr><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><strong>Engineering Learnings</strong></td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">AKS pod networking, Oryx BOM fixes, APIM CORS, Reasoning models</td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="11. BankCompliance AI: Engineering Learnings & Troubleshooting" /></ac:link></td></tr>
+<tr><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><strong>Daily K8s Operations</strong></td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;">Kubernetes &amp; Helm Daily Command Runbook (10 Operational Tiers, Purpose &amp; Emergency Triage)</td><td class="confluenceTd" style="border: 1px solid #dfe1e6; padding: 6px 10px;"><ac:link><ri:page ri:content-title="13. Enterprise Kubernetes Daily Operations Runbook" /></ac:link></td></tr>
 </tbody></table>
 """
 }

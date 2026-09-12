@@ -28,6 +28,7 @@ The complete **12-document company-level engineering suite** is live on Atlassia
 | **04** | **[04. FinOps & Near-Zero Idle Cost Strategy](04-finops-and-zero-cost-strategy.md)** | Master Cost Matrix ($0.00 Idle), Ephemeral OS, KEDA Scale-to-Zero | [Open Page 04 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/10321929) |
 | **10** | **[10. Master Incident Post-Mortems & Root Cause Analysis (RCA)](10-incident-post-mortems-and-rca-knowledge-base.md)** | 26 Production SRE Incident Post-Mortems (5-Whys, Diffs, KQL Queries) | [Open Page 10 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/10387482) |
 | **11** | **[11. BankCompliance AI: Engineering Learnings & Troubleshooting](11-bank-compliance-troubleshooting-learnings.md)** | 12 Production Issues (AKS, APIM URL Rewriting, LiteLLM, CSI Locks) | [Open Page 11 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/10485761) |
+| **13** | **[13. Enterprise Kubernetes Daily Operations Runbook](13-kubernetes-daily-operations-runbook.md)** | AKS Daily `kubectl`/`helm` commands with purpose & 10 triage tiers | [Open Page 13 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/16908289) |
 
 ---
 
