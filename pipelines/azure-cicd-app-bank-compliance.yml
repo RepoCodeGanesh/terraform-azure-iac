@@ -38,6 +38,16 @@ pr: none
 #     exclude:
 #       - '**/*.md'
 
+parameters:
+  - name: deployTarget
+    displayName: 'Deployment Target'
+    type: string
+    default: 'all'
+    values:
+      - 'all'
+      - 'frontend-only'
+      - 'backend-only'
+
 variables:
   - name: azureServiceConnection
     value: 'app-prod'
@@ -55,9 +65,61 @@ pool:
 
 stages:
 
-# ── STAGE 0: DevSecOps SAST & SCA Security Scanning ──────────────────────────
+# ── STAGE 0: Selective Path Change Detection ─────────────────────────────────
+- stage: DetectChanges
+  displayName: 'Detect Changed Components'
+  jobs:
+  - job: EvaluateDiff
+    displayName: 'Evaluate Changed Paths & Target'
+    steps:
+    - checkout: self
+      fetchDepth: 2
+    - bash: |
+        TARGET="${{ parameters.deployTarget }}"
+        echo "Selected deployment target: $TARGET"
+        echo "Build Reason: $(Build.Reason)"
+
+        if [ "$TARGET" = "frontend-only" ]; then
+          BACKEND_CHANGED="false"
+          FRONTEND_CHANGED="true"
+        elif [ "$TARGET" = "backend-only" ]; then
+          BACKEND_CHANGED="true"
+          FRONTEND_CHANGED="false"
+        elif [ "$TARGET" = "all" ]; then
+          BACKEND_CHANGED="true"
+          FRONTEND_CHANGED="true"
+        else
+          # Automatic CI trigger: evaluate git diff against HEAD~1
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            DIFF_FILES=$(git diff --name-only HEAD~1 HEAD)
+          else
+            DIFF_FILES=$(git log -1 --name-only --pretty="")
+          fi
+          echo "Changed files in commit:"
+          echo "$DIFF_FILES"
+
+          BACKEND_CHANGED="false"
+          FRONTEND_CHANGED="false"
+
+          if echo "$DIFF_FILES" | grep -qE "^app/bank-compliance/(backend|k8s|chart|eval)/|^pipelines/azure-cicd-app-bank-compliance\.yml"; then
+            BACKEND_CHANGED="true"
+          fi
+
+          if echo "$DIFF_FILES" | grep -qE "^app/bank-compliance/frontend/|^pipelines/azure-cicd-app-bank-compliance\.yml"; then
+            FRONTEND_CHANGED="true"
+          fi
+        fi
+
+        echo "##vso[task.setvariable variable=backendChanged;isOutput=true]$BACKEND_CHANGED"
+        echo "##vso[task.setvariable variable=frontendChanged;isOutput=true]$FRONTEND_CHANGED"
+        echo "Result: backendChanged=$BACKEND_CHANGED, frontendChanged=$FRONTEND_CHANGED"
+      name: setVars
+      displayName: 'Compute Component Flags'
+
+# ── STAGE 1: DevSecOps SAST & SCA Security Scanning ──────────────────────────
 - stage: DevSecOpsScan
-  displayName: '0. DevSecOps SAST & SCA Security Scan'
+  displayName: '1. DevSecOps SAST & SCA Security Scan'
+  dependsOn: DetectChanges
   jobs:
   - job: SecurityScan
     displayName: 'Execute SAST, Dependency SCA & SonarCloud Scan'
@@ -104,9 +166,11 @@ stages:
     - task: SonarCloudAnalyze@4
       displayName: 'Execute Enterprise SonarCloud SAST Security Scan'
 
-# ── STAGE 1: Continuous AI Quality & Regression Evaluation Gate ──────────────
+# ── STAGE 2: Continuous AI Quality & Regression Evaluation Gate ──────────────
 - stage: AIEvalQualityGate
-  displayName: '1. AI Quality & Regression Evaluation Gate'
+  displayName: '2. AI Quality & Regression Evaluation Gate'
+  dependsOn: [DetectChanges, DevSecOpsScan]
+  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['EvaluateDiff.setVars.backendChanged'], 'true'))
   jobs:
   - job: RunEvaluation
     displayName: 'Evaluate RAG Groundedness, Citation & Security'
@@ -130,10 +194,11 @@ stages:
       displayName: 'Publish AI Evaluation Scorecard'
       condition: always()
 
-# ── STAGE 2: Build & Push Backend Docker Image ──────────────────────────────
+# ── STAGE 3: Build & Push Backend Docker Image ──────────────────────────────
 - stage: BuildBackend
-  displayName: '2. Build Backend Container'
-  dependsOn: [DevSecOpsScan, AIEvalQualityGate]
+  displayName: '3. Build Backend Container'
+  dependsOn: [DetectChanges, AIEvalQualityGate]
+  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['EvaluateDiff.setVars.backendChanged'], 'true'))
   jobs:
   - job: BuildDockerImage
     displayName: 'Build & Push Docker Image'
@@ -150,10 +215,11 @@ stages:
           $(Build.BuildId)
           latest
 
-# ── STAGE 3: Deploy to AKS Cluster via Helm ─────────────────────────────────
+# ── STAGE 4: Deploy to AKS Cluster via Helm ─────────────────────────────────
 - stage: DeployAKS
-  displayName: '3. Deploy to AKS Cluster (Helm)'
+  displayName: '4. Deploy to AKS Cluster (Helm)'
   dependsOn: BuildBackend
+  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['EvaluateDiff.setVars.backendChanged'], 'true'))
   jobs:
   - deployment: DeployKubernetes
     displayName: 'Deploy via Helm Package'
@@ -193,10 +259,11 @@ stages:
                   --wait \
                   --timeout 5m
 
-# ── STAGE 4: Build & Deploy Frontend to Static Web App ──────────────────────
+# ── STAGE 5: Build & Deploy Frontend to Static Web App ──────────────────────
 - stage: DeployFrontend
-  displayName: '4. Deploy Frontend SPA to Azure Static Web App'
-  dependsOn: [DevSecOpsScan, AIEvalQualityGate]
+  displayName: '5. Deploy Frontend SPA to Azure Static Web App'
+  dependsOn: [DetectChanges, DevSecOpsScan]
+  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['EvaluateDiff.setVars.frontendChanged'], 'true'))
   jobs:
   - deployment: DeployFrontendSPA
     displayName: 'Deploy React SPA to SWA'

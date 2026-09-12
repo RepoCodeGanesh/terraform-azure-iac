@@ -22,6 +22,16 @@ on:
     paths:
       - 'app/bank-compliance/**'
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deployment target'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'frontend-only'
+          - 'backend-only'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -44,9 +54,33 @@ env:
   SUBSCRIPTION_ID: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
 
 jobs:
-  # ── JOB 0: DevSecOps SAST & SCA Security Scanning (Phase 1) ────────────────
+  # ── JOB 0: Detect Path Changes (Smart Selective CI/CD) ─────────────────────
+  detect-changes:
+    name: 🔍 Path Change Detection
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'app/bank-compliance/backend/**'
+              - 'app/bank-compliance/k8s/**'
+              - 'app/bank-compliance/chart/**'
+              - 'app/bank-compliance/eval/**'
+              - '.github/workflows/app-bank-compliance.yml'
+            frontend:
+              - 'app/bank-compliance/frontend/**'
+              - '.github/workflows/app-bank-compliance.yml'
+
+  # ── JOB 1: DevSecOps SAST & SCA Security Scanning (Phase 1) ────────────────
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
+    needs: [detect-changes]
     uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
     with:
       working_directory: 'app/bank-compliance'
@@ -56,9 +90,16 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 1: Continuous AI Quality & Regression Evaluation Gate (GenAIOps) ───
+  # ── JOB 2: Continuous AI Quality & Regression Evaluation Gate (GenAIOps) ───
   ai-eval-quality-gate:
     name: AI Quality & Regression Gate
+    needs: [detect-changes, devsecops-scan]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.devsecops-scan.result == 'success' &&
+      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
+       (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -82,10 +123,17 @@ jobs:
             app/bank-compliance/eval/eval_attestation.json
           retention-days: 30
 
-  # ── JOB 2: Build & Push Backend Container to GHCR ─────────────────────────
+  # ── JOB 3: Build & Push Backend Container to GHCR ─────────────────────────
   build-and-push-backend:
     name: Build & Push Backend Image
-    needs: [devsecops-scan, ai-eval-quality-gate]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.devsecops-scan.result == 'success' &&
+      (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
+      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
+       (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -135,11 +183,14 @@ jobs:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-container-bankc-backend'
 
-  # ── JOB 3: Deploy Kubernetes Manifests to AKS ─────────────────────────────
+  # ── JOB 4: Deploy Kubernetes Manifests to AKS ─────────────────────────────
   deploy-backend-aks:
     name: Deploy to AKS
-    needs: build-and-push-backend
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push')
+    needs: [build-and-push-backend]
+    if: |
+      needs.build-and-push-backend.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+       ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push'))
     runs-on: ubuntu-latest
     environment: bank-compliance-prod
     steps:
@@ -333,11 +384,18 @@ jobs:
 
           EOF
 
-  # ── JOB 4: Build & Deploy Frontend to Azure Static Web App (Reusable Called) ─
+  # ── JOB 5: Build & Deploy Frontend to Azure Static Web App (Reusable Called) ─
   deploy-frontend:
     name: Build & Deploy Frontend SPA
-    needs: [devsecops-scan, ai-eval-quality-gate]
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push')
+    needs: [detect-changes, devsecops-scan]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.devsecops-scan.result == 'success' &&
+      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'frontend-only')) ||
+       (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.frontend == 'true')) &&
+      (github.event_name == 'workflow_dispatch' ||
+       ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push'))
     uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
     with:
       static_web_app_name: 'stapp-ht-bankc-p-cin-01'
@@ -349,10 +407,10 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 5: Consolidated Dynamic Release Governance Summary ──────────────────
+  # ── JOB 6: Consolidated Dynamic Release Governance Summary ──────────────────
   summary:
     name: 📊 Release Governance Summary
-    needs: [devsecops-scan, ai-eval-quality-gate, deploy-backend-aks, deploy-frontend]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, deploy-backend-aks, deploy-frontend]
     if: always()
     runs-on: ubuntu-latest
     steps:
