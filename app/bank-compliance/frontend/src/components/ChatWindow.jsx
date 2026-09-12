@@ -21,16 +21,14 @@ function getSynthesizerModelName(model) {
   return model
 }
 
-function formatAgentModelBadge(model, msgMode) {
-  if (!model) return '⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ Gemini 2.0'
-  if (model === 'governance-abstention-shield') return '🛡️ Handled by: Sovereign Guardrail (In-Memory Sieve)'
-  if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Intent Router)'
-  if (model === 'governance-core') return '⚖️ BankCompliance Core'
-  if (msgMode === 'sovereign' || model.includes('sovereign') || model.includes('qwen') || model.includes('private-slm')) {
-    return '🛡️ Sovereign In-Cluster SLM: Qwen2.5-0.5B (Zero-Egress AKS Node)'
+function formatLatency(ms) {
+  if (!ms && ms !== 0) return '18ms'
+  const num = typeof ms === 'number' ? ms : parseFloat(ms)
+  if (isNaN(num)) return `${ms}ms`
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}s`
   }
-  const synthName = getSynthesizerModelName(model)
-  return `⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ ${synthName}`
+  return `${Math.round(num)}ms`
 }
 
 function getExecutionTrace(m) {
@@ -38,6 +36,7 @@ function getExecutionTrace(m) {
   const isRouter = m.model_used === 'conversational-intent-router'
   const isSovereign = m.inferenceMode === 'sovereign' || (m.model_used && (m.model_used.includes('sovereign') || m.model_used.includes('qwen') || m.model_used.includes('private-slm')))
   const synthName = getSynthesizerModelName(m.model_used)
+  const latStr = formatLatency(m.latency_ms)
 
   if (isInterception) {
     return {
@@ -49,7 +48,7 @@ function getExecutionTrace(m) {
       pillText: '#fcd34d',
       btnBg: 'rgba(245, 158, 11, 0.12)',
       btnBgActive: 'rgba(245, 158, 11, 0.25)',
-      buttonLabel: `Supervisor Agent Intercept (${m.latency_ms || 2}ms)`,
+      buttonLabel: `🛡️ Safety Shield Intercept (<3ms)`,
       steps: [
         {
           num: 1,
@@ -96,7 +95,7 @@ function getExecutionTrace(m) {
       pillText: '#c7d2fe',
       btnBg: 'rgba(99, 102, 241, 0.12)',
       btnBgActive: 'rgba(99, 102, 241, 0.25)',
-      buttonLabel: `Conversational Router (${m.latency_ms || 5}ms)`,
+      buttonLabel: `💬 Supervisor Router (${latStr})`,
       steps: [
         {
           num: 1,
@@ -146,7 +145,7 @@ function getExecutionTrace(m) {
       pillText: '#34d399',
       btnBg: 'rgba(16, 185, 129, 0.12)',
       btnBgActive: 'rgba(16, 185, 129, 0.25)',
-      buttonLabel: `Sovereign Air-Gapped Pipeline (${m.latency_ms || 120}ms)`,
+      buttonLabel: `🛡️ Sovereign SLM • Qwen 2.5 (${latStr})`,
       steps: [
         {
           num: 1,
@@ -202,7 +201,7 @@ function getExecutionTrace(m) {
     pillText: '#c7d2fe',
     btnBg: 'rgba(99, 102, 241, 0.12)',
     btnBgActive: 'rgba(99, 102, 241, 0.25)',
-    buttonLabel: `4-Agent Pipeline (${m.latency_ms || 18}ms)`,
+    buttonLabel: `⚡ 4 Agents • ${synthName} (${latStr})`,
     steps: [
       {
         num: 1,
@@ -428,85 +427,61 @@ Approved for CCO / Internal Audit Review.`
               {m.role === 'assistant' && (
                 <>
                   <div style={{
-                    marginBottom: '10px',
+                    marginBottom: '8px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-start',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
                     paddingBottom: '6px',
-                    gap: '8px',
-                    flexWrap: 'wrap'
+                    gap: '8px'
                   }}>
-                    {(() => {
+                    {m.cached ? (
+                      <span style={{
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        border: '1px solid rgba(16, 185, 129, 0.35)',
+                        color: '#34d399',
+                        fontSize: '0.70rem',
+                        fontWeight: 600,
+                        padding: '3px 10px',
+                        borderRadius: '9999px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}>
+                        <Zap size={11} /> Semantic Cache Hit ({formatLatency(m.latency_ms)} • $0.00)
+                      </span>
+                    ) : (() => {
                       const trace = getExecutionTrace(m)
                       return (
-                        <>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{
-                              fontSize: '0.72rem',
-                              color: trace.pillText,
-                              background: trace.pillBg,
-                              border: `1px solid ${trace.borderColor}`,
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              fontWeight: 600,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '5px'
-                            }}>
-                              {trace.type === 'interception' ? (
-                                <ShieldAlert size={11} />
-                              ) : trace.type === 'sovereign' ? (
-                                <ShieldCheck size={11} />
-                              ) : (
-                                <Cpu size={11} />
-                              )}
-                              <span>{formatAgentModelBadge(m.model_used, m.inferenceMode)}</span>
-                            </span>
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {m.cached ? (
-                              <span style={{
-                                background: 'rgba(16, 185, 129, 0.15)',
-                                border: '1px solid rgba(16, 185, 129, 0.35)',
-                                color: '#34d399',
-                                fontSize: '0.68rem',
-                                fontWeight: 700,
-                                padding: '2px 7px',
-                                borderRadius: '9999px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-                                <Zap size={10} /> Cache Hit ({m.latency_ms}ms)
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => toggleTrace(idx)}
-                                style={{
-                                  background: expandedTraces[idx] ? trace.btnBgActive : 'transparent',
-                                  border: `1px solid ${trace.borderColor}`,
-                                  color: trace.titleColor,
-                                  fontSize: '0.68rem',
-                                  fontWeight: 600,
-                                  padding: '2px 8px',
-                                  borderRadius: '9999px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.18s ease'
-                                }}
-                                title="Toggle multi-agent execution pipeline trace"
-                              >
-                                <span>{m.latency_ms || 18}ms • Trace</span>
-                                {expandedTraces[idx] ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-                              </button>
-                            )}
-                          </div>
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => toggleTrace(idx)}
+                          style={{
+                            background: expandedTraces[idx] ? trace.btnBgActive : trace.btnBg,
+                            border: `1px solid ${trace.borderColor}`,
+                            color: trace.titleColor,
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            padding: '3px 11px',
+                            borderRadius: '9999px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.18s ease'
+                          }}
+                          title="Click to view execution trace"
+                        >
+                          {trace.type === 'interception' ? (
+                            <ShieldAlert size={12} />
+                          ) : trace.type === 'sovereign' ? (
+                            <ShieldCheck size={12} />
+                          ) : (
+                            <Cpu size={12} />
+                          )}
+                          <span>{trace.buttonLabel}</span>
+                          {expandedTraces[idx] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        </button>
                       )
                     })()}
                   </div>

@@ -85,18 +85,17 @@ export default function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-dark)' }}>
       {/* ── Enterprise Executive Navigation Bar ─────────────────────────────── */}
-      <header className="glass-panel" style={{
+      <header className="glass-panel header-container" style={{
         padding: '8px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottom: '1px solid var(--border-subtle)',
         zIndex: 30,
-        gap: '16px',
-        flexWrap: 'wrap'
+        gap: '12px'
       }}>
         {/* Left: Brand & Platform Identity */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           <div style={{
             background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
             padding: '7px',
@@ -108,17 +107,17 @@ export default function App() {
             <Building2 size={18} color="#ffffff" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
+            <h1 style={{ fontSize: '0.96rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
               BankCompliance AI
             </h1>
-            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: 0 }}>
+            <p className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: 0 }}>
               RBI Master Directions • Central India AKS Cluster
             </p>
           </div>
         </div>
 
         {/* Center: 5 Core Enterprise Command Pillars */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <nav className="header-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
           {/* Pillar 1: Copilot */}
           <button
             onClick={() => navigateToPillar('copilot')}
@@ -226,12 +225,12 @@ export default function App() {
             }}
           >
             <FileCheck size={13} />
-            <span>Policy Redliner</span>
+            <span className="nav-btn-text">Policy Redliner</span>
           </button>
         </nav>
 
         {/* Right: Global Inference Engine Switcher & APIM Health */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <div style={{
             display: 'inline-flex',
             background: 'rgba(15, 23, 42, 0.85)',
@@ -259,7 +258,8 @@ export default function App() {
               }}
             >
               <Zap size={12} color={inferenceMode === 'cloud' ? '#818cf8' : 'currentColor'} />
-              <span>Multi-Cloud Fleet (Groq/Gemini)</span>
+              <span className="engine-btn-text-desktop">Multi-Cloud Fleet (Groq/Gemini)</span>
+              <span className="engine-btn-text-mobile">Cloud</span>
             </button>
 
             <button
@@ -281,7 +281,8 @@ export default function App() {
               }}
             >
               <Shield size={12} color={inferenceMode === 'sovereign' ? '#34d399' : 'currentColor'} />
-              <span>Sovereign SLM (Qwen 2.5)</span>
+              <span className="engine-btn-text-desktop">Sovereign SLM (Qwen 2.5)</span>
+              <span className="engine-btn-text-mobile">SLM</span>
             </button>
           </div>
 
@@ -298,7 +299,7 @@ export default function App() {
             gap: '5px'
           }}>
             <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-            <span>APIM 200 OK</span>
+            <span className="desktop-only">APIM 200 OK</span>
           </span>
         </div>
       </header>
