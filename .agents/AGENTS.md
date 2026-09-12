@@ -276,6 +276,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Mixing documentation browsing/reading concerns with conversational copilot interactions within the same tab created visual fatigue and state bloat (>700 lines in `App.jsx`). In enterprise architecture, documentation catalogs belong in a dedicated Governance hub, while copilots should offer a focused, distraction-free conversational canvas.
 * **Resolution:** (1) Removed the 275px Master Directions directory sidebar and split `<DocumentViewer>` from the Copilot tab, allowing `<ChatWindow>` to occupy 100% full width with centered message reading boundaries (`maxWidth: 880px`). (2) Removed redundant secondary subheaders in `ChatWindow.jsx` (`REGULATORY SCOPE` and duplicate engine status badge already visible in the top navbar). (3) Reduced `App.jsx` by 450+ lines while preserving complete circular coverage in Pillar 3 (`/governance`) and administrative sync controls in Pillar 2 (`/command`).
 
+### 33. Elimination of In-Chat Documentation Clutter via Collapsible Cryptographic Citation Cards & Header Badge De-Duplication
+* **Symptom:** AI responses in the chat window were congested with massive verbatim statutory clause blocks tacked below each synthesized answer, multiplying message height by 3x-5x and forcing continuous scrolling. Message headers additionally rendered two side-by-side redundant badges repeating "4 Agents" / "4-Agent Pipeline".
+* **Root Cause:** Citation cards rendered raw statutory documentation markdown (`citation.text`) uncollapsed directly in the chat bubble. Message headers had not been unified, displaying both an execution trace launcher and an agent model badge that stated identical pipeline details.
+* **Resolution:** (1) Transformed `CitationCard.jsx` into a sleek 1-line collapsible statutory reference badge (`📜 RBI/2023-24/102 • Clause 5.2 | sha256:... ▾`), collapsed by default with zero documentation clutter, expandable on-demand with 1 click. (2) Unified message header into a single clean agent badge on the left and a compact latency/trace toggle on the right (`18ms • Trace ▾`), eliminating all visual redundancy. (3) Purged dead `DocumentViewer.jsx` and unused props (`selectedCircular`, `onSelectCitation`).
+
 ---
 
 

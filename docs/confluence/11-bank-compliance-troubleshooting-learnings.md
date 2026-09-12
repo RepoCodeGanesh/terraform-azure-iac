@@ -508,6 +508,26 @@ resp = await client.post(
 
 ---
 
+### 20. Elimination of In-Chat Documentation Clutter via Collapsible Cryptographic Citation Cards
+
+#### Symptom:
+* In the Regulatory Copilot chat window, synthesized assistant answers were appended with large boxes of verbatim circular text for every citation returned by the vector lake. A query referencing 3-4 statutory clauses expanded the chat message bubble by hundreds of pixels with raw statutory prose, obscuring the synthesized answer and forcing heavy scrolling. Furthermore, message headers featured two side-by-side redundant badges repeating "4 Agents" / "4-Agent Pipeline".
+
+#### Root Cause:
+* `<CitationCard.jsx>` rendered full statutory markdown (`<MarkdownRenderer content={citation.text} />`) uncollapsed by default directly within the conversational flow. In enterprise AI assistants (ChatGPT, Claude, Bing Copilot), citations are intended as lightweight, auditable reference anchors rather than comprehensive document dumps. Additionally, the execution trace toggle and the model badge both stated duplicate multi-agent orchestration details.
+
+#### Resolution:
+1. **Collapsible 1-Line Citation References:**
+   * Redesigned `<CitationCard.jsx>` into a sleek, 1-line reference badge (`📜 RBI/2023-24/102 • Clause 5.2 | sha256:... ▾`).
+   * Kept raw statutory text collapsed by default (taking only 28px height), expandable on demand with 1 click for compliance officers needing deep verification.
+2. **De-duplicated Telemetry Header:**
+   * Unified message header into an informative model/agent badge on the left (`⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ Gemini 2.0`) and a compact latency/trace toggle on the right (`18ms • Trace ▾`), eliminating all visual repetition.
+3. **Dead Code Elimination:**
+   * Removed unused `selectedCircular` and `onSelectCitation` props from `<ChatWindow.jsx>`.
+   * Deleted obsolete 300-line `<DocumentViewer.jsx>` component from `components/`.
+
+---
+
 ## 3. Platform Engineer Checklist & Golden Rules
 
 | Category | Rule | Verification Command |

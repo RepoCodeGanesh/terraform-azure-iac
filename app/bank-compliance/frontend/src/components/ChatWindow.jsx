@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle, BookOpen } from 'lucide-react'
+import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle } from 'lucide-react'
 import MarkdownRenderer from './MarkdownRenderer'
 import CitationCard from './CitationCard'
 import PIIBanner from './PIIBanner'
@@ -249,7 +249,7 @@ function getExecutionTrace(m) {
 }
 
 
-export default function ChatWindow({ selectedCircular, onSelectCitation, inferenceMode: propInferenceMode, onToggleInferenceMode }) {
+export default function ChatWindow({ inferenceMode: propInferenceMode, onToggleInferenceMode }) {
   const [internalInferenceMode, setInternalInferenceMode] = useState('cloud')
   const inferenceMode = propInferenceMode !== undefined ? propInferenceMode : internalInferenceMode
   const setInferenceMode = onToggleInferenceMode || setInternalInferenceMode
@@ -307,7 +307,6 @@ export default function ChatWindow({ selectedCircular, onSelectCitation, inferen
           query: userQuery,
           department: 'legal-compliance',
           session_id: 'active-session-01',
-          circular: selectedCircular !== 'All' ? selectedCircular : undefined,
           history: historyPayload,
           model_preference: inferenceMode === 'sovereign' ? 'sovereign-slm' : 'cloud'
         })
@@ -429,85 +428,87 @@ Approved for CCO / Internal Audit Review.`
               {m.role === 'assistant' && (
                 <>
                   <div style={{
-                    marginBottom: '12px',
+                    marginBottom: '10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-                    paddingBottom: '8px',
+                    paddingBottom: '6px',
                     gap: '8px',
                     flexWrap: 'wrap'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {m.cached ? (
-                        <span style={{
-                          background: 'rgba(16, 185, 129, 0.15)',
-                          border: '1px solid rgba(16, 185, 129, 0.35)',
-                          color: '#34d399',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
-                          <Zap size={10} /> Semantic Cache Hit ({m.latency_ms}ms • $0.00)
-                        </span>
-                      ) : (() => {
-                        const trace = getExecutionTrace(m)
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => toggleTrace(idx)}
-                            style={{
-                              background: expandedTraces[idx] ? trace.btnBgActive : trace.btnBg,
+                    {(() => {
+                      const trace = getExecutionTrace(m)
+                      return (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{
+                              fontSize: '0.72rem',
+                              color: trace.pillText,
+                              background: trace.pillBg,
                               border: `1px solid ${trace.borderColor}`,
-                              color: trace.titleColor,
-                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
                               fontWeight: 600,
-                              padding: '3px 10px',
-                              borderRadius: '9999px',
-                              display: 'flex',
+                              display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '5px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease'
-                            }}
-                            title="Click to view step-by-step execution trace"
-                          >
-                            {trace.type === 'interception' ? (
-                              <ShieldAlert size={11} />
-                            ) : trace.type === 'sovereign' ? (
-                              <ShieldCheck size={11} />
-                            ) : (
-                              <Cpu size={11} />
-                            )}
-                            <span>{trace.buttonLabel}</span>
-                            {expandedTraces[idx] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                          </button>
-                        )
-                      })()}
-                    </div>
+                              gap: '5px'
+                            }}>
+                              {trace.type === 'interception' ? (
+                                <ShieldAlert size={11} />
+                              ) : trace.type === 'sovereign' ? (
+                                <ShieldCheck size={11} />
+                              ) : (
+                                <Cpu size={11} />
+                              )}
+                              <span>{formatAgentModelBadge(m.model_used, m.inferenceMode)}</span>
+                            </span>
+                          </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {(() => {
-                        const trace = getExecutionTrace(m)
-                        return (
-                          <span style={{
-                            fontSize: '0.72rem',
-                            color: trace.pillText,
-                            background: trace.pillBg,
-                            border: `1px solid ${trace.borderColor}`,
-                            padding: '3px 9px',
-                            borderRadius: '6px',
-                            fontWeight: 600
-                          }}>
-                            {formatAgentModelBadge(m.model_used, m.inferenceMode)}
-                          </span>
-                        )
-                      })()}
-                    </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {m.cached ? (
+                              <span style={{
+                                background: 'rgba(16, 185, 129, 0.15)',
+                                border: '1px solid rgba(16, 185, 129, 0.35)',
+                                color: '#34d399',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                padding: '2px 7px',
+                                borderRadius: '9999px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                <Zap size={10} /> Cache Hit ({m.latency_ms}ms)
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => toggleTrace(idx)}
+                                style={{
+                                  background: expandedTraces[idx] ? trace.btnBgActive : 'transparent',
+                                  border: `1px solid ${trace.borderColor}`,
+                                  color: trace.titleColor,
+                                  fontSize: '0.68rem',
+                                  fontWeight: 600,
+                                  padding: '2px 8px',
+                                  borderRadius: '9999px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.18s ease'
+                                }}
+                                title="Toggle multi-agent execution pipeline trace"
+                              >
+                                <span>{m.latency_ms || 18}ms • Trace</span>
+                                {expandedTraces[idx] ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
 
                   {/* ── Expandable Multi-Agent Execution Trace ───────────────────── */}
@@ -592,13 +593,13 @@ Approved for CCO / Internal Audit Review.`
               {/* Message Content */}
               {m.role === 'user' ? m.text : <MarkdownRenderer content={m.text} />}
               
-              {/* Citation Cards */}
+              {/* Compact Collapsible Regulatory Citations */}
               {m.citations && m.citations.length > 0 && (
-                <div style={{ marginTop: '16px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                      <ShieldCheck size={13} />
-                      <span>Verified RBI Master Direction Evidence:</span>
+                <div style={{ marginTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                      <ShieldCheck size={12} />
+                      <span>Verified Regulatory Sources ({m.citations.length}):</span>
                     </div>
                     <button
                       onClick={() => exportMemo(m)}
@@ -607,8 +608,8 @@ Approved for CCO / Internal Audit Review.`
                         border: '1px solid rgba(99, 102, 241, 0.3)',
                         color: '#c7d2fe',
                         borderRadius: '6px',
-                        padding: '3px 8px',
-                        fontSize: '0.7rem',
+                        padding: '2px 7px',
+                        fontSize: '0.68rem',
                         fontWeight: 600,
                         cursor: 'pointer',
                         display: 'flex',
@@ -616,16 +617,16 @@ Approved for CCO / Internal Audit Review.`
                         gap: '4px',
                         transition: 'all 0.15s ease'
                       }}
+                      title="Download signed regulatory compliance memo"
                     >
-                      <Download size={11} /> Export Memo
+                      <Download size={10} /> Export Memo
                     </button>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {m.citations.map((c, cIdx) => (
                       <CitationCard
                         key={cIdx}
                         citation={c}
-                        onSelectCitation={onSelectCitation}
                       />
                     ))}
                   </div>
