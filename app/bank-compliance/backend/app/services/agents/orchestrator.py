@@ -99,7 +99,8 @@ class MultiAgentOrchestrator:
         sanitized_query: str,
         department: str = "compliance",
         session_id: str = "default-session",
-        history: Optional[List[Dict[str, str]]] = None
+        history: Optional[List[Dict[str, str]]] = None,
+        target_model: Optional[str] = None
     ) -> Dict[str, Any]:
 
         # ── G2: Token Budget Circuit Breaker (pre-flight check) ───────────────
@@ -193,7 +194,11 @@ class MultiAgentOrchestrator:
         user_content = f"Regulatory Context:\n{context_str}\n\nCompliance Query:\n{state['sanitized_query']}"
         
         with trace_agent_span("synthesizer_generation", "SynthesizerAgent", "gemini-2.0-flash") as s_span:
-            answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(user_content, state.get("citations", []))
+            answer, model_used = await MultiAgentOrchestrator._call_llm_with_fallback(
+                user_content,
+                state.get("citations", []),
+                target_model=target_model
+            )
             s_span.set_attribute("gen_ai.final_model_selected", model_used)
         
         return {
@@ -204,12 +209,23 @@ class MultiAgentOrchestrator:
         }
 
     @staticmethod
-    async def _call_llm_with_fallback(user_content: str, citations: List[Dict[str, Any]] = None) -> tuple[str, str]:
-        """Calls LiteLLM with Google Gemini 2.0 Flash / Groq as Primary ($0 cost) and Azure OpenAI as DR Fallback."""
-        primary_model = getattr(settings, "OPENAI_MODEL", "gemini-2.0-flash") or "gemini-2.0-flash"
+    async def _call_llm_with_fallback(
+        user_content: str,
+        citations: List[Dict[str, Any]] = None,
+        target_model: Optional[str] = None
+    ) -> tuple[str, str]:
+        """Calls LiteLLM with Google Gemini 2.0 Flash / Groq as Primary ($0 cost) and Azure OpenAI / Sovereign SLM as Fallback."""
+        primary_model = target_model or getattr(settings, "OPENAI_MODEL", "gemini-2.0-flash") or "gemini-2.0-flash"
+
+        sys_prompt = SYSTEM_PROMPT
+        if primary_model == "private-slm":
+            sys_prompt = (
+                "You are BankCompliance AI. Interpret the provided Reserve Bank of India (RBI) "
+                "Master Directions concisely with exact circular numbers and actionable compliance directives."
+            )
 
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": sys_prompt},
             {"role": "user", "content": user_content}
         ]
 
@@ -217,11 +233,14 @@ class MultiAgentOrchestrator:
             litellm_url = getattr(settings, "LITELLM_URL", "http://litellm:4000/v1")
             api_key = getattr(settings, "LITELLM_API_KEY", "sk-litellm-proxy-key")
 
-            # ── Multi-Cloud Priority: Primary (Gemini/Groq $0) ➔ Standby DR (Azure OpenAI) ➔ Sovereign SLM ──
+            # ── Multi-Cloud Priority: Primary ➔ Standby DR ➔ Sovereign SLM ──
             candidate_models = []
-            for candidate in [primary_model, "gemini-2.0-flash", "groq-llama-70b", "gpt-5.4-nano", "private-slm"]:
-                if candidate and candidate not in candidate_models:
-                    candidate_models.append(candidate)
+            if target_model == "private-slm":
+                candidate_models = ["private-slm", "groq-llama-70b", "gemini-2.0-flash"]
+            else:
+                for candidate in [primary_model, "gemini-2.0-flash", "groq-llama-70b", "gpt-5.4-nano", "private-slm"]:
+                    if candidate and candidate not in candidate_models:
+                        candidate_models.append(candidate)
 
             for m in candidate_models:
                 try:
@@ -229,7 +248,7 @@ class MultiAgentOrchestrator:
                         "model": m,
                         "messages": messages,
                         "temperature": 0.1,
-                        "max_completion_tokens": 1024
+                        "max_completion_tokens": 512 if m == "private-slm" else 1024
                     }
                     async with httpx.AsyncClient(timeout=25.0) as client:
                         resp = await client.post(

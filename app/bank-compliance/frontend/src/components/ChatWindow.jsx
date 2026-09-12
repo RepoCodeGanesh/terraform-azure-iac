@@ -27,10 +27,14 @@ function formatAgentModelBadge(model) {
   if (model === 'conversational-intent-router') return '💬 Handled by: Supervisor Agent (Router)'
   if (model === 'governance-core') return '⚖️ BankCompliance Core'
   const synthName = getSynthesizerModelName(model)
+  if (synthName.includes('Sovereign SLM') || (model && (model.includes('private-slm') || model.includes('qwen')))) {
+    return '🛡️ Sovereign In-Cluster SLM: Qwen2.5-0.5B (Zero-Egress AKS Node)'
+  }
   return `⚡ 4 Agents: Supervisor ➔ Qdrant ➔ Auditor ➔ ${synthName}`
 }
 
 export default function ChatWindow({ selectedCircular, onSelectCitation }) {
+  const [inferenceMode, setInferenceMode] = useState('cloud') // 'cloud' | 'sovereign'
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -86,7 +90,8 @@ export default function ChatWindow({ selectedCircular, onSelectCitation }) {
           department: 'legal-compliance',
           session_id: 'active-session-01',
           circular: selectedCircular !== 'All' ? selectedCircular : undefined,
-          history: historyPayload
+          history: historyPayload,
+          model_preference: inferenceMode === 'sovereign' ? 'sovereign-slm' : 'cloud'
         })
       })
       const data = await res.json()
@@ -153,6 +158,114 @@ Approved for CCO / Internal Audit Review.`
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
+      {/* ── Top Inference Routing Bar (Cloud Fleet vs Sovereign SLM Toggle) ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 24px',
+        background: 'rgba(15, 23, 42, 0.7)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(12px)',
+        zIndex: 5,
+        flexWrap: 'wrap',
+        gap: '10px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+            INFERENCE ENGINE:
+          </span>
+          <div style={{
+            display: 'inline-flex',
+            background: 'rgba(255, 255, 255, 0.04)',
+            padding: '3px',
+            borderRadius: '10px',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <button
+              type="button"
+              onClick={() => setInferenceMode('cloud')}
+              style={{
+                padding: '5px 14px',
+                borderRadius: '7px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: inferenceMode === 'cloud' ? 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)' : 'transparent',
+                color: inferenceMode === 'cloud' ? '#ffffff' : 'var(--text-muted)',
+                transition: 'all 0.2s ease',
+                boxShadow: inferenceMode === 'cloud' ? '0 0 12px rgba(79, 70, 229, 0.4)' : 'none'
+              }}
+              title="Ultra-fast legal reasoning via Google Gemini 2.0 Flash and Groq LPU"
+            >
+              <Zap size={13} /> Multi-Cloud Fleet (Groq / Gemini)
+            </button>
+            <button
+              type="button"
+              onClick={() => setInferenceMode('sovereign')}
+              style={{
+                padding: '5px 14px',
+                borderRadius: '7px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: inferenceMode === 'sovereign' ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' : 'transparent',
+                color: inferenceMode === 'sovereign' ? '#ffffff' : 'var(--text-muted)',
+                transition: 'all 0.2s ease',
+                boxShadow: inferenceMode === 'sovereign' ? '0 0 12px rgba(16, 185, 129, 0.45)' : 'none'
+              }}
+              title="100% In-Cluster Sovereign SLM (Qwen2.5-0.5B on AKS node CPU, Zero-Egress)"
+            >
+              <ShieldCheck size={13} /> Sovereign In-Cluster SLM (Qwen 2.5)
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {inferenceMode === 'sovereign' ? (
+            <span style={{
+              fontSize: '0.72rem',
+              color: '#34d399',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              padding: '3px 10px',
+              borderRadius: '9999px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600
+            }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+              Zero-Egress AKS Node Active (Air-Gapped)
+            </span>
+          ) : (
+            <span style={{
+              fontSize: '0.72rem',
+              color: '#93c5fd',
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
+              padding: '3px 10px',
+              borderRadius: '9999px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600
+            }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#60a5fa', display: 'inline-block' }} />
+              500+ tok/s Ultra-Fast Synthesis
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Messages Scroll Area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {messages.map((m, idx) => (

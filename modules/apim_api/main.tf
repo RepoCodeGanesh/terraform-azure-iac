@@ -95,7 +95,7 @@ resource "azapi_resource" "policy" {
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
   <backend>
-    <forward-request timeout="30" />
+    <forward-request timeout="60" />
   </backend>
   <outbound>
     <base />

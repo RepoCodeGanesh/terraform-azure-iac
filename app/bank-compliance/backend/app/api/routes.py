@@ -53,6 +53,7 @@ class QueryRequest(BaseModel):
     session_id: Optional[str] = "default-session"
     circular: Optional[str] = None
     history: Optional[List[Dict[str, Any]]] = None
+    model_preference: Optional[str] = "cloud"
 
 class Citation(BaseModel):
     circular_no: str
@@ -122,11 +123,13 @@ async def query_compliance(request: QueryRequest):
         )
 
     # 3. Multi-Agent Orchestration (Supervisor ➔ Retriever ➔ Auditor ➔ Synthesizer)
+    target_model = "private-slm" if getattr(request, "model_preference", "cloud") in ["sovereign-slm", "local", "private-slm", "sovereign"] else None
     agent_output = await MultiAgentOrchestrator.run(
         sanitized_query=sanitized_prompt,
         department=request.department or "compliance",
         session_id=request.session_id or "default-session",
-        history=request.history
+        history=request.history,
+        target_model=target_model
     )
 
     answer = agent_output["answer"]
