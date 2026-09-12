@@ -32,6 +32,24 @@ spec:
           envFrom:
             - configMapRef:
                 name: bankc-backend-config
+            # O1: Langfuse LLM Tracing credentials (50k free traces/month)
+            # Create secret: kubectl create secret generic bankc-langfuse-secret \
+            #   --from-literal=LANGFUSE_PUBLIC_KEY=pk-lf-... \
+            #   --from-literal=LANGFUSE_SECRET_KEY=sk-lf-... \
+            #   -n bank-compliance
+            - secretRef:
+                name: bankc-langfuse-secret
+                optional: true  # Pod starts even if secret not yet created
+          # S1: CIS Kubernetes Benchmark — Pod Security Context
+          # runAsNonRoot + runAsUser 1000 + no privilege escalation + drop ALL caps.
+          # NOTE: readOnlyRootFilesystem intentionally OMITTED — breaks Qdrant & LiteLLM.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               cpu: "1m"

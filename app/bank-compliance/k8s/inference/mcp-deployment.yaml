@@ -1,0 +1,97 @@
+# ==============================================================================
+# A2: BankCompliance AI — MCP (Model Context Protocol) Regulatory Search Server
+# Exposes search_rbi_regulations FastMCP tool for Claude Desktop / Cursor / etc.
+# Namespace: bank-compliance
+# Service:   bankc-mcp-server (ClusterIP, port 8080)
+# Image:     Same as backend (shares QdrantService and document corpus)
+# FinOps:    $0 — runs on existing AKS Free-Tier CPU node
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankc-mcp-server
+  namespace: bank-compliance
+  labels:
+    app: bankc-mcp-server
+    app.kubernetes.io/name: bankc-mcp-server
+    app.kubernetes.io/part-of: bank-compliance-ai
+    app.kubernetes.io/component: mcp-server
+  annotations:
+    skill-bridge/phase: "A2"
+    skill-bridge/tool: "FastMCP"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bankc-mcp-server
+  template:
+    metadata:
+      labels:
+        app: bankc-mcp-server
+        app.kubernetes.io/part-of: bank-compliance-ai
+    spec:
+      serviceAccountName: bankc-sa
+      containers:
+        - name: mcp-server
+          image: ghcr.io/repocodeganesh/bank-compliance-backend:latest
+          imagePullPolicy: Always
+          # Run the MCP server module directly
+          command: ["python", "-m", "app.services.mcp_server"]
+          env:
+            - name: MCP_TRANSPORT
+              value: "sse"  # Server-Sent Events transport for HTTP MCP clients
+          ports:
+            - containerPort: 8080
+              name: mcp
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: bankc-backend-config
+            - secretRef:
+                name: bankc-langfuse-secret
+                optional: true
+          # S1: Pod Security Context — non-root, no escalation
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankc-mcp-server
+  namespace: bank-compliance
+  labels:
+    app: bankc-mcp-server
+    app.kubernetes.io/part-of: bank-compliance-ai
+  annotations:
+    skill-bridge/access: "cluster-internal-only"
+spec:
+  type: ClusterIP
+  selector:
+    app: bankc-mcp-server
+  ports:
+    - name: mcp
+      port: 8080
+      targetPort: 8080
+      protocol: TCP

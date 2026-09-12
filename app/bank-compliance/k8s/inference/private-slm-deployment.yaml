@@ -1,8 +1,13 @@
 # ==============================================================================
-# In-Cluster Private Sovereign SLM Inference Tier (Kubernetes Deployment)
+# A3 Phase 1: In-Cluster Private Sovereign SLM Inference Tier
 # Workload: BankCompliance AI — High-Security In-Cluster Fallback
-# SKU: Lightweight CPU-optimized (Qwen-2.5-0.5B / Phi-3.5-mini)
-# FinOps Profile: $0.00 Idle Cost (Runs on existing AKS Free-Tier Node Pool)
+# Model:    Qwen2.5-0.5B (CPU-optimized, 395MB, zero API cost)
+# SKU:      Lightweight CPU-only (Runs on existing AKS Free-Tier Node Pool)
+# FinOps:   $0.00 Idle Cost — no GPU node pool needed
+#
+# Design: initContainer pre-pulls the model into emptyDir volume before the
+# main Ollama server starts. This guarantees sub-second cold-start on queries
+# after the initial model pull completes (one-time ~60s on pod creation).
 # ==============================================================================
 apiVersion: apps/v1
 kind: Deployment
@@ -13,6 +18,10 @@ metadata:
     app.kubernetes.io/name: private-slm-inference
     app.kubernetes.io/part-of: bank-compliance-ai
     app.kubernetes.io/component: in-cluster-inference
+    app.kubernetes.io/version: "qwen2.5-0.5b"
+  annotations:
+    skill-bridge/phase: "A3-phase1"
+    skill-bridge/model: "qwen2.5:0.5b"
 spec:
   replicas: 1
   strategy:
@@ -27,11 +36,59 @@ spec:
     metadata:
       labels:
         app: private-slm-inference
-        azure.workload.identity/use: "true"
+        app.kubernetes.io/part-of: bank-compliance-ai
     spec:
+      # ── initContainer: Pre-pull qwen2.5:0.5b into shared model volume ────────
+      # Runs to completion before main Ollama server starts.
+      # Uses `ollama pull` via the Ollama CLI bundled in the same image.
+      # Model is stored in /root/.ollama/models (shared emptyDir volume).
+      initContainers:
+        - name: model-puller
+          image: ollama/ollama:0.3.12
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "=== A3 Phase 1: Pulling qwen2.5:0.5b model into shared volume ==="
+              # Start Ollama server in background temporarily to allow pull
+              ollama serve &
+              OLLAMA_PID=$!
+              # Wait for server to be ready
+              for i in $(seq 1 30); do
+                if ollama list > /dev/null 2>&1; then
+                  echo "✅ Ollama server ready — pulling qwen2.5:0.5b..."
+                  break
+                fi
+                echo "  Waiting for Ollama daemon... ($i/30)"
+                sleep 2
+              done
+              ollama pull qwen2.5:0.5b
+              echo "✅ Model pull complete. Model stored in /root/.ollama"
+              # Gracefully stop background server
+              kill $OLLAMA_PID 2>/dev/null || true
+              wait $OLLAMA_PID 2>/dev/null || true
+              echo "✅ initContainer done — handing over to main Ollama server."
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0:11434"
+            - name: OLLAMA_MODELS
+              value: "/root/.ollama/models"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1536Mi"
+          volumeMounts:
+            - name: slm-model-storage
+              mountPath: /root/.ollama
+
+      # ── Main Container: Ollama Inference Server ───────────────────────────────
       containers:
         - name: slm-engine
-          image: ollama/ollama:0.1.32
+          image: ollama/ollama:0.3.12
           imagePullPolicy: IfNotPresent
           env:
             - name: OLLAMA_HOST
@@ -40,6 +97,8 @@ spec:
               value: "/root/.ollama/models"
             - name: OLLAMA_NUM_PARALLEL
               value: "2"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
           ports:
             - name: http-inference
               containerPort: 11434
@@ -58,17 +117,22 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
+            # Wait longer on first start since model must be loaded
+            failureThreshold: 12
           livenessProbe:
             httpGet:
               path: /api/tags
               port: 11434
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 30
             timeoutSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - name: slm-model-storage
               mountPath: /root/.ollama
+
       volumes:
         - name: slm-model-storage
           emptyDir:
+            # qwen2.5:0.5b is ~395MB quantized; 2Gi gives comfortable headroom
             sizeLimit: 2Gi

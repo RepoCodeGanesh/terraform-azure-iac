@@ -7,6 +7,7 @@ with primary routing to Azure OpenAI gpt-5.4-nano / Google Gemini 2.0.
 
 import os
 import json
+import time
 import logging
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
@@ -27,6 +28,43 @@ except ImportError:
     httpx = None
 
 logger = logging.getLogger(__name__)
+
+# ── G2: In-Memory Daily AI Token Budget Circuit Breaker ──────────────────────
+# Resets automatically at UTC midnight. Default: 500,000 tokens/day (~$0.50
+# at Gemini pricing). Configurable via DAILY_TOKEN_BUDGET env var in ConfigMap.
+_TOKEN_BUDGET_DAILY: int = int(os.getenv("DAILY_TOKEN_BUDGET", "500000"))
+_token_usage: Dict[str, Any] = {"date": "", "count": 0}
+
+
+def _check_and_increment_token_budget(estimated_tokens: int = 2000) -> bool:
+    """
+    Returns True if the daily token budget has capacity for this request.
+    Increments the counter by estimated_tokens on approval.
+    Returns False (circuit open) if budget is exhausted.
+    Auto-resets at UTC date change.
+    """
+    today = time.strftime("%Y-%m-%d", time.gmtime())  # UTC date
+    if _token_usage["date"] != today:
+        # New day — reset counter
+        _token_usage["date"] = today
+        _token_usage["count"] = 0
+        logger.info("G2 Token Budget: Daily counter reset for %s (limit: %d)", today, _TOKEN_BUDGET_DAILY)
+
+    remaining = _TOKEN_BUDGET_DAILY - _token_usage["count"]
+    if remaining < estimated_tokens:
+        logger.warning(
+            "G2 Token Budget: CIRCUIT OPEN — daily limit %d reached (used: %d, requested: %d)",
+            _TOKEN_BUDGET_DAILY, _token_usage["count"], estimated_tokens
+        )
+        return False
+
+    _token_usage["count"] += estimated_tokens
+    logger.debug(
+        "G2 Token Budget: approved +%d tokens (total used today: %d / %d)",
+        estimated_tokens, _token_usage["count"], _TOKEN_BUDGET_DAILY
+    )
+    return True
+
 
 SYSTEM_PROMPT = """You are BankCompliance AI, the official Banking Regulatory & Compliance Copilot for Indian Scheduled Commercial Banks and NBFCs.
 You provide precise, legally auditable interpretations of Reserve Bank of India (RBI) Master Directions, KYC norms, IT Governance, Digital Lending, and Digital Payment regulations.
@@ -63,8 +101,25 @@ class MultiAgentOrchestrator:
         session_id: str = "default-session",
         history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
-        
-        # Initialize Agent Execution State
+
+        # ── G2: Token Budget Circuit Breaker (pre-flight check) ───────────────
+        # Each compliance query costs ~2,000 tokens on average (system prompt +
+        # context + response). Check budget BEFORE any LLM call to prevent
+        # runaway spend. Circuit auto-resets at UTC midnight.
+        if not _check_and_increment_token_budget(estimated_tokens=2000):
+            return {
+                "answer": (
+                    "⚠️ **Daily AI Token Budget Reached**\n\n"
+                    "The BankCompliance AI token budget for today has been exhausted. "
+                    "The system will automatically reset at midnight UTC. "
+                    "Please try again tomorrow, or contact your platform administrator "
+                    "to increase the `DAILY_TOKEN_BUDGET` limit."
+                ),
+                "citations": [],
+                "suggested_queries": [],
+                "model_used": "token-budget-circuit-breaker"
+            }
+
         state: AgentExecutionState = {
             "original_query": sanitized_query,
             "sanitized_query": sanitized_query,

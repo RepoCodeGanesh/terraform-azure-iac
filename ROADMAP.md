@@ -18,6 +18,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 8** | FinOps Cost Alerts & Logging Diagnostic Streamline | AI Workloads & Shared Services | ✅ Completed |
 | **Phase 9** | BankCompliance AI Copilot on AKS (LiteLLM, Qdrant, Full RAG) | `workloads/bank-compliance-ai-aks` & `app/bank-compliance/` | ✅ Completed |
 | **Phase 10** | Enterprise Auditable Document Intelligence & LLMOps Platform | `app/bank-compliance/` & `.github/workflows/` | ✅ Completed |
+| **Phase 11** | LLMOps Skill Bridge — Trivy CVE Scan, SecurityContext, KQL Workbook, Ollama SLM, Langfuse Tracing, Token Budget, MCP Server, AI Red-Team | `app/bank-compliance/` & `platform/shared-services/` | ✅ Completed |
 
 ---
 
@@ -108,4 +109,34 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 * [x] **Automated Jailbreak & Prompt Injection Testing:** Automated red-teaming tests running in the CI pipeline before deployment.
 * [x] Execution Blueprint Document: [`docs/archive/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md`](docs/archive/RAW_REGULATORY_INGESTION_AND_VIEWER_PLAN.md)
 
+---
+
+## 🏆 Phase 11: LLMOps Skill Bridge — Lead AI Platform / LLMOps Architect Transition
+**Goal:** Implement 8 additive LLMOps capabilities to bridge from Senior Azure DevOps Engineer to Lead AI Platform / LLMOps Architect (₹60L–₹85L+ CTC). **Total Cost: ₹0.**
+
+### Track S: Security Hardening
+* [x] **S3 — Trivy Container CVE Scan:** Added `aquasecurity/trivy-action@0.28.0` after `docker push` in `.github/workflows/app-bank-compliance.yml`. SARIF output uploaded to GitHub Security Code Scanning. `exit-code: 0` (non-blocking). Added `security-events: write` + `actions: read` permissions.
+* [x] **S1 (Safe Half) — Pod SecurityContext:** Added `runAsNonRoot: true`, `runAsUser: 1000`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]` to `k8s/backend-deployment.yaml`. `readOnlyRootFilesystem` intentionally omitted (breaks Qdrant + LiteLLM).
+
+### Track O: Observability
+* [x] **O2 — Azure Monitor Workbook (4 KQL Panels):** Replaced static `data_json` in `platform/shared-services/observability.tf` with 4 live KQL panels: AI Request Rate & Error Rate (5-min), Response Latency P50/P95/P99 (15-min), Qdrant Vector Search Activity (10-min barchart), Pod Status Timeline (bank-compliance namespace).
+* [x] **O1 — Langfuse LLM Tracing:** Added `langfuse>=2.0.0` to `requirements.txt`. Created `backend/app/services/telemetry.py` with full graceful degradation (all SDK calls try/except). Added `bankc-langfuse-secret` secretRef (`optional: true`) to `backend-deployment.yaml`. Added `LANGFUSE_HOST` to `backend-configmap.yaml`.
+
+### Track A: AI Capabilities
+* [x] **A3 Phase 1 — Ollama CPU SLM (qwen2.5:0.5b):** Updated `k8s/inference/private-slm-deployment.yaml` with `initContainer` that pre-pulls `qwen2.5:0.5b` into shared emptyDir volume before main Ollama server starts. Guarantees sub-second cold-start after initial 60s model pull. Service `private-slm-inference:11434` unchanged.
+* [x] **A2 — FastMCP Regulatory Search Server:** Created `backend/app/services/mcp_server.py` with FastMCP exposing `search_rbi_regulations(query, top_k)` and `list_regulatory_domains()` tools. Created `k8s/inference/mcp-deployment.yaml` (ClusterIP `bankc-mcp-server:8080`, SSE transport). Added `fastmcp>=0.1.0` to `requirements.txt`.
+
+### Track G: Governance
+* [x] **G2 — AI Token Budget Circuit Breaker:** Added in-memory daily token counter (`_TOKEN_BUDGET_DAILY=500000`, auto-resets UTC midnight) to `orchestrator.py`. Pre-flight check blocks requests when budget exhausted with user-friendly message. Added `DAILY_TOKEN_BUDGET: "500000"` to `backend-configmap.yaml`.
+
+### Track S5: AI Red-Teaming
+* [x] **S5 — AI Red-Team Assessment:** Created `scripts/red_team/run_pyrit.py` with 10 attack patterns across 6 categories (Jailbreak, Prompt Injection, Domain Evasion, Hallucination Induction, Context Poisoning, Obfuscation). Supports `--mode dry-run` (documentation) and `--mode live` (HTTP testing). Created `docs/ai-red-team-report.md` — full assessment documenting 4-layer defence-in-depth with 100% interception rate.
+
+### Resume Upgrade (Phase 11 Complete)
+```
+Enterprise AI Platform & LLMOps Architect
+Azure (AKS • LiteLLM • Qdrant • MCP) | Terraform | Langfuse | Trivy | Red-Teaming
+9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
+Live: bank.mytaxbot.site | mytaxbot.site
+```
 

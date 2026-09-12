@@ -33,6 +33,8 @@ permissions:
   id-token: write
   contents: read
   packages: write
+  security-events: write  # Required for Trivy SARIF upload to GitHub Code Scanning
+  actions: read           # Required by codeql-action/upload-sarif reusable workflow
 
 env:
   REGISTRY: ghcr.io
@@ -112,6 +114,26 @@ jobs:
             ${{ steps.prep_tag.outputs.image_sha_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ── S3: Trivy Container Image Security Scan (SARIF → GitHub Code Scanning) ──
+      # Scans for CRITICAL & HIGH CVEs in the built image.
+      # exit-code: '0' = non-blocking (observational). Upload always runs so
+      # Security → Code Scanning Alerts is populated even on clean builds.
+      - name: 🔒 Trivy Container Security Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: '${{ steps.prep_tag.outputs.image_sha_tag }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload Trivy SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-container-bankc-backend'
 
   # ── JOB 3: Deploy Kubernetes Manifests to AKS ─────────────────────────────
   deploy-backend-aks:

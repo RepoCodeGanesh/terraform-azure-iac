@@ -27,3 +27,8 @@ data:
   # Telemetry & Runtime Environment
   APPLICATIONINSIGHTS_CONNECTION_STRING: ""
   ENVIRONMENT: "production"
+  # G2: AI Token Budget Circuit Breaker — daily token limit before circuit opens
+  # ~500k tokens = ~250 compliance queries/day at 2k tokens each ($0 on Gemini free tier)
+  DAILY_TOKEN_BUDGET: "500000"
+  # O1: Langfuse tracing host (keys loaded from bankc-langfuse-secret)
+  LANGFUSE_HOST: "https://cloud.langfuse.com"
