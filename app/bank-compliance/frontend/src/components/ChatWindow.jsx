@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle } from 'lucide-react'
+import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle, BookOpen } from 'lucide-react'
 import MarkdownRenderer from './MarkdownRenderer'
 import CitationCard from './CitationCard'
 import PIIBanner from './PIIBanner'
