@@ -172,14 +172,41 @@ jobs:
             terraform plan -destroy -input=false -parallelism=10
           fi
 
-      - name: Terraform Destroy
+      - name: Terraform Destroy (with Automated Backoff Retry)
         if: inputs.action == 'destroy'
         working-directory: ${{ inputs.target }}
         run: |
+          MAX_RETRIES=2
+          ATTEMPT=1
+          SUCCESS=false
+
+          DESTROY_ARGS="-auto-approve -input=false -parallelism=10"
           if [ -f "prod.tfvars" ]; then
-            terraform destroy -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
-          else
-            terraform destroy -auto-approve -input=false -parallelism=10
+            DESTROY_ARGS="$DESTROY_ARGS -var-file=prod.tfvars"
+          fi
+
+          while [ $ATTEMPT -le $((MAX_RETRIES + 1)) ]; do
+            echo "🚀 [Pass $ATTEMPT/$((MAX_RETRIES + 1))] Executing: terraform destroy $DESTROY_ARGS"
+            if terraform destroy $DESTROY_ARGS; then
+              echo "✅ Terraform destroy completed successfully on Pass $ATTEMPT."
+              SUCCESS=true
+              break
+            else
+              EXIT_CODE=$?
+              if [ $ATTEMPT -le $MAX_RETRIES ]; then
+                BACKOFF=$((ATTEMPT * 20))
+                echo "⚠️ [Pass $ATTEMPT] Destroy exited with code $EXIT_CODE."
+                echo "💡 Transient Azure control-plane lock detected (e.g. StorageAccountOperationInProgress / VMSS cleanup)."
+                echo "⏳ Backing off for ${BACKOFF}s before automated retry..."
+                sleep $BACKOFF
+              fi
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "❌ Terraform destroy failed after $((MAX_RETRIES + 1)) attempts."
+            exit 1
           fi
 
       - name: Generate Terraform Step Summary

@@ -38,6 +38,10 @@ resource "azurerm_storage_account" "this" {
       days = var.container_retention_days
     }
   }
+
+  timeouts {
+    delete = "30m"
+  }
 }
 
 resource "azurerm_storage_container" "this" {
