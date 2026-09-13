@@ -296,6 +296,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Microsoft managed add-ons (Gatekeeper, KEDA Operator, Metrics Server, Workload Identity) default to 2 replicas for multi-zone HA. On a single-node cluster (`Standard_B2s` / `Standard_D2s_v5`), running 2 replicas of each operator on the same VM provides 0% extra availability while consuming >96% of node allocatable CPU requests (1829m of 1900m).
 * **Resolution:** (1) Deployed automated `finops-single-node-tuner` CronJob (`app/bank-compliance/k8s/finops-single-node-tuner.yaml`) running in-cluster Python REST calls every 6 hours to pin `gatekeeper-controller`, `keda-operator`, `keda-operator-metrics-apiserver`, `keda-admission-webhooks`, `azure-wi-webhook-controller-manager`, and `metrics-server` to 1 replica. (2) Set `replicas: 0` for idle inference workloads (`mcp-deployment`, `private-slm-deployment`) in git. (3) Wired tuner into `.github/workflows/app-bank-compliance.yml` to automatically execute on CI/CD redeployments.
 
+### 37. Azure Storage Asynchronous Teardown Race Condition (`StorageAccountOperationInProgress` 409 Conflict)
+* **Symptom:** During `terraform destroy`, deleting `azurerm_storage_account` fails with `unexpected status 409 (409 Conflict) with error: StorageAccountOperationInProgress: An operation is currently performing on this storage account that requires exclusive access.` Downstream resources (e.g. parent Resource Group) are not destroyed.
+* **Root Cause:** In Terraform's destroy dependency graph, child sub-resources (`azurerm_storage_container`) are destroyed immediately before the parent `azurerm_storage_account`. Azure Storage processes container purges asynchronously while holding an exclusive account lock mutex. When ARM's `DELETE /storageAccounts/<name>` request arrives milliseconds later, ARM rejects the call with HTTP 409.
+* **Resolution:** (1) A sequential second pass of `terraform destroy` cleanly destroys the parent resource group once the storage lock clears (<15 seconds). (2) For automated CI/CD pipelines, execute destroys asynchronously via GitHub Actions / ADO (`terraform-unified-manager.yml`) so local machine power state never disrupts cloud teardown.
+
 ---
 
 
