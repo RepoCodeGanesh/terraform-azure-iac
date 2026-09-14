@@ -83,7 +83,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-dark)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', height: '100dvh', background: 'var(--bg-dark)' }}>
       {/* ── Enterprise Executive Navigation Bar ─────────────────────────────── */}
       <header className="glass-panel header-container" style={{
         padding: '8px 20px',
@@ -305,7 +305,7 @@ export default function App() {
       </header>
 
       {/* ── Main Dynamic Workspace View ────────────────────────────────────── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="workspace-container" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Pillar 2: Command Center Mode */}
         {activePillar === 'command' && (
           <CommandCenter
@@ -344,6 +344,54 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* ── Mobile Bottom Navigation Dock (<= 860px) ───────────────────────── */}
+      <nav className="mobile-bottom-dock" aria-label="Mobile Navigation">
+        <button
+          type="button"
+          onClick={() => navigateToPillar('copilot')}
+          className={`mobile-dock-btn ${activePillar === 'copilot' ? 'active' : ''}`}
+        >
+          <MessageSquare size={18} />
+          <span>Copilot</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToPillar('command')}
+          className={`mobile-dock-btn ${activePillar === 'command' ? 'active' : ''}`}
+        >
+          <Sliders size={18} />
+          <span>Command</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToPillar('governance')}
+          className={`mobile-dock-btn ${activePillar === 'governance' ? 'active' : ''}`}
+        >
+          <Shield size={18} />
+          <span>Governance</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToPillar('monitoring')}
+          className={`mobile-dock-btn ${activePillar === 'monitoring' ? 'active' : ''}`}
+        >
+          <Activity size={18} />
+          <span>Monitoring</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToPillar('redline')}
+          className={`mobile-dock-btn ${activePillar === 'redline' ? 'active' : ''}`}
+        >
+          <FileCheck size={18} />
+          <span>Redliner</span>
+        </button>
+      </nav>
     </div>
   )
 }

@@ -350,7 +350,8 @@ export default function SalaryCtcOptimiser() {
               <h4 style={{ color: '#f1f5f9', fontSize: '1.1rem', fontWeight: '700', marginBottom: '14px' }}>
                 📊 Side-by-Side Component Restructuring Table
               </h4>
-              <div style={{ overflowX: 'auto' }}>
+              {/* Desktop Table (>= 769px) */}
+              <div className="desktop-only-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', textAlign: 'left' }}>
@@ -384,6 +385,47 @@ export default function SalaryCtcOptimiser() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card-Based Reflow (<= 768px) */}
+              <div className="mobile-only-block mobile-ctc-cards" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {result.component_breakdown.map((row, idx) => (
+                  <div key={idx} style={{
+                    background: 'rgba(30, 41, 59, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '10px',
+                    padding: '14px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.9rem' }}>{row.component}</span>
+                      <span style={{
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        background: row.taxability?.includes('Exempt') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                        color: row.taxability?.includes('Exempt') ? '#34d399' : '#f87171',
+                        flexShrink: 0
+                      }}>
+                        {row.taxability}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.86rem', marginBottom: '6px' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Current: </span>
+                        <span style={{ color: '#cbd5e1' }}>₹{row.current_amount?.toLocaleString('en-IN')}</span>
+                      </div>
+                      <span style={{ color: '#64748b' }}>➔</span>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Optimised: </span>
+                        <span style={{ color: '#34d399', fontWeight: 700 }}>₹{row.optimised_amount?.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '6px' }}>
+                      ℹ️ {row.tax_exemption_rule}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

@@ -376,7 +376,7 @@ Approved for CCO / Internal Audit Review.`
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
       {/* Messages Scroll Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
+      <div className="chat-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
         <div style={{
           maxWidth: '880px',
           width: '100%',
@@ -386,7 +386,7 @@ Approved for CCO / Internal Audit Review.`
           gap: '20px'
         }}>
           {messages.map((m, idx) => (
-          <div key={idx} className="animate-fade-in" style={{
+          <div key={idx} className="animate-fade-in chat-bubble-row" style={{
             display: 'flex',
             gap: '14px',
             alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
@@ -678,7 +678,7 @@ Approved for CCO / Internal Audit Review.`
       )}
 
       {/* Floating Modern Command Bar Input */}
-      <div style={{ padding: '16px 20px', background: 'rgba(10, 14, 22, 0.85)', borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="chat-input-wrapper" style={{ padding: '16px 20px', background: 'rgba(10, 14, 22, 0.85)', borderTop: '1px solid var(--border-subtle)' }}>
         <div style={{ maxWidth: '880px', width: '100%', margin: '0 auto' }}>
           <form onSubmit={handleSend} style={{
             display: 'flex',

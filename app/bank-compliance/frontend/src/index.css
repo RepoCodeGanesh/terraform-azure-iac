@@ -174,28 +174,38 @@ body {
   overflow: hidden;
 }
 
+.mobile-bottom-dock {
+  display: none;
+}
+
+.redline-mobile-tab-toggle {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .desktop-only {
     display: none !important;
   }
 
-  .header-nav {
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
-    max-width: 100% !important;
-    padding-bottom: 2px !important;
+  .mobile-only {
+    display: flex !important;
   }
-  .header-nav::-webkit-scrollbar {
+
+  /* Prevent iOS Safari 120% auto-zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Hide header navigation buttons on mobile; replaced by bottom dock */
+  .header-nav {
     display: none !important;
   }
 
   .header-container {
-    padding: 6px 12px !important;
+    padding: 8px 14px !important;
     gap: 8px !important;
     flex-wrap: nowrap !important;
-    overflow-x: auto !important;
+    justify-content: space-between !important;
   }
 
   .engine-btn-text-desktop {
@@ -205,14 +215,123 @@ body {
   .engine-btn-text-mobile {
     display: inline !important;
   }
+
+  /* Workspace container safe-area bottom offset for mobile dock */
+  .workspace-container {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 8px)) !important;
+  }
+
+  /* Mobile Bottom Navigation Dock */
+  .mobile-bottom-dock {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(13, 17, 26, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-glass);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)) 4px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .mobile-dock-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    min-height: 48px;
+    transition: all 0.18s ease;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-dock-btn.active {
+    color: #ffffff !important;
+    background: rgba(99, 102, 241, 0.18);
+  }
+
+  .mobile-dock-btn span {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .mobile-dock-btn.active span {
+    color: #818cf8;
+  }
+
+  /* Redline Studio Mobile Adaptation */
+  .redline-mobile-tab-toggle {
+    display: flex !important;
+  }
+
+  .redline-dual-container {
+    flex-direction: column !important;
+    padding: 10px 12px !important;
+    gap: 12px !important;
+  }
+
+  .redline-pane-left,
+  .redline-pane-right {
+    display: none !important;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+
+  .redline-pane-left.mobile-active,
+  .redline-pane-right.mobile-active {
+    display: flex !important;
+  }
+
+  /* Chat Window Mobile Optimizations */
+  .chat-scroll-area {
+    padding: 12px 10px !important;
+  }
+
+  .chat-bubble-row {
+    max-width: 95% !important;
+    gap: 8px !important;
+  }
+
+  .chat-input-wrapper {
+    padding: 10px 12px !important;
+  }
 }
 
 @media (min-width: 861px) {
   .mobile-only {
     display: none !important;
   }
+
+  .mobile-bottom-dock {
+    display: none !important;
+  }
+
   .engine-btn-text-mobile {
     display: none !important;
   }
+
+  .redline-mobile-tab-toggle {
+    display: none !important;
+  }
+
+  .redline-pane-left,
+  .redline-pane-right {
+    display: flex !important;
+  }
 }
+
 

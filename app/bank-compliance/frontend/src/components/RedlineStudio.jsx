@@ -75,6 +75,7 @@ export default function RedlineStudio() {
   const [auditResult, setAuditResult] = useState(() => auditContractLocally(COMPLIANT_AGREEMENT, 'RBI_Compliant_FinTech_Agreement_2026.pdf'))
   const [copiedIdx, setCopiedIdx] = useState(null)
   const [downloadingCert, setDownloadingCert] = useState(false)
+  const [mobileTab, setMobileTab] = useState('redline')
 
   // ── Client-Side Dynamic Statutory Rules Engine (100% Offline & Resilience Shield) ──
   function auditContractLocally(text, docName) {
@@ -471,8 +472,53 @@ export default function RedlineStudio() {
         </div>
       </div>
 
+      {/* ── Mobile Segmented View Selector (<= 860px) ──────────────────────── */}
+      <div className="redline-mobile-tab-toggle" style={{
+        margin: '10px 14px 0 14px',
+        background: '#0f172a',
+        padding: '4px',
+        borderRadius: '8px',
+        border: '1px solid #1e293b',
+        gap: '6px'
+      }}>
+        <button
+          type="button"
+          onClick={() => setMobileTab('draft')}
+          style={{
+            flex: 1,
+            padding: '8px',
+            borderRadius: '6px',
+            background: mobileTab === 'draft' ? '#1e293b' : 'transparent',
+            color: mobileTab === 'draft' ? '#ffffff' : '#94a3b8',
+            border: 'none',
+            fontWeight: 700,
+            fontSize: '0.78rem',
+            cursor: 'pointer'
+          }}
+        >
+          📄 Original Draft ({clauseCount})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('redline')}
+          style={{
+            flex: 1,
+            padding: '8px',
+            borderRadius: '6px',
+            background: mobileTab === 'redline' ? 'rgba(236, 72, 153, 0.2)' : 'transparent',
+            color: mobileTab === 'redline' ? '#f472b6' : '#94a3b8',
+            border: mobileTab === 'redline' ? '1px solid rgba(236, 72, 153, 0.5)' : '1px solid transparent',
+            fontWeight: 700,
+            fontSize: '0.78rem',
+            cursor: 'pointer'
+          }}
+        >
+          ✍️ RBI Redline ({auditResult ? auditResult.total_violations : 0})
+        </button>
+      </div>
+
       {/* ── Main Side-by-Side Dual-Pane Workspace ───────────────────────────── */}
-      <div style={{
+      <div className="redline-dual-container" style={{
         display: 'flex',
         flex: 1,
         overflow: 'hidden',
@@ -481,7 +527,7 @@ export default function RedlineStudio() {
         minHeight: 0
       }}>
         {/* ── LEFT PANE: Contract Source Text Editor (48% width) ─────────────── */}
-        <div style={{
+        <div className={`redline-pane-left ${mobileTab === 'draft' ? 'mobile-active' : ''}`} style={{
           flex: '1 1 48%',
           display: 'flex',
           flexDirection: 'column',
@@ -571,7 +617,7 @@ export default function RedlineStudio() {
         </div>
 
         {/* ── RIGHT PANE: Audit Results & Redline Diffs (52% width) ─────────── */}
-        <div style={{
+        <div className={`redline-pane-right ${mobileTab === 'redline' ? 'mobile-active' : ''}`} style={{
           flex: '1 1 52%',
           display: 'flex',
           flexDirection: 'column',
