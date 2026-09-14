@@ -25,21 +25,31 @@ try:
 except ImportError:
     HAS_CONTENT_SAFETY = False
 
+try:
+    from azure.ai.projects import AIProjectClient
+    HAS_AZURE_AI_PROJECTS = True
+except ImportError:
+    HAS_AZURE_AI_PROJECTS = False
+
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-GROQ_API_KEY            = os.environ.get("GROQ_API_KEY", "")
-GROQ_MODEL              = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
-OPENAI_ENDPOINT         = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
-OPENAI_MODEL            = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
-SEARCH_ENDPOINT         = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
-SEARCH_INDEX            = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
-CONTENT_SAFETY_ENDPOINT = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
-COSMOS_DB_ENDPOINT      = os.environ.get("COSMOS_DB_ENDPOINT", "")
-COSMOS_DB_DATABASE      = os.environ.get("COSMOS_DB_DATABASE", "db-tax-advisor")
-COSMOS_DB_CONTAINER     = os.environ.get("COSMOS_DB_CONTAINER", "chat_history")
-APP_NAME                = os.environ.get("APP_NAME", "TaxBot India")
-APP_VERSION             = os.environ.get("APP_VERSION", "1.0.0")
+GROQ_API_KEY             = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL               = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+OPENAI_ENDPOINT          = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+OPENAI_MODEL             = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
+FOUNDRY_PROJECT_ENDPOINT = os.environ.get("FOUNDRY_PROJECT_ENDPOINT", "")
+FOUNDRY_AGENT_NAME        = os.environ.get("FOUNDRY_AGENT_NAME", "TaxBot-Calculation-Specialist")
+FOUNDRY_AGENT_VERSION     = os.environ.get("FOUNDRY_AGENT_VERSION", "2")
+FOUNDRY_API_KEY           = os.environ.get("FOUNDRY_API_KEY", "")
+SEARCH_ENDPOINT          = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
+SEARCH_INDEX             = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
+CONTENT_SAFETY_ENDPOINT  = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
+COSMOS_DB_ENDPOINT       = os.environ.get("COSMOS_DB_ENDPOINT", "")
+COSMOS_DB_DATABASE       = os.environ.get("COSMOS_DB_DATABASE", "db-tax-advisor")
+COSMOS_DB_CONTAINER      = os.environ.get("COSMOS_DB_CONTAINER", "chat_history")
+APP_NAME                 = os.environ.get("APP_NAME", "TaxBot India")
+APP_VERSION              = os.environ.get("APP_VERSION", "1.0.0")
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -172,6 +182,97 @@ def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens
         except Exception as e2:
             logging.error("❌ Both Primary (Groq) and Secondary (Azure OpenAI) failed: %s", e2)
             raise e2
+
+# ── Microsoft Azure AI Foundry Agent Helpers (Code Interpreter) ────────────────
+_foundry_project_client = None
+
+def get_foundry_project_client():
+    global _foundry_project_client
+    if _foundry_project_client is not None:
+        return _foundry_project_client
+    if not HAS_AZURE_AI_PROJECTS or not FOUNDRY_PROJECT_ENDPOINT:
+        return None
+    try:
+        from azure.ai.projects import AIProjectClient
+        _foundry_project_client = AIProjectClient(
+            endpoint=FOUNDRY_PROJECT_ENDPOINT,
+            credential=get_credential(),
+        )
+        return _foundry_project_client
+    except Exception as e:
+        logging.warning("Azure AI Foundry ProjectClient initialization failed: %s", e)
+        return None
+
+def is_calculation_request(message: str) -> bool:
+    """Detect if a user prompt is requesting mathematical tax calculation or slab computations."""
+    if not message:
+        return False
+    lowered = message.lower()
+    calc_keywords = [
+        "calculate", "calculation", "compute", "computation", "how much tax", "what is my tax",
+        "what will be my tax", "compare regime", "which regime is better", "my salary is", "earning",
+        "gross salary", "net tax", "tax liability", "tax on", "marginal relief", "rebate 87a",
+        "standard deduction", "tax payable", "tax amount", "math", "calculator"
+    ]
+    for kw in calc_keywords:
+        if kw in lowered:
+            return True
+    patterns = [
+        r'\b\d+(\.\d+)?\s*(lakh|lakhs|lac|lacs|cr|crore|crores|k|thousand)\b',
+        r'₹\s*\d+',
+        r'rs\.?\s*\d+',
+        r'inr\s*\d+',
+        r'\b\d{5,8}\b',
+    ]
+    for p in patterns:
+        if re.search(p, lowered):
+            return True
+    return False
+
+def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str]:
+    """
+    Invokes Microsoft Azure AI Foundry Agent Service (TaxBot-Calculation-Specialist)
+    utilizing its sandboxed Python Code Interpreter tool for 100% exact numerical accuracy.
+    Returns (response_text, model_name).
+    """
+    if not HAS_AZURE_AI_PROJECTS or not FOUNDRY_PROJECT_ENDPOINT:
+        return None, None
+    try:
+        project_client = get_foundry_project_client()
+        if not project_client:
+            return None, None
+        
+        openai_client = project_client.get_openai_client()
+        inputs = []
+        if history:
+            for h in history[-4:]:
+                if h.get("role") in ("user", "assistant") and h.get("content"):
+                    inputs.append({"role": h["role"], "content": h["content"]})
+        inputs.append({"role": "user", "content": prompt})
+        
+        logging.info("🤖 Invoking Microsoft Foundry Agent '%s' (v%s) with Code Interpreter...", FOUNDRY_AGENT_NAME, FOUNDRY_AGENT_VERSION)
+        response = openai_client.responses.create(
+            input=inputs,
+            extra_body={
+                "agent_reference": {
+                    "name": FOUNDRY_AGENT_NAME,
+                    "version": str(FOUNDRY_AGENT_VERSION),
+                    "type": "agent_reference"
+                }
+            }
+        )
+        
+        reply = getattr(response, "output_text", None)
+        if not reply and hasattr(response, "choices") and response.choices:
+            reply = response.choices[0].message.content
+        if not reply:
+            reply = str(response)
+            
+        logging.info("✅ Served via Microsoft Foundry Agent Service (%s)", FOUNDRY_AGENT_NAME)
+        return reply, f"azure-foundry/{FOUNDRY_AGENT_NAME}"
+    except Exception as e:
+        logging.warning("⚠️ Microsoft Foundry Agent execution failed (%s). Falling back to primary LLM...", e)
+        return None, None
 
 # ── Cosmos DB Session Persistence Helpers ─────────────────────────────────────
 _cosmos_container = None
@@ -482,13 +583,17 @@ def diagnostics(req: func.HttpRequest) -> func.HttpResponse:
         "AZURE_SEARCH_ENDPOINT":         bool(SEARCH_ENDPOINT),
         "AZURE_SEARCH_INDEX":            bool(SEARCH_INDEX),
         "AZURE_CONTENT_SAFETY_ENDPOINT": bool(CONTENT_SAFETY_ENDPOINT),
+        "FOUNDRY_PROJECT_ENDPOINT":      bool(FOUNDRY_PROJECT_ENDPOINT),
+        "FOUNDRY_AGENT_NAME":            FOUNDRY_AGENT_NAME,
+        "FOUNDRY_AGENT_ENABLED":         bool(FOUNDRY_PROJECT_ENDPOINT and HAS_AZURE_AI_PROJECTS),
     }
-    all_ok = any([checks["GROQ_PRIMARY_ENABLED"], checks["AZURE_OPENAI_ENDPOINT"]])
+    all_ok = any([checks["GROQ_PRIMARY_ENABLED"], checks["AZURE_OPENAI_ENDPOINT"], checks["FOUNDRY_PROJECT_ENDPOINT"]])
     return cors_response(200 if all_ok else 500, {
         "status": "ok" if all_ok else "degraded",
         "checks": checks,
         "primary_model": f"groq/{GROQ_MODEL}" if GROQ_API_KEY else f"azure/{OPENAI_MODEL}",
         "fallback_model": f"azure/{OPENAI_MODEL}",
+        "foundry_agent": FOUNDRY_AGENT_NAME if checks["FOUNDRY_AGENT_ENABLED"] else None,
         "app": APP_NAME,
         "content_safety_enabled": bool(CONTENT_SAFETY_ENDPOINT),
     })
@@ -530,6 +635,20 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
                 "sources_searched": False,
                 "out_of_scope": True,
             })
+
+        # 🧮 4. Microsoft Foundry Agent Dispatch (Python Code Interpreter Sandbox)
+        if is_calculation_request(message):
+            foundry_reply, foundry_model = invoke_foundry_agent(message, history)
+            if foundry_reply:
+                saved = save_chat_turn(session_id, raw_message, foundry_reply, foundry_model)
+                return cors_response(200, {
+                    "reply": foundry_reply,
+                    "model": foundry_model,
+                    "sessionId": session_id,
+                    "persisted": saved,
+                    "sources_searched": False,
+                    "code_interpreter": True,
+                })
 
         # RAG search
         context = rag_search(message)

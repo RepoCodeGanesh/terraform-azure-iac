@@ -122,7 +122,8 @@ export default function ChatAdvisor() {
           role: 'assistant', 
           content: data.reply || 'No response received.',
           model: data.model,
-          out_of_scope: data.out_of_scope
+          out_of_scope: data.out_of_scope,
+          code_interpreter: data.code_interpreter
         },
       ])
     } catch (err) {
@@ -192,12 +193,22 @@ export default function ChatAdvisor() {
                 <div style={{ 
                   marginTop: '8px', 
                   fontSize: '0.7rem', 
-                  color: m.out_of_scope ? '#fde68a' : 'var(--text-muted)', 
+                  color: m.out_of_scope 
+                    ? '#fde68a' 
+                    : (m.code_interpreter || (m.model && m.model.startsWith('azure-foundry')))
+                      ? '#38bdf8'
+                      : 'var(--text-muted)', 
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: '5px' 
                 }}>
-                  <span>{m.out_of_scope ? '🛡️ Domain Sieve Intercept (<2ms)' : `⚡ Model: ${m.model}`}</span>
+                  <span>
+                    {m.out_of_scope 
+                      ? '🛡️ Domain Sieve Intercept (<2ms)' 
+                      : (m.code_interpreter || (m.model && m.model.startsWith('azure-foundry')))
+                        ? '🤖 Microsoft Foundry Agent (Python Code Interpreter)'
+                        : `⚡ Model: ${m.model}`}
+                  </span>
                 </div>
               )}
             </div>

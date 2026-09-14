@@ -6,3 +6,4 @@ openai>=1.56.0,<2.0.0
 cryptography==41.0.7
 azure-monitor-opentelemetry>=1.6.0,<2.0.0
 azure-cosmos>=4.8.0,<5.0.0
+azure-ai-projects>=2.1.0
