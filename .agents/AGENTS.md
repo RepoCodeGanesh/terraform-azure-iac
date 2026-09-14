@@ -317,7 +317,10 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Resolution:** 
   1. Implemented a deterministic `validate_tax_domain_scope` guardrail executing in sub-2ms that intercepts off-topic non-tax queries (cooking, sports, entertainment, general programming) and returns a structured out-of-scope abstention response without burning LLM inference tokens.
   2. Hardened `SYSTEM_PROMPT` in `function_app.py` with strict regulatory domain boundaries.
-  3. Added a "New Chat" session reset button in `ChatAdvisor.jsx` and model/out-of-scope visual badges in the UI.
+### 41. Azure AI Foundry Model Deployment Rejection (`DeploymentModelNotSupported: Format:OpenAI,Name:gpt-4o-mini,Version:2` & Deprecation Collision)
+* **Symptom:** In Azure AI Foundry portal (`ai.azure.com`), attempting to deploy `gpt-4o-mini` fails with red banner: `DeploymentModelNotSupported: The model 'Format:OpenAI,Name:gpt-4o-mini,Version:2' of account deployment is not supported.`
+* **Root Cause:** (1) The user selected the AzureML Model Registry catalog asset (`azureml://registries/azure-openai/models/gpt-4o-mini/versions/2`) which requires dedicated managed compute instead of Cognitive Services account deployment. (2) `gpt-4o-mini` (version `2024-07-18`) is in `Deprecating` status in `eastus2`, blocking new account deployments.
+* **Resolution:** Deploy active, Generally Available non-deprecated models for Azure OpenAI Cognitive Services: `gpt-5.4-nano` and `gpt-5.4-mini` (version `2026-03-17`) using SKU `GlobalStandard` and capacity 10 via Azure CLI (`az cognitiveservices account deployment create`). Both models feature full `agentsV2` and `assistants` capabilities with zero idle standby cost.
 
 ---
 
