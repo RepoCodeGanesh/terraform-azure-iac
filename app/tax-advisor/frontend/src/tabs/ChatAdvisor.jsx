@@ -1,19 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://apim-ht-ss-p-cin-01.azure-api.net/tax-advisor'
 
-const QUICK_PROMPTS = [
-  { label: "🧮 Calculate Tax on ₹18.5L", text: "Calculate my tax on ₹18,50,000 salary under Budget 2025 New vs Old Regime." },
-  { label: "⚖️ Compare Slabs (₹25L CTC)", text: "Compare Old vs New Regime for ₹25,00,000 salary with ₹1.5L 80C, ₹50k NPS, and ₹30k health insurance." },
-  { label: "⚡ 80CCD(2) Employer NPS", text: "How can I save tax using Section 80CCD(2) employer NPS in FY 2026-27?" },
-  { label: "📈 Equity LTCG Rules", text: "What are the capital gains tax rates on equity mutual funds under Budget 2025?" },
+const HERO_PROMPTS = [
+  {
+    title: "🧮 Calculate Tax on ₹18.5L Salary",
+    subtitle: "New vs Old Regime comparison with ₹75k standard deduction",
+    text: "Calculate my tax on ₹18,50,000 salary under Budget 2025 New vs Old Regime."
+  },
+  {
+    title: "⚖️ Compare Slabs for ₹25L CTC",
+    subtitle: "Slabs, 80C, 80CCD NPS, and Section 87A rebate",
+    text: "Compare Old vs New Regime for ₹25,00,000 salary with ₹1.5L 80C, ₹50k NPS, and ₹30k health insurance."
+  },
+  {
+    title: "⚡ Section 80CCD(2) Employer NPS",
+    subtitle: "Tax-free corporate pension restructuring in FY 2026-27",
+    text: "How can I save tax using Section 80CCD(2) employer NPS in FY 2026-27?"
+  },
+  {
+    title: "📈 Equity Mutual Fund LTCG Rules",
+    subtitle: "Budget 2025 capital gains tax rates & exemptions",
+    text: "What are the capital gains tax rates on equity mutual funds under Budget 2025?"
+  }
 ]
 
 export default function ChatAdvisor() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Union Budget 2025.\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!\n\n💡 *Tip: Try asking for a tax calculation to see the **Microsoft AI Foundry Python Specialist** with live code verification.*",
+      content: "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Union Budget 2025.\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!\n\n💡 *Ask for a tax calculation to see the **Microsoft AI Foundry Python Specialist** compute exact statutory slabs with verified code.*",
       model: "system-welcome",
     },
   ])
@@ -21,11 +38,11 @@ export default function ChatAdvisor() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [engineMode, setEngineMode] = useState('auto') // 'auto' | 'foundry' | 'fast'
-  const [expandedTraces, setExpandedTraces] = useState({})
+  const [expandedTraces, setExpandedTraces] = useState({}) // Hidden by default!
+  const [showArchInfo, setShowArchInfo] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [isListening, setIsListening] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
-  const [diagnostics, setDiagnostics] = useState(null)
 
   const messagesEndRef = useRef(null)
   const recognitionRef = useRef(null)
@@ -43,7 +60,7 @@ export default function ChatAdvisor() {
     return 'default-session'
   })
 
-  // Initialize Speech Recognition API
+  // Initialize Web Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -59,39 +76,14 @@ export default function ChatAdvisor() {
           for (let i = event.resultIndex; i < event.results.length; i++) {
             transcript += event.results[i][0].transcript
           }
-          if (transcript) {
-            setInput(transcript)
-          }
+          if (transcript) setInput(transcript)
         }
 
-        recognizer.onerror = (event) => {
-          console.warn('Speech recognition error:', event.error)
-          setIsListening(false)
-        }
-
-        recognizer.onend = () => {
-          setIsListening(false)
-        }
-
+        recognizer.onerror = () => setIsListening(false)
+        recognizer.onend = () => setIsListening(false)
         recognitionRef.current = recognizer
       }
     }
-  }, [])
-
-  // Fetch live backend diagnostics (Foundry Hub & models status)
-  useEffect(() => {
-    const fetchDiagnostics = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/diagnostics`)
-        if (res.ok) {
-          const data = await res.json()
-          setDiagnostics(data)
-        }
-      } catch {
-        // Silently continue if diagnostics warming up
-      }
-    }
-    fetchDiagnostics()
   }, [])
 
   // Restore past session history from Cosmos DB on load
@@ -104,7 +96,7 @@ export default function ChatAdvisor() {
           const data = await res.json()
           if (data.turns && data.turns.length > 0) {
             const restored = [
-              messages[0], // welcome message
+              messages[0],
               ...data.turns.flatMap(t => [
                 { role: 'user', content: t.userMessage },
                 { 
@@ -120,7 +112,7 @@ export default function ChatAdvisor() {
           }
         }
       } catch {
-        // Silently fallback to fresh session if history service is warming up
+        // Silently fallback if warming up
       }
     }
     fetchHistory()
@@ -141,7 +133,7 @@ export default function ChatAdvisor() {
     setMessages([
       {
         role: 'assistant',
-        content: "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Union Budget 2025.\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!",
+        content: "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Union Budget 2025.\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!\n\n💡 *Ask for a tax calculation to see the **Microsoft AI Foundry Python Specialist** compute exact statutory slabs with verified code.*",
         model: "system-welcome",
       },
     ])
@@ -162,12 +154,13 @@ export default function ChatAdvisor() {
         recognitionRef.current.start()
         setIsListening(true)
       } catch (err) {
-        console.error('Failed to start speech recognition:', err)
+        console.error('Speech recognition error:', err)
         setIsListening(false)
       }
     }
   }
 
+  // Toggle code visibility on demand (hidden by default)
   const toggleTrace = (index) => {
     setExpandedTraces(prev => ({
       ...prev,
@@ -225,12 +218,9 @@ export default function ChatAdvisor() {
       }
 
       const data = await res.json()
-      const newIndex = updatedHistory.length
-      
-      // Automatically expand the code trace if it's a python calculation
-      if (data.code_trace || data.code_interpreter) {
-        setExpandedTraces(prev => ({ ...prev, [newIndex]: true }))
-      }
+
+      // NOTE: Code is intentionally NOT auto-expanded by default.
+      // It will only display when user explicitly clicks the inspect button!
 
       setMessages([
         ...updatedHistory,
@@ -254,267 +244,366 @@ export default function ChatAdvisor() {
     }
   }
 
+  // Is conversation in initial empty state?
+  const isInitialState = messages.length <= 1
+
   return (
-    <div className="card chat-container">
-      {/* ── Top Header ──────────────────────────────────────────────────────── */}
-      <div className="card-header" style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="card-icon" style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}>💬</div>
-          <div>
-            <h2 className="card-title">AI Tax Advisor Chat & Agent Studio</h2>
-            <p className="card-subtitle">Enterprise Dual-Engine: Azure AI Foundry Python Specialist & Fast RAG Advisor</p>
-          </div>
-        </div>
-        <button
-          onClick={handleNewChat}
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid var(--border)',
+    <div className="card chat-container" style={{ padding: '0', overflow: 'hidden' }}>
+      {/* ── Sleek Minimal Header Bar ────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 20px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(15, 20, 32, 0.85)',
+        backdropFilter: 'blur(12px)',
+        flexWrap: 'wrap',
+        gap: '10px',
+      }}>
+        {/* Left: Brand & Pill */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
             borderRadius: '8px',
-            padding: '6px 14px',
-            color: 'var(--text-secondary)',
-            fontSize: '0.8rem',
-            cursor: 'pointer',
+            background: 'linear-gradient(135deg, #FF9933 0%, #ffffff 50%, #138808 100%)',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s ease',
-          }}
-          title="Reset conversation and start a new session"
-        >
-          <span>🔄</span>
-          <span>New Chat</span>
-        </button>
-      </div>
-
-      {/* ── Engine Selector HUD ─────────────────────────────────────────────── */}
-      <div style={{
-        background: 'rgba(26, 26, 46, 0.7)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '12px',
-        padding: '10px 14px',
-        marginBottom: '16px',
-        backdropFilter: 'blur(10px)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Execution Engine:
-            </span>
-            <div style={{ display: 'flex', background: 'rgba(0, 0, 0, 0.3)', borderRadius: '8px', padding: '3px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-              <button
-                type="button"
-                onClick={() => setEngineMode('auto')}
-                style={{
-                  background: engineMode === 'auto' ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent',
-                  color: engineMode === 'auto' ? '#fff' : 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '5px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: engineMode === 'auto' ? 600 : 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.2s ease',
-                }}
-                title="Smart Auto-Router: Math calculations route to Foundry Python Specialist; general queries use Fast Advisory"
-              >
-                <span>🤖</span>
-                <span>Auto-Route</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setEngineMode('foundry')}
-                style={{
-                  background: engineMode === 'foundry' ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'transparent',
-                  color: engineMode === 'foundry' ? '#fff' : 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '5px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: engineMode === 'foundry' ? 600 : 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.2s ease',
-                }}
-                title="Force Microsoft Azure AI Foundry Agent (gpt-5.4-mini) with Python Code Interpreter"
-              >
-                <span>🧮</span>
-                <span>Foundry Specialist</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setEngineMode('fast')}
-                style={{
-                  background: engineMode === 'fast' ? 'linear-gradient(135deg, #10b981, #059669)' : 'transparent',
-                  color: engineMode === 'fast' ? '#fff' : 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '5px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: engineMode === 'fast' ? 600 : 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.2s ease',
-                }}
-                title="Force Low-Latency Advisory via Groq LPU (500+ tok/s)"
-              >
-                <span>⚡</span>
-                <span>Fast Advisory</span>
-              </button>
+            justifyContent: 'center',
+            fontSize: '16px',
+            boxShadow: '0 2px 8px rgba(255, 153, 51, 0.25)',
+          }}>
+            🇮🇳
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.98rem', color: '#f8fafc', letterSpacing: '-0.3px' }}>
+                TaxBot AI
+              </span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                color: '#38bdf8',
+                background: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                borderRadius: '12px',
+                padding: '1px 8px',
+              }}>
+                FY 2026-27
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Engine Status Line */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
-            <span>
-              {engineMode === 'foundry' 
-                ? 'Foundry Agent: Forced (hub-taxbot-foundry-01 / gpt-5.4-mini)' 
-                : engineMode === 'fast'
-                  ? 'Fast Engine: Active (Groq LPU / Azure OpenAI)'
-                  : 'Auto-Router Active: Smart Dispatch enabled'}
-            </span>
+        {/* Right: Segmented Engine Switcher + Info + New Chat */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Segmented Control */}
+          <div style={{
+            display: 'flex',
+            background: 'rgba(0, 0, 0, 0.4)',
+            borderRadius: '8px',
+            padding: '2px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+          }}>
+            <button
+              type="button"
+              onClick={() => setEngineMode('auto')}
+              style={{
+                background: engineMode === 'auto' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                color: engineMode === 'auto' ? '#f8fafc' : '#94a3b8',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '0.74rem',
+                fontWeight: engineMode === 'auto' ? 600 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title="Smart Auto-Route: Calculations use Foundry Python Specialist; General advice uses Fast Advisory"
+            >
+              🤖 Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => setEngineMode('foundry')}
+              style={{
+                background: engineMode === 'foundry' ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.4), rgba(99, 102, 241, 0.4))' : 'transparent',
+                color: engineMode === 'foundry' ? '#e9d5ff' : '#94a3b8',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '0.74rem',
+                fontWeight: engineMode === 'foundry' ? 600 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title="Foundry Specialist: Forces gpt-5.4-mini with Python Code Interpreter"
+            >
+              🧮 Math
+            </button>
+            <button
+              type="button"
+              onClick={() => setEngineMode('fast')}
+              style={{
+                background: engineMode === 'fast' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                color: engineMode === 'fast' ? '#6ee7b7' : '#94a3b8',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '0.74rem',
+                fontWeight: engineMode === 'fast' ? 600 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title="Fast Advisory: Ultra-low latency responses via GroqCloud LPU"
+            >
+              ⚡ Fast
+            </button>
           </div>
-        </div>
 
-        {/* Live Architecture HUD Chips */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-          <span style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '4px', padding: '2px 6px', color: '#a5b4fc' }}>
-            🏛️ Hub: hub-taxbot-foundry-01
-          </span>
-          <span style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '4px', padding: '2px 6px', color: '#d8b4fe' }}>
-            🎯 Agent: TaxBot-Calculation-Specialist (v2)
-          </span>
-          <span style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '4px', padding: '2px 6px', color: '#7dd3fc' }}>
-            🐍 Python Code Interpreter: Ready
-          </span>
-          <span style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '4px', padding: '2px 6px', color: '#6ee7b7' }}>
-            🛡️ Sub-2ms Scope Sieve: Active
-          </span>
-        </div>
-      </div>
-
-      {/* ── Quick Prompt Chips ──────────────────────────────────────────────── */}
-      <div className="quick-prompts" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-        {QUICK_PROMPTS.map((item, idx) => (
+          {/* Architecture Info Toggle Button */}
           <button
-            key={idx}
-            className="quick-prompt-btn"
-            onClick={() => handleSend(item.text)}
-            disabled={loading}
+            type="button"
+            onClick={() => setShowArchInfo(!showArchInfo)}
             style={{
-              fontSize: '0.78rem',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              border: '1px solid var(--border)',
-              background: 'rgba(255, 255, 255, 0.03)',
-              color: 'var(--text-secondary)',
+              background: showArchInfo ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              padding: '4px 9px',
+              color: showArchInfo ? '#38bdf8' : '#94a3b8',
+              fontSize: '0.74rem',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
+            title="View Azure AI Architecture & Model Details"
           >
-            {item.label}
+            <span>ℹ️</span>
           </button>
-        ))}
+
+          {/* New Chat Button */}
+          <button
+            type="button"
+            onClick={handleNewChat}
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              padding: '4px 10px',
+              color: '#94a3b8',
+              fontSize: '0.74rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Reset conversation"
+          >
+            <span>🔄</span>
+            <span>New</span>
+          </button>
+        </div>
       </div>
 
-      {/* ── Message Feed ────────────────────────────────────────────────────── */}
-      <div className="chat-messages" style={{ minHeight: '340px', maxHeight: '560px', overflowY: 'auto' }}>
+      {/* ── Architecture Drawer (Collapsible) ───────────────────────────────── */}
+      {showArchInfo && (
+        <div style={{
+          background: 'rgba(11, 15, 25, 0.95)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          padding: '10px 20px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
+          fontSize: '0.72rem',
+          color: '#94a3b8',
+        }}>
+          <span style={{ color: '#a5b4fc' }}>🏛️ <strong>Hub:</strong> hub-taxbot-foundry-01 (eastus2)</span>
+          <span style={{ color: '#d8b4fe' }}>🎯 <strong>Specialist:</strong> TaxBot-Calculation-Specialist (gpt-5.4-mini)</span>
+          <span style={{ color: '#38bdf8' }}>🐍 <strong>Tool:</strong> Python Code Interpreter Sandbox</span>
+          <span style={{ color: '#34d399' }}>⚡ <strong>Primary LPU:</strong> GroqCloud (llama-3.3-70b)</span>
+          <span style={{ color: '#f59e0b' }}>🛡️ <strong>Guardrail:</strong> Sub-2ms Deterministic Scope Sieve</span>
+        </div>
+      )}
+
+      {/* ── Chat Messages Container ─────────────────────────────────────────── */}
+      <div className="chat-messages" style={{ minHeight: '380px', maxHeight: '540px', overflowY: 'auto', padding: '16px 20px' }}>
+        
+        {/* ── Empty State Hero Suggestion Cards (Visible only at start) ──────── */}
+        {isInitialState && (
+          <div style={{ margin: '14px 0 24px 0' }}>
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+            }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '4px' }}>
+                How can I assist your tax planning today?
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Select a suggested computation or ask your custom tax question below:
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '10px',
+            }}>
+              {HERO_PROMPTS.map((item, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleSend(item.text)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
+                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.3)'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                >
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '3px' }}>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: '1.4' }}>
+                    {item.subtitle}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Messages List ─────────────────────────────────────────────────── */}
         {messages.map((m, idx) => (
-          <div key={idx} className={`msg ${m.role === 'user' ? 'user' : 'bot'}`}>
-            <div className="msg-avatar">
+          <div key={idx} className={`msg ${m.role === 'user' ? 'user' : 'bot'}`} style={{ marginBottom: '16px' }}>
+            <div className="msg-avatar" style={{ fontSize: '15px' }}>
               {m.role === 'user' ? '👤' : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')) ? '🧮' : '🇮🇳')}
             </div>
+
             <div 
               className="msg-bubble" 
               style={{ 
-                whiteSpace: 'pre-line',
-                border: m.out_of_scope 
-                  ? '1px solid rgba(245, 158, 11, 0.5)' 
-                  : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')))
-                    ? '1px solid rgba(168, 85, 247, 0.35)'
-                    : undefined,
-                background: m.out_of_scope 
-                  ? 'rgba(245, 158, 11, 0.08)' 
-                  : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')))
-                    ? 'rgba(168, 85, 247, 0.04)'
-                    : undefined,
-                maxWidth: '90%',
+                maxWidth: '85%',
+                background: m.role === 'user' 
+                  ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.4))'
+                  : 'rgba(15, 23, 42, 0.5)',
+                border: m.out_of_scope
+                  ? '1px solid rgba(245, 158, 11, 0.4)'
+                  : '1px solid rgba(255, 255, 255, 0.07)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
               }}
             >
-              {m.content}
+              {/* Rich Markdown Rendering (No raw asterisks or hashtags!) */}
+              <MarkdownRenderer content={m.content} />
 
-              {/* ── Python Math Trace Inspector Accordion ───────────────────── */}
-              {(m.code_trace || m.code_interpreter) && (
-                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => toggleTrace(idx)}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(0, 0, 0, 0.25)',
-                      border: '1px solid rgba(168, 85, 247, 0.25)',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      color: '#c084fc',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{expandedTraces[idx] ? '▼' : '▶'}</span>
-                      <span>🔍 View Python Calculation Code & Math Verification</span>
-                    </span>
-                    <span style={{
-                      background: 'rgba(168, 85, 247, 0.2)',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '0.68rem',
-                      color: '#e9d5ff',
-                    }}>
-                      Budget 2025 Slabs
-                    </span>
-                  </button>
+              {/* ── Minimalist Telemetry & On-Demand Code Accordion ────────── */}
+              {m.model && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                  paddingTop: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}>
+                  {/* Discreet Footer Line */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    flexWrap: 'wrap', 
+                    gap: '8px',
+                    fontSize: '0.72rem',
+                    color: '#94a3b8'
+                  }}>
+                    {/* Left: Attribution + Latency + Verification */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{
+                        color: m.out_of_scope ? '#f59e0b' : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')) ? '#c084fc' : '#38bdf8'),
+                        fontWeight: 500,
+                      }}>
+                        {m.out_of_scope
+                          ? '🛡️ Scope Guardrail'
+                          : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')))
+                            ? 'Foundry Specialist (gpt-5.4-mini)'
+                            : m.model.startsWith('groq')
+                              ? `Groq LPU (${m.model.replace('groq/', '')})`
+                              : m.model}
+                      </span>
 
+                      {m.latency_ms && (
+                        <span>· ⏱️ {m.latency_ms < 1000 ? `${m.latency_ms}ms` : `${(m.latency_ms / 1000).toFixed(1)}s`}</span>
+                      )}
+
+                      {(m.verified || m.code_interpreter) && (
+                        <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          · ✅ Verified Math
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Right: On-Demand Python Code Toggle Button (HIDDEN BY DEFAULT!) */}
+                    {(m.code_trace || m.code_interpreter) && (
+                      <button
+                        type="button"
+                        onClick={() => toggleTrace(idx)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#a5b4fc',
+                          fontSize: '0.72rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#a5b4fc'}
+                      >
+                        <span>{expandedTraces[idx] ? '▴ Hide Code' : '🔍 View Code ▾'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Expanded Code Box (ONLY rendered on explicit user click!) */}
                   {expandedTraces[idx] && (
                     <div style={{
-                      marginTop: '8px',
-                      background: '#0d1117',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      marginTop: '4px',
+                      background: '#070a12',
+                      border: '1px solid rgba(168, 85, 247, 0.25)',
                       borderRadius: '8px',
-                      padding: '12px',
+                      padding: '10px 12px',
                       fontFamily: 'monospace',
-                      fontSize: '0.75rem',
+                      fontSize: '0.74rem',
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', color: '#94a3b8' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>🐍</span>
-                          <span>Python Sandboxed Calculation Trace</span>
-                        </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', color: '#94a3b8' }}>
+                        <span style={{ color: '#c084fc' }}>🐍 Python Sandboxed Calculation Trace</span>
                         <button
                           type="button"
                           onClick={() => handleCopyCode(m.code_trace || '# Statutory Python calculation', idx)}
                           style={{
                             background: 'rgba(255, 255, 255, 0.08)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
                             borderRadius: '4px',
-                            padding: '3px 8px',
-                            color: '#cbd5e1',
-                            fontSize: '0.7rem',
+                            padding: '2px 8px',
+                            color: '#e2e8f0',
+                            fontSize: '0.68rem',
                             cursor: 'pointer',
                           }}
                         >
@@ -523,97 +612,18 @@ export default function ChatAdvisor() {
                       </div>
 
                       <pre style={{
-                        background: '#070a0f',
+                        background: '#04060a',
                         padding: '10px',
                         borderRadius: '6px',
                         overflowX: 'auto',
                         color: '#38bdf8',
                         lineHeight: '1.4',
                         whiteSpace: 'pre-wrap',
+                        margin: 0,
                       }}>
                         <code>{m.code_trace || `# Standard statutory slab computation executed\n# FY 2026-27 (AY 2027-28) Budget 2025 Slabs\n# New Regime: 0-4L (0%), 4-8L (5%), 8-12L (10%), 12-16L (15%), 16-20L (20%), 20-24L (25%), >24L (30%)\n# Standard Deduction: ₹75,000 (New) | ₹50,000 (Old)\n# Section 87A rebate up to ₹60,000 (Zero tax up to ₹12L) + 4% Cess`}</code>
                       </pre>
-
-                      <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', color: '#34d399', fontSize: '0.7rem' }}>
-                        <span>✅</span>
-                        <span>100% Deterministic: Exact statutory math calculated with zero LLM rounding drift</span>
-                      </div>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* ── Telemetry Badges ────────────────────────────────────────── */}
-              {m.model && (
-                <div style={{ 
-                  marginTop: '10px', 
-                  fontSize: '0.72rem', 
-                  display: 'flex', 
-                  flexWrap: 'wrap',
-                  alignItems: 'center', 
-                  gap: '8px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                  paddingTop: '6px',
-                }}>
-                  {/* Model Badge */}
-                  <span style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    background: m.out_of_scope
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')))
-                        ? 'rgba(168, 85, 247, 0.15)'
-                        : m.model.startsWith('groq')
-                          ? 'rgba(16, 185, 129, 0.15)'
-                          : 'rgba(56, 189, 248, 0.15)',
-                    color: m.out_of_scope
-                      ? '#fde68a'
-                      : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')))
-                        ? '#e9d5ff'
-                        : m.model.startsWith('groq')
-                          ? '#a7f3d0'
-                          : '#bae6fd',
-                    fontWeight: 500,
-                  }}>
-                    <span>
-                      {m.out_of_scope 
-                        ? '🛡️ Scope Sieve Guardrail' 
-                        : (m.code_interpreter || (m.model && m.model.includes('azure-foundry')))
-                          ? '🤖 Azure AI Foundry Agent (Python Code Interpreter)'
-                          : m.model.startsWith('groq')
-                            ? `⚡ GroqCloud LPU (${m.model.replace('groq/', '')})`
-                            : `🔷 ${m.model}`}
-                    </span>
-                  </span>
-
-                  {/* Latency Tag */}
-                  {m.latency_ms && (
-                    <span style={{
-                      color: 'var(--text-muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                    }}>
-                      <span>⏱️</span>
-                      <span>{m.latency_ms < 1000 ? `${m.latency_ms}ms` : `${(m.latency_ms / 1000).toFixed(1)}s`}</span>
-                    </span>
-                  )}
-
-                  {/* Verification Tag */}
-                  {(m.verified || m.code_interpreter) && (
-                    <span style={{
-                      color: '#34d399',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                      fontWeight: 500,
-                    }}>
-                      <span>✅</span>
-                      <span>Python Math Verified</span>
-                    </span>
                   )}
                 </div>
               )}
@@ -622,13 +632,18 @@ export default function ChatAdvisor() {
         ))}
 
         {loading && (
-          <div className="msg bot">
+          <div className="msg bot" style={{ marginBottom: '16px' }}>
             <div className="msg-avatar">🇮🇳</div>
-            <div className="msg-bubble" style={{ minWidth: '160px' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <div className="msg-bubble" style={{
+              background: 'rgba(15, 23, 42, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.07)',
+              borderRadius: '12px',
+              padding: '10px 16px',
+            }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '6px' }}>
                 {engineMode === 'foundry' 
-                  ? '🧮 Executing Python calculation sandbox...'
-                  : '🧠 Analyzing tax statutory slabs...'}
+                  ? '🧮 Computing exact statutory slabs in Python sandbox...' 
+                  : '🧠 Formulating personalized tax guidance...'}
               </div>
               <div className="loading-dots">
                 <span></span>
@@ -641,72 +656,93 @@ export default function ChatAdvisor() {
         <div ref={messagesEndRef} />
       </div>
 
-      {error && <div className="error-banner">⚠️ {error}</div>}
+      {error && <div className="error-banner" style={{ margin: '0 20px 10px 20px' }}>⚠️ {error}</div>}
 
-      {/* ── Chat Input Row with Voice Recognition ──────────────────────────── */}
-      <div className="chat-input-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
-        <textarea
-          className="chat-input"
-          placeholder={isListening ? "🔴 Listening to your voice... speak now..." : "Ask a tax question or calculation (e.g. 'I earn 22L, rent 30K/mo. Compare New vs Old regime')..."}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSend()
-            }
-          }}
-          rows={2}
-          style={{
-            flex: 1,
-            borderColor: isListening ? '#ef4444' : undefined,
-            boxShadow: isListening ? '0 0 10px rgba(239, 68, 68, 0.4)' : undefined,
-          }}
-        />
+      {/* ── Modern Floating Input Capsule ───────────────────────────────────── */}
+      <div style={{ padding: '12px 20px 16px 20px', background: 'rgba(15, 20, 32, 0.6)' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'rgba(26, 32, 53, 0.8)',
+          border: isListening ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '20px',
+          padding: '6px 12px',
+          boxShadow: isListening ? '0 0 12px rgba(239, 68, 68, 0.35)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
+          transition: 'all 0.2s ease',
+        }}>
+          <textarea
+            className="chat-input"
+            placeholder={isListening ? "🔴 Listening to your voice... speak now..." : "Ask a tax question or calculation (e.g. 'I earn 22L, rent 30K/mo. Which regime is better?')..."}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
+            rows={1}
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              color: '#f8fafc',
+              fontSize: '0.86rem',
+              resize: 'none',
+              outline: 'none',
+              padding: '6px 4px',
+              fontFamily: 'inherit',
+            }}
+          />
 
-        {/* 🎙️ Voice Input Button */}
-        <button
-          type="button"
-          className="chat-send-btn"
-          onClick={toggleVoiceInput}
-          style={{
-            background: isListening ? '#ef4444' : 'rgba(255, 255, 255, 0.08)',
-            border: isListening ? '1px solid #dc2626' : '1px solid var(--border)',
-            color: '#fff',
-            borderRadius: '10px',
-            width: '42px',
-            height: '42px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            animation: isListening ? 'pulse 1.5s infinite' : 'none',
-          }}
-          title={isListening ? "Listening... click to stop" : "Speak your tax question (Voice Input)"}
-        >
-          {isListening ? '🔴' : '🎙️'}
-        </button>
+          {/* 🎙️ Voice Input Button */}
+          <button
+            type="button"
+            onClick={toggleVoiceInput}
+            style={{
+              background: isListening ? '#ef4444' : 'transparent',
+              border: 'none',
+              color: isListening ? '#fff' : '#94a3b8',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title={isListening ? "Listening... click to stop" : "Voice Input (Speech-to-Text)"}
+          >
+            {isListening ? '🔴' : '🎙️'}
+          </button>
 
-        {/* ➔ Send Button */}
-        <button
-          className="chat-send-btn"
-          onClick={() => handleSend()}
-          disabled={loading || !input.trim()}
-          title="Send message"
-          style={{
-            borderRadius: '10px',
-            width: '42px',
-            height: '42px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.2rem',
-          }}
-        >
-          ➔
-        </button>
+          {/* ➔ Send Button */}
+          <button
+            type="button"
+            onClick={() => handleSend()}
+            disabled={loading || !input.trim()}
+            style={{
+              background: input.trim() ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255, 255, 255, 0.08)',
+              border: 'none',
+              color: input.trim() ? '#fff' : '#64748b',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1rem',
+              cursor: input.trim() && !loading ? 'pointer' : 'default',
+              transition: 'all 0.15s ease',
+            }}
+            title="Send message"
+          >
+            ➔
+          </button>
+        </div>
       </div>
     </div>
   )
