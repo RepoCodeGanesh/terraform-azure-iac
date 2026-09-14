@@ -311,6 +311,14 @@ State files are path-keyed — **git repo location does not affect state**.
   4. **RedlineStudio Mobile Segmented Toggle:** Implemented a mobile segmented toggle (`[ 📄 Original Draft ]` vs `[ ✍️ RBI Redline ]`) in `RedlineStudio.jsx` allowing single-pane focus on mobile while preserving side-by-side dual-pane editing on desktop.
   5. **Dynamic Viewport Height:** Adopted `100dvh` across outer containers and chat scroll areas to prevent virtual keyboards and browser address bars from obscuring inputs.
 
+### 40. TaxBot India Domain Boundary Leak & Semantic Hallucination on Non-Tax Queries (`how to make idly`)
+* **Symptom:** TaxBot India chat happily answered off-topic queries, providing detailed culinary recipes (e.g. "how to make idly"), cricket sports trivia, or general coding scripts instead of abstaining.
+* **Root Cause:** In `app/tax-advisor/backend/function_app.py`, `analyze_prompt_safety` only checked for prompt injection signatures (`ignore previous instructions`) and toxicity via Azure Content Safety, completely lacking a domain scope validation sieve. When off-topic queries returned 0 results from Azure AI Search, the fallback LLM executed with a system prompt that lacked an explicit domain abstention boundary.
+* **Resolution:** 
+  1. Implemented a deterministic `validate_tax_domain_scope` guardrail executing in sub-2ms that intercepts off-topic non-tax queries (cooking, sports, entertainment, general programming) and returns a structured out-of-scope abstention response without burning LLM inference tokens.
+  2. Hardened `SYSTEM_PROMPT` in `function_app.py` with strict regulatory domain boundaries.
+  3. Added a "New Chat" session reset button in `ChatAdvisor.jsx` and model/out-of-scope visual badges in the UI.
+
 ---
 
 

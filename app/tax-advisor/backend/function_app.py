@@ -71,6 +71,7 @@ Rules:
 - Recommend the better regime with clear reasoning
 - Use Indian number format (₹10,00,000 not ₹1000000)
 - Keep responses concise but complete
+- STRICT REGULATORY DOMAIN BOUNDARY: You are strictly an Indian Income Tax, Personal Finance, and Salary Advisor. If the user asks about topics outside Indian taxation (such as cooking recipes like idly/dosa, sports, general coding, entertainment, or unrelated general knowledge), you MUST POLITELY DECLINE and state that you only advise on Indian taxation, salary planning, and ITR filing for FY 2026-27.
 """
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -277,6 +278,77 @@ def analyze_prompt_safety(text: str) -> dict:
 
     return {"safe": True, "reason": "Passed safety audit", "category": "None"}
 
+# ── Domain Scope Guardrail (Sub-2ms Deterministic Tax Sieve) ───────────────────
+OUT_OF_SCOPE_TAX_REPLY = (
+    "⚠️ **Out of Regulatory Tax Scope**\n\n"
+    "I am **TaxBot India**, specialized exclusively in **Indian Income Tax (FY 2026-27 / AY 2027-28)**, "
+    "Budget 2025 tax slabs, salary optimization, deductions (80C, 80D, 80CCD), and ITR filing.\n\n"
+    "I cannot assist with questions outside Indian personal taxation (such as cooking recipes, sports, entertainment, or general coding).\n\n"
+    "**Suggested Tax Queries You Can Ask:**\n"
+    "• *I earn ₹18L per year. Which tax regime is better for me?*\n"
+    "• *How can I save tax using Section 80CCD(2) employer NPS?*\n"
+    "• *What is the capital gains tax on equity mutual funds in FY 2026-27?*\n"
+    "• *How do I claim HRA exemption under Section 10(13A)?*"
+)
+
+GREETING_REPLY = (
+    "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Budget 2025.\n\n"
+    "Ask me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, "
+    "HRA exemption, capital gains, or salary CTC optimization!"
+)
+
+NON_TAX_TRIGGERS = {
+    'idly', 'idli', 'dosa', 'sambar', 'biryani', 'recipe', 'cook', 'cooking', 'bake', 'baking',
+    'pizza', 'burger', 'pasta', 'maggi', 'curry', 'dish', 'ingredient', 'roti', 'chapati',
+    'cricket', 'football', 'ipl', 'world cup', 'virat', 'dhoni', 'messi', 'ronaldo', 'tennis',
+    'movie', 'actor', 'actress', 'cinema', 'song', 'lyrics', 'singer', 'netflix', 'series',
+    'horoscope', 'astrology', 'zodiac', 'weather', 'forecast', 'rain', 'temperature',
+    'python code', 'java code', 'javascript code', 'c++', 'write code', 'debug code',
+    'plumbing', 'mechanic', 'repair car', 'fly in sky', 'fry'
+}
+
+TAX_DOMAIN_VOCABULARY = {
+    'tax', 'taxes', 'taxation', 'income', 'salary', 'tds', 'tcs', 'itr', 'itr-1', 'itr-2', 'itr-3', 'itr-4',
+    'pan', 'tan', 'form 16', 'form 26as', 'ais', 'tis', 'regime', 'rebate', 'cess', 'surcharge', 'slab', 'slabs',
+    'assessment', 'fy', 'ay', 'budget', 'exemption', 'exempt', 'deduction', 'deductions', 'section', 'sec',
+    '80c', '80d', '80ccd', '80ccd(1b)', '80ccd(2)', '80e', '80g', '80tta', '80ttb', '87a', '115bac', '24b',
+    '10(13a)', '10(14)', 'rule 2a', 'rule 15', 'rule 3', 'ctc', 'basic', 'hra', 'lta', 'da', 'special allowance',
+    'conveyance', 'medical', 'food card', 'meal', 'sodexo', 'pluxee', 'zeta', 'gratuity', 'perquisite', 'take-home',
+    'in-hand', 'gross', 'net', 'epf', 'vpf', 'pf', 'provident', 'nps', 'ppf', 'elss', 'mutual fund', 'mutual funds',
+    'stock', 'stocks', 'equity', 'shares', 'ltcg', 'stcg', 'capital gain', 'capital gains', 'dividend', 'interest',
+    'fd', 'fixed deposit', 'home loan', 'housing loan', 'rent', 'landlord', 'tenant', 'pension', 'senior citizen',
+    'advance tax', 'refund', 'audit', 'ca', 'chartered accountant', 'incometax', 'filing', 'file', 'return',
+    'standard deduction', 'relief', 'earn', 'earning', 'lakh', 'lakhs', 'crore', 'crores', 'rupee', 'rupees'
+}
+
+def validate_tax_domain_scope(text: str) -> tuple:
+    """Sub-2ms deterministic guardrail verifying query pertains to Indian taxation."""
+    lowered = text.lower().strip()
+    if not lowered:
+        return False, OUT_OF_SCOPE_TAX_REPLY
+    
+    # 1. Immediate greeting check
+    if lowered in {'hi', 'hello', 'hey', 'namaste', 'namaskar', 'good morning', 'good evening', 'help'}:
+        return False, GREETING_REPLY
+
+    # 2. Check presence of tax vocabulary or financial amounts
+    has_tax_terms = any(term in lowered for term in TAX_DOMAIN_VOCABULARY)
+    has_currency_or_numbers = bool(re.search(r'(?:₹|rs\.?|inr|\b\d+\s*(?:l|lakh|k|crore)?\b)', lowered))
+    
+    # 3. Check for explicit non-tax triggers (e.g. "how to make idly")
+    has_out_of_scope = any(trig in lowered for trig in NON_TAX_TRIGGERS)
+    if has_out_of_scope and not has_tax_terms:
+        logging.warning(f"🛡️ Tax Guardrail Sieve: Intercepted off-topic query ('{text[:60]}...')")
+        return False, OUT_OF_SCOPE_TAX_REPLY
+        
+    # 4. Check density: If prompt has 3+ generic words but zero tax keywords and no figures
+    words = [w for w in re.findall(r'[a-zA-Z]+', lowered) if len(w) > 2]
+    if len(words) >= 3 and not has_tax_terms and not has_currency_or_numbers:
+        logging.warning(f"🛡️ Tax Guardrail Sieve: Intercepted zero-tax density query ('{text[:60]}...')")
+        return False, OUT_OF_SCOPE_TAX_REPLY
+        
+    return True, ""
+
 def get_search_client() -> SearchClient:
     return SearchClient(
         endpoint=SEARCH_ENDPOINT,
@@ -445,6 +517,19 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
 
         # 🔒 2. PII Sanitization & Masking (PAN / Aadhaar)
         message = sanitize_pii(raw_message)
+
+        # 🛡️ 3. Deterministic Domain Guardrail Sieve (<2ms)
+        session_id = body.get("sessionId") or body.get("session_id") or req.headers.get("x-session-id") or "default-session"
+        in_scope, scope_reply = validate_tax_domain_scope(message)
+        if not in_scope:
+            return cors_response(200, {
+                "reply": scope_reply,
+                "model": "governance-scope-guardrail",
+                "sessionId": session_id,
+                "persisted": False,
+                "sources_searched": False,
+                "out_of_scope": True,
+            })
 
         # RAG search
         context = rag_search(message)
