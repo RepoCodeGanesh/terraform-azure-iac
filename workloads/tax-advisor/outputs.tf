@@ -130,3 +130,13 @@ output "observability_agent_name" {
   description = "Name of the Azure Copilot Observability Agent."
   value       = var.enable_observability_agent ? azapi_resource.observability_agent[0].name : null
 }
+
+output "foundry_hub_id" {
+  description = "Resource ID of the Azure AI Foundry Hub account."
+  value       = azurerm_cognitive_account.foundry_hub.id
+}
+
+output "foundry_hub_endpoint" {
+  description = "Endpoint of the Azure AI Foundry Hub account."
+  value       = azurerm_cognitive_account.foundry_hub.endpoint
+}

@@ -224,4 +224,14 @@ variable "app_prod_sp_object_id" {
   type        = string
 }
 
+variable "foundry_hub_name" {
+  description = "Name of the Azure AI Foundry Hub Cognitive Service account."
+  type        = string
+}
+
+variable "foundry_location" {
+  description = "Azure region for the AI Foundry Hub."
+  type        = string
+}
+
 

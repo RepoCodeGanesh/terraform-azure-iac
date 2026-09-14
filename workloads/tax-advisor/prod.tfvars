@@ -58,5 +58,7 @@ cloudflare_zone_id = "45acc43e2f88066e0406eca94edffc53"
 
 # ── Deployment Service Principal ────────────────────────────────────────────
 app_prod_sp_object_id = "9630f661-27e7-42f0-8377-5565ba7db7cd"
+foundry_hub_name      = "hub-taxbot-foundry-01"
+foundry_location      = "eastus2"
 
 

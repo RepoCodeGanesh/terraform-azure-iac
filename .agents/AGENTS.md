@@ -322,6 +322,16 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** (1) The user selected the AzureML Model Registry catalog asset (`azureml://registries/azure-openai/models/gpt-4o-mini/versions/2`) which requires dedicated managed compute instead of Cognitive Services account deployment. (2) `gpt-4o-mini` (version `2024-07-18`) is in `Deprecating` status in `eastus2`, blocking new account deployments.
 * **Resolution:** Deploy active, Generally Available non-deprecated models for Azure OpenAI Cognitive Services: `gpt-5.4-nano` and `gpt-5.4-mini` (version `2026-03-17`) using SKU `GlobalStandard` and capacity 10 via Azure CLI (`az cognitiveservices account deployment create`). Both models feature full `agentsV2` and `assistants` capabilities with zero idle standby cost.
 
+### 42. Python Dependency Solver Collision: `openai<2.0.0` vs. `azure-ai-projects>=2.1.0`
+* **Symptom:** `pip install -r requirements.txt` fails in CI/CD pipeline with `ERROR: Cannot install -r requirements.txt and openai<2.0.0 and >=1.56.0 because these package versions have conflicting dependencies. The conflict is caused by: azure-ai-projects 2.1.0 depends on openai>=2.8.0. ERROR: ResolutionImpossible`.
+* **Root Cause:** The monorepo pinned `openai>=1.56.0,<2.0.0` for Azure Functions runtime stability. Introducing `azure-ai-projects` required `openai>=2.8.0` / `>=3.0.0`, creating an unresolvable constraint.
+* **Resolution:** Remove `azure-ai-projects` from `requirements.txt`. Azure AI Foundry endpoints expose standard OpenAI-compatible REST APIs reachable via the existing `openai>=1.56.0` client and lightweight standard HTTP, eliminating conflicting transitive dependencies.
+
+### 43. Azure AI Foundry Hub Terraform Replacement on Missing `project_management_enabled`
+* **Symptom:** Running `terraform plan` after importing an Azure AI Foundry Hub (`kind = "AIServices"`) shows `azurerm_cognitive_account.foundry_hub must be replaced` with `~ project_management_enabled = true -> false # forces replacement`.
+* **Root Cause:** When created via Azure AI Foundry, cognitive service accounts have `project_management_enabled = true` and `identity { type = "SystemAssigned" }`. The default Terraform schema assumes standard Cognitive Services where this defaults to `false`, triggering full resource recreation.
+* **Resolution:** Explicitly declare `project_management_enabled = true` and `identity { type = "SystemAssigned" }` in `workloads/tax-advisor/foundry.tf`.
+
 ---
 
 
