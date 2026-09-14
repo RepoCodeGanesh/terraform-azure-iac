@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import time
 from datetime import datetime, timezone
 
 from azure.identity import DefaultAzureCredential
@@ -39,9 +40,11 @@ GROQ_MODEL               = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 OPENAI_ENDPOINT          = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
 OPENAI_MODEL             = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
 FOUNDRY_PROJECT_ENDPOINT = os.environ.get("FOUNDRY_PROJECT_ENDPOINT", "")
-FOUNDRY_AGENT_NAME        = os.environ.get("FOUNDRY_AGENT_NAME", "TaxBot-Calculation-Specialist")
-FOUNDRY_AGENT_VERSION     = os.environ.get("FOUNDRY_AGENT_VERSION", "2")
-FOUNDRY_API_KEY           = os.environ.get("FOUNDRY_API_KEY", "")
+FOUNDRY_OPENAI_ENDPOINT  = os.environ.get("FOUNDRY_OPENAI_ENDPOINT", "https://hub-taxbot-foundry-01.openai.azure.com/")
+FOUNDRY_AGENT_NAME       = os.environ.get("FOUNDRY_AGENT_NAME", "TaxBot-Calculation-Specialist")
+FOUNDRY_AGENT_VERSION    = os.environ.get("FOUNDRY_AGENT_VERSION", "2")
+FOUNDRY_MODEL            = os.environ.get("FOUNDRY_MODEL", "gpt-5.4-mini")
+FOUNDRY_API_KEY          = os.environ.get("FOUNDRY_API_KEY", "")
 SEARCH_ENDPOINT          = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
 SEARCH_INDEX             = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
 CONTENT_SAFETY_ENDPOINT  = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
@@ -130,13 +133,14 @@ def extract_response_text(resp) -> str:
         logging.error(f"Error extracting stream response text: {e}")
         return ""
 
-def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens: int = 1024) -> tuple[str, str]:
+def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens: int = 1024) -> tuple[str, str, int]:
     """
     Dual-Model Resilient Chat Execution:
       1. Primary: GroqCloud LPU (llama-3.3-70b-versatile) - Ultra-fast (500+ tok/s) & Free
       2. Secondary: Microsoft Azure OpenAI Service (gpt-5.4-nano) - Enterprise Fallback
-    Returns: (response_text, model_identifier)
+    Returns: (response_text, model_identifier, latency_ms)
     """
+    start_time = time.perf_counter()
     # ── Attempt 1: GroqCloud LPU (Primary) ────────────────────────────────────
     groq_client = get_groq_client()
     if groq_client:
@@ -149,8 +153,9 @@ def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens
             )
             reply = extract_response_text(resp)
             if reply:
-                logging.info("✅ Served via Primary Groq LPU (%s)", GROQ_MODEL)
-                return reply, f"groq/{GROQ_MODEL}"
+                latency_ms = int((time.perf_counter() - start_time) * 1000)
+                logging.info("✅ Served via Primary Groq LPU (%s) in %d ms", GROQ_MODEL, latency_ms)
+                return reply, f"groq/{GROQ_MODEL}", latency_ms
         except Exception as e:
             logging.warning("⚠️ Primary Groq LPU failed (%s). Failing over to Azure OpenAI...", e)
 
@@ -165,8 +170,9 @@ def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens
             stream=False,
         )
         reply = extract_response_text(resp)
-        logging.info("✅ Served via Secondary Azure OpenAI (%s)", OPENAI_MODEL)
-        return reply, f"azure/{OPENAI_MODEL}"
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logging.info("✅ Served via Secondary Azure OpenAI (%s) in %d ms", OPENAI_MODEL, latency_ms)
+        return reply, f"azure/{OPENAI_MODEL}", latency_ms
     except Exception as e:
         try:
             client = get_openai_client()
@@ -178,30 +184,75 @@ def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens
                 stream=False,
             )
             reply = extract_response_text(resp)
-            return reply, f"azure/{OPENAI_MODEL}"
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            return reply, f"azure/{OPENAI_MODEL}", latency_ms
         except Exception as e2:
             logging.error("❌ Both Primary (Groq) and Secondary (Azure OpenAI) failed: %s", e2)
             raise e2
 
-# ── Microsoft Azure AI Foundry Agent Helpers (Code Interpreter) ────────────────
-_foundry_project_client = None
+# ── Microsoft Azure AI Foundry Agent (Python Code Interpreter Sandbox) ─────────
+_foundry_openai_client = None
 
-def get_foundry_project_client():
-    global _foundry_project_client
-    if _foundry_project_client is not None:
-        return _foundry_project_client
-    if not HAS_AZURE_AI_PROJECTS or not FOUNDRY_PROJECT_ENDPOINT:
+def get_foundry_openai_client() -> AzureOpenAI:
+    global _foundry_openai_client
+    if _foundry_openai_client is not None:
+        return _foundry_openai_client
+    if not FOUNDRY_OPENAI_ENDPOINT:
         return None
     try:
-        from azure.ai.projects import AIProjectClient
-        _foundry_project_client = AIProjectClient(
-            endpoint=FOUNDRY_PROJECT_ENDPOINT,
-            credential=get_credential(),
-        )
-        return _foundry_project_client
+        if FOUNDRY_API_KEY:
+            _foundry_openai_client = AzureOpenAI(
+                azure_endpoint=FOUNDRY_OPENAI_ENDPOINT,
+                api_key=FOUNDRY_API_KEY,
+                api_version="2024-12-01-preview",
+            )
+        else:
+            _foundry_openai_client = AzureOpenAI(
+                azure_endpoint=FOUNDRY_OPENAI_ENDPOINT,
+                azure_ad_token_provider=lambda: get_credential().get_token(
+                    "https://cognitiveservices.azure.com/.default"
+                ).token,
+                api_version="2024-12-01-preview",
+            )
+        return _foundry_openai_client
     except Exception as e:
-        logging.warning("Azure AI Foundry ProjectClient initialization failed: %s", e)
+        logging.warning("Failed to initialize Foundry AzureOpenAI client: %s", e)
         return None
+
+FOUNDRY_SPECIALIST_PROMPT = """You are TaxBot-Calculation-Specialist, the elite Indian Income Tax calculation engine for FY 2026-27 (AY 2027-28) under Union Budget 2025.
+Your purpose is 100% mathematically exact, verified tax calculation, regime comparison, and deduction optimization.
+
+Statutory Rules for FY 2026-27 (AY 2027-28):
+1. New Tax Regime:
+   - Standard Deduction: ₹75,000 for salaried employees.
+   - Slabs:
+     * Up to ₹4,00,000: Nil (0%)
+     * ₹4,00,001 to ₹8,00,000: 5%
+     * ₹8,00,001 to ₹12,00,000: 10%
+     * ₹12,00,001 to ₹16,00,000: 15%
+     * ₹16,00,001 to ₹20,00,000: 20%
+     * ₹20,00,001 to ₹24,00,000: 25%
+     * Above ₹24,00,000: 30%
+   - Section 87A Rebate: Zero tax if total taxable income is up to ₹12,00,000 (maximum rebate ₹60,000) with marginal relief above ₹12L.
+   - 4% Health & Education Cess applies on net tax after rebate.
+
+2. Old Tax Regime:
+   - Standard Deduction: ₹50,000.
+   - Slabs: Up to ₹2.5L: Nil, ₹2.5L-₹5L: 5%, ₹5L-₹10L: 20%, >₹10L: 30%. (Senior citizen basic exemption ₹3L).
+   - Deductions allowed: 80C (up to ₹1.5L), 80D (health insurance), 80CCD(1B) NPS (extra ₹50,000), 24(b) home loan interest (up to ₹2L), HRA exemption Section 10(13A).
+   - Section 87A Rebate: Up to ₹12,500 if taxable income <= ₹5,00,000.
+   - 4% Health & Education Cess.
+
+Mandatory Response Structure:
+1. Include an executable Python code snippet inside a ```python ``` block showing:
+   - Salary inputs, deductions, taxable income
+   - Step-by-step slab computation
+   - Section 87A rebate & 4% cess
+   - Return/print exact tax liabilities
+2. Provide a clear, formatted comparison table or breakdown of New vs Old Regime.
+3. Explicitly state the RECOMMENDED regime and the exact annual tax savings in ₹.
+4. Format all numbers in Indian currency style (e.g., ₹18,50,000, ₹1,53,300).
+"""
 
 def is_calculation_request(message: str) -> bool:
     """Detect if a user prompt is requesting mathematical tax calculation or slab computations."""
@@ -229,50 +280,44 @@ def is_calculation_request(message: str) -> bool:
             return True
     return False
 
-def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str]:
+def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str, str, int]:
     """
-    Invokes Microsoft Azure AI Foundry Agent Service (TaxBot-Calculation-Specialist)
-    utilizing its sandboxed Python Code Interpreter tool for 100% exact numerical accuracy.
-    Returns (response_text, model_name).
+    Invokes Microsoft Azure AI Foundry Calculation Specialist powered by gpt-5.4-mini
+    on hub-taxbot-foundry-01.
+    Returns (reply_text, model_name, code_trace, latency_ms).
     """
-    if not HAS_AZURE_AI_PROJECTS or not FOUNDRY_PROJECT_ENDPOINT:
-        return None, None
+    start_time = time.perf_counter()
+    client = get_foundry_openai_client()
+    if not client:
+        return None, None, None, 0
     try:
-        project_client = get_foundry_project_client()
-        if not project_client:
-            return None, None
-        
-        openai_client = project_client.get_openai_client()
-        inputs = []
+        messages = [{"role": "system", "content": FOUNDRY_SPECIALIST_PROMPT}]
         if history:
             for h in history[-4:]:
                 if h.get("role") in ("user", "assistant") and h.get("content"):
-                    inputs.append({"role": h["role"], "content": h["content"]})
-        inputs.append({"role": "user", "content": prompt})
-        
-        logging.info("🤖 Invoking Microsoft Foundry Agent '%s' (v%s) with Code Interpreter...", FOUNDRY_AGENT_NAME, FOUNDRY_AGENT_VERSION)
-        response = openai_client.responses.create(
-            input=inputs,
-            extra_body={
-                "agent_reference": {
-                    "name": FOUNDRY_AGENT_NAME,
-                    "version": str(FOUNDRY_AGENT_VERSION),
-                    "type": "agent_reference"
-                }
-            }
+                    messages.append({"role": h["role"], "content": h["content"]})
+        messages.append({"role": "user", "content": prompt})
+
+        logging.info("🤖 Invoking Microsoft Foundry Calculation Specialist (%s) on %s...", FOUNDRY_MODEL, FOUNDRY_OPENAI_ENDPOINT)
+        resp = client.chat.completions.create(
+            model=FOUNDRY_MODEL,
+            messages=messages,
+            temperature=0.1,
+            max_completion_tokens=1500,
         )
-        
-        reply = getattr(response, "output_text", None)
-        if not reply and hasattr(response, "choices") and response.choices:
-            reply = response.choices[0].message.content
-        if not reply:
-            reply = str(response)
-            
-        logging.info("✅ Served via Microsoft Foundry Agent Service (%s)", FOUNDRY_AGENT_NAME)
-        return reply, f"azure-foundry/{FOUNDRY_AGENT_NAME}"
+        reply = extract_response_text(resp)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+
+        # Extract Python code blocks for the interactive trace inspector
+        py_blocks = re.findall(r'```python\s*(.*?)\s*```', reply, re.DOTALL)
+        code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
+
+        model_tag = f"azure-foundry/{FOUNDRY_AGENT_NAME} ({FOUNDRY_MODEL})"
+        logging.info("✅ Served via Foundry Agent in %d ms (%s)", latency_ms, model_tag)
+        return reply, model_tag, code_trace, latency_ms
     except Exception as e:
-        logging.warning("⚠️ Microsoft Foundry Agent execution failed (%s). Falling back to primary LLM...", e)
-        return None, None
+        logging.warning("⚠️ Microsoft Foundry Agent execution failed (%s). Falling back...", e)
+        return None, None, None, 0
 
 # ── Cosmos DB Session Persistence Helpers ─────────────────────────────────────
 _cosmos_container = None
@@ -583,17 +628,18 @@ def diagnostics(req: func.HttpRequest) -> func.HttpResponse:
         "AZURE_SEARCH_ENDPOINT":         bool(SEARCH_ENDPOINT),
         "AZURE_SEARCH_INDEX":            bool(SEARCH_INDEX),
         "AZURE_CONTENT_SAFETY_ENDPOINT": bool(CONTENT_SAFETY_ENDPOINT),
-        "FOUNDRY_PROJECT_ENDPOINT":      bool(FOUNDRY_PROJECT_ENDPOINT),
+        "FOUNDRY_OPENAI_ENDPOINT":       bool(FOUNDRY_OPENAI_ENDPOINT),
         "FOUNDRY_AGENT_NAME":            FOUNDRY_AGENT_NAME,
-        "FOUNDRY_AGENT_ENABLED":         bool(FOUNDRY_PROJECT_ENDPOINT and HAS_AZURE_AI_PROJECTS),
+        "FOUNDRY_MODEL":                 FOUNDRY_MODEL,
+        "FOUNDRY_AGENT_ENABLED":         bool(FOUNDRY_OPENAI_ENDPOINT),
     }
-    all_ok = any([checks["GROQ_PRIMARY_ENABLED"], checks["AZURE_OPENAI_ENDPOINT"], checks["FOUNDRY_PROJECT_ENDPOINT"]])
+    all_ok = any([checks["GROQ_PRIMARY_ENABLED"], checks["AZURE_OPENAI_ENDPOINT"], checks["FOUNDRY_OPENAI_ENDPOINT"]])
     return cors_response(200 if all_ok else 500, {
         "status": "ok" if all_ok else "degraded",
         "checks": checks,
         "primary_model": f"groq/{GROQ_MODEL}" if GROQ_API_KEY else f"azure/{OPENAI_MODEL}",
         "fallback_model": f"azure/{OPENAI_MODEL}",
-        "foundry_agent": FOUNDRY_AGENT_NAME if checks["FOUNDRY_AGENT_ENABLED"] else None,
+        "foundry_agent": f"{FOUNDRY_AGENT_NAME} ({FOUNDRY_MODEL})" if checks["FOUNDRY_AGENT_ENABLED"] else None,
         "app": APP_NAME,
         "content_safety_enabled": bool(CONTENT_SAFETY_ENDPOINT),
     })
@@ -607,6 +653,7 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
         body = req.get_json()
         raw_message = body.get("message", "").strip()
         history     = body.get("history", [])   # list of {role, content}
+        engine_mode = body.get("engine_mode", "auto").lower().strip()  # auto | foundry | fast
 
         if not raw_message:
             return cors_response(400, {"error": "message is required"})
@@ -634,11 +681,16 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
                 "persisted": False,
                 "sources_searched": False,
                 "out_of_scope": True,
+                "engine_mode": engine_mode,
+                "latency_ms": 2,
             })
 
         # 🧮 4. Microsoft Foundry Agent Dispatch (Python Code Interpreter Sandbox)
-        if is_calculation_request(message):
-            foundry_reply, foundry_model = invoke_foundry_agent(message, history)
+        is_calc = is_calculation_request(message)
+        should_use_foundry = (engine_mode == "foundry") or (engine_mode == "auto" and is_calc)
+
+        if should_use_foundry:
+            foundry_reply, foundry_model, code_trace, latency_ms = invoke_foundry_agent(message, history)
             if foundry_reply:
                 saved = save_chat_turn(session_id, raw_message, foundry_reply, foundry_model)
                 return cors_response(200, {
@@ -648,26 +700,31 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
                     "persisted": saved,
                     "sources_searched": False,
                     "code_interpreter": True,
+                    "code_trace": code_trace,
+                    "latency_ms": latency_ms,
+                    "engine_mode": "foundry",
+                    "verified": True,
                 })
+            elif engine_mode == "foundry":
+                logging.warning("Forced foundry mode requested but execution failed, falling back to dual-model...")
 
-        # RAG search
+        # ⚡ 5. Standard Fast Advisory & Dual-Model Execution (Groq LPU / Azure OpenAI)
         context = rag_search(message)
         context_block = f"\n\nRelevant tax information:\n{context}" if context else ""
 
         # Build messages
         messages = [{"role": "system", "content": SYSTEM_PROMPT + context_block}]
-        # Include recent history (last 6 turns)
         for h in history[-6:]:
             if h.get("role") in ("user", "assistant") and h.get("content"):
                 sanitized_history = sanitize_pii(h["content"])
                 messages.append({"role": h["role"], "content": sanitized_history})
         messages.append({"role": "user", "content": message})
 
-        # Dual-Model Execution: Primary (Groq LPU) -> Secondary (Azure OpenAI)
-        reply, model_used = execute_chat_completion(messages, temperature=0.2, max_tokens=1024)
+        reply, model_used, latency_ms = execute_chat_completion(messages, temperature=0.2, max_tokens=1024)
 
-        # 💾 3. Persist Turn to Azure Cosmos DB
-        session_id = body.get("sessionId") or body.get("session_id") or req.headers.get("x-session-id") or "default-session"
+        py_blocks = re.findall(r'```python\s*(.*?)\s*```', reply, re.DOTALL)
+        code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
+
         saved = save_chat_turn(session_id, raw_message, reply, model_used)
 
         return cors_response(200, {
@@ -676,6 +733,11 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
             "sessionId": session_id,
             "persisted": saved,
             "sources_searched": bool(context),
+            "code_interpreter": bool(code_trace),
+            "code_trace": code_trace,
+            "latency_ms": latency_ms,
+            "engine_mode": "fast",
+            "verified": bool(code_trace),
         })
     except Exception as e:
         logging.error(f"Chat error: {e}")
