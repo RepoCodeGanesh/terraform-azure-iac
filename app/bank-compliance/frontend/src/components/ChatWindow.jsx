@@ -6,9 +6,7 @@ import PIIBanner from './PIIBanner'
 
 const INITIAL_SUGGESTIONS = [
   "Can a bank store transaction data in a public overseas cloud?",
-  "What are the acceptable OVDs for NRI account opening under V-CIP?",
-  "What are the RBI restrictions on outsourcing CISO functions?",
-  "What is the penalty for issuing an unsolicited credit card?"
+  "What are the acceptable OVDs for NRI account opening under V-CIP?"
 ]
 
 function getSynthesizerModelName(model) {
@@ -313,7 +311,7 @@ export default function ChatWindow({ inferenceMode: propInferenceMode, onToggleI
       const data = await res.json()
       
       const newSuggestions = data.suggested_queries && data.suggested_queries.length > 0
-        ? data.suggested_queries
+        ? data.suggested_queries.slice(0, 2)
         : INITIAL_SUGGESTIONS
       
       setActiveSuggestions(newSuggestions)
@@ -640,7 +638,7 @@ Approved for CCO / Internal Audit Review.`
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               Suggested:
             </span>
-            {activeSuggestions.slice(0, 3).map((s, sIdx) => (
+            {activeSuggestions.slice(0, 2).map((s, sIdx) => (
               <button
                 key={sIdx}
                 onClick={() => submitQuery(s)}

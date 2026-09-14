@@ -5,9 +5,6 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'https://apim-ht-ss-p-cin-01.a
 const QUICK_PROMPTS = [
   "I earn ₹18L per year. Which tax regime is better for me?",
   "How can I save tax using Section 80CCD(2) employer NPS?",
-  "What is the capital gains tax on equity mutual funds in FY 2026-27?",
-  "Can I claim HRA and home loan interest deduction together?",
-  "What is Section 87A rebate limit under the New Regime?",
 ]
 
 export default function ChatAdvisor() {
