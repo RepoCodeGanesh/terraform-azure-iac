@@ -332,7 +332,13 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** When created via Azure AI Foundry, cognitive service accounts have `project_management_enabled = true` and `identity { type = "SystemAssigned" }`. The default Terraform schema assumes standard Cognitive Services where this defaults to `false`, triggering full resource recreation.
 * **Resolution:** Explicitly declare `project_management_enabled = true` and `identity { type = "SystemAssigned" }` in `workloads/tax-advisor/foundry.tf`.
 
+### 44. Cross-Platform Line-Ending Drift & Implicit Provider Subscription Leakage in Multi-Root Terraform
+* **Symptom:** Running `terraform plan` locally on Windows shows unexpected in-place diffs on Azure Monitor Workbooks (`AppRequests`, `KubePodInventory` replaced with identical text) and module telemetry resources (`modtm_telemetry` subscription_id tag changing from `Shared-services` to `Apps-prod`).
+* **Root Cause:** (1) Windows Git checkout with `core.autocrlf = true` formats multiline KQL query heredocs (`<<-KQL`) with CRLF (`\r\n`), which differs from Azure Resource Manager's stored LF (`\n`). (2) Downstream Azure Verified Modules (`avm-res-cognitiveservices-account`) use `azapi` provider data sources for telemetry. Without an explicit `provider "azapi"` block pinned to `var.subscription_id`, `azapi` falls back to whichever subscription is currently active in the local Azure CLI (`az account show`).
+* **Resolution:** (1) Create a root `.gitattributes` file enforcing `* text=auto eol=lf` and `*.tf text eol=lf` across all IaC files. (2) Explicitly declare `provider "azapi" { subscription_id = var.subscription_id }` and declare `azapi = { source = "azure/azapi", version = "~> 2.0" }` in `required_providers` in `versions.tf`.
+
 ---
+
 
 
 
