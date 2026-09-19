@@ -25,8 +25,7 @@ terraform-azure-iac/
 │       ├── frontend/       # React Vite SPA (bank.mytaxbot.site)
 │       ├── k8s/            # All Kubernetes manifests (namespace, SA, deployments, KEDA)
 │       ├── chart/          # Helm chart package
-│       ├── eval/           # CI/CD evaluation & golden dataset
-│       └── .github/workflows/ # GitHub Actions CI/CD
+│       └── eval/           # CI/CD evaluation & golden dataset
 ├── modules/                # Reusable Terraform modules
 ├── pipelines/              # Azure DevOps pipeline YAMLs + reusable templates
 └── docs/                   # Architecture docs, guides, planning docs
@@ -60,7 +59,7 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 - **Domain:** https://bank.mytaxbot.site
 - **IaC:** `workloads/bank-compliance-ai-aks/`
 - **App:** `app/bank-compliance/`
-- **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` + `app/bank-compliance/.github/workflows/build-and-deploy.yml` / `.github/workflows/app-bank-compliance.yml`
+- **CI/CD:** `pipelines/azure-cicd-app-bank-compliance.yml` + `.github/workflows/workload-bank-compliance-aks.yml` / `.github/workflows/app-bank-compliance.yml`
 - **Stack:** AKS Free Tier (`aks-ht-bankc-p-cin-01`), LiteLLM Proxy, Qdrant (4GB CSI disk), KEDA scale-to-zero
 - **Key IaC Outputs needed by app:**
   - `aks_workload_identity_client_id` → annotate `k8s/serviceaccount.yaml`

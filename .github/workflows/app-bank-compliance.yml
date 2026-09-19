@@ -39,7 +39,7 @@ concurrency:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
   packages: write
   security-events: write
   actions: read
@@ -237,3 +237,18 @@ jobs:
           * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
           * **APIM Gateway Endpoint:** \`https://apim-ht-ss-p-cin-01.azure-api.net/bankc\`
           EOF
+
+  # ── JOB 7: Enterprise SemVer Release Tagging (Central Org Template) ──────────
+  create-release:
+    name: Enterprise SemVer Release
+    needs: [summary]
+    if: |
+      needs.summary.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+       ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push'))
+    uses: RepoCodeGanesh/.github/.github/workflows/app-tag-semver.yml@main
+    with:
+      artifact_name: 'genaiops-evaluation-attestation'
+      release_artifacts: 'redteam_security_attestation.json'
+      tag_prefix: 'bankc-v'
+

@@ -183,8 +183,10 @@ stages:
       displayName: 'Use Python 3.11'
 
     - script: |
-        python app/bank-compliance/eval/evaluate.py
-      displayName: 'Execute Golden Dataset Evaluation Gate'
+        python app/bank-compliance/eval/evaluate.py --mode fast --max-cost 0.05
+        python app/bank-compliance/eval/redteam_suite.py
+        python app/bank-compliance/backend/test_all_8_tasks_suite.py
+      displayName: 'Execute Golden Dataset, PyRIT Red Team & 8-Task Evaluation Gate'
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -192,6 +194,14 @@ stages:
         ArtifactName: 'genaiops-quality-scorecard'
         publishLocation: 'Container'
       displayName: 'Publish AI Evaluation Scorecard'
+      condition: always()
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'redteam_security_attestation.json'
+        ArtifactName: 'pyrit-redteam-attestation'
+        publishLocation: 'Container'
+      displayName: 'Publish PyRIT Red Team Security Attestation'
       condition: always()
 
 # ── STAGE 3: Build & Push Backend Docker Image ──────────────────────────────
