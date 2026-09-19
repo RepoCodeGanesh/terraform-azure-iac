@@ -28,6 +28,12 @@ module "bankc_apim_api" {
       url_template = "/api/v1/compliance/query"
       description  = "Submit regulatory compliance question"
     }
+    "compliance-query-v2-post" = {
+      display_name = "Query Compliance v2 (LangGraph)"
+      method       = "POST"
+      url_template = "/api/v2/compliance/query"
+      description  = "Submit regulatory compliance question using LangGraph cyclic StateGraph"
+    }
     "healthz-get" = {
       display_name = "Health Check"
       method       = "GET"

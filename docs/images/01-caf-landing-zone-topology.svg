@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+  <!-- Canvas Border -->
+  <rect x="15" y="15" width="1170" height="650" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+
+  <!-- Title Bar -->
+  <rect x="15" y="15" width="1170" height="50" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="35" y="46" fill="#0f172a" font-size="16" font-weight="700">HappyTechies Cloud Platform — 4-Subscription CAF Landing Zone &amp; State Map</text>
+  <text x="1050" y="46" fill="#64748b" font-size="12" font-weight="600">Doc: CR-CAF-01</text>
+
+  <!-- Tenant Box -->
+  <rect x="35" y="80" width="1130" height="55" rx="4" fill="#f8fafc" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="600" y="105" fill="#0078d4" font-size="13" font-weight="700" text-anchor="middle">Microsoft Entra ID Tenant: 4cef0d84-84d6-4ed0-8abe-773b015bcf99 (MyTaxBot)</text>
+  <text x="600" y="123" fill="#475569" font-size="11" text-anchor="middle">Zero-Trust Workload Identity Federation (OIDC) | Dual CI/CD: GitHub Actions &amp; Azure DevOps</text>
+
+  <!-- 4 Subscriptions Grid -->
+  <!-- Sub 1: Bootstrap -->
+  <g transform="translate(35, 150)">
+    <rect width="265" height="490" rx="4" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+    <rect x="0" y="0" width="265" height="35" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+    <text x="132" y="23" fill="#0f172a" font-size="13" font-weight="700" text-anchor="middle">1. Bootstrap Sub</text>
+
+    <rect x="15" y="50" width="235" height="420" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="75" fill="#334155" font-size="10" font-weight="700">ID: 7689ad81-71ba-481b-a17c</text>
+    
+    <text x="25" y="105" fill="#0f172a" font-size="11" font-weight="700">CENTRAL STATE BACKEND:</text>
+    <text x="25" y="128" fill="#334155" font-size="10">• Storage: sthtbootpcin01</text>
+    <text x="25" y="146" fill="#334155" font-size="10">• Container: tfstate</text>
+    <text x="25" y="164" fill="#334155" font-size="10">• Auth: use_azuread_auth</text>
+    <text x="25" y="182" fill="#334155" font-size="10">• Key Vault: kv-ht-boot-p-cin-01</text>
+
+    <line x1="25" y1="205" x2="225" y2="205" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="25" y="230" fill="#0f172a" font-size="11" font-weight="700">STATE KEYS ISOLATED:</text>
+    <text x="25" y="255" fill="#334155" font-size="10">1. bootstrap/prod.tfstate</text>
+    <text x="25" y="275" fill="#334155" font-size="10">2. hub/prod.tfstate</text>
+    <text x="25" y="295" fill="#334155" font-size="10">3. shared-services/prod.tfstate</text>
+    <text x="25" y="315" fill="#334155" font-size="10">4. workloads/tax-advisor/prod</text>
+    <text x="25" y="335" fill="#334155" font-size="10">5. workloads/bank-compliance</text>
+  </g>
+
+  <!-- Sub 2: Hub-prod -->
+  <g transform="translate(320, 150)">
+    <rect width="265" height="490" rx="4" fill="#f8fafc" stroke="#d97706" stroke-width="1.5"/>
+    <rect x="0" y="0" width="265" height="35" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+    <text x="132" y="23" fill="#92400e" font-size="13" font-weight="700" text-anchor="middle">2. Hub-prod Sub</text>
+
+    <rect x="15" y="50" width="235" height="420" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="75" fill="#334155" font-size="10" font-weight="700">ID: 3eb8cc01-50c6-473e-8d5f</text>
+
+    <text x="25" y="105" fill="#b45309" font-size="11" font-weight="700">PERIMETER NETWORK:</text>
+    <text x="25" y="128" fill="#334155" font-size="10">• Hub VNet (10.0.0.0/16)</text>
+    <text x="25" y="146" fill="#334155" font-size="10">• AzureFirewallSubnet (10.0.1.0/26)</text>
+    <text x="25" y="164" fill="#334155" font-size="10">• AzureBastionSubnet (10.0.2.0/26)</text>
+    <text x="25" y="182" fill="#334155" font-size="10">• GatewaySubnet (10.0.3.0/27)</text>
+
+    <line x1="25" y1="205" x2="225" y2="205" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="25" y="230" fill="#b45309" font-size="11" font-weight="700">HUB-SPOKE PEERING:</text>
+    <text x="25" y="255" fill="#334155" font-size="10">↔ TaxBot Spoke (10.41.0.0/16)</text>
+    <text x="25" y="275" fill="#334155" font-size="10">↔ BankCompliance (10.42.0.0/16)</text>
+    <text x="25" y="295" fill="#334155" font-size="10">↔ Shared Services (10.43.0.0/16)</text>
+  </g>
+
+  <!-- Sub 3: Shared-services -->
+  <g transform="translate(605, 150)">
+    <rect width="265" height="490" rx="4" fill="#f8fafc" stroke="#0078d4" stroke-width="1.5"/>
+    <rect x="0" y="0" width="265" height="35" fill="#e0f2fe" stroke="#0078d4" stroke-width="1"/>
+    <text x="132" y="23" fill="#0369a1" font-size="13" font-weight="700" text-anchor="middle">3. Shared-services Sub</text>
+
+    <rect x="15" y="50" width="235" height="420" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="75" fill="#334155" font-size="10" font-weight="700">ID: 859a785c-bd38-402d-b595</text>
+
+    <text x="25" y="105" fill="#0369a1" font-size="11" font-weight="700">SHARED PLATFORM:</text>
+    <text x="25" y="128" fill="#334155" font-size="10">• Azure APIM (apim-ht-ss)</text>
+    <text x="25" y="146" fill="#334155" font-size="10">• Log Analytics (law-ht-ss)</text>
+    <text x="25" y="164" fill="#334155" font-size="10">• Shared Key Vault (kv-ht-ss)</text>
+    <text x="25" y="182" fill="#334155" font-size="10">• AI Content Safety F0</text>
+
+    <line x1="25" y1="205" x2="225" y2="205" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="25" y="230" fill="#0369a1" font-size="11" font-weight="700">SECRETS HOSTED:</text>
+    <text x="25" y="255" fill="#334155" font-size="10">✓ confluence-api-token</text>
+    <text x="25" y="275" fill="#334155" font-size="10">✓ azure-openai-key</text>
+  </g>
+
+  <!-- Sub 4: Apps-prod -->
+  <g transform="translate(890, 150)">
+    <rect width="275" height="490" rx="4" fill="#f8fafc" stroke="#16a34a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="275" height="35" fill="#dcfce7" stroke="#16a34a" stroke-width="1"/>
+    <text x="137" y="23" fill="#15803d" font-size="13" font-weight="700" text-anchor="middle">4. Apps-prod Sub</text>
+
+    <rect x="15" y="50" width="245" height="420" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="75" fill="#334155" font-size="10" font-weight="700">ID: f4ffefe1-d689-4059-969c</text>
+
+    <text x="25" y="105" fill="#15803d" font-size="11" font-weight="700">WORKLOAD 1: TAXBOT</text>
+    <text x="25" y="128" fill="#334155" font-size="10">• Python Function App Y1</text>
+    <text x="25" y="146" fill="#334155" font-size="10">• Azure AI Search + Cosmos DB</text>
+    <text x="25" y="164" fill="#0078d4" font-size="10">  www.mytaxbot.site</text>
+
+    <line x1="25" y1="185" x2="235" y2="185" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="25" y="210" fill="#15803d" font-size="11" font-weight="700">WORKLOAD 2: BANKCOMPLIANCE</text>
+    <text x="25" y="233" fill="#334155" font-size="10">• AKS Free Tier (Standard_B4ms)</text>
+    <text x="25" y="251" fill="#334155" font-size="10">• Qdrant Vector DB (4GB CSI)</text>
+    <text x="25" y="269" fill="#334155" font-size="10">• LiteLLM Multi-Cloud Gateway</text>
+    <text x="25" y="287" fill="#334155" font-size="10">• In-Cluster Sovereign SLM</text>
+    <text x="25" y="305" fill="#0078d4" font-size="10">  bank.mytaxbot.site</text>
+  </g>
+</svg>

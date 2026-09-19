@@ -1,8 +1,28 @@
 {
-  "venvPath": "app/tax-advisor/backend",
-  "venv": ".venv",
-  "extraPaths": [
-    "app/tax-advisor/backend/.venv/Lib/site-packages",
+  "include": [
+    "app/bank-compliance/backend",
     "app/tax-advisor/backend"
+  ],
+  "extraPaths": [
+    "app/bank-compliance/backend",
+    "app/tax-advisor/backend",
+    "app/tax-advisor/backend/.venv/Lib/site-packages"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "app/bank-compliance/backend",
+      "extraPaths": [
+        ".",
+        "../../tax-advisor/backend/.venv/Lib/site-packages"
+      ]
+    },
+    {
+      "root": "app/tax-advisor/backend",
+      "extraPaths": [
+        ".",
+        ".venv/Lib/site-packages"
+      ]
+    }
   ]
 }
+

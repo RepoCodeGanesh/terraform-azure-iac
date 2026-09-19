@@ -1,0 +1,80 @@
+{{/*
+BankCompliance AI Backend Deployment (FastAPI Application)
+Features: Azure Workload Identity, Prometheus Scraping (:8000/metrics), Liveness/Readiness Probes
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankc-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: bankc-backend
+    app.kubernetes.io/name: {{ include "bank-compliance.name" . }}-backend
+    {{- include "bank-compliance.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: bankc-backend
+  # Rolling update: bring up new pod, confirm healthy, then terminate old pod.
+  # maxUnavailable: 0 ensures zero downtime (old pod only removed after new one is Ready).
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: bankc-backend
+      annotations:
+        # Automated Prometheus telemetry scraping
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      # Allow 30s for in-flight requests to drain before forced kill.
+      # FastAPI handles SIGTERM and closes gracefully within this window.
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: bankc-backend-config
+            - secretRef:
+                name: litellm-secret
+                optional: true
+            # O1: Langfuse LLM Tracing credentials (50k free traces/month)
+            - secretRef:
+                name: bankc-langfuse-secret
+                optional: true
+          # S1: CIS Kubernetes Benchmark — Pod Security Context
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          # Liveness Probe: Restarts container if deadlock occurs
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          # Readiness Probe: Routes traffic only after model corpus is loaded
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

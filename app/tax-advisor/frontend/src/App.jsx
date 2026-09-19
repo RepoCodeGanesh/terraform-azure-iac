@@ -26,8 +26,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Tab Navigation */}
-      <nav className="tab-nav">
+      {/* Tab Navigation (Desktop) */}
+      <nav className="tab-nav desktop-tab-nav">
         <div className="tab-nav-inner">
           <button
             className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
@@ -66,6 +66,41 @@ export default function App() {
         {activeTab === 'optimiser' && <SalaryCtcOptimiser />}
         {activeTab === 'filing' && <FilingGuide />}
       </main>
+
+      {/* Mobile Bottom Navigation Dock (Visible on <= 768px) */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <button
+          className={`mobile-nav-btn ${activeTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setActiveTab('chat')}
+        >
+          <span className="mobile-nav-icon">💬</span>
+          <span className="mobile-nav-label">Advisor</span>
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${activeTab === 'comparator' ? 'active' : ''}`}
+          onClick={() => setActiveTab('comparator')}
+        >
+          <span className="mobile-nav-icon">⚖️</span>
+          <span className="mobile-nav-label">Compare</span>
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${activeTab === 'optimiser' ? 'active' : ''}`}
+          onClick={() => setActiveTab('optimiser')}
+        >
+          <span className="mobile-nav-icon">💼</span>
+          <span className="mobile-nav-label">CTC Restruct</span>
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${activeTab === 'filing' ? 'active' : ''}`}
+          onClick={() => setActiveTab('filing')}
+        >
+          <span className="mobile-nav-icon">📁</span>
+          <span className="mobile-nav-label">Filing Guide</span>
+        </button>
+      </nav>
     </div>
   )
 }

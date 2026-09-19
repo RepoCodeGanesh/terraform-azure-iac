@@ -16,8 +16,10 @@ Start here:
 - [docs/README.md](docs/README.md) - **Master Documentation Hub** (Architecture, CI/CD, Platform Runbooks, and Standards).
 - [docs/confluence/README.md](docs/confluence/README.md) - **Confluence Wiki Suite** ([Live on Atlassian](https://happytechies.atlassian.net/wiki/spaces/HT/overview)).
 - [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) - Canonical project context, subscription map, deployment sequence, and cost matrix.
-- [docs/platform-guide/README.md](docs/platform-guide/README.md) - Platform Guide Visual Documentation Suite (Mermaid topology, IaC guide, CI/CD pipelines, CAF naming, Blue-Green deployments, & telemetry).
-- [AGENTS.md](AGENTS.md) - Concise rules for AI agents working in this repository.
+- [docs/platform-guide/README.md](docs/platform-guide/README.md) - Platform Guide Visual Documentation Suite (12 Guides with Mermaid diagrams).
+- [docs/workflows-and-governance/README.md](docs/workflows-and-governance/README.md) - Git branching, SemVer, reusable GHA workflows & AKS observability.
+- [docs/archive/README.md](docs/archive/README.md) - Completed Phase 9/10 execution blueprints and architectural history.
+- [.agents/AGENTS.md](.agents/AGENTS.md) - Rules and context for AI agents working in this repository.
 
 ## Terraform Roots
 
@@ -31,10 +33,10 @@ Deploy roots independently and in this order:
 
 Do not merge these roots into one Terraform state.
 
-## Decoupled Applications
+## 🚀 Production Applications (Monorepo)
 
-* **TaxBot India App:** Located in `app/tax-advisor` (React SPA + Python Functions).
-* **BankCompliance AI App:** Standalone external repository [`bank-compliance-ai-app`](https://github.com/RepoCodeGanesh/bank-compliance-ai-app) (FastAPI + React SPA + Qdrant 4GB CSI + LiteLLM Gateway). See [Standalone App Guide](docs/BANK_COMPLIANCE_APP_STANDALONE_GUIDE.md).
+* **TaxBot India App:** Located in [`app/tax-advisor`](app/tax-advisor/) (React SPA + Python Function App on [www.mytaxbot.site](https://www.mytaxbot.site)).
+* **BankCompliance AI App:** Located in [`app/bank-compliance`](app/bank-compliance/) (React SPA + FastAPI + Qdrant Vector DB on 4GB CSI + LiteLLM Multi-Model Gateway on AKS [bank.mytaxbot.site](https://bank.mytaxbot.site)).
 
 ## Validate Locally
 

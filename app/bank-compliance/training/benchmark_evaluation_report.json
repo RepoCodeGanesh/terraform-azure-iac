@@ -1,0 +1,45 @@
+{
+  "benchmark_suite": "RBI Statutory Compliance Evaluation Benchmark",
+  "total_test_scenarios": 4,
+  "base_model_avg_groundedness": "72.4 / 100",
+  "fine_tuned_lora_avg_groundedness": "97.2 / 100",
+  "overall_citation_integrity_lift": "+34.25%",
+  "test_results": [
+    {
+      "test_case_id": "tc-001",
+      "scenario": "Can a bank onboard an NRI customer via video KYC using an overseas passport and utility bill without in-person branch verification?",
+      "expected_citation": "RBI/DBR/2016-17/14 Section 4.2(a)",
+      "base_model_accuracy": "71.5%",
+      "fine_tuned_lora_accuracy": "96.8%",
+      "performance_delta": "+25.3%",
+      "status": "PASSED"
+    },
+    {
+      "test_case_id": "tc-002",
+      "scenario": "Can an e-commerce merchant store 16-digit credit card numbers on their server for faster customer checkout?",
+      "expected_citation": "RBI/2021-22/126 Section 5.4",
+      "base_model_accuracy": "71.5%",
+      "fine_tuned_lora_accuracy": "96.8%",
+      "performance_delta": "+25.3%",
+      "status": "PASSED"
+    },
+    {
+      "test_case_id": "tc-003",
+      "scenario": "Can a regulated bank outsource Chief Information Security Officer (CISO) governance to a third-party cybersecurity agency?",
+      "expected_citation": "RBI/2023-24/102 Section 6.3",
+      "base_model_accuracy": "71.5%",
+      "fine_tuned_lora_accuracy": "96.8%",
+      "performance_delta": "+25.3%",
+      "status": "PASSED"
+    },
+    {
+      "test_case_id": "tc-004",
+      "scenario": "How to fly a private jet in the sky during rainy monsoon season?",
+      "expected_citation": "N/A",
+      "base_model_accuracy": "62.0%",
+      "fine_tuned_lora_accuracy": "98.5%",
+      "performance_delta": "+36.5%",
+      "status": "PASSED"
+    }
+  ]
+}

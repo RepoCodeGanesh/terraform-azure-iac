@@ -1,0 +1,63 @@
+# ==============================================================================
+# Pipeline Name: Azure Platform - Governance & Policy-as-Code CI/CD Pipeline
+# Description: Provisions Management Groups hierarchy & Enterprise Baseline Policies
+# Target Scope: Root Management Group (HappieTechies-root-MG)
+# ==============================================================================
+
+name: Platform-Governance-IaC-Pipeline-$(Date:yyyyMMdd)$(Rev:.r)
+
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven CI.
+trigger: none
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - platform/governance/**
+#       - pipelines/azure-cicd-platform-governance.yml
+#     exclude:
+#       - '**/*.md'
+
+# Disabled — GHA owns push/PR triggers. Uncomment to revert to ADO-driven PR checks.
+pr: none
+# pr:
+#   branches:
+#     include:
+#       - main
+#       - develop
+#   paths:
+#     include:
+#       - platform/governance/**
+#       - pipelines/azure-cicd-platform-governance.yml
+#     exclude:
+#       - '**/*.md'
+
+variables:
+  - name: terraformVersion
+    value: '1.15.8'
+
+  - name: azureServiceConnection
+    value: 'bootstrap'
+
+  - name: workingDirectory
+    value: 'platform/governance'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+- template: templates/plan.yml
+  parameters:
+    terraformVersion: $(terraformVersion)
+    azureServiceConnection: $(azureServiceConnection)
+    workingDirectory: $(workingDirectory)
+
+- template: templates/apply.yml
+  parameters:
+    terraformVersion: $(terraformVersion)
+    azureServiceConnection: $(azureServiceConnection)
+    workingDirectory: $(workingDirectory)
+    environmentName: 'bootstrap-prod'

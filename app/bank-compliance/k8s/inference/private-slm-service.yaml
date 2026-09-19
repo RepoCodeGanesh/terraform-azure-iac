@@ -1,0 +1,22 @@
+# ==============================================================================
+# In-Cluster Private SLM Internal ClusterIP Service
+# Exposes private inference pod strictly inside the AKS virtual network
+# Zero public IP allocation, zero egress fees
+# ==============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: private-slm-inference
+  namespace: bank-compliance
+  labels:
+    app.kubernetes.io/name: private-slm-inference
+    app.kubernetes.io/part-of: bank-compliance-ai
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-inference
+      port: 11434
+      targetPort: 11434
+      protocol: TCP
+  selector:
+    app: private-slm-inference

@@ -1,3 +1,10 @@
+# ==============================================================================
+# KEDA (Kubernetes Event-driven Autoscaling) — FinOps Autoscaler
+# Features:
+#   - Scale-To-Zero: Automatically scales pods to 0 replicas when idle (saving cluster memory/CPU)
+#   - Burst Scaling: Automatically spins up to 5 pods when CPU utilization crosses 70%
+#   - Cooldown: Waits 300 seconds (5 mins) after traffic stops before scaling down to 0
+# ==============================================================================
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -14,3 +21,43 @@ spec:
       metadata:
         type: Utilization
         value: "70"
+---
+# ── LiteLLM AI Gateway: Scale-to-Zero when no AI requests in flight ────────────
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: litellm-proxy-scaler
+  namespace: bank-compliance
+spec:
+  scaleTargetRef:
+    name: litellm-proxy
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  cooldownPeriod: 300
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "70"
+---
+# ── Qdrant Vector DB: Longer cooldown (600s) — cold start loads index from disk ─
+# NOTE: scaleTargetRef.kind = StatefulSet (not Deployment — Qdrant is a StatefulSet)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: qdrant-scaler
+  namespace: bank-compliance
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: qdrant
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 600
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "70"
+

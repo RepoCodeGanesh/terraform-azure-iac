@@ -92,7 +92,63 @@ def chunk_rbi_markdown(file_path_or_text: str, circular_id: str = None, circular
             "category": category,
             "clause": clause_header,
             "text": section,
-            "keywords": keywords
+            "keywords": keywords,
+            "page_number": 1
         })
         
     return chunks
+
+def chunk_rbi_pdf_document(doc_model: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Takes a structured PDF document model (from PDFIngestService.parse_pdf_document)
+    and breaks it into indexable clause-level chunks for Qdrant.
+    """
+    circular_no = doc_model.get("circular_no", "RBI/GEN/2026")
+    title = doc_model.get("title", "RBI Master Direction")
+    category = doc_model.get("category", "General Banking Regulations")
+    doc_hash = doc_model.get("provenance_hash", "")
+    
+    chunks = []
+    sections = doc_model.get("sections", [])
+    
+    for sec in sections:
+        sec_title = sec.get("title", "Regulatory Provisions")
+        page_num = sec.get("page", 1)
+        raw_text = sec.get("raw_text", "").strip()
+        clauses = sec.get("clauses", [])
+        
+        if not raw_text and not clauses:
+            continue
+            
+        if len(raw_text) > 1200:
+            # Sub-split large sections into smaller paragraph windows
+            paragraphs = [p.strip() for p in raw_text.split("\n\n") if p.strip()]
+            for p_idx, para in enumerate(paragraphs):
+                clause_header = f"{sec_title} [Para {p_idx + 1}, Page {page_num}]"
+                keywords = extract_keywords(f"{title} {sec_title} {para}")
+                chunks.append({
+                    "circular_no": circular_no,
+                    "title": title,
+                    "category": category,
+                    "clause": clause_header,
+                    "text": para,
+                    "keywords": keywords,
+                    "page_number": page_num,
+                    "doc_hash": doc_hash
+                })
+        else:
+            clause_header = f"{sec_title} [Page {page_num}]"
+            keywords = extract_keywords(f"{title} {sec_title} {raw_text}")
+            chunks.append({
+                "circular_no": circular_no,
+                "title": title,
+                "category": category,
+                "clause": clause_header,
+                "text": raw_text,
+                "keywords": keywords,
+                "page_number": page_num,
+                "doc_hash": doc_hash
+            })
+            
+    return chunks
+

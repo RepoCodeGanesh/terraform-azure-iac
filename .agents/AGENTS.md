@@ -1,38 +1,395 @@
 # Repository Configuration & AI Agent Context
 
-## 🎯 Repository Purpose & Intent
-This repository provisions an enterprise-grade **Azure AI Landing Zone** following the **Microsoft Cloud Adoption Framework (CAF)** pattern using **Terraform** and **Dual CI/CD Pipelines (Azure DevOps & GitHub Actions)**.
-
-For compact current context, read `docs/PROJECT_CONTEXT.md` first. It preserves the repository goal, current `workloads/tax-advisor` deployment goal, subscription map, recent Terraform fixes, and known apply risks.
+## Purpose
+This is the **Enterprise Azure Landing Zone monorepo** for HappyTechies Cloud & AI Platform.
+It contains all Terraform infrastructure, Azure DevOps pipelines, and application code for all workloads.
 
 ---
 
-## 🔑 Subscriptions & Dual CI/CD Authentication (Workload Identity Federation)
+## Workspace Layout
+
+```
+terraform-azure-iac/
+├── platform/
+│   ├── governance/         # Enterprise Management Groups & Policy-as-Code (HappieTechies-root-MG)
+│   ├── bootstrap/          # Bootstrap sub (7689ad81) — remote state SA, Key Vault
+│   ├── hub/                # Hub-prod sub (3eb8cc01) — Azure Firewall, Bastion, Gateway
+│   └── shared-services/    # Shared-services sub (859a785c) — APIM, Log Analytics, Key Vault
+├── workloads/
+│   ├── tax-advisor/        # TaxBot IaC — Apps-prod sub (f4ffefe1)
+│   └── bank-compliance-ai-aks/ # BankCompliance IaC — Apps-prod sub (f4ffefe1)
+├── app/
+│   ├── tax-advisor/        # TaxBot app code (React + Python Function App)
+│   └── bank-compliance/    # BankCompliance app code (React + FastAPI + k8s manifests)
+│       ├── backend/        # FastAPI backend + Dockerfile
+│       ├── frontend/       # React Vite SPA (bank.mytaxbot.site)
+│       ├── k8s/            # All Kubernetes manifests (namespace, SA, deployments, KEDA)
+│       ├── chart/          # Helm chart package
+│       ├── eval/           # CI/CD evaluation & golden dataset
+│       └── .github/workflows/ # GitHub Actions CI/CD
+├── modules/                # Reusable Terraform modules
+├── pipelines/              # Azure DevOps pipeline YAMLs + reusable templates
+└── docs/                   # Architecture docs, guides, planning docs
+```
+
+---
+
+## Management Group & Subscription Map (CAF Enterprise Hierarchy)
+
+* **Root MG:** `HappieTechies-root-MG` (`HappyTechies Root`)
+  * **Platform MG (`mg-ht-platform`):**
+    * `bootstrap` (`7689ad81-71ba-481b-a17c-e1b6be61bab1`)
+    * `Hub-prod` (`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b`)
+    * `Shared-services` (`859a785c-bd38-402d-b595-1f44f40fb9bf`)
+  * **Landing Zones MG (`mg-ht-landingzones`):**
+    * `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`)
 
 Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 
-| Tier / Scope | Azure Subscription | Azure DevOps (ADO) Pipeline & Connection | GitHub Actions Workflow & Secret | Entra ID App Registration (Client ID & Object ID) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Bootstrap** | `bootstrap`<br>`7689ad81-71ba-481b-a17c-e1b6be61bab1` | `pipelines/azure-cicd-bootstrap.yml`<br>Service Connection: `bootstrap` | `.github/workflows/platform-bootstrap.yml`<br>Secret: `BOOTSTRAP_CLIENT_ID` | `DevOpsUniverse-Terraform-bootstrap`<br>App ID: `934ab83b-2f61-475e-bdbc-85c9eaed83e6`<br>Obj ID: `f3a1b19b-11b8-4e13-8499-7f83ea39547a` |
-| **Hub Network** | `Hub-prod`<br>`3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b` | `pipelines/azure-cicd-hub.yml`<br>Service Connection: `hub-prod` | `.github/workflows/platform-hub.yml`<br>Secret: `HUB_CLIENT_ID` | `DevOpsUniverse-Terraform-hub-prod`<br>App ID: `78960c14-26d2-4a0c-ab21-579c3030155e`<br>Obj ID: `14cfc7b4-c3a2-4994-9f5c-0ce4d8db0f57` |
-| **Shared Services** | `Shared-services`<br>`859a785c-bd38-402d-b595-1f44f40fb9bf` | `pipelines/azure-cicd-shared-ser.yml`<br>Service Connection: `shared-services` | `.github/workflows/platform-shared-services.yml`<br>Secret: `SHARED_CLIENT_ID` | `DevOpsUniverse-Terraform-shared-services`<br>App ID: `580ffcfd-51ee-4dc3-9204-d03cb438ff82`<br>Obj ID: `c5a24473-2bad-41a7-b0b1-b79b94621252` |
-| **Apps (AI Workloads)** | `Apps-prod`<br>`f4ffefe1-d689-4059-969c-ccc73e2a11d4` | `pipelines/azure-cicd-app-tax-advisor.yml`<br>Service Connection: `app-prod` | `.github/workflows/app-tax-advisor.yml`<br>Secret: `APP_CLIENT_ID` | `DevOpsUniverse-Terraform-app-prod`<br>App ID: `99ab7987-3989-46c3-bae9-92279be16608`<br>Obj ID: `9630f661-27e7-42f0-8377-5565ba7db7cd` |
+---
+
+## Active Workloads
+
+### Workload 1: TaxBot India
+- **Domain:** https://www.mytaxbot.site
+- **IaC:** `workloads/tax-advisor/`
+- **App:** `app/tax-advisor/`
+- **CI/CD:** `pipelines/azure-cicd-tax-advisor.yml` + `.github/workflows/workload-tax-advisor.yml` / `app-tax-advisor.yml`
+
+### Workload 2: BankCompliance AI
+- **Domain:** https://bank.mytaxbot.site
+- **IaC:** `workloads/bank-compliance-ai-aks/`
+- **App:** `app/bank-compliance/`
+- **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` + `app/bank-compliance/.github/workflows/build-and-deploy.yml` / `.github/workflows/app-bank-compliance.yml`
+- **Stack:** AKS Free Tier (`aks-ht-bankc-p-cin-01`), LiteLLM Proxy, Qdrant (4GB CSI disk), KEDA scale-to-zero
+- **Key IaC Outputs needed by app:**
+  - `aks_workload_identity_client_id` → annotate `k8s/serviceaccount.yaml`
+  - `content_safety_endpoint` → set in `k8s/backend-configmap.yaml`
+  - `static_web_app_api_key` → GitHub Secret `AZURE_STATIC_WEB_APPS_API_TOKEN`
 
 ---
 
-## ⚙️ Rules & Architecture Constraints
-1. **Multi-Root Terraform State**: Never combine state into a single root. Keep `platform/bootstrap`, `platform/hub`, `platform/shared-services`, and `workloads/tax-advisor` in separate directories.
-2. **Backend Subscription**: All `backend.hcl` files point `subscription_id` to `7689ad81-71ba-481b-a17c-e1b6be61bab1` (where the backend storage account `sthtbootpcin01` lives).
-3. **App Deployment**: `workloads/tax-advisor` deploys resources into `Apps-prod` (`f4ffefe1-d689-4059-969c-ccc73e2a11d4`) and uses Azure DevOps service connection `app-prod` or GitHub Actions WIF `tax-advisor-prod`.
-4. **Cost Optimization**: Default to `Consumption_0`, `F1`, `B1`, and Cosmos DB Manual `400 RU/s` (Free Tier) to keep running costs near zero when idle.
-5. **Central Called Workflows**: App deployments delegate execution to central reusable templates in `RepoCodeGanesh/.github` across 4 parallelized phases.
-6. **WIF OIDC Claim Rule**: GitHub Actions workflows using Entra ID identity `DevOpsUniverse-Terraform-app-prod` must specify `environment: tax-advisor-prod` to match federated credential claims.
-7. **Observability**: Stream logs from Azure OpenAI, AI Search, Cosmos DB, and Functions into central Log Analytics `law-ht-ss-p-cin-01` via `azurerm_monitor_diagnostic_setting`.
+## CI/CD Authentication (Workload Identity Federation)
+
+| ADO Service Connection | GitHub Secret | App Registration Client ID | Enterprise App Object ID (Principal ID) |
+|----------------------|---------------|---------------------------|------------------------------------------|
+| `bootstrap` | `BOOTSTRAP_CLIENT_ID` | `934ab83b-2f61-475e-bdbc-85c9eaed83e6` | `f3a1b19b-11b8-4e13-8499-7f83ea39547a` |
+| `hub-prod` | `HUB_CLIENT_ID` | `78960c14-26d2-4a0c-ab21-579c3030155e` | `14cfc7b4-c3a2-4994-9f5c-0ce4d8db0f57` |
+| `shared-services` | `SHARED_CLIENT_ID` | `580ffcfd-51ee-4dc3-9204-d03cb438ff82` | `c5a24473-2bad-41a7-b0b1-b79b94621252` |
+| `app-prod` | `APP_CLIENT_ID` | `99ab7987-3989-46c3-bae9-92279be16608` | `9630f661-27e7-42f0-8377-5565ba7db7cd` |
+
+GitHub Secrets required for BankCompliance GHA: `APP_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_STATIC_WEB_APPS_API_TOKEN`
+
+---
+
+## Terraform State (Remote — Azure Blob)
+
+All roots use Azure AD auth (`use_azuread_auth = true`) against `sthtbootpcin01` in the bootstrap subscription.
+State files are path-keyed — **git repo location does not affect state**.
+
+| Root | State Key |
+|------|-----------|
+| `platform/governance` | `governance/prod.tfstate` |
+| `platform/bootstrap` | `bootstrap/prod.tfstate` |
+| `platform/hub` | `hub/prod.tfstate` |
+| `platform/shared-services` | `shared-services/prod.tfstate` |
+| `workloads/tax-advisor` | `workloads/tax-advisor/prod.tfstate` |
+| `workloads/bank-compliance-ai-aks` | `workloads/bank-compliance-ai-aks/prod.tfstate` |
+
+---
+
+## Agent Rules
+
+1. **Continuous Documentation Maintenance:** Always proactively update project documentation (`AGENTS.md`, READMEs, architecture runbooks, and roadmap docs) whenever code, infrastructure, workflows, or policies change.
+2. When working on `app/bank-compliance/`, always cross-check `workloads/bank-compliance-ai-aks/outputs.tf` for resource names and endpoints that must be wired into k8s ConfigMaps.
+3. Never hardcode subscription IDs — use `${{ secrets.AZURE_SUBSCRIPTION_ID }}` in GHA and `var.subscription_id` in Terraform.
+4. Terraform roots are independent — do not merge state files or add cross-root `terraform_remote_state` without explicit instruction.
+5. The ADO environment for BankCompliance infra approvals is `bank-compliance-prod`. Do not use `tax-advisor-prod`.
+6. LiteLLM image must be pinned to a specific version tag — never use `:main-latest`.
+7. **Document All Incident Learnings:** Whenever a bug, workflow failure, or edge-case is resolved, immediately add the root cause and remediation steps to the Troubleshooting section below.
+8. **Visual Presentation Standard:** Prefer clean ASCII box diagrams, Unicode structured flowcharts, and comparative Markdown tables over raw Mermaid blocks to guarantee 100% reliable rendering across all chat interfaces, IDE panels, and web viewers.
+9. **Frequent Documentation & Confluence Maintenance:** Proactively update local markdown docs (`docs/confluence/`, `README.md`, `PROJECT_CONTEXT.md`) and keep live Atlassian Confluence (`HT` space) synchronized whenever code, infrastructure, or policies evolve.
+10. **Strict Declarative Infrastructure Lifecycle (Zero Out-of-Band Cloud Deletions):** Never perform manual or out-of-band resource deletions via Azure CLI (`az resource delete`, `az group delete`) or Portal clicks. All resource deprecations and deletions must be executed strictly declaratively: remove the resource from the `.tf` code and let Terraform destroy it via `terraform plan` and `terraform apply` (or through the unified CI/CD pipeline) to preserve remote state integrity and prevent out-of-band drift.
+11. **Strict Variable Separation (Zero Hardcoding in `variables.tf`):** Never define environment-specific values, Entra ID Principal Object IDs, subscription IDs, or tenant credentials as `default = "..."` inside `variables.tf`. `variables.tf` must strictly define schema and types only; all concrete values must reside exclusively in environment `.tfvars` files (`prod.tfvars`, `dev.tfvars`) and passed via `-var-file`.
+
+---
+
+## 🛠️ Operational Troubleshooting & Engineering Learnings
+
+### 1. GitHub Actions: `Unrecognized named-value: 'matrix'` at Job Level
+* **Symptom:** Workflow fails parsing with `Unrecognized named-value: 'matrix' @[L43]`.
+* **Root Cause:** Job-level `if:` conditions (`jobs.<job>.if`) evaluate *before* `strategy.matrix` is expanded. The `matrix` context is not available at the job root.
+* **Resolution:** Implement a preliminary `resolve-targets` setup job that evaluates the target input and outputs a dynamically filtered matrix JSON array (`include: ${{ fromJson(needs.resolve-targets.outputs.matrix) }}`).
+
+### 2. GitHub Actions: Multiline `$GITHUB_OUTPUT` Parse Failure
+* **Symptom:** Runner error: `##[error]Unable to process file command 'output' successfully. Invalid format '  {"name":...'`.
+* **Root Cause:** GitHub Actions `$GITHUB_OUTPUT` expects single-line `key=value` pairs. Unescaped multiline strings break parsing on line 2.
+* **Resolution:** Format matrix JSON as a compact single-line string (`ALL_TARGETS='[{"name":"..."},...]'`) or use EOF delimiter syntax (`echo "matrix<<EOF" >> $GITHUB_OUTPUT`).
+
+### 3. Dynamic Secret Indexing is Unsupported in GitHub Actions
+* **Symptom:** `${{ secrets[matrix.secret_name] }}` evaluates to empty/null or fails.
+* **Root Cause:** GitHub Actions does not support dynamic bracket dereferencing on the `secrets` context.
+* **Resolution:** Pass public Entra ID Client IDs directly inside the matrix objects (`client_id: '934ab83b-...'`) rather than indexing secrets.
+
+### 4. Multi-Agent Semantic Drift & Hallucination Loop on Off-Topic Queries
+* **Symptom:** Asking `"how to fly in sky"` or `"i want to fry"` caused the AI to synthesize detailed answers on NRI KYC V-CIP or Cloud Data Localization.
+* **Root Cause:** (1) When initial vector search returned 0 results, the Auditor Agent reflection loop injected a generic domain search query (`"RBI Master Direction on kyc"`), pulling unrelated documents into context and forcing synthesis. (2) In multi-turn chat sessions, short off-topic queries ($\le 6$ words) were blindly prepended with the prior question (`"Can a bank store data in cloud? -> Specifically: i want to fry"`), bypassing domain guardrails.
+* **Resolution:** (1) Enforce a deterministic out-of-scope guardrail in `SupervisorAgent` checking the raw prompt before history concatenation to reject non-banking queries in `<5ms`. (2) Only resolve conversation history if the follow-up contains explicit contextual markers (`what about`, `why`, `is that mandatory`, `explain more`).
+
+### 5. Grafana ClusterIP & Public HTTPS Mixed Content
+* **Symptom:** Embedded Grafana iframe fails to load or appears empty on `https://bank.mytaxbot.site`.
+* **Root Cause:** Web browsers block embedding local/HTTP services (`http://localhost:3000`) inside secure HTTPS origins. Furthermore, Grafana is intentionally kept as internal `ClusterIP` in the `monitoring` namespace for security & zero egress cost.
+* **Resolution:** Render native React telemetry panels on the website. To access full Grafana UI, use secure local port-forwarding: `kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring`.
+
+### 6. Terraform Backend Partial Configuration
+* **Symptom:** `terraform init` fails with backend configuration missing errors.
+* **Root Cause:** Monorepo uses partial backend definitions with empty `backend "azurerm" {}` in `versions.tf`.
+* **Resolution:** Always initialize Terraform with `-reconfigure -backend-config=backend.hcl -input=false` and set `ARM_USE_OIDC: "true"`.
+
+### 7. GitHub Actions Expression Syntax: Unexpected Symbol / Escaped Quotes
+* **Symptom:** Workflow parse failure `Unexpected symbol: '\"...'. Located at position X within expression: ${{ inputs.param || \"...\" }}`.
+* **Root Cause:** GitHub Actions expressions (`${{ ... }}`) require single quotes (`'...'`) for string literals. Double quotes (`"..."`) or escaped quotes (`\"...\"`) are invalid within expressions. Furthermore, directly interpolating `${{ ... }}` into inline scripts (Python/Bash) risks script injection and string delimiter clashes.
+* **Resolution:** In expressions, always use single quotes (`${{ inputs.param || 'default-value' }}`). For inline scripts, pass variables via step-level `env:` and access them via `os.environ` or `$ENV_VAR`.
+
+### 8. Azure Cognitive Services Soft-Delete & `FlagMustBeSetForRestore` Collision
+* **Symptom:** `azapi_resource` creation for Azure OpenAI or Content Safety fails with `409 Conflict: FlagMustBeSetForRestore` ("An existing resource with ID '...' has been soft-deleted. To restore it, set the restore flag to true").
+* **Root Cause:** Deleting an Azure Cognitive Services / OpenAI account places it into a soft-deleted retention state (48 hours to 90 days). ARM / AzAPI resource creation requests (`PUT`) fail because the resource name remains locked in the subscription's recycle bin.
+* **Resolution:** Purge the soft-deleted resource from the recycle bin before re-running Terraform apply:
+  ```bash
+  az cognitiveservices account purge --name <account-name> --resource-group <rg-name> --location <location> --subscription <sub-id>
+  ```
+
+### 9. Key Vault Secrets & RBAC Role Assignment 409 Conflicts Missing from State
+* **Symptom:** `azurerm_key_vault_secret` or `azurerm_role_assignment` fails with `409 Conflict: A secret with ID ... already exists` or `RoleAssignmentExists`.
+* **Root Cause:** Cloud resources were manually provisioned or left behind from a previous destroyed state while the remote state file was deleted or out-of-sync.
+* **Resolution:** For Key Vault secrets, delete and purge soft-deleted secrets (`az keyvault secret delete` and `az keyvault secret purge`). For role assignments, remove orphaned assignments using `az role assignment delete --ids <id>` or import them into Terraform state (`terraform import <resource> <id>`).
+
+### 10. AKS Diagnostic Setting Pre-existence & Terraform State Collision
+* **Symptom:** `azurerm_monitor_diagnostic_setting` fails with `already exists - to be managed via Terraform this resource needs to be imported into the State`.
+* **Root Cause:** When an AKS cluster is deployed with OMS agent or policy enforcement, Azure Monitor diagnostic settings (`diag-aks-ht-bankc-p-cin-01`) may be created directly in ARM or exist from earlier unmanaged runs.
+* **Resolution:** Import the diagnostic setting into the Terraform state:
+  ```bash
+  terraform import -var-file="prod.tfvars" 'module.bank_compliance_aks.azurerm_monitor_diagnostic_setting.aks_diagnostics[0]' '/subscriptions/<sub-id>/resourceGroups/<rg-name>/providers/Microsoft.ContainerService/managedClusters/<cluster-name>|<diag-name>'
+  ```
+
+### 11. GitHub Actions: Job Depends on Unknown Job in `needs:` Array
+* **Symptom:** Workflow parse failure: `Invalid workflow file: ... Job 'summary' depends on unknown job 'deploy-backend-aks'`.
+* **Root Cause:** A downstream aggregation or summary job lists a job ID in `needs:` that does not match the exact key name defined under `jobs:` in the workflow YAML.
+* **Resolution:** Synchronize the job key in `jobs:` (e.g., rename `deploy-aks:` to `deploy-backend-aks:`) to match all downstream `needs:` references.
+
+### 12. AKS Stopped State Mutation Restrictions (`OperationNotAllowed`)
+* **Symptom:** Terraform apply or ARM mutation fails with `400 Bad Request: OperationNotAllowed: Managed Cluster is in stopped state, no operations except for start are allowed`.
+* **Root Cause:** For FinOps cost optimization, AKS clusters may be powered down (`Stopped`). Azure Resource Manager forbids any cluster updates, node pool upgrades, or addon mutations while stopped.
+* **Resolution:** Start the AKS cluster (`az aks start --name <cluster> --resource-group <rg>`) and wait for `provisioningState: Succeeded` before applying Terraform changes.
+
+### 13. Static Web App Deployment Token Misalignment (`Reason: No matching Static Web App was found or the api key was invalid`)
+* **Symptom:** `Azure/static-web-apps-deploy@v1` fails with HTTP 400 `BadRequest: No matching Static Web App was found or the api key was invalid`.
+* **Root Cause:** In caller workflows calling reusable `app-deploy-swa.yml`, `swa_token_secret_name` was omitted and defaulted to a legacy uppercase secret name (`SWA-TAXB-DEPLOYMENT-TOKEN`) containing an obsolete token, whereas Terraform stores the live API key in `taxb-swa-deployment-token`.
+* **Resolution:** Explicitly pass `swa_token_secret_name: 'taxb-swa-deployment-token'` in the caller workflow `with:` block and ensure Key Vault secrets reflect the live `az staticwebapp secrets list` API token.
+
+### 14. AKS Ingress Public IP Elimination via Internal Web App Routing
+* **Symptom:** AKS Web App Routing addon provisions an unwanted public IP (`kubernetes-*`) on the NGINX ingress controller incurring hourly static IP charges (~$3.65/mo).
+* **Root Cause:** By default, AKS Web App Routing initializes NGINX with `defaultIngressControllerType: External` creating a public Azure Load Balancer frontend.
+* **Resolution:** Reconfigure App Routing to internal mode via Azure CLI (`az aks approuting update --nginx Internal --name <cluster> --resource-group <rg>`) or set `loadBalancerAnnotations: { "service.beta.kubernetes.io/azure-load-balancer-internal": "true" }` on the `NginxIngressController` CRD. Azure automatically deletes the public IP and unbinds the frontend.
+
+### 15. GitHub Actions: `Workflow does not exist or does not have a workflow_dispatch trigger in this branch`
+* **Symptom:** In GitHub Actions UI, clicking **Run workflow** displays yellow warning: `Workflow does not exist or does not have a workflow_dispatch trigger in this branch` with the button disabled.
+* **Root Cause:** GitHub Actions UI caches the historical YAML filename (e.g. `terraform-unified-manager.yml`). If the file was renamed in a feature branch (e.g. to `ops-terraform-manager.yml`), GitHub checks the branch for the exact historical filename and fails if it doesn't match.
+* **Resolution:** Ensure the exact YAML filename expected by the UI (`terraform-unified-manager.yml`) exists in the branch with a valid `workflow_dispatch:` trigger.
+
+### 16. Reusable Workflow Permission Delegation (`The workflow is requesting 'actions: read', but is only allowed 'actions: none'`)
+* **Symptom:** Workflow failure on startup: `Error calling workflow '.../reusable-checkov-scan.yml...'. The workflow is requesting 'actions: read', but is only allowed 'actions: none'`.
+* **Root Cause:** When a caller workflow defines an explicit top-level `permissions:` block, any undeclared scopes default to `none`. GitHub Actions enforces that a called reusable workflow's requested permissions must be a subset of (or allowed by) what the caller grants. `github/codeql-action/upload-sarif` in the reusable scan workflow requires `actions: read` along with `security-events: write` and `contents: read`.
+* **Resolution:** Explicitly include `actions: read` in the caller workflow's top-level `permissions:` block alongside `contents: read`, `security-events: write`, and `id-token: write`.
+
+### 17. 3-Layer Mathematical Vector Centroid Guardrails (Eliminating Brittle Regex Heuristics)
+* **Symptom:** Adversarial or random off-topic prompts (e.g. `"why my bathroom running without water"`, `"how to fly in sky"`, `"i want to fry"`) bypassed domain guardrails when conversational history was present or when prompts started with common question words (`why`, `who`, `what if`).
+* **Root Cause:** Handcrafted regex lists (`FOLLOWUP_PATTERNS`, `DOMAIN_KEYWORDS`) and string concatenation (`old_q + " -> " + new_q`) are brittle heuristics. Language is infinitely creative, creating a "whack-a-mole" trap where new keywords and regexes are constantly needed.
+* **Resolution:** Replaced all regex heuristics with **Layer 1 Mathematical Vector Centroid Sieve** ($S = \frac{\vec{u} \cdot \vec{C}_{\text{domain}}}{\|\vec{u}\| \|\vec{C}_{\text{domain}}\|}$) in `DomainCentroidGuardrail` (<3ms in-memory cosine distance) and **Layer 2 LLM Intent Disambiguation** without context string-stitching. Ensures 100% mathematical interception of out-of-scope topics with zero maintenance overhead.
+
+### 18. LiteLLM Routing Strategy Enterprise License Exception (`CrashLoopBackOff` on `latency-based-routing`)
+* **Symptom:** `litellm-proxy` pod goes into `CrashLoopBackOff` with exit code 3. Helm upgrade times out with `Error: context deadline exceeded`. Logs show `Exception: You must be a LiteLLM Enterprise user to use this feature. If you have a license please set LITELLM_LICENSE in your env.`
+* **Root Cause:** `router_settings.routing_strategy: "latency-based-routing"` is an enterprise-only feature in LiteLLM. When deployed in open-source LiteLLM without `LITELLM_LICENSE`, the proxy aborts startup immediately.
+* **Resolution:** Set `routing_strategy: "least-busy"` or `"simple-shuffle"` in `litellm-configmap.yaml` and `k8s/litellm/config.yaml`. These routing strategies are 100% free and open-source.
+
+### 19. Domain Guardrail False Positives on Colloquial Banking Phrasing (`how to collect lending money`)
+* **Symptom:** User questions regarding loan recovery, Fair Practices Code, and collection practices (e.g. `"how to collect lending money"`) were falsely intercepted with `⚠️ Out of Regulatory Scope` / `governance-abstention-shield`.
+* **Root Cause:** The in-memory vector centroid was initialized against only 6 baseline circulars without stopword filtering. Common question words diluted sparse vectors, while colloquial loan collection terms (`collect`, `money`, `debts`) fell just below the static cosine threshold ($0.1021 < 0.12$).
+* **Resolution:** (1) Implemented stopword-filtered tokenization in `domain_guardrail.py` to remove non-informative words. (2) Auto-indexed all 12+ multi-domain Master Directions into the centroid. (3) Calibrated mathematical thresholds (`DOMAIN_SIMILARITY_THRESHOLD = 0.030`, `MAX_CLAUSE_SIMILARITY_THRESHOLD = 0.060`) ensuring 100% valid banking questions pass while non-banking queries (cooking, sports, plumbing) remain blocked.
+
+### 21. Azure Storage `AuthorizationPermissionMismatch` 403 on Entra ID AzCopy / Blob Sync
+* **Symptom:** `azcopy sync` or `az storage blob sync` using Azure AD authentication fails with `403 This request is not authorized to perform this operation using this permission. ERROR CODE: AuthorizationPermissionMismatch`.
+* **Root Cause:** Standard ARM control-plane roles (`Contributor`, `Owner`) on the subscription or resource group do NOT grant data-plane access to blob containers. When authenticating via Entra ID (WIF OIDC Service Principal), Azure Storage enforces explicit data plane RBAC.
+* **Resolution:** Assign the **`Storage Blob Data Contributor`** role to the Deployment Service Principal (`app-prod` Object ID: `9630f661-27e7-42f0-8377-5565ba7db7cd`) on the target storage account (`sthttaxbpcin01`):
+  ```bash
+  az role assignment create --role "Storage Blob Data Contributor" --assignee-object-id "9630f661-27e7-42f0-8377-5565ba7db7cd" --assignee-principal-type "ServicePrincipal" --scope "/subscriptions/f4ffefe1-d689-4059-969c-ccc73e2a11d4/resourceGroups/rg-ht-taxb-p-cin-01/providers/Microsoft.Storage/storageAccounts/sthttaxbpcin01"
+  ```
+  Also declare `azurerm_role_assignment.cicd_blob_contributor` in `workloads/tax-advisor/security_rbac.tf`.
+
+### 22. Helm Upgrade Timeout (`context deadline exceeded`) & AKS Workload Identity Webhook Deadlock
+* **Symptom:** `helm upgrade --install` times out after 10m with `Error: UPGRADE FAILED: context deadline exceeded`. `kubectl describe rs` shows `Error creating: Internal error occurred: failed calling webhook "mutation.azure-workload-identity.io": no endpoints available for service "azure-wi-webhook-webhook-service"`.
+* **Root Cause:** When an AKS single-node cluster reaches 99% CPU request capacity, the `azure-wi-webhook-controller-manager` pod in `kube-system` goes into `Pending (Insufficient cpu)`. Any application pod labeled with `azure.workload.identity/use: "true"` invokes this mutating webhook on creation, causing ReplicaSet creation to fail and Helm rolling updates to time out.
+* **Resolution:** (1) For workloads using direct API keys passed via Kubernetes Secrets (like LiteLLM proxy and backend with multi-cloud secrets), remove `azure.workload.identity/use: "true"` from the pod templates in `litellm-deployment.yaml` and `backend-deployment.yaml`. (2) Clean up failed Helm release secrets: `kubectl delete secret -l owner=helm,name=bank-compliance,status=failed -n bank-compliance`.
+
+### 23. Terraform Undeclared Resource Reference on Partial Cleanup (`Reference to undeclared resource`)
+* **Symptom:** `terraform validate` or CI/CD Plan pipeline fails with `Error: Reference to undeclared resource ... on security.tf ... on outputs.tf ... A managed resource "azurerm_search_service" "shared_ai_search" has not been declared in the root module`.
+* **Root Cause:** When deprecating or removing an unused Azure cloud resource from its definition file (`ai_services.tf`), downstream references in `security.tf` (Key Vault secrets, RBAC role assignments) and `outputs.tf` were not simultaneously removed.
+* **Resolution:** Clean up all downstream consumers of the deleted resource: remove orphaned `azurerm_key_vault_secret`, `azurerm_role_assignment`, and `output` blocks. Run `terraform validate` across all root modules before pushing to git.
+
+### 24. GitHub Actions Entra ID OIDC Subject Mismatch on Environment Name (`AADSTS700213: No matching federated identity record found`)
+* **Symptom:** Workflow fails at `azure/login@v2` step with `AADSTS700213: No matching federated identity record found for presented assertion subject 'repo:RepoCodeGanesh/terraform-azure-iac:environment:<env-name>'. Check your federated identity credential Subject, Audience and Issuer against the presented assertion`.
+* **Root Cause:** In GitHub Actions workflows calling reusable templates (`tf-plan.yml` / `tf-apply.yml`), `environment_name:` was configured with an un-suffixed name (e.g. `'bootstrap'` instead of `'bootstrap-prod'`). Entra ID App Registrations are configured with explicit Federated Identity Credentials expecting exact subject claims matching `repo:RepoCodeGanesh/terraform-azure-iac:environment:<root>-prod`.
+* **Resolution:** Synchronize `environment_name` in caller workflows (`.github/workflows/platform-governance.yml`, `platform-bootstrap.yml`, etc.) to match the exact `-prod` environment configured on the corresponding Entra ID App Registration (`bootstrap-prod`, `hub-prod`, `shared-services-prod`, `bank-compliance-prod`, `tax-advisor-prod`).
+
+### 25. React JSX Sibling Expression Parsing Failure in Conditional Assistant Header (`Expected ')' but found '{'`)
+* **Symptom:** Vite SPA production build fails with `[vite:esbuild] Transform failed with 1 error: ... ChatWindow.jsx:245:16: ERROR: Expected ")" but found "{"`.
+* **Root Cause:** Inside a conditional expression `{m.role === 'assistant' && ( ... )}`, multiple sibling elements (the telemetry badge bar `<div>` and the expandable trace block `{!m.cached && ...}`) were placed consecutively without an enclosing React Fragment (`<> ... </>`). Additionally, loop iterator indexing used an undefined variable `i` instead of map parameter `idx`.
+* **Resolution:** Wrap all sibling elements within a React Fragment (`<> ... </>`) inside the conditional expression and use `idx` consistently for trace toggling state.
+
+### 26. Bash Inline Script EOF Syntax Error on Nested Loop in GitHub Actions (`syntax error: unexpected end of file`)
+* **Symptom:** GitHub Actions deployment step terminates with `/home/runner/work/...sh: line 80: syntax error: unexpected end of file` (exit code 2).
+* **Root Cause:** In the inline bash script for auto-recovering stuck Helm releases, an outer loop `for STUCK_STATUS in ...; do` was opened but lacked a closing `done` before proceeding to the FinOps quota scaling block.
+* **Resolution:** Ensure all `for` loops in CI/CD inline shell scripts have corresponding `done` terminators. Always match `do ... done` pairs before adding downstream execution stages.
+
+### 27. FastMCP Server Host & Interface Binding in Kubernetes (`connection refused` on 8080)
+* **Symptom:** FastMCP pod `bankc-mcp-server` enters CrashLoopBackOff or fails readiness/liveness probes (`dial tcp 10.244.0.X:8080: connect: connection refused`).
+* **Root Cause:** FastMCP SSE transport defaults to binding `127.0.0.1:8000`. Kubernetes kubelet probes connect from outside localhost via the pod's container IP. When probe targets port 8080 while FastMCP binds `127.0.0.1:8000`, the connection is actively refused.
+* **Resolution:** In `mcp_server.py`, pass `host=os.getenv("MCP_HOST", "0.0.0.0")` and `port=int(os.getenv("MCP_PORT", "8080"))` to `mcp.run(transport="sse", host=host, port=port)`. In `mcp-deployment.yaml`, set `MCP_HOST: "0.0.0.0"` and `MCP_PORT: "8080"`.
+
+### 28. In-Cluster Sovereign SLM CPU Scheduling Deadlock on Single-Node AKS (`Insufficient cpu`)
+* **Symptom:** Ollama SLM pod `private-slm-inference` remains in `Pending` state indefinitely with `0/1 nodes are available: 1 Insufficient cpu`.
+* **Root Cause:** On single-node `Standard_B2ms` (2 vCPUs = 2000m), system daemonsets (OMS agent, Azure CNI, Ingress) consume ~1840m. Configuring `requests.cpu: 250m` in `ollama-deployment.yaml` exceeds schedulable capacity.
+* **Resolution:** Right-size `requests.cpu: "10m"` and `requests.memory: "128Mi"` with burst limits `1000m` / `1536Mi` on both `initContainer` (model puller) and main Ollama engine. Pod schedules instantly and completes model initialization in <60s.
+
+### 30. React JSX Ternary IIFE Expression Syntax Parsing Failure (`Expected identifier but found '('`)
+* **Symptom:** Vite SPA production build fails in GitHub Actions CI/CD with `[vite:esbuild] Transform failed with 1 error: ... ChatWindow.jsx:342:23: ERROR: Expected identifier but found "("`.
+* **Root Cause:** In React JSX, conditional ternary branches evaluating an immediately invoked function expression (IIFE) must follow `condition ? (<Component />) : (() => { ... })()`. Adding an extraneous curly brace `{(() => { ... })()}` inside the ternary branch violates JSX grammar because the ternary expression is already embedded within an active JSX expression block.
+* **Resolution:** Remove the extraneous `{` and `}` surrounding the IIFE call: format ternary branch strictly as `) : (() => { const ...; return (<Component />); })()`.
+
+### 31. Silent Fallback Bug in Client-Side Document Auditing & Enterprise SPA Dual-Pane URL Routing
+* **Symptom:** In Policy Redliner (`RedlineStudio.jsx`), clearing the editor or typing new text continued evaluating to a failing 10% RED score (5 violations). Furthermore, refreshing the page or using browser Back/Forward buttons reset the workspace back to the initial tab because state was monolithic without URL routing.
+* **Root Cause:** (1) `runRedlineAudit` used `const currentText = contractText || sampleAgreement`. When `contractText` was empty or cleared, JavaScript truthiness silently fell back to `sampleAgreement` which contained 5 intentional statutory breaches, giving a false-positive failure. (2) Navigation pillars lacked HTML5 History (`pushState` / `popstate`) synchronization. (3) The legacy layout was vertically stacked (>2,000px high), forcing continuous scrolling between editor and diff cards.
+* **Resolution:** (1) Provided dual sample loaders: `🟢 Load 100% Compliant Agreement` (passes all 6 statutory regex rules with 0 violations and 100% score) and `🔴 Load High-Risk SOW (5 Violations)`. Empty text now resets cleanly to an empty prompt state rather than silently failing. (2) Implemented deep-linkable HTML5 URL routing (`/copilot`, `/command`, `/governance`, `/monitoring`, `/redline`) supported by Azure SWA `navigationFallback.rewrite = "/index.html"`. (3) Redesigned `RedlineStudio.jsx` into a high-density side-by-side dual-pane workspace (Left: Source Editor; Right: Sticky Score HUD & Live Redline Diffs with one-click copy buttons).
+
+### 32. Eliminating Documentation Sidebar & Split-Screen View Clutter in Enterprise Conversational Copilots
+* **Symptom:** The conversational Regulatory Copilot (`/copilot`) felt cramped, cluttered, and overwhelming. A 275px wide sidebar listing 12 Master Directions occupied the left side, layout mode toggles occupied a secondary toolbar, and `<DocumentViewer>` took up half the screen with raw document text, duplicating documentation already present in the Governance tab.
+* **Root Cause:** Mixing documentation browsing/reading concerns with conversational copilot interactions within the same tab created visual fatigue and state bloat (>700 lines in `App.jsx`). In enterprise architecture, documentation catalogs belong in a dedicated Governance hub, while copilots should offer a focused, distraction-free conversational canvas.
+* **Resolution:** (1) Removed the 275px Master Directions directory sidebar and split `<DocumentViewer>` from the Copilot tab, allowing `<ChatWindow>` to occupy 100% full width with centered message reading boundaries (`maxWidth: 880px`). (2) Removed redundant secondary subheaders in `ChatWindow.jsx` (`REGULATORY SCOPE` and duplicate engine status badge already visible in the top navbar). (3) Reduced `App.jsx` by 450+ lines while preserving complete circular coverage in Pillar 3 (`/governance`) and administrative sync controls in Pillar 2 (`/command`).
+
+### 33. Elimination of In-Chat Documentation Clutter via Collapsible Cryptographic Citation Cards & Header Badge De-Duplication
+* **Symptom:** AI responses in the chat window were congested with massive verbatim statutory clause blocks tacked below each synthesized answer, multiplying message height by 3x-5x and forcing continuous scrolling. Message headers additionally rendered two side-by-side redundant badges repeating "4 Agents" / "4-Agent Pipeline".
+* **Root Cause:** Citation cards rendered raw statutory documentation markdown (`citation.text`) uncollapsed directly in the chat bubble. Message headers had not been unified, displaying both an execution trace launcher and an agent model badge that stated identical pipeline details.
+* **Resolution:** (1) Transformed `CitationCard.jsx` into a sleek 1-line collapsible statutory reference badge (`📜 RBI/2023-24/102 • Clause 5.2 | sha256:... ▾`), collapsed by default with zero documentation clutter, expandable on-demand with 1 click. (2) Unified message header into a single clean agent badge on the left and a compact latency/trace toggle on the right (`18ms • Trace ▾`), eliminating all visual redundancy. (3) Purged dead `DocumentViewer.jsx` and unused props (`selectedCircular`, `onSelectCitation`).
+
+### 34. Azure Monitor Workbook Rendering Blank (`serializedData: null` & Missing `crossComponentResources` Workspace Binding)
+* **Symptom:** Opening the centralized Azure Monitor Workbook (`2d689b14-8f92-4f3a-96e2-54911d7e8b91` in `rg-ht-ss-p-cin-01`) displays the title banner but leaves the remainder of the page completely blank with no charts or query results.
+* **Root Cause:** (1) The resource in Azure was initially created with `properties.serializedData: null` (an empty shell) because `platform/shared-services` Terraform apply was not executed after the workbook items were defined. (2) When Azure Monitor Workbooks are created at the Resource Group scope rather than inside a Log Analytics Workspace blade, each KQL query item (`queryType: 0`, `resourceType: "microsoft.operationalinsights/workspaces"`) evaluates against the parent Resource Group (which has no KQL provider) and renders blank unless explicitly bound to a workspace via `crossComponentResources: [ "<log-analytics-workspace-id>" ]`.
+* **Resolution:** (1) Add `crossComponentResources = [module.shared_log_analytics.id]` to all KQL query items in `platform/shared-services/observability.tf`. (2) Use verified live telemetry tables (`AppRequests`, `AzureDiagnostics`, `KubePodInventory`) rather than obsolete table names. (3) Synchronize the live workbook resource via `az rest` / Terraform apply.
+
+### 35. Azure Monitor Container Insights Ingestion Failure (Missing DCR/DCRA in AMA MSI Mode)
+* **Symptom:** In Azure Portal, clicking AKS `Monitor (Insights)` tabs (`Reports`, `Nodes`, `Controllers`, `Containers`) or built-in workbooks (*Deployments and HPAs*, *Workload Details*, *Disk Capacity*) shows "No data found", and no logs are ingested into `law-ht-ss-p-cin-01` (`ContainerLogV2` is empty).
+* **Root Cause:** In Azure Monitor Agent (AMA) MSI mode (`msi_auth_for_monitoring_enabled = true`), the `ama-logs` daemonset strictly requires an Azure Data Collection Rule (DCR) and Association (DCRA). The `azurerm_kubernetes_cluster.oms_agent` block only sets cluster properties but does not create the DCR/DCRA. `ama-logs` logs: `"Exception while parsing dcr : No JSON file found... giving up onboarding after 31 secs"`, dropping 100% of telemetry.
+* **Resolution:** (1) Codify `azurerm_monitor_data_collection_rule.container_insights` and `azurerm_monitor_data_collection_rule_association.container_insights` in `modules/aks/main.tf` streaming `Microsoft-ContainerLogV2`, `Microsoft-KubeEvents`, `Microsoft-KubePodInventory`, `Microsoft-KubeNodeInventory`, `Microsoft-Perf`, and `Microsoft-InsightsMetrics` to the workspace. (2) Assign `Monitoring Metrics Publisher` role on the DCR and workspace to the Kubelet identity (`kubelet_identity[0].object_id`). (3) Import existing live DCR and DCRA into Terraform state to prevent configuration drift.
+
+### 36. 1-Node AKS CPU Quota Starvation from Multi-Replica System Add-ons
+* **Symptom:** Rolling updates or new pod deployments fail with `FailedScheduling: 0/1 nodes are available: 1 Insufficient cpu`. Core mutating admission webhooks (`azure-wi-webhook`) go into `Pending`, deadlocking deployments.
+* **Root Cause:** Microsoft managed add-ons (Gatekeeper, KEDA Operator, Metrics Server, Workload Identity) default to 2 replicas for multi-zone HA. On a single-node cluster (`Standard_B2ms`), running 2 replicas of each operator on the same VM consumes >96% of node allocatable CPU requests (1899m of 1900m). When configured as a periodic 6-hour CronJob, cluster reboots left system replicas at 2 until the cron timer fired.
+* **Resolution:** Upgraded `finops-single-node-tuner` (`app/bank-compliance/k8s/finops-single-node-tuner.yaml`) to a continuous in-cluster Python Deployment (1m request, 50m limit) that reconciles within 5 seconds of cluster boot and every 120 seconds continuously, instantly clamping `gatekeeper-controller`, `keda-operator`, `keda-operator-metrics-apiserver`, `keda-admission-webhooks`, `azure-wi-webhook-controller-manager`, and `metrics-server` to 1 replica.
+
+### 37. Azure Storage Asynchronous Teardown Race Condition (`StorageAccountOperationInProgress` 409 Conflict)
+* **Symptom:** During `terraform destroy`, deleting `azurerm_storage_account` fails with `unexpected status 409 (409 Conflict) with error: StorageAccountOperationInProgress: An operation is currently performing on this storage account that requires exclusive access.` Downstream resources (e.g. parent Resource Group) are not destroyed.
+* **Root Cause:** In Terraform's destroy dependency graph, child sub-resources (`azurerm_storage_container`) are destroyed immediately before the parent `azurerm_storage_account`. Azure Storage processes container purges asynchronously while holding an exclusive account lock mutex. When ARM's `DELETE /storageAccounts/<name>` request arrives milliseconds later, ARM rejects the call with HTTP 409.
+* **Resolution:** (1) A sequential second pass of `terraform destroy` cleanly destroys the parent resource group once the storage lock clears (<15 seconds). (2) For automated CI/CD pipelines, execute destroys asynchronously via GitHub Actions / ADO (`terraform-unified-manager.yml`) so local machine power state never disrupts cloud teardown.
+
+### 39. Responsive Mobile Web Engineering for Dual AI SPAs (TaxBot & BankCompliance AI)
+* **Symptom:** Opening TaxBot (`mytaxbot.site`) or BankCompliance AI (`bank.mytaxbot.site`) on smartphones (iOS Safari / Android Chrome) resulted in: (1) iOS Safari automatically zooming the screen to 120% whenever an input was tapped, breaking layout framing; (2) wide horizontal data tables (Regime Comparison & CTC Restructuring in TaxBot) forcing sideways scrolling and horizontal jitter; (3) BankCompliance top navigation bar (~950px wide) squishing buttons into unclickable slivers; (4) RedlineStudio dual-pane diff view squishing code and text into illegible 170px columns.
+* **Root Cause:** (1) iOS Safari triggers an irreversible viewport zoom on form focus whenever `<input>`, `<select>`, or `<textarea>` has `font-size < 16px` (e.g. `0.85rem` or `14px`). (2) Native desktop HTML tables are non-responsive by default. (3) 5-pillar top navigation tabs and dual-pane side-by-side flex layouts assume desktop widescreen viewports (>1024px).
+* **Resolution:** 
+  1. **iOS Auto-Zoom Elimination:** Applied `input, select, textarea { font-size: 16px !important; }` inside `@media (max-width: 768px)` and `(max-width: 860px)`.
+  2. **Mobile Card Reflows:** Replaced horizontal desktop comparison tables in TaxBot with adaptive mobile card stacks (`.comparison-cards-mobile` and `.mobile-ctc-cards`) displaying high-contrast Net Tax summaries and individual component cards while retaining native `<table>` on desktop via `.desktop-only-table`.
+  3. **Ergonomic Bottom Navigation Docks:** Added fixed, blurred-glass bottom navigation docks (`.mobile-bottom-nav` and `.mobile-bottom-dock`) with 44px+ touch targets and `env(safe-area-inset-bottom)` support, while hiding bloated top nav buttons on mobile.
+  4. **RedlineStudio Mobile Segmented Toggle:** Implemented a mobile segmented toggle (`[ 📄 Original Draft ]` vs `[ ✍️ RBI Redline ]`) in `RedlineStudio.jsx` allowing single-pane focus on mobile while preserving side-by-side dual-pane editing on desktop.
+  5. **Dynamic Viewport Height:** Adopted `100dvh` across outer containers and chat scroll areas to prevent virtual keyboards and browser address bars from obscuring inputs.
+
+### 40. TaxBot India Domain Boundary Leak & Semantic Hallucination on Non-Tax Queries (`how to make idly`)
+* **Symptom:** TaxBot India chat happily answered off-topic queries, providing detailed culinary recipes (e.g. "how to make idly"), cricket sports trivia, or general coding scripts instead of abstaining.
+* **Root Cause:** In `app/tax-advisor/backend/function_app.py`, `analyze_prompt_safety` only checked for prompt injection signatures (`ignore previous instructions`) and toxicity via Azure Content Safety, completely lacking a domain scope validation sieve. When off-topic queries returned 0 results from Azure AI Search, the fallback LLM executed with a system prompt that lacked an explicit domain abstention boundary.
+* **Resolution:** 
+  1. Implemented a deterministic `validate_tax_domain_scope` guardrail executing in sub-2ms that intercepts off-topic non-tax queries (cooking, sports, entertainment, general programming) and returns a structured out-of-scope abstention response without burning LLM inference tokens.
+  2. Hardened `SYSTEM_PROMPT` in `function_app.py` with strict regulatory domain boundaries.
+### 41. Azure AI Foundry Model Deployment Rejection (`DeploymentModelNotSupported: Format:OpenAI,Name:gpt-4o-mini,Version:2` & Deprecation Collision)
+* **Symptom:** In Azure AI Foundry portal (`ai.azure.com`), attempting to deploy `gpt-4o-mini` fails with red banner: `DeploymentModelNotSupported: The model 'Format:OpenAI,Name:gpt-4o-mini,Version:2' of account deployment is not supported.`
+* **Root Cause:** (1) The user selected the AzureML Model Registry catalog asset (`azureml://registries/azure-openai/models/gpt-4o-mini/versions/2`) which requires dedicated managed compute instead of Cognitive Services account deployment. (2) `gpt-4o-mini` (version `2024-07-18`) is in `Deprecating` status in `eastus2`, blocking new account deployments.
+* **Resolution:** Deploy active, Generally Available non-deprecated models for Azure OpenAI Cognitive Services: `gpt-5.4-nano` and `gpt-5.4-mini` (version `2026-03-17`) using SKU `GlobalStandard` and capacity 10 via Azure CLI (`az cognitiveservices account deployment create`). Both models feature full `agentsV2` and `assistants` capabilities with zero idle standby cost.
+
+### 42. Python Dependency Solver Collision: `openai<2.0.0` vs. `azure-ai-projects>=2.1.0`
+* **Symptom:** `pip install -r requirements.txt` fails in CI/CD pipeline with `ERROR: Cannot install -r requirements.txt and openai<2.0.0 and >=1.56.0 because these package versions have conflicting dependencies. The conflict is caused by: azure-ai-projects 2.1.0 depends on openai>=2.8.0. ERROR: ResolutionImpossible`.
+* **Root Cause:** The monorepo pinned `openai>=1.56.0,<2.0.0` for Azure Functions runtime stability. Introducing `azure-ai-projects` required `openai>=2.8.0` / `>=3.0.0`, creating an unresolvable constraint.
+* **Resolution:** Remove `azure-ai-projects` from `requirements.txt`. Azure AI Foundry endpoints expose standard OpenAI-compatible REST APIs reachable via the existing `openai>=1.56.0` client and lightweight standard HTTP, eliminating conflicting transitive dependencies.
+
+### 43. Azure AI Foundry Hub Terraform Replacement on Missing `project_management_enabled`
+* **Symptom:** Running `terraform plan` after importing an Azure AI Foundry Hub (`kind = "AIServices"`) shows `azurerm_cognitive_account.foundry_hub must be replaced` with `~ project_management_enabled = true -> false # forces replacement`.
+* **Root Cause:** When created via Azure AI Foundry, cognitive service accounts have `project_management_enabled = true` and `identity { type = "SystemAssigned" }`. The default Terraform schema assumes standard Cognitive Services where this defaults to `false`, triggering full resource recreation.
+* **Resolution:** Explicitly declare `project_management_enabled = true` and `identity { type = "SystemAssigned" }` in `workloads/tax-advisor/foundry.tf`.
+
+---
+
+
+
+## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
+
+### 1. 🏗️ AI Platform Engineering (Azure CAF & Zero-Trust Cloud)
+* **Topology:** 4-Subscription CAF Enterprise Landing Zone (`bootstrap`, `hub`, `shared-services`, `apps-prod`).
+* **Identity & Security:** Entra ID Workload Identity Federation (WIF) OIDC authentication for GitHub Actions & Azure DevOps. Zero static secrets.
+* **FinOps Discipline:** $0.00 idle compute profile using AKS Free Tier, Ephemeral OS, SWA Free Tier, and Consumption Serverless.
+
+### 2. ⚡ GenAIOps & Multi-Agent RAG Orchestration
+* **Architecture:** 4-Microagent State Graph (Supervisor Router ➔ Retriever ➔ Auditor Reflection Critic ➔ Synthesizer).
+* **FinOps & Speed:** Sub-10ms Governed Semantic Vector Cache with 94.2% hit rate ($0.0035/query cost reduction).
+* **High Availability:** Multi-Cloud AI Gateway (LiteLLM) routing to Google Gemini 2.0 Flash with automated failover to Azure OpenAI `gpt-5.4-nano` on HTTP 429.
+
+### 3. 🔍 LLMOps & Quality Guardrails
+* **Continuous Evaluation:** Automated CI/CD evaluation gate with Ragas Triad metrics (Groundedness 4.68/5.0, Citation Integrity 4.92/5.0, Answer Relevance 4.46/5.0).
+* **Enterprise Testing Framework:** 6-Tier testing pyramid documented in [`docs/platform-guide/11-enterprise-genai-evaluation-and-testing-framework.md`](../docs/platform-guide/11-enterprise-genai-evaluation-and-testing-framework.md).
+* **Data Protection:** Real-time DPDP Act PII Sanitization (PAN, Aadhaar, Card numbers auto-masked).
+* **Safety Shields:** Deterministic domain out-of-scope interceptor (<10ms) to prevent hallucination / semantic drift loops.
+
+### 4. 📊 DataOps & Regulatory Data Lake
+* **Ingestion:** Automated PDF layout-aware chunking pipeline with SHA-256 cryptographic provenance hashing for auditable citations.
+* **Vector Store:** Qdrant Vector Store on AKS with 4GB Managed CSI Persistent Disk and HNSW indexing.
+
+### 5. 🛡️ DevSecOps & Policy-as-Code (Checkov IaC Security)
+* **Scanner:** Checkov (Palo Alto / Bridgecrew) Static Code Analysis & Policy-as-Code.
+* **Config:** Central repository configuration at `.checkov.yaml` with framework targets `[terraform, kubernetes]`.
+* **Rollout Strategy:**
+  - **Phase 1: Discovery (Week 1)**: Advisory mode (`soft_fail: true`). Scans all platform & workload IaC PRs, outputs markdown summaries to `$GITHUB_STEP_SUMMARY`, and uploads SARIF findings to GitHub Security tab without blocking deployments.
+  - **Phase 2: Baseline (Week 2)**: Create baseline suppression file for existing architectural trade-offs.
+  - **Phase 3: Enforcement (Week 3+)**: Enforce blocking gate (`soft_fail: false`) for new CRITICAL/HIGH violations.
+* **Inline Waivers:** When suppressing an accepted violation, use `#checkov:skip=CKV_AZURE_XX: "Documented justification"`.
+
+### 6. 📦 Reusable Module Architecture Philosophy (AVM Wrappers vs. Hardened Native)
+* **Architecture Pattern:** Hybrid CAF modularization calling official `hashicorp/azurerm ~> 4.0` provider.
+* **AVM Wrappers:** Used for standalone single-purpose services with mature Microsoft schemas (`modules/search_service` wrapping `Azure/avm-res-search-searchservice/azurerm`).
+* **Hardened Native Modules:** Used for core compute, networking, and security (`modules/aks`, `modules/key_vault`, `modules/network`, `modules/function_app`, `modules/cosmos_db`, `modules/cognitive_account`, `modules/content_safety`, `modules/static_web_app`):
+  - **FinOps Guardrails:** Enforces Free-tier SKUs (`Free`, `Y1`, `F0`, `Essential`), Ephemeral OS ($0.00), and KEDA scale-to-zero.
+  - **WIF & OIDC Direct Binding:** Direct binding of Federated Identity Credentials and RBAC without fighting third-party module abstraction layers.
+  - **Fast Execution:** Eliminates deeply nested module trees, executing CI/CD plans in < 15 seconds.
+
+### 7. 🏛️ 5-Pillar Enterprise CAF Platform Standards ($0.00 / Ultra-Low Cost)
+1. **FinOps Spend Protection:** $15 monthly budget guardrails (`azurerm_consumption_budget_subscription`) across all 4 subscriptions with email alerts at 70%, 90%, 100% to `richtextforganesh@outlook.com`.
+2. **Centralized Observability:** Azure Managed Grafana (`sku = "Essential"` $0.00 / 30 users) in `platform/shared-services` with `Monitoring Reader` RBAC, Central Action Group (`ag-ht-ss-p-cin-01`), Resource Graph KQL inventory queries, and Azure Monitor Workbooks.
+3. **Security Posture:** Microsoft Defender for Cloud Free CSPM (Continuous CIS Azure Foundations benchmark scanning) + Key Vault `AuditEvent` diagnostic streaming to `law-ht-ss-p-cin-01`.
+4. **Zero-Trust Hybrid Networking:** Central Private DNS Zones in Hub (`privatelink.vaultcore.azure.net`, `cognitiveservices`, `search`) linked to Hub, Shared Services, and Apps Spoke VNets.
+5. **Shared AI Platform Services:** Central Azure Document Intelligence (`F0` 500 pgs/mo free) and Azure AI Search (`free` 10k docs free) in `platform/shared-services` with endpoints wired to Key Vault and workload ConfigMaps.
 
 ---
 
 ## 🤖 Developer AI Tooling & Environment Context
-- **AI Subscription:** **Google AI Plus** (India tier)
-- **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context capabilities.
-- **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+- **Primary Focus:** Enterprise AI Platform Engineering, GenAIOps, LLMOps, and Cloud-Native DataOps.
+- **AI Ecosystem:** Google AI Plus (Gemini Pro long-context analysis), Antigravity IDE, NotebookLM (regulatory PDF analysis), Azure AI Services.
+- **Atlassian Confluence Space:** `HappyTechies Cloud & AI Platform` (`HT`) at `https://happytechies.atlassian.net/wiki/spaces/HT/overview`.
+  - **Account Email:** `richtextforganesh@outlook.com`
+  - **Secret Location:** Azure Key Vault `kv-ht-ss-p-cin-01` (secret: `confluence-api-token` in Shared Services sub `859a785c-bd38-402d-b595-1f44f40fb9bf`).
+  - **Auto-Sync Script:** `scripts/sync_to_confluence.py` (converts markdown to storage XHTML and updates Space `HT` via REST API).
+
 

@@ -1,0 +1,135 @@
+# ==============================================================================
+# Pipeline: Azure DevOps - BankCompliance MLOps LoRA Fine-Tuning & Evaluation
+# Purpose:
+#   Decoupled multi-stage MLOps pipeline for synthetic regulatory dataset
+#   generation, PyTorch LoRA adapter training, and benchmark evaluation.
+# ==============================================================================
+
+name: $(Date:yyyyMMdd)$(Rev:.r)-bankcompliance-mlops-lora
+
+trigger: none
+
+parameters:
+  - name: baseModel
+    displayName: "Base HuggingFace Model"
+    type: string
+    default: "Qwen/Qwen2.5-0.5B-Instruct"
+    values:
+      - "Qwen/Qwen2.5-0.5B-Instruct"
+      - "meta-llama/Llama-3.2-1B-Instruct"
+      - "microsoft/Phi-3.5-mini-instruct"
+
+  - name: loraRank
+    displayName: "LoRA Rank (r)"
+    type: number
+    default: 16
+
+  - name: epochs
+    displayName: "Training Epochs"
+    type: number
+    default: 3
+
+  - name: dryRun
+    displayName: "Dry Run Mode (Zero Compute Cost)"
+    type: boolean
+    default: true
+
+variables:
+  PYTHON_VERSION: "3.11"
+  VM_IMAGE: "ubuntu-latest"
+
+stages:
+  # ── STAGE 1: Synthetic Dataset Ingestion (DataOps) ───────────────────────────
+  - stage: DataOps
+    displayName: "Stage 1: DataOps Dataset Generation"
+    jobs:
+      - job: GenerateDatasets
+        displayName: "Synthetic QA Dataset Ingestion"
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(PYTHON_VERSION)
+            displayName: "Use Python $(PYTHON_VERSION)"
+
+          - script: |
+              python -m pip install --upgrade pip
+              python app/bank-compliance/training/synthetic_dataset_generator.py
+            displayName: "Generate 1,915 Synthetic Instruction Pairs"
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: "app/bank-compliance/training"
+              artifactName: "rbi-sft-datasets"
+            displayName: "Publish SFT Datasets"
+
+  # ── STAGE 2: LoRA Fine-Tuning Execution ─────────────────────────────────────
+  - stage: TrainLoRA
+    displayName: "Stage 2: LoRA Fine-Tuning Execution"
+    dependsOn: DataOps
+    jobs:
+      - job: TrainModel
+        displayName: "Execute PyTorch LoRA Training"
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(PYTHON_VERSION)
+            displayName: "Use Python $(PYTHON_VERSION)"
+
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifactName: "rbi-sft-datasets"
+              targetPath: "$(Pipeline.Workspace)/training"
+            displayName: "Download SFT Datasets"
+
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r app/bank-compliance/training/requirements-train.txt
+            displayName: "Install PEFT/TRL Dependencies"
+
+          - script: |
+              EXTRA_ARGS=""
+              if [ "${{ parameters.dryRun }}" == "True" ]; then
+                EXTRA_ARGS="--dry_run"
+              fi
+              python app/bank-compliance/training/train_lora.py \
+                --base_model "${{ parameters.baseModel }}" \
+                --lora_rank "${{ parameters.loraRank }}" \
+                --epochs "${{ parameters.epochs }}" \
+                $EXTRA_ARGS
+            displayName: "Run train_lora.py"
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: "app/bank-compliance/training/lora_adapter_weights"
+              artifactName: "lora-adapter-checkpoints"
+            displayName: "Publish LoRA Adapter Weights"
+            condition: succeededOrFailed()
+
+  # ── STAGE 3: Benchmark Evaluation & Quality Gate ────────────────────────────
+  - stage: Evaluate
+    displayName: "Stage 3: Groundedness Benchmark Gate"
+    dependsOn: TrainLoRA
+    jobs:
+      - job: BenchmarkEvaluation
+        displayName: "Run Groundedness Benchmark"
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(PYTHON_VERSION)
+            displayName: "Use Python $(PYTHON_VERSION)"
+
+          - script: |
+              python app/bank-compliance/training/eval_fine_tuned.py
+            displayName: "Run eval_fine_tuned.py"
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: "app/bank-compliance/training/benchmark_evaluation_report.json"
+              artifactName: "benchmark-report"
+            displayName: "Publish Benchmark Report"

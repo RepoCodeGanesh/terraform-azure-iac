@@ -132,9 +132,9 @@ When discussing architectures with cross-functional engineering teams, academic 
 > **Also Known As:** *Vanilla RAG, Basic Vector RAG, Dense Retrieval RAG, Bi-Encoder RAG, Flat Cosine Lookup.*
 
 #### Architecture:
-1. Ingest documents $\rightarrow$ Chunk by character/token count $\rightarrow$ Generate embeddings via `text-embedding-3-small`.
+1. Ingest documents ➔ Chunk by character/token count ➔ Generate embeddings via `text-embedding-3-small`.
 2. Store in vector database (Azure Cosmos DB Vector Search / Azure AI Search).
-3. User query $\rightarrow$ Convert to embedding $\rightarrow$ Calculate Cosine Similarity $\rightarrow$ Send Top-$K$ chunks to LLM.
+3. User query ➔ Convert to embedding ➔ Calculate Cosine Similarity ➔ Send Top-$K$ chunks to LLM.
 
 #### Critical Failure Modes in Production:
 * **The Exact-Match Blindspot:** Vector embeddings struggle with precise identifiers (e.g., Section numbers like `Section 80C`, error codes `ERR-403`, or Aadhaar/PAN formats).
@@ -325,4 +325,4 @@ graph TD
 * [Platform Overview & Subscriptions](01-platform-overview.md)
 * [Terraform Infrastructure as Code Guide](02-terraform-iac-guide.md)
 * [Monitoring & Telemetry Guide](07-monitoring-telemetry-guide.md)
-* [BankCompliance AI Troubleshooting & Learnings](../BANK_COMPLIANCE_TROUBLESHOOTING_AND_LEARNINGS.md)
+* [BankCompliance AI Troubleshooting & Learnings](../confluence/11-bank-compliance-troubleshooting-learnings.md)

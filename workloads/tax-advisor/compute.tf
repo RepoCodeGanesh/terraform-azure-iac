@@ -34,17 +34,18 @@ module "function_app" {
   identity_type              = "SystemAssigned"
 
   app_settings = {
-    "AZURE_OPENAI_ENDPOINT"         = data.azurerm_cognitive_account.openai.endpoint
-    "AZURE_OPENAI_MODEL"            = var.openai_model_name
-    "COSMOS_DB_ENDPOINT"            = module.cosmos_db.endpoint
-    "COSMOS_DB_DATABASE"            = module.cosmos_db.database_name
-    "COSMOS_DB_CONTAINER"           = module.cosmos_db.container_name
-    "AZURE_SEARCH_ENDPOINT"         = module.search_service.endpoint
-    "AZURE_SEARCH_INDEX"            = "tax-docs"
-    "AZURE_CONTENT_SAFETY_ENDPOINT" = data.azurerm_cognitive_account.content_safety.endpoint
-    "RAG_DOCUMENTS_CONTAINER"       = "documents"
-    "APP_NAME"                      = "TaxBot India"
-    "APP_VERSION"                   = "1.0.0"
+    "AZURE_OPENAI_ENDPOINT"          = data.azurerm_cognitive_account.openai.endpoint
+    "AZURE_OPENAI_MODEL"             = var.openai_model_name
+    "COSMOS_DB_ENDPOINT"             = module.cosmos_db.endpoint
+    "COSMOS_DB_DATABASE"             = module.cosmos_db.database_name
+    "COSMOS_DB_CONTAINER"            = module.cosmos_db.container_name
+    "AZURE_SEARCH_ENDPOINT"          = module.search_service.endpoint
+    "AZURE_SEARCH_INDEX"             = "tax-docs"
+    "AZURE_CONTENT_SAFETY_ENDPOINT"  = data.azurerm_cognitive_account.content_safety.endpoint
+    "DOCUMENT_INTELLIGENCE_ENDPOINT" = "https://di-ht-ss-p-cin-01.cognitiveservices.azure.com/"
+    "RAG_DOCUMENTS_CONTAINER"        = "documents"
+    "APP_NAME"                       = "TaxBot India"
+    "APP_VERSION"                    = "1.0.0"
   }
 
   tags = local.tags

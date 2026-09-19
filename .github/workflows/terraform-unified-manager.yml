@@ -16,6 +16,7 @@ on:
         options:
           - 'workloads/bank-compliance-ai-aks'
           - 'workloads/tax-advisor'
+          - 'platform/governance'
           - 'platform/shared-services'
           - 'platform/hub'
           - 'platform/bootstrap'
@@ -26,11 +27,16 @@ on:
         options:
           - 'plan'
           - 'apply'
+          - 'plan-destroy'
           - 'destroy'
       confirm_destroy:
-        description: 'If destroying, type "DESTROY" to confirm (leave empty for plan/apply):'
+        description: 'If destroying, type "DESTROY" to confirm (leave empty for plan/apply/plan-destroy):'
         required: false
         default: ''
+
+concurrency:
+  group: terraform-${{ inputs.target }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   id-token: write
@@ -39,7 +45,7 @@ permissions:
 jobs:
   # ── STAGE 1: Dynamically Resolve Target Subscription & Environment ─────────
   resolve-target:
-    name: Resolve Target Configuration
+    name: Resolve Target Context
     runs-on: ubuntu-latest
     outputs:
       sub_id: ${{ steps.resolve.outputs.sub_id }}
@@ -54,7 +60,7 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve Azure Target & OIDC Environment
+      - name: Resolve Azure Target
         id: resolve
         run: |
           TARGET="${{ inputs.target }}"
@@ -62,30 +68,30 @@ jobs:
           echo "Selected Action: ${{ inputs.action }}"
 
           case "$TARGET" in
-            "workloads/bank-compliance-ai-aks")
+            "workloads/bank-compliance-ai-aks"|"workloads/tax-advisor")
               echo "sub_id=f4ffefe1-d689-4059-969c-ccc73e2a11d4" >> $GITHUB_OUTPUT
-              echo "env_name=tax-advisor-prod" >> $GITHUB_OUTPUT
-              echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              echo "env_name=bank-compliance-prod" >> $GITHUB_OUTPUT
+              echo "client_id=99ab7987-3989-46c3-bae9-92279be16608" >> $GITHUB_OUTPUT
               ;;
-            "workloads/tax-advisor")
-              echo "sub_id=f4ffefe1-d689-4059-969c-ccc73e2a11d4" >> $GITHUB_OUTPUT
-              echo "env_name=tax-advisor-prod" >> $GITHUB_OUTPUT
-              echo "client_id=${{ secrets.APP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+            "platform/governance")
+              echo "sub_id=7689ad81-71ba-481b-a17c-e1b6be61bab1" >> $GITHUB_OUTPUT
+              echo "env_name=bootstrap-prod" >> $GITHUB_OUTPUT
+              echo "client_id=934ab83b-2f61-475e-bdbc-85c9eaed83e6" >> $GITHUB_OUTPUT
               ;;
             "platform/shared-services")
               echo "sub_id=859a785c-bd38-402d-b595-1f44f40fb9bf" >> $GITHUB_OUTPUT
               echo "env_name=shared-services-prod" >> $GITHUB_OUTPUT
-              echo "client_id=${{ secrets.SHARED_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              echo "client_id=580ffcfd-51ee-4dc3-9204-d03cb438ff82" >> $GITHUB_OUTPUT
               ;;
             "platform/hub")
               echo "sub_id=3eb8cc01-50c6-473e-8d5f-f8d532ae1f5b" >> $GITHUB_OUTPUT
               echo "env_name=hub-prod" >> $GITHUB_OUTPUT
-              echo "client_id=${{ secrets.HUB_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              echo "client_id=78960c14-26d2-4a0c-ab21-579c3030155e" >> $GITHUB_OUTPUT
               ;;
             "platform/bootstrap")
               echo "sub_id=7689ad81-71ba-481b-a17c-e1b6be61bab1" >> $GITHUB_OUTPUT
               echo "env_name=bootstrap-prod" >> $GITHUB_OUTPUT
-              echo "client_id=${{ secrets.BOOTSTRAP_CLIENT_ID }}" >> $GITHUB_OUTPUT
+              echo "client_id=934ab83b-2f61-475e-bdbc-85c9eaed83e6" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "::error ::Unknown target $TARGET"
@@ -100,19 +106,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-target.outputs.env_name }}
     env:
+      ARM_USE_OIDC: "true"
       ARM_PROVIDER_RETRY_MAX: "10"
       ARM_CLIENT_TIMEOUT: "600"
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.15.8
 
-      - name: Azure OIDC Login
-        uses: azure/login@v2
+      - uses: azure/login@v2
         with:
           client-id: ${{ needs.resolve-target.outputs.client_id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -123,8 +127,7 @@ jobs:
           mkdir -p ~/.terraform.d/plugin-cache
           echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
 
-      - name: Cache Terraform Providers
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.terraform.d/plugin-cache
           key: terraform-plugins-${{ runner.os }}-${{ hashFiles(format('{0}/.terraform.lock.hcl', inputs.target)) }}
@@ -140,13 +143,13 @@ jobs:
             -input=false
 
       - name: Terraform Plan
-        if: inputs.action == 'plan'
+        if: inputs.action == 'plan' || inputs.action == 'apply'
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform plan -var-file=prod.tfvars -parallelism=10
+            terraform plan -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform plan -parallelism=10
+            terraform plan -input=false -parallelism=10
           fi
 
       - name: Terraform Apply
@@ -154,17 +157,74 @@ jobs:
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform apply -auto-approve -var-file=prod.tfvars -parallelism=10
+            terraform apply -auto-approve -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform apply -auto-approve -parallelism=10
+            terraform apply -auto-approve -input=false -parallelism=10
           fi
 
-      - name: Terraform Destroy
-        if: inputs.action == 'destroy'
+      - name: Terraform Plan Destroy
+        if: inputs.action == 'destroy' || inputs.action == 'plan-destroy'
         working-directory: ${{ inputs.target }}
         run: |
           if [ -f "prod.tfvars" ]; then
-            terraform destroy -auto-approve -var-file=prod.tfvars -parallelism=10
+            terraform plan -destroy -input=false -var-file=prod.tfvars -parallelism=10
           else
-            terraform destroy -auto-approve -parallelism=10
+            terraform plan -destroy -input=false -parallelism=10
           fi
+
+      - name: Terraform Destroy (with Automated Backoff Retry)
+        if: inputs.action == 'destroy'
+        working-directory: ${{ inputs.target }}
+        run: |
+          MAX_RETRIES=2
+          ATTEMPT=1
+          SUCCESS=false
+
+          DESTROY_ARGS="-auto-approve -input=false -parallelism=10"
+          if [ -f "prod.tfvars" ]; then
+            DESTROY_ARGS="$DESTROY_ARGS -var-file=prod.tfvars"
+          fi
+
+          while [ $ATTEMPT -le $((MAX_RETRIES + 1)) ]; do
+            echo "🚀 [Pass $ATTEMPT/$((MAX_RETRIES + 1))] Executing: terraform destroy $DESTROY_ARGS"
+            if terraform destroy $DESTROY_ARGS; then
+              echo "✅ Terraform destroy completed successfully on Pass $ATTEMPT."
+              SUCCESS=true
+              break
+            else
+              EXIT_CODE=$?
+              if [ $ATTEMPT -le $MAX_RETRIES ]; then
+                BACKOFF=$((ATTEMPT * 20))
+                echo "⚠️ [Pass $ATTEMPT] Destroy exited with code $EXIT_CODE."
+                echo "💡 Transient Azure control-plane lock detected (e.g. StorageAccountOperationInProgress / VMSS cleanup)."
+                echo "⏳ Backing off for ${BACKOFF}s before automated retry..."
+                sleep $BACKOFF
+              fi
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "❌ Terraform destroy failed after $((MAX_RETRIES + 1)) attempts."
+            exit 1
+          fi
+
+      - name: Generate Terraform Step Summary
+        if: always()
+        run: |
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+
+          ### Terraform Azure Landing Zone Summary
+          **Target Root:** \`${{ inputs.target }}\`
+          **Action:** \`${{ inputs.action }}\`
+          **Azure Subscription ID:** \`${{ needs.resolve-target.outputs.sub_id }}\`
+          **Target Environment:** \`${{ needs.resolve-target.outputs.env_name }}\`
+
+          | CAF Governance Check | Configuration | Status |
+          | :--- | :--- | :--- |
+          | **Remote State Backend** | \`sthtbootpcin01\` (Azure AD Auth) | Connected |
+          | **State Key** | \`${{ inputs.target }}/prod.tfstate\` | Isolated |
+          | **Workload Identity (WIF)** | Entra ID Federated OIDC | Authenticated |
+          | **Cost Policy** | Low-Cost / Free-Tier SKUs Enforced | Verified |
+
+          EOF

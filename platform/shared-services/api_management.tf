@@ -38,16 +38,3 @@ resource "azurerm_monitor_diagnostic_setting" "apim_diagnostics" {
     module.shared_log_analytics
   ]
 }
-
-# ─── Shared App Service Plan ──────────────────────────────────────────────────
-
-module "shared_service_plan" {
-  source = "../../modules/service_plan"
-
-  name                = module.shared_asp_name.name
-  location            = azurerm_resource_group.shared_services.location
-  resource_group_name = azurerm_resource_group.shared_services.name
-  os_type             = "Linux"
-  sku_name            = "F1"
-  tags                = local.tags
-}

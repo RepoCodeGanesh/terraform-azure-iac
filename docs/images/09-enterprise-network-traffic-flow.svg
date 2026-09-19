@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#0078d4"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Border -->
+  <rect x="15" y="15" width="1170" height="650" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+
+  <!-- Title & Header Bar -->
+  <rect x="15" y="15" width="1170" height="50" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="35" y="46" fill="#0f172a" font-size="16" font-weight="700">HappyTechies Cloud Platform — End-to-End Network Topology &amp; Ingress Specification</text>
+  <text x="1050" y="46" fill="#64748b" font-size="12" font-weight="600">Doc: CR-NET-09</text>
+
+  <!-- 1. Client Tier -->
+  <g transform="translate(35, 90)">
+    <rect width="180" height="540" rx="4" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+    <rect x="0" y="0" width="180" height="35" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+    <text x="90" y="23" fill="#0f172a" font-size="13" font-weight="700" text-anchor="middle">Client Perimeter</text>
+
+    <!-- Client Box -->
+    <rect x="15" y="55" width="150" height="110" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="90" y="85" fill="#0078d4" font-size="13" font-weight="700" text-anchor="middle">Web Browser</text>
+    <text x="90" y="105" fill="#334155" font-size="11" text-anchor="middle">bank.mytaxbot.site</text>
+    <text x="90" y="125" fill="#64748b" font-size="10" text-anchor="middle">React 18 SPA</text>
+    <text x="90" y="145" fill="#059669" font-size="10" font-weight="600" text-anchor="middle">DPDP PII Auto-Mask</text>
+
+    <!-- Specs -->
+    <rect x="15" y="185" width="150" height="330" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="210" fill="#0f172a" font-size="11" font-weight="700">CONNECTION SPECS:</text>
+    <text x="25" y="235" fill="#334155" font-size="10">• Protocol: HTTPS</text>
+    <text x="25" y="255" fill="#334155" font-size="10">• TLS: Version 1.3 / 1.2</text>
+    <text x="25" y="275" fill="#334155" font-size="10">• Port: 443 (TCP)</text>
+    <text x="25" y="305" fill="#0f172a" font-size="11" font-weight="700">SECURITY POSTURE:</text>
+    <text x="25" y="330" fill="#334155" font-size="10">• Zero static secrets</text>
+    <text x="25" y="350" fill="#334155" font-size="10">• Client-side masking</text>
+    <text x="25" y="370" fill="#334155" font-size="10">• Ephemeral sessions</text>
+  </g>
+
+  <!-- Flow: Client -> Cloudflare -->
+  <line x1="215" y1="150" x2="265" y2="150" stroke="#0078d4" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="240" y="140" fill="#0078d4" font-size="10" font-weight="700" text-anchor="middle">HTTPS:443</text>
+
+  <!-- 2. Cloudflare Edge -->
+  <g transform="translate(270, 90)">
+    <rect width="200" height="540" rx="4" fill="#f8fafc" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect x="0" y="0" width="200" height="35" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>
+    <text x="100" y="23" fill="#92400e" font-size="13" font-weight="700" text-anchor="middle">Cloudflare Edge Network</text>
+
+    <rect x="15" y="55" width="170" height="460" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="85" fill="#b45309" font-size="11" font-weight="700">EDGE SERVICES:</text>
+    <text x="25" y="110" fill="#334155" font-size="10">• Anycast DNS CNAME</text>
+    <text x="25" y="130" fill="#334155" font-size="10">• Layer 7 DDoS Mitigation</text>
+    <text x="25" y="150" fill="#334155" font-size="10">• Full (Strict) SSL Offload</text>
+    <text x="25" y="170" fill="#334155" font-size="10">• Static Asset Caching</text>
+    
+    <line x1="25" y1="195" x2="175" y2="195" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="25" y="220" fill="#b45309" font-size="11" font-weight="700">ORIGIN TARGETS:</text>
+    <text x="25" y="245" fill="#334155" font-size="10">1. UI Static Web App:</text>
+    <text x="25" y="262" fill="#0078d4" font-size="10">stapp-ht-bankc-p-cin-01</text>
+    <text x="25" y="295" fill="#334155" font-size="10">2. API Gateway (APIM):</text>
+    <text x="25" y="312" fill="#0078d4" font-size="10">apim-ht-ss-p-cin-01</text>
+  </g>
+
+  <!-- Flow: Cloudflare -> APIM -->
+  <line x1="470" y1="300" x2="520" y2="300" stroke="#0078d4" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="495" y="290" fill="#0078d4" font-size="10" font-weight="700" text-anchor="middle">HTTPS:443</text>
+
+  <!-- 3. Azure APIM Gateway (Shared Services) -->
+  <g transform="translate(525, 90)">
+    <rect width="210" height="540" rx="4" fill="#f8fafc" stroke="#0078d4" stroke-width="1.5"/>
+    <rect x="0" y="0" width="210" height="35" fill="#e0f2fe" stroke="#0078d4" stroke-width="1"/>
+    <text x="105" y="23" fill="#0369a1" font-size="13" font-weight="700" text-anchor="middle">Azure API Management</text>
+
+    <rect x="15" y="55" width="180" height="460" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="85" fill="#0369a1" font-size="11" font-weight="700">GATEWAY POLICIES:</text>
+    <text x="25" y="105" fill="#64748b" font-size="9">apim-ht-ss-p-cin-01 (Consumption)</text>
+    
+    <text x="25" y="135" fill="#0f172a" font-size="10" font-weight="700">1. CORS Whitelist:</text>
+    <text x="25" y="152" fill="#334155" font-size="10">https://bank.mytaxbot.site</text>
+
+    <text x="25" y="182" fill="#0f172a" font-size="10" font-weight="700">2. Rate Limiting:</text>
+    <text x="25" y="199" fill="#334155" font-size="10">60 req/min per Client IP</text>
+
+    <text x="25" y="229" fill="#0f172a" font-size="10" font-weight="700">3. URL Rewrite:</text>
+    <text x="25" y="246" fill="#334155" font-size="10">/bankc/api/* ➔ /api/*</text>
+
+    <text x="25" y="276" fill="#0f172a" font-size="10" font-weight="700">4. Backend Target:</text>
+    <text x="25" y="293" fill="#334155" font-size="10">AKS Public LoadBalancer</text>
+    <text x="25" y="310" fill="#64748b" font-size="9">Port: 80 (TCP Forward)</text>
+  </g>
+
+  <!-- Flow: APIM -> AKS Spoke -->
+  <line x1="735" y1="300" x2="780" y2="300" stroke="#0078d4" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="758" y="290" fill="#0078d4" font-size="10" font-weight="700" text-anchor="middle">HTTP:80</text>
+
+  <!-- 4. Azure Kubernetes Service (AKS Spoke VNet) -->
+  <g transform="translate(785, 90)">
+    <rect width="380" height="540" rx="4" fill="#f8fafc" stroke="#3b82f6" stroke-width="1.5"/>
+    <rect x="0" y="0" width="380" height="35" fill="#dbeafe" stroke="#3b82f6" stroke-width="1"/>
+    <text x="190" y="23" fill="#1d4ed8" font-size="13" font-weight="700" text-anchor="middle">AKS Spoke VNet (10.42.0.0/16) | Overlay: 192.168.0.0/16</text>
+
+    <!-- FastAPI Backend Pod -->
+    <rect x="15" y="55" width="350" height="115" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="80" fill="#1d4ed8" font-size="12" font-weight="700">FastAPI Backend (bankc-backend-svc:8000)</text>
+    <text x="25" y="100" fill="#334155" font-size="10">• Pod IP: 192.168.1.14 (Azure CNI Overlay)</text>
+    <text x="25" y="118" fill="#334155" font-size="10">• 4-Microagent State Machine (Supervisor, Retriever, Auditor, Synthesizer)</text>
+    <text x="25" y="136" fill="#059669" font-size="10" font-weight="600">• Governed Semantic Vector Cache (&lt;10ms, Cosine &gt;= 0.90, $0.00)</text>
+    <text x="25" y="154" fill="#334155" font-size="10">• OpenTelemetry GenAI Semantic Spans (v1.26+ Standard)</text>
+
+    <!-- Zero Egress Box -->
+    <rect x="15" y="185" width="350" height="330" rx="4" fill="#f1f5f9" stroke="#10b981" stroke-width="1.5"/>
+    <text x="25" y="210" fill="#047857" font-size="11" font-weight="700">INTERNAL CLUSTERIP TIER (ZERO PUBLIC EGRESS)</text>
+
+    <!-- Qdrant -->
+    <rect x="25" y="225" width="330" height="75" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="35" y="248" fill="#b91c1c" font-size="11" font-weight="700">Qdrant Vector Database (qdrant:6333)</text>
+    <text x="35" y="268" fill="#334155" font-size="10">• 4GB Azure Managed Disk (E1 SSD, ~$0.15/mo) mounted at /qdrant/data</text>
+    <text x="35" y="286" fill="#334155" font-size="10">• HNSW Dense Vector Indexing | ClusterIP: 10.240.12.80</text>
+
+    <!-- LiteLLM Gateway -->
+    <rect x="25" y="310" width="330" height="95" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="35" y="333" fill="#047857" font-size="11" font-weight="700">LiteLLM AI Proxy Gateway (litellm:4000)</text>
+    <text x="35" y="353" fill="#334155" font-size="10">• 1. Primary Route: Google Gemini 2.0 Flash (HTTPS:443)</text>
+    <text x="35" y="371" fill="#334155" font-size="10">• 2. Standby Route: Azure OpenAI gpt-5.4-nano (East US)</text>
+    <text x="35" y="389" fill="#334155" font-size="10">• 3. Sovereign Route: In-Cluster Private SLM (Local CPU)</text>
+
+    <!-- Private SLM -->
+    <rect x="25" y="415" width="330" height="85" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="35" y="438" fill="#6d28d9" font-size="11" font-weight="700">Private Sovereign SLM (private-slm:11434)</text>
+    <text x="35" y="458" fill="#334155" font-size="10">• CPU Qwen-2.5 / Phi-3 (Ollama Engine, &lt;1GB RAM)</text>
+    <text x="35" y="476" fill="#334155" font-size="10">• Zero External Token Egress (100% On-Cluster Privacy)</text>
+  </g>
+</svg>

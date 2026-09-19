@@ -13,6 +13,14 @@ resource "azurerm_role_assignment" "func_blob_contributor" {
   depends_on           = [time_sleep.wait_for_func_identity]
 }
 
+resource "azurerm_role_assignment" "cicd_blob_contributor" {
+  count                = var.enable_role_assignments ? 1 : 0
+  scope                = module.function_app.storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = var.app_prod_sp_object_id
+  depends_on           = [module.function_app]
+}
+
 # ─── RBAC: Cognitive Services OpenAI User (for Chat Completions) ──────────────
 
 resource "azurerm_role_assignment" "func_openai_user" {

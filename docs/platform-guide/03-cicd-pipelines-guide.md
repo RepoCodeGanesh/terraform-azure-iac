@@ -120,7 +120,17 @@ flowchart TD
 
 ---
 
-## 🔒 Azure OIDC WIF Environment Claim Rules
+## 🔒 Azure OIDC WIF Environment Claim Standards
+All GitHub Actions workflows authenticate via Entra ID Workload Identity Federation using specific `-prod` environment subject claims.
+
+| Workflow File | Target Subscription | Entra ID App Registration Client ID | GitHub Environment (`environment_name`) | OIDC Subject Claim |
+| :--- | :--- | :--- | :--- | :--- |
+| **`platform-governance.yml`** | `bootstrap` (`7689ad81`) | `BOOTSTRAP_CLIENT_ID` (`934ab83b-...`) | `bootstrap-prod` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:bootstrap-prod` |
+| **`platform-bootstrap.yml`** | `bootstrap` (`7689ad81`) | `BOOTSTRAP_CLIENT_ID` (`934ab83b-...`) | `bootstrap-prod` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:bootstrap-prod` |
+| **`platform-hub.yml`** | `Hub-prod` (`3eb8cc01`) | `HUB_CLIENT_ID` (`78960c14-...`) | `hub-prod` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:hub-prod` |
+| **`platform-shared-services.yml`**| `Shared-services` (`859a785c`) | `SHARED_CLIENT_ID` (`580ffcfd-...`) | `shared-services-prod` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:shared-services-prod` |
+| **`workload-tax-advisor.yml`** | `Apps-prod` (`f4ffefe1`) | `APP_CLIENT_ID` (`99ab7987-...`) | `tax-advisor-prod` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:tax-advisor-prod` |
+| **`workload-bank-compliance-aks.yml`**| `Apps-prod` (`f4ffefe1`)| `APP_CLIENT_ID` (`99ab7987-...`) | `bank-compliance-prod` | `repo:RepoCodeGanesh/terraform-azure-iac:environment:bank-compliance-prod` |
 
 > [!IMPORTANT]
-> **Environment Claim Requirement**: Azure Entra ID App Registration `DevOpsUniverse-Terraform-app-prod` requires the subject claim `repo:RepoCodeGanesh/terraform-azure-iac:environment:tax-advisor-prod`. All called workflows executing Azure CLI login specify `environment: tax-advisor-prod` to ensure authentication success.
+> **Environment Claim Requirement**: Azure Entra ID App Registrations strictly enforce subject matching against the `-prod` environment names above. Never omit the `-prod` suffix in workflow `environment_name` inputs.

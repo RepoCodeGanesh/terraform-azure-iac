@@ -232,7 +232,8 @@ export default function RegimeComparator() {
             </div>
           </div>
 
-          <table className="comparison-table">
+          {/* Desktop Table View (>= 769px) */}
+          <table className="comparison-table desktop-only-table">
             <thead>
               <tr>
                 <th>Component</th>
@@ -293,6 +294,86 @@ export default function RegimeComparator() {
               </tr>
             </tbody>
           </table>
+
+          {/* Mobile Card-Based Reflow View (<= 768px) */}
+          <div className="comparison-cards-mobile mobile-only-block">
+            {/* Total Tax Highlight Card */}
+            <div className="mobile-summary-card" style={{
+              background: result.recommendation === 'new' ? 'rgba(29, 185, 84, 0.08)' : 'rgba(96, 165, 250, 0.08)',
+              border: `1.5px solid ${result.recommendation === 'new' ? 'rgba(29, 185, 84, 0.4)' : 'rgba(96, 165, 250, 0.4)'}`,
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '14px'
+            }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Total Tax Payable (inc. 4% Cess)
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <div style={{
+                  flex: 1,
+                  background: 'rgba(29, 185, 84, 0.12)',
+                  border: '1px solid rgba(29, 185, 84, 0.3)',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--green-light)', fontWeight: 700 }}>NEW REGIME</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--green-light)', marginTop: '4px' }}>
+                    {formatRupee(result.new_regime.total_tax)}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{result.new_regime.effective_rate}% eff.</div>
+                </div>
+
+                <div style={{
+                  flex: 1,
+                  background: 'rgba(96, 165, 250, 0.1)',
+                  border: '1px solid rgba(96, 165, 250, 0.25)',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontWeight: 700 }}>OLD REGIME</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa', marginTop: '4px' }}>
+                    {formatRupee(result.old_regime.total_tax)}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{result.old_regime.effective_rate}% eff.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Component Breakdown Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { label: 'Gross Salary', newVal: formatRupee(result.gross_salary), oldVal: formatRupee(result.gross_salary) },
+                { label: 'Standard Deduction', newVal: `-${formatRupee(result.new_regime.standard_deduction)}`, oldVal: `-${formatRupee(result.old_regime.standard_deduction)}` },
+                { label: 'Employer NPS [80CCD(2)]', newVal: `-${formatRupee(result.new_regime.employer_nps_deduction)}`, oldVal: `-${formatRupee(result.old_regime.employer_nps_deduction)}` },
+                { label: 'Other Deductions (80C/80D/HRA)', newVal: 'Not Allowed', oldVal: `-${formatRupee(result.old_regime.total_deductions - result.old_regime.standard_deduction - result.old_regime.employer_nps_deduction)}` },
+                { label: 'Net Taxable Income', newVal: formatRupee(result.new_regime.taxable_income), oldVal: formatRupee(result.old_regime.taxable_income) },
+                { label: 'Base Tax (Pre-Cess)', newVal: formatRupee(result.new_regime.tax_before_cess), oldVal: formatRupee(result.old_regime.tax_before_cess) }
+              ].map((item, idx) => (
+                <div key={idx} style={{
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  padding: '12px 14px'
+                }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                    {item.label}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>New:</span>
+                      <span style={{ color: 'var(--green-light)', fontWeight: 600 }}>{item.newVal}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Old:</span>
+                      <span style={{ color: '#60a5fa', fontWeight: 600 }}>{item.oldVal}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

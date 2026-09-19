@@ -50,6 +50,6 @@ When guiding the user:
 
 - Master Documentation Hub: [docs/README.md](../../../docs/README.md)
 - Canonical Project Context & Architecture: [docs/PROJECT_CONTEXT.md](../../../docs/PROJECT_CONTEXT.md)
-- Reusable App Workflow Guide: [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](../../../docs/REUSABLE_APP_WORKFLOW_GUIDE.md)
+- Reusable App Workflow Guide: [docs/workflows-and-governance/REUSABLE_APP_WORKFLOW_GUIDE.md](../../../docs/workflows-and-governance/REUSABLE_APP_WORKFLOW_GUIDE.md)
 - Monitoring & Telemetry Playbook: [docs/platform-guide/07-monitoring-telemetry-guide.md](../../../docs/platform-guide/07-monitoring-telemetry-guide.md)
 - Primary README: [README.md](../../../README.md)

@@ -125,6 +125,12 @@ Thumbs.db
 
 .tmp/
 scratch*/
+scripts/scratch/
+scripts/local_*
+scripts/tmp_*
+scripts/temp_*
+scripts/*.tmp.py
+scripts/*.local.py
 *.bak
 *.tmp
 *.swp
@@ -142,3 +148,9 @@ docs/resume/
 *resume*
 *Resume*
 *.docx
+
+###############################################################################
+# 9. Binary Documents & Raw PDF Lake (Store in Azure Blob Storage instead)
+###############################################################################
+*.pdf
+**/raw_pdfs/

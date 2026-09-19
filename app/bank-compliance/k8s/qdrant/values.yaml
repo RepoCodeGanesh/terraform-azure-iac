@@ -1,3 +1,9 @@
+# ==============================================================================
+# Qdrant Vector Database Helm Values
+# Deployment Pattern:
+#   - Storage: 4Gi Azure Managed CSI Disk (Persistent vector store, surviving pod restarts)
+#   - FinOps Sizing: Low-cost burstable CPU (100m - 500m) and 256Mi - 1Gi RAM
+# ==============================================================================
 persistence:
   enabled: true
   storageClassName: "managed-csi"

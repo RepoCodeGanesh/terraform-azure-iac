@@ -32,10 +32,28 @@ spec:
           envFrom:
             - configMapRef:
                 name: bankc-backend-config
+            # O1: Langfuse LLM Tracing credentials (50k free traces/month)
+            # Create secret: kubectl create secret generic bankc-langfuse-secret \
+            #   --from-literal=LANGFUSE_PUBLIC_KEY=pk-lf-... \
+            #   --from-literal=LANGFUSE_SECRET_KEY=sk-lf-... \
+            #   -n bank-compliance
+            - secretRef:
+                name: bankc-langfuse-secret
+                optional: true  # Pod starts even if secret not yet created
+          # S1: CIS Kubernetes Benchmark — Pod Security Context
+          # runAsNonRoot + runAsUser 1000 + no privilege escalation + drop ALL caps.
+          # NOTE: readOnlyRootFilesystem intentionally OMITTED — breaks Qdrant & LiteLLM.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
-              cpu: "10m"
-              memory: "64Mi"
+              cpu: "1m"
+              memory: "32Mi"
             limits:
               cpu: "500m"
               memory: "512Mi"
@@ -59,16 +77,14 @@ metadata:
   namespace: bank-compliance
   labels:
     app: bankc-backend
-  annotations:
-    service.beta.kubernetes.io/azure-dns-label-name: "bankc-api-ht-cin"
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: bankc-backend
   ports:
     - name: http
       port: 80
       targetPort: 8000
-    - name: http-alt
+    - name: api
       port: 8000
       targetPort: 8000

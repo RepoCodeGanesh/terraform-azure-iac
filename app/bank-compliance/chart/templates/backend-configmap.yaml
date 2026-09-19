@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bankc-backend-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bank-compliance.labels" . | nindent 4 }}
+data:
+  CONTENT_SAFETY_ENDPOINT: {{ .Values.backend.env.contentSafetyEndpoint | quote }}
+  LITELLM_URL: {{ .Values.backend.env.litellmUrl | quote }}
+  OPENAI_MODEL: {{ .Values.backend.env.openaiModel | quote }}
+  QDRANT_HOST: {{ .Values.backend.env.qdrantHost | quote }}
+  QDRANT_PORT: {{ .Values.backend.env.qdrantPort | quote }}
+  QDRANT_COLLECTION: {{ .Values.backend.env.qdrantCollection | quote }}
+  ALLOWED_ORIGINS: {{ .Values.backend.env.allowedOrigins | quote }}
+  ENVIRONMENT: {{ .Values.backend.env.environment | quote }}
+  # O1: Langfuse Tracing Configuration
+  LANGFUSE_HOST: {{ .Values.backend.env.langfuseHost | default "https://cloud.langfuse.com" | quote }}
+  LANGFUSE_TRACING_ENABLED: {{ .Values.backend.env.langfuseTracingEnabled | default "true" | quote }}
+  # G2: Token Budget Circuit Breaker
+  DAILY_TOKEN_BUDGET: {{ .Values.backend.env.dailyTokenBudget | default "500000" | quote }}

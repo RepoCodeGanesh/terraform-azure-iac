@@ -1,0 +1,11 @@
+# LoRA/PEFT Fine-Tuning & Evaluation Dependencies
+torch>=2.2.0
+transformers>=4.40.0
+peft>=0.10.0
+trl>=0.8.6
+datasets>=2.18.0
+accelerate>=0.29.0
+bitsandbytes>=0.43.0
+scikit-learn>=1.4.0
+tqdm>=4.66.0
+pydantic>=2.6.0

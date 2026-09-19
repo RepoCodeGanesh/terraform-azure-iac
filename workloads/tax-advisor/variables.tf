@@ -219,4 +219,19 @@ variable "cloudflare_zone_id" {
   default     = "45acc43e2f88066e0406eca94edffc53"
 }
 
+variable "app_prod_sp_object_id" {
+  description = "Enterprise App Object ID (Principal ID) for the app-prod GitHub Actions & ADO deployment Service Principal."
+  type        = string
+}
+
+variable "foundry_hub_name" {
+  description = "Name of the Azure AI Foundry Hub Cognitive Service account."
+  type        = string
+}
+
+variable "foundry_location" {
+  description = "Azure region for the AI Foundry Hub."
+  type        = string
+}
+
 

@@ -1,5 +1,13 @@
 import os
-from pydantic_settings import BaseSettings
+
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    try:
+        from pydantic import BaseSettings
+    except ImportError:
+        class BaseSettings:
+            pass
 
 class Settings(BaseSettings):
     APP_NAME: str = "BankCompliance AI"
@@ -7,7 +15,7 @@ class Settings(BaseSettings):
     
     # AI Gateway / LiteLLM Proxy
     LITELLM_URL: str = os.getenv("LITELLM_URL", "http://litellm:4000/v1")
-    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-5.4-nano")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gemini-2.0-flash")
     
     # Qdrant Vector DB
     QDRANT_HOST: str = os.getenv("QDRANT_HOST", "qdrant")
@@ -16,6 +24,10 @@ class Settings(BaseSettings):
     
     # Azure Content Safety
     CONTENT_SAFETY_ENDPOINT: str = os.getenv("CONTENT_SAFETY_ENDPOINT", "")
+    
+    # Azure Document Intelligence (OCR & Table Extraction)
+    DOCUMENT_INTELLIGENCE_ENDPOINT: str = os.getenv("DOCUMENT_INTELLIGENCE_ENDPOINT", "https://di-ht-ss-p-cin-01.cognitiveservices.azure.com/")
+    DOCUMENT_INTELLIGENCE_KEY: str = os.getenv("DOCUMENT_INTELLIGENCE_KEY", "")
     
     # CORS
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")

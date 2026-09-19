@@ -187,6 +187,40 @@ variable "enable_azure_policy" {
   default     = true
 }
 
+# ── Spot Node Pool Configurations (FinOps) ──────────────────────────────────
+
+variable "enable_spot_node_pool" {
+  description = "Whether to enable the secondary Spot instance node pool for cost savings (80%+ discount)."
+  type        = bool
+  default     = true
+}
+
+variable "aks_spot_vm_size" {
+  description = "VM size for the secondary Spot node pool (e.g. Standard_B2s or Standard_D2s_v5)."
+  type        = string
+  default     = "Standard_B2s"
+}
+
+variable "aks_spot_max_count" {
+  description = "Maximum number of spot nodes to autoscale."
+  type        = number
+  default     = 3
+}
+
+# ── GPU Node Pool Configurations (A3 Phase 2 vLLM Benchmark) ────────────────
+
+variable "enable_gpu_node_pool" {
+  description = "A3 Phase 2: Whether to provision on-demand GPU node pool (Standard_NC4as_T4_v3 Spot) for vLLM benchmarking."
+  type        = bool
+  default     = false
+}
+
+variable "aks_gpu_vm_size" {
+  description = "VM SKU for the GPU node pool (e.g. Standard_NC4as_T4_v3)."
+  type        = string
+  default     = "Standard_NC4as_T4_v3"
+}
+
 # ── Custom Domain & Governance Configurations ───────────────────────────────
 
 variable "custom_domain_name" {

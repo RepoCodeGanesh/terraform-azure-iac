@@ -48,3 +48,19 @@ module "shared_openai" {
 
   depends_on = [azurerm_resource_group.shared_services, module.shared_log_analytics]
 }
+
+# ─── Shared Azure AI Document Intelligence (F0 Free Tier) ─────────────────────
+# Free Tier: 500 pages/month free OCR & table layout parsing for Bank & TaxBot
+
+resource "azurerm_cognitive_account" "shared_doc_intelligence" {
+  name                          = "di-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  location                      = var.location
+  resource_group_name           = azurerm_resource_group.shared_services.name
+  kind                          = "FormRecognizer"
+  sku_name                      = "F0"
+  custom_subdomain_name         = "di-${var.project}-${var.workload}-${var.environment}-${var.location_short}-${var.instance}"
+  public_network_access_enabled = true
+  tags                          = local.tags
+
+  depends_on = [azurerm_resource_group.shared_services]
+}

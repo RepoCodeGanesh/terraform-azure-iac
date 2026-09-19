@@ -1,0 +1,69 @@
+# ==============================================================================
+# BankCompliance AI — Helm Chart Default Values
+# ==============================================================================
+
+# Global / Shared
+namespace: bank-compliance
+
+# Workload Identity Service Account
+serviceAccount:
+  create: true
+  name: bankc-sa
+  clientId: "0db122a8-1966-4955-8c97-74f1b540ca45"
+
+# FastAPI Backend
+backend:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/repocodeganesh/bank-compliance-backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+    altPort: 8000
+    targetPort: 8000
+  resources:
+    requests:
+      cpu: 1m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    contentSafetyEndpoint: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
+    litellmUrl: "http://litellm:4000/v1"
+    openaiModel: "gemini-2.0-flash"
+    qdrantHost: "qdrant"
+    qdrantPort: "6333"
+    qdrantCollection: "rbi_master_directions"
+    allowedOrigins: "https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
+    environment: "production"
+    langfuseHost: "https://cloud.langfuse.com"
+    langfuseTracingEnabled: "true"
+    dailyTokenBudget: "500000"
+
+# LiteLLM AI Gateway Proxy
+litellm:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/berriai/litellm
+    tag: main-v1.57.4  # v1.41.0 had prometheus NoneType callback bug — fixed in v1.57.4+
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+  resources:
+    requests:
+      cpu: 1m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 300Mi
+
+# Secrets (Injected dynamically by CI/CD via --set or secret ref)
+secrets:
+  openaiEndpoint: ""
+  openaiKey: ""
+  geminiApiKey: ""
+  groqApiKey: ""

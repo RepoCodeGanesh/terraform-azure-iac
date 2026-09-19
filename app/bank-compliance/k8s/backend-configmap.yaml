@@ -1,20 +1,34 @@
+# ==============================================================================
+# BankCompliance AI — Kubernetes Backend ConfigMap
+# Stores non-sensitive runtime configurations, internal cluster DNS endpoints,
+# Qdrant vector database parameters, and CORS domain whitelists.
+# ==============================================================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: bankc-backend-config
   namespace: bank-compliance
 data:
+  # Azure AI Platform Services in Shared-Services Subscription ($0.00 Free Tiers)
   CONTENT_SAFETY_ENDPOINT: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
+  DOCUMENT_INTELLIGENCE_ENDPOINT: "https://di-ht-ss-p-cin-01.cognitiveservices.azure.com/"
+  AZURE_AI_SEARCH_ENDPOINT: "https://srch-ht-ss-p-cin-01.search.windows.net"
 
-  # Internal cluster DNS
+  # Internal Kubernetes Cluster DNS (Zero Egress Costs)
   LITELLM_URL: "http://litellm:4000/v1"
-  OPENAI_MODEL: "gpt-5.4-nano"
+  OPENAI_MODEL: "gemini-2.0-flash"
   QDRANT_HOST: "qdrant"
   QDRANT_PORT: "6333"
   QDRANT_COLLECTION: "rbi_master_directions"
 
-  # CORS: includes both default Azure SWA domain, optional custom domain, and local dev
+  # CORS Origins: Azure Static Web Apps (SWA) + Custom Domain + Local Dev
   ALLOWED_ORIGINS: "https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
 
+  # Telemetry & Runtime Environment
   APPLICATIONINSIGHTS_CONNECTION_STRING: ""
   ENVIRONMENT: "production"
+  # G2: AI Token Budget Circuit Breaker — daily token limit before circuit opens
+  # ~500k tokens = ~250 compliance queries/day at 2k tokens each ($0 on Gemini free tier)
+  DAILY_TOKEN_BUDGET: "500000"
+  # O1: Langfuse tracing host (keys loaded from bankc-langfuse-secret)
+  LANGFUSE_HOST: "https://cloud.langfuse.com"

@@ -17,16 +17,26 @@ logger = logging.getLogger(__name__)
 LOADED_CLAUSES: List[Dict[str, Any]] = []
 
 def get_documents_directory() -> Path:
-    possible_paths = [
-        Path(__file__).resolve().parent.parent.parent.parent / "documents", # app/bank-compliance/documents
-        Path("/app/documents"),                                             # docker container path
-        Path("./documents"),                                                # relative execution path
-        Path(__file__).resolve().parents[4] / "app" / "bank-compliance" / "documents"
+    candidates = [
+        Path("/app/documents"),
+        Path(__file__).resolve().parent.parent.parent / "documents",
+        Path("./documents"),
+        Path("../documents")
     ]
-    for p in possible_paths:
+    # Check parent hierarchy safely
+    curr = Path(__file__).resolve()
+    for parent in curr.parents:
+        docs = parent / "documents"
+        if docs.is_dir():
+            return docs
+        docs_app = parent / "app" / "bank-compliance" / "documents"
+        if docs_app.is_dir():
+            return docs_app
+
+    for p in candidates:
         if p.is_dir():
             return p
-    return possible_paths[0]
+    return candidates[0]
 
 def load_documents_corpus() -> List[Dict[str, Any]]:
     global LOADED_CLAUSES

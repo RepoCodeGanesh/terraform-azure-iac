@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+  <rect x="15" y="15" width="1170" height="650" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+
+  <!-- Title Bar -->
+  <rect x="15" y="15" width="1170" height="50" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="35" y="46" fill="#0f172a" font-size="16" font-weight="700">Workload 2: BankCompliance AI — 4-Microagent AKS &amp; Inference Architecture</text>
+  <text x="1050" y="46" fill="#64748b" font-size="12" font-weight="600">Doc: CR-APP-03</text>
+
+  <!-- Left: Ingress Tier -->
+  <g transform="translate(35, 80)">
+    <rect width="250" height="560" rx="4" fill="#f8fafc" stroke="#0284c7" stroke-width="1.5"/>
+    <rect x="0" y="0" width="250" height="35" fill="#e0f2fe" stroke="#0284c7" stroke-width="1"/>
+    <text x="125" y="23" fill="#0369a1" font-size="13" font-weight="700" text-anchor="middle">1. Client &amp; Edge Ingress</text>
+
+    <!-- Web App -->
+    <rect x="15" y="50" width="220" height="120" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="75" fill="#0284c7" font-size="11" font-weight="700">REACT SPA (AZURE SWA):</text>
+    <text x="25" y="98" fill="#334155" font-size="10">• Split-Screen Regulatory Viewer</text>
+    <text x="25" y="116" fill="#334155" font-size="10">• Deep-Linked RBI Citations</text>
+    <text x="25" y="134" fill="#334155" font-size="10">• Native GenAIOps Telemetry</text>
+    <text x="25" y="155" fill="#0078d4" font-size="10">https://bank.mytaxbot.site</text>
+
+    <!-- APIM -->
+    <rect x="15" y="185" width="220" height="140" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="210" fill="#0369a1" font-size="11" font-weight="700">AZURE APIM GATEWAY:</text>
+    <text x="25" y="233" fill="#334155" font-size="10">• Rate Limit: 60 calls/min/IP</text>
+    <text x="25" y="251" fill="#334155" font-size="10">• CORS: bank.mytaxbot.site</text>
+    <text x="25" y="269" fill="#334155" font-size="10">• URL Rewrite: /bankc/api/* ➔ /api/*</text>
+    <text x="25" y="287" fill="#059669" font-size="10" font-weight="600">✓ Consumption ($0.00 Idle)</text>
+
+    <!-- DPDP PII -->
+    <rect x="15" y="340" width="220" height="185" rx="4" fill="#ffffff" stroke="#16a34a" stroke-width="1"/>
+    <text x="25" y="365" fill="#15803d" font-size="11" font-weight="700">DPDP ACT PII SANITIZER:</text>
+    <text x="25" y="388" fill="#334155" font-size="10">• Real-time Regex + NER Masking</text>
+    <text x="25" y="410" fill="#b91c1c" font-size="10">❌ [PAN-REDACTED]</text>
+    <text x="25" y="428" fill="#b91c1c" font-size="10">❌ [AADHAAR-REDACTED]</text>
+    <text x="25" y="446" fill="#b91c1c" font-size="10">❌ [CARD-REDACTED]</text>
+    <text x="25" y="475" fill="#059669" font-size="10" font-weight="600">Zero PII Egress Guarantee</text>
+  </g>
+
+  <!-- Center: 4-Agent Orchestrator -->
+  <g transform="translate(305, 80)">
+    <rect width="540" height="560" rx="4" fill="#f8fafc" stroke="#3b82f6" stroke-width="1.5"/>
+    <rect x="0" y="0" width="540" height="35" fill="#dbeafe" stroke="#3b82f6" stroke-width="1"/>
+    <text x="270" y="23" fill="#1d4ed8" font-size="13" font-weight="700" text-anchor="middle">2. 4-Microagent State Graph Orchestrator (FastAPI Pod)</text>
+
+    <!-- Cache -->
+    <rect x="15" y="50" width="510" height="55" rx="4" fill="#ffffff" stroke="#10b981" stroke-width="1"/>
+    <text x="25" y="73" fill="#047857" font-size="11" font-weight="700">⚡ Sub-10ms Governed Semantic Vector Cache</text>
+    <text x="25" y="93" fill="#334155" font-size="10">Cosine Match (&gt;= 0.90) | Hit Rate: 94.2% | Latency: 8.4ms | Zero Token Cost</text>
+
+    <!-- Agent 1 & 2 -->
+    <rect x="15" y="115" width="245" height="105" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="138" fill="#0284c7" font-size="11" font-weight="700">🎯 SupervisorAgent</text>
+    <text x="25" y="160" fill="#334155" font-size="10">• Domain Out-of-Scope Interceptor</text>
+    <text x="25" y="178" fill="#334155" font-size="10">• &lt;10ms Non-Banking Rejection</text>
+    <text x="25" y="196" fill="#64748b" font-size="9">Prevents Semantic Drift</text>
+
+    <rect x="280" y="115" width="245" height="105" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="290" y="138" fill="#d97706" font-size="11" font-weight="700">🔍 RetrieverAgent</text>
+    <text x="290" y="160" fill="#334155" font-size="10">• Tool Caller on Qdrant DB</text>
+    <text x="290" y="178" fill="#334155" font-size="10">• Dense HNSW Top-5 Vector Search</text>
+    <text x="290" y="196" fill="#64748b" font-size="9">Distance Threshold: 0.72</text>
+
+    <!-- Agent 3 & 4 -->
+    <rect x="15" y="230" width="245" height="115" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="253" fill="#db2777" font-size="11" font-weight="700">🧠 AuditorAgent (Reflection)</text>
+    <text x="25" y="275" fill="#334155" font-size="10">• Groundedness &amp; Relevance Critic</text>
+    <text x="25" y="293" fill="#334155" font-size="10">• Max Iterations: 2 (Prevents loops)</text>
+    <text x="25" y="311" fill="#64748b" font-size="9">Injects query refinements on missing facts</text>
+
+    <rect x="280" y="230" width="245" height="115" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="290" y="253" fill="#059669" font-size="11" font-weight="700">✍️ SynthesizerAgent</text>
+    <text x="290" y="275" fill="#334155" font-size="10">• Formats RBI Statutory Citations</text>
+    <text x="290" y="293" fill="#334155" font-size="10">• Deep-Link Clause Inspection URLs</text>
+    <text x="290" y="311" fill="#64748b" font-size="9">Groundedness Score: 4.68/5.0</text>
+
+    <!-- OpenTelemetry -->
+    <rect x="15" y="355" width="510" height="170" rx="4" fill="#ffffff" stroke="#6366f1" stroke-width="1"/>
+    <text x="25" y="380" fill="#4338ca" font-size="11" font-weight="700">📊 OpenTelemetry GenAI Semantic Spans (v1.26+ Standard):</text>
+    <text x="25" y="405" fill="#334155" font-size="10">• gen_ai.system = 'happytechies.bankc' | gen_ai.agent.name = ['Supervisor', 'Retriever', 'Auditor']</text>
+    <text x="25" y="425" fill="#334155" font-size="10">• gen_ai.usage.input_tokens | gen_ai.usage.output_tokens | cache_hit = true/false</text>
+    <text x="25" y="445" fill="#334155" font-size="10">• Prometheus /metrics endpoint on :8000</text>
+    <text x="25" y="475" fill="#059669" font-size="10" font-weight="600">✓ Full distributed trace propagation across all 4 micro-agents</text>
+  </g>
+
+  <!-- Right: Storage & Inference -->
+  <g transform="translate(865, 80)">
+    <rect width="300" height="560" rx="4" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+    <rect x="0" y="0" width="300" height="35" fill="#e2e8f0" stroke="#475569" stroke-width="1"/>
+    <text x="150" y="23" fill="#0f172a" font-size="13" font-weight="700" text-anchor="middle">3. Storage &amp; Inference Tier</text>
+
+    <!-- Qdrant -->
+    <rect x="15" y="50" width="270" height="135" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="75" fill="#b91c1c" font-size="11" font-weight="700">QDRANT VECTOR DB (CSI):</text>
+    <text x="25" y="98" fill="#334155" font-size="10">• 4GB Azure Managed Disk (E1 SSD)</text>
+    <text x="25" y="116" fill="#334155" font-size="10">• Persists across az aks stop/start</text>
+    <text x="25" y="134" fill="#334155" font-size="10">• Cost: ~$0.15/month (₹12/mo)</text>
+    <text x="25" y="156" fill="#0078d4" font-size="10">ClusterIP: qdrant:6333</text>
+
+    <!-- LiteLLM -->
+    <rect x="15" y="195" width="270" height="160" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="220" fill="#047857" font-size="11" font-weight="700">LITELLM AI PROXY GATEWAY:</text>
+    <text x="25" y="243" fill="#334155" font-size="10">1. Primary: Google Gemini 2.0 Flash</text>
+    <text x="25" y="261" fill="#334155" font-size="10">2. Fallback: Azure OpenAI gpt-5.4-nano</text>
+    <text x="25" y="279" fill="#334155" font-size="10">3. Sovereign: In-Cluster Private SLM</text>
+    <text x="25" y="303" fill="#64748b" font-size="9">Circuit Breaking on HTTP 429/500</text>
+    <text x="25" y="325" fill="#0078d4" font-size="10">ClusterIP: litellm:4000</text>
+
+    <!-- Sovereign SLM -->
+    <rect x="15" y="365" width="270" height="160" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="390" fill="#6d28d9" font-size="11" font-weight="700">IN-CLUSTER SOVEREIGN SLM:</text>
+    <text x="25" y="413" fill="#334155" font-size="10">• CPU Qwen-2.5 / Phi-3 (Ollama)</text>
+    <text x="25" y="431" fill="#334155" font-size="10">• Memory: &lt;1GB RAM on AKS Node</text>
+    <text x="25" y="449" fill="#334155" font-size="10">• Zero External Token Egress</text>
+    <text x="25" y="473" fill="#059669" font-size="10" font-weight="600">100% Data Localization Compliance</text>
+    <text x="25" y="495" fill="#0078d4" font-size="10">ClusterIP: private-slm:11434</text>
+  </g>
+</svg>

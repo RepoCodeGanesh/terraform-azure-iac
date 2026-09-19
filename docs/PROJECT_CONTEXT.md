@@ -1,18 +1,19 @@
 # Project Context & Architecture
 
-This is the compact source of truth for the Azure AI Landing Zone & TaxBot India application repository.
+This is the canonical source of truth for the **Enterprise Azure AI Landing Zone Monorepo**, hosting infrastructure and application code for **TaxBot India** (Serverless PaaS) and **BankCompliance AI** (Cloud-Native AKS).
 
 ---
 
 ## 🎯 Repository Goal
 
-Provision an enterprise-style Azure AI Landing Zone using Terraform and Azure DevOps CI/CD, following Microsoft Cloud Adoption Framework patterns while keeping idle cost as close to zero as practical.
+Provision an enterprise-style Azure AI Landing Zone using Terraform and Dual CI/CD (Azure DevOps & GitHub Actions), following Microsoft Cloud Adoption Framework (CAF) patterns while maintaining low running costs with serverless and scale-to-zero architectures.
 
 Core outcomes:
-- Build hands-on Azure DevOps and Terraform IaC practice.
-- Create a reusable AI platform foundation for Azure OpenAI, APIM gateway security, telemetry, private networking, and AI Search RAG workloads.
-- Host **TaxBot India (AI Income Tax Advisor)** for FY 2026-27 (AY 2027-28).
-- Use low-cost SKUs by default: APIM `Consumption`, Functions `Consumption Y1`, Log Analytics `PerGB2018`, Storage `Standard_LRS`, Key Vault `Standard`, Azure OpenAI `S0` with `gpt-5.4-nano`, and Cosmos DB `Serverless`.
+- Build enterprise-grade Azure DevOps and Terraform IaC practices.
+- Provide a resilient, multi-subscription AI platform for Azure OpenAI, LiteLLM Multi-Model Gateway, APIM security, private networking, and AI Search / Qdrant RAG workloads.
+- Host **TaxBot India (AI Income Tax Advisor)** on Serverless PaaS ([www.mytaxbot.site](https://www.mytaxbot.site)).
+- Host **BankCompliance AI Copilot** on AKS Free Tier ([bank.mytaxbot.site](https://bank.mytaxbot.site)).
+- Maintain near-zero idle cost using low-cost SKUs: APIM `Consumption_0`, Functions `Consumption Y1`, AKS Free Tier on Ephemeral OS with auto-shutdown, Qdrant on 4GB CSI disk, and Cosmos DB Serverless Free Tier.
 
 ---
 
@@ -20,7 +21,7 @@ Core outcomes:
 
 ```
                   ┌─────────────────────────────────────────┐
-                  │          Azure DevOps Pipelines         │
+                  │       Dual CI/CD (ADO & GHA WIF)        │
                   └────────────────────┬────────────────────┘
                                        │ (Workload Identity Federation)
                                        ▼
@@ -30,10 +31,12 @@ Core outcomes:
  │     Bootstrap     │     Hub-prod      │  Shared-services  │   Apps-prod   │
  │   7689ad81-...    │   3eb8cc01-...    │   859a785c-...    │  f4ffefe1-... │
  ├───────────────────┼───────────────────┼───────────────────┼───────────────┤
- │ • Remote state    │ • Hub VNet        │ • Log Analytics   │ • Spoke VNet  │
- │   Storage Account │ • Azure Firewall  │ • APIM Gateway    │ • OpenAI API  │
- │   (sthtbootpcin01)│   Subnet          │   (Consumption)   │ • AI Search   │
- │ • Key Vault       │ • Bastion Subnet  │ • Key Vault       │ • Function App│
+ │ • Remote state    │ • Hub VNet        │ • Log Analytics   │ • Spoke 1:    │
+ │   Storage Account │   (10.0.0.0/16)   │   (law-ht-ss...)  │   TaxBot PaaS │
+ │   (sthtbootpcin01)│ • Azure Firewall  │ • APIM Gateway    │   (10.41.0/16)│
+ │ • Key Vault       │   Subnet          │   (Consumption)   │ • Spoke 2:    │
+ │   (kv-ht-boot...) │ • Bastion Subnet  │ • Shared Key Vault│   Bankc AKS   │
+ │                   │ • Gateway Subnet  │   (kv-ht-ss...)   │   (10.42.0/16)│
  └───────────────────┴───────────────────┴───────────────────┴───────────────┘
 ```
 
@@ -48,11 +51,71 @@ Core outcomes:
 * **CI/CD:** `pipelines/azure-cicd-tax-advisor.yml` & `.github/workflows/workload-tax-advisor.yml`.
 
 ### Workload 2: BankCompliance AI (`workloads/bank-compliance-ai-aks` & `app/bank-compliance`)
+* **Industry Sector:** RegTech (Regulatory Technology / BFSI)
 * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
 * **APIM Gateway Endpoint:** `https://apim-ht-ss-p-cin-01.azure-api.net/bankc`
-* **Architecture:** Cloud-Native Kubernetes (AKS Free Tier `aks-ht-bankc-p-cin-01`, LiteLLM Proxy Gateway with Azure OpenAI `gpt-5.4-nano`, Qdrant Vector DB on 4GB CSI Managed Disk, DPDP PII Auto-Masking, Azure Static Web Apps).
+* **Architecture Stack:**
+  * **Frontend:** React Vite SPA with Split-Screen Regulatory Clause Viewer & Citation Chips.
+  * **API Gateway:** Azure API Management (`apim-ht-ss-p-cin-01`) Consumption Tier for SSL offloading & CORS.
+  * **Compute:** Azure Kubernetes Service (AKS Free Tier `aks-ht-bankc-p-cin-01` on `Standard_B4ms` 4 vCPUs).
+  * **Multi-Agent State Graph Orchestrator:**
+    * 🎯 **Supervisor / Planner:** `gemini-2.0-flash-lite` (Intent classification & query decomposition)
+    * 🔍 **Retriever Agent:** Autonomous Qdrant hybrid vector search
+    * 🧠 **Auditor / Reflection Agent:** `gemini-2.0-flash-thinking` (Chain-of-Thought statutory verification & anti-hallucination)
+    * ✍️ **Synthesizer Agent:** `gemini-2.0-flash` with automatic cross-cloud failover to Azure OpenAI `gpt-5.4-nano`
+  * **Vector Database:** Qdrant Vector DB on 4GB CSI Azure Managed Disk with Governed Semantic Caching.
+  * **Sovereign In-Cluster SLM Tier:** Lightweight CPU-optimized pod (`Qwen-2.5-0.5B` / `Phi-3.5-mini`) on AKS for zero-egress sovereign inference.
+  * **LoRA/PEFT Fine-Tuning Engine:** HuggingFace `peft` + `trl` SFTTrainer specializing SLMs on RBI Master Directions (+34.25% groundedness lift).
+  * **Governance & Safety:** DPDP Act PII Sanitizer, Deterministic Hallucination Shield, & OpenTelemetry GenAI (v1.26+) distributed tracing.
+  * **GenAIOps Command Center:** Prometheus & Grafana 6-Pillar Operational Dashboard (UID: `bank-compliance-ai-overview`).
 * **Resource Group:** `rg-ht-bankc-p-cin-01` (`Apps-prod`) with Spoke VNet `10.42.0.0/16` (Azure CNI Overlay `192.168.0.0/16`).
-* **CI/CD:** `pipelines/azure-cicd-bank-compliance-aks.yml` & `.github/workflows/workload-bank-compliance-aks.yml` & `.github/workflows/app-bank-compliance.yml` (Fully automated, zero-touch OIDC deployments).
+* **CI/CD:** 3-Tier Decoupled CI/CD (`app-bank-compliance.yml`, `dataops-regulatory-sync.yml`, `mlops-lora-training.yml`).
+
+```mermaid
+flowchart TD
+    User([Compliance User / Auditor]) -->|HTTPS| Frontend["bank.mytaxbot.site (React SPA)"]
+    Frontend -->|POST /api/v1/compliance/query| APIM["Azure APIM Gateway<br/>(apim-ht-ss-p-cin-01)"]
+    APIM -->|LoadBalanced HTTP| Backend["FastAPI Backend Pod<br/>(bankc-backend:8000)"]
+
+    subgraph MultiAgentStateGraph ["🧠 Multi-Agent State Graph Orchestrator"]
+        PII["🛡️ DPDP PII Shield & Out-of-Scope Filter"]
+        Cache{"⚡ Semantic Vector Cache"}
+        Supervisor["🎯 Supervisor Agent<br/>(gemini-2.0-flash-lite)"]
+        Retriever["🔍 Retriever Agent"]
+        Auditor["🧠 Auditor / Reflection Agent<br/>(gemini-2.0-flash-thinking)"]
+        Synthesizer["✍️ Synthesizer Agent<br/>(gemini-2.0-flash)"]
+    end
+
+    Backend --> PII
+    PII --> Cache
+    Cache -->|Cache Miss| Supervisor
+    Supervisor --> Retriever
+    Retriever -->|Tool Query| Qdrant[("Qdrant Vector DB<br/>4GB CSI Disk")]
+    Qdrant --> Auditor
+    Auditor -->|Reflection / Self-Correction| Retriever
+    Auditor -->|Evidence Verified| Synthesizer
+    
+    subgraph AIGateway ["🌐 LiteLLM Multi-Model Gateway Proxy"]
+        LiteLLM["LiteLLM Pod (:4000)"]
+        GeminiFleet["Google Cloud Fleet<br/>(flash / flash-lite / thinking)"]
+        AzureFailover["Azure OpenAI Service<br/>(gpt-5.4-nano)"]
+    end
+
+    Synthesizer --> LiteLLM
+    Supervisor -.-> LiteLLM
+    Auditor -.-> LiteLLM
+    LiteLLM -->|Primary Tier| GeminiFleet
+    LiteLLM -.->|Cross-Cloud DR Fallback| AzureFailover
+
+    subgraph Observability ["📊 10/10 GenAIOps Command Center"]
+        Prometheus["Prometheus Server"]
+        Grafana["Grafana Dashboard<br/>(bank-compliance-ai-overview)"]
+    end
+
+    Backend -->|/metrics (Custom PII & RAGOps)| Prometheus
+    LiteLLM -->|/metrics (Tokens, Spend, 429s)| Prometheus
+    Prometheus --> Grafana
+```
 
 ---
 
@@ -62,12 +125,12 @@ Core outcomes:
 Current status:
 - `platform/bootstrap`: complete.
 - `platform/hub`: complete.
-- `platform/shared-services`: complete (Key Vault, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
+- `platform/shared-services`: complete (Key Vault with dynamic AI endpoint registry, APIM, Log Analytics, Content Safety, OpenAI live; RBAC Admin role assigned).
 - `workloads/tax-advisor`: complete (Serverless Function App + Cosmos + AI Search + Cloudflare DNS `www.mytaxbot.site` automated).
-- `workloads/bank-compliance-ai-aks`: complete (AKS + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
+- `workloads/bank-compliance-ai-aks`: complete (AKS `Standard_B4ms` + Spoke VNet + APIM Gateway + Cloudflare DNS `bank.mytaxbot.site` automated).
 - `app/tax-advisor`: complete (React UI + Python backend + APIM rate limiting + custom domain live).
 - `app/bank-compliance`: complete (React SPA + FastAPI backend + LiteLLM + Qdrant Vector DB live).
-- `pipelines/`: active and verified across both GitHub Actions and Azure DevOps.
+- `pipelines/`: active and verified across both GitHub Actions and Azure DevOps with dedicated OIDC federated credentials.
 - `dns_automation`: 100% automated via Cloudflare Terraform provider across both workloads with 10s `time_sleep` buffer.
 
 ---
@@ -91,9 +154,12 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
   * `AzureFirewallSubnet`: `10.0.0.0/26`
   * `AzureBastionSubnet`: `10.0.0.64/27`
   * `GatewaySubnet`: `10.0.0.96/27`
-* **Spoke Network**: `10.41.0.0/16` (`workloads/tax-advisor`)
+* **Spoke 1 (TaxBot PaaS)**: `10.41.0.0/16` (`workloads/tax-advisor`)
   * `snet-app-integration`: `10.41.1.0/24` (Subnet delegation for Function App VNet integration)
   * `PrivateEndpoints`: `10.41.2.0/24` (Private Link endpoints for OpenAI & Storage)
+* **Spoke 2 (BankCompliance AKS)**: `10.42.0.0/16` (`workloads/bank-compliance-ai-aks`)
+  * `snet-aks-nodes`: `10.42.1.0/24` (AKS Node Pool subnet with Azure CNI Overlay `192.168.0.0/16`)
+  * `snet-ingress`: `10.42.2.0/24` (Internal/External Ingress LoadBalancer)
 
 ---
 
@@ -103,7 +169,9 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 | :--- | :--- | :--- | :--- |
 | **API Management** | AI Prompt Gateway & Rate Limiting | `Consumption_0` | **$0 / month** |
 | **App Service Plan** | Function App Host | `F1` (Free) / `B1` | **$0 – $13 / month** |
-| **Log Analytics** | Application Insights & Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
+| **AKS Cluster** | BankCompliance Multi-Agent Host | `Free` tier (`Standard_B4ms` Ephemeral OS) | **$0 idle** (~₹25/day active) |
+| **Container Storage** | Qdrant Vector DB Persistent Disk | Azure Managed Disk CSI (`4Gi`) | **~$0.15 / month** (₹12/mo) |
+| **Log Analytics** | Central Application Telemetry | `PerGB2018` (30-day retention) | Pay-as-you-go |
 | **Storage Account** | Terraform `.tfstate` & Functions | `Standard_LRS` | Pennies / month |
 | **Cosmos DB** | Session Chat History Storage | Manual `400 RU/s` (Free Tier) | **$0 / month** |
 | **Azure AI Content Safety** | Jailbreak Shield & PII Sanitizer | `F0` (5,000 calls/mo Free) | **$0 / month** |
@@ -114,22 +182,25 @@ Tenant ID: `4cef0d84-84d6-4ed0-8abe-773b015bcf99`
 ## 🔒 Terraform Multi-Root State Rules
 
 Keep Terraform roots separate. Do not merge state:
-- `platform/bootstrap`       → `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
-- `platform/hub`             → `sthtbootpcin01/tfstate/hub/prod.tfstate`
-- `platform/shared-services` → `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
-- `workloads/tax-advisor`    → `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
+- `platform/bootstrap`              → `sthtbootpcin01/tfstate/bootstrap/prod.tfstate`
+- `platform/hub`                    → `sthtbootpcin01/tfstate/hub/prod.tfstate`
+- `platform/shared-services`        → `sthtbootpcin01/tfstate/shared-services/prod.tfstate`
+- `workloads/tax-advisor`           → `sthtbootpcin01/tfstate/workloads/tax-advisor/prod.tfstate`
+- `workloads/bank-compliance-ai-aks` → `sthtbootpcin01/tfstate/workloads/bank-compliance-ai-aks/prod.tfstate`
 
 ---
 
-## 📚 CI/CD & Governance Guides
+## 📚 Documentation & Governance Reference Hub
 
-- **Git Branching Strategy:** [docs/BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md)
-- **Automated Versioning (SemVer) Guide:** [docs/AUTOMATED_VERSIONING_GUIDE.md](AUTOMATED_VERSIONING_GUIDE.md)
-- **Reusable App Workflow Guide:** [docs/REUSABLE_APP_WORKFLOW_GUIDE.md](REUSABLE_APP_WORKFLOW_GUIDE.md)
 - **Master Documentation Index:** [docs/README.md](README.md)
-- **Azure RAG Architectural Patterns Guide:** [docs/platform-guide/08-azure-rag-architectural-patterns.md](platform-guide/08-azure-rag-architectural-patterns.md)
-- **Multi-Cloud AI Gateway & Fallback Guide:** [docs/platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md](platform-guide/09-multi-cloud-ai-gateway-and-fallback-guide.md)
-- **AI Engineering Roadmap & Gap Analysis Guide:** [docs/platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md](platform-guide/10-enterprise-ai-engineering-backlog-and-roadmap.md)
+- **Confluence Enterprise Suite:** [docs/confluence/README.md](confluence/README.md)
+- **Platform Operations Guides (12 Modules):** [docs/platform-guide/README.md](platform-guide/README.md)
+- **Git Branching Strategy:** [docs/workflows-and-governance/BRANCHING_STRATEGY.md](workflows-and-governance/BRANCHING_STRATEGY.md)
+- **Automated Versioning (SemVer) Guide:** [docs/workflows-and-governance/AUTOMATED_VERSIONING_GUIDE.md](workflows-and-governance/AUTOMATED_VERSIONING_GUIDE.md)
+- **Reusable App Workflow Guide:** [docs/workflows-and-governance/REUSABLE_APP_WORKFLOW_GUIDE.md](workflows-and-governance/REUSABLE_APP_WORKFLOW_GUIDE.md)
+- **AKS Hybrid Observability Guide:** [docs/workflows-and-governance/AKS_HYBRID_OBSERVABILITY_GUIDE.md](workflows-and-governance/AKS_HYBRID_OBSERVABILITY_GUIDE.md)
+- **BankCompliance Troubleshooting & Learnings:** [docs/confluence/11-bank-compliance-troubleshooting-learnings.md](confluence/11-bank-compliance-troubleshooting-learnings.md)
+- **Milestone Archives (Phases 9 & 10):** [docs/archive/README.md](archive/README.md)
 
 ---
 
@@ -138,4 +209,49 @@ Keep Terraform roots separate. Do not merge state:
 * **AI Subscription:** **Google AI Plus** (India tier)
 * **Primary AI Models & Capabilities:** Gemini Pro flagship models with high rate limits and long-context reasoning.
 * **Integrated Tooling Ecosystem:** Antigravity IDE, NotebookLM (used for analyzing large regulatory PDFs, Master Directions, and Tax Acts), Google Workspace AI integrations, and 200 GB Google One cloud storage.
+
+---
+
+## 🏆 Phase 11 LLMOps Capabilities (Skill Bridge — September 2026)
+
+The following capabilities were added as part of the LLMOps Skill Bridge to qualify for Lead AI Platform / LLMOps Architect roles (₹60L–₹85L+ CTC):
+
+| Capability | Component | File(s) |
+|---|---|---|
+| **S3 — Trivy CVE Scanning** | CI/CD container image security scan → GitHub Code Scanning | `.github/workflows/app-bank-compliance.yml` |
+| **S1 — Pod Security Context** | CIS K8s: non-root, drop ALL caps, no escalation | `k8s/backend-deployment.yaml` |
+| **O2 — Azure Monitor KQL Workbook** | 4-panel: Request Rate, Latency P50/P95/P99, Qdrant, Pod Timeline | `platform/shared-services/observability.tf` |
+| **O1 — Langfuse LLM Tracing** | Per-agent waterfall traces (50k free/month, graceful no-op if keys absent) | `backend/app/services/telemetry.py` |
+| **A3 — Ollama SLM initContainer** | `qwen2.5:0.5b` pre-pulled via initContainer; sub-second inference post-init | `k8s/inference/private-slm-deployment.yaml` |
+| **G2 — Token Budget Circuit Breaker** | In-memory daily token counter; auto-resets UTC midnight | `backend/app/services/agents/orchestrator.py` |
+| **A2 — FastMCP Server** | `search_rbi_regulations` + `list_regulatory_domains` MCP tools | `backend/app/services/mcp_server.py` |
+| **S5 — AI Red-Team Report** | 10 attack patterns, 4-layer defence documented, 100% interception | `docs/ai-red-team-report.md` |
+
+### New Resume Headline (Phase 11)
+```
+Enterprise AI Platform & LLMOps Architect
+Azure (AKS • LiteLLM • Qdrant • MCP) | Terraform | Langfuse | Trivy | Red-Teaming
+9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
+Live: bank.mytaxbot.site | mytaxbot.site
+```
+
+---
+
+## 🏆 Phase 12 LLMOps Capabilities (Skill Bridge Phase 2 — September 2026)
+
+| Capability | Component | File(s) |
+|---|---|---|
+| **A1 — LangGraph StateGraph Orchestrator** | Multi-agent cyclic graph with Supervisor, Retriever, Auditor (reflection loop), and Synthesizer nodes | `backend/app/services/agents/orchestrator_v2.py` |
+| **A1 — REST API v2 Routing** | Dual `/api/v2` router prefix and `/v2/compliance/query` endpoints | `backend/app/api/routes.py` & `main.py` |
+| **A3 Phase 2 — GPU Node Pool IaC** | On-demand `Standard_NC4as_T4_v3` Spot pool (`sku=gpu:NoSchedule` taint, ₹0 default) | `workloads/bank-compliance-ai-aks/aks_cluster.tf` |
+| **A3 Phase 2 — vLLM Benchmark Manifest** | High-throughput GPU inference serving Qwen2.5-0.5B / Llama-3.2-1B | `k8s/inference/vllm-benchmark.yaml` |
+| **A3 Phase 2 — Inference Benchmarking Harness** | Measures TTFT, throughput (tokens/s), latency P50/P95/P99 across concurrency | `scripts/benchmark_vllm.py` |
+
+### New Resume Headline (Phase 12 Lead Architect)
+```
+Lead Enterprise AI Platform & LLMOps Architect
+Azure (AKS • LiteLLM • Qdrant • vLLM) | LangGraph | Langfuse | MCP | Terraform | Trivy | Red-Teaming
+9+ years | CKA | AZ-400 | HashiCorp Terraform Certified
+Live: bank.mytaxbot.site | mytaxbot.site
+```
 

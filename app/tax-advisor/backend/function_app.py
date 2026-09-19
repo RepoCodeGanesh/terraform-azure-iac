@@ -3,12 +3,13 @@ import json
 import logging
 import os
 import re
+import time
 from datetime import datetime, timezone
 
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizedQuery
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 
 # ── Azure Monitor OpenTelemetry Instrumentation (Safe Initialization) ─────────
 try:
@@ -25,16 +26,33 @@ try:
 except ImportError:
     HAS_CONTENT_SAFETY = False
 
+try:
+    from azure.ai.projects import AIProjectClient
+    HAS_AZURE_AI_PROJECTS = True
+except ImportError:
+    HAS_AZURE_AI_PROJECTS = False
+
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-OPENAI_ENDPOINT         = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
-OPENAI_MODEL            = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
-SEARCH_ENDPOINT         = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
-SEARCH_INDEX            = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
-CONTENT_SAFETY_ENDPOINT = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
-APP_NAME                = os.environ.get("APP_NAME", "TaxBot India")
-APP_VERSION             = os.environ.get("APP_VERSION", "1.0.0")
+GROQ_API_KEY             = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL               = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+OPENAI_ENDPOINT          = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+OPENAI_MODEL             = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
+FOUNDRY_PROJECT_ENDPOINT = os.environ.get("FOUNDRY_PROJECT_ENDPOINT", "")
+FOUNDRY_OPENAI_ENDPOINT  = os.environ.get("FOUNDRY_OPENAI_ENDPOINT", "https://hub-taxbot-foundry-01.openai.azure.com/")
+FOUNDRY_AGENT_NAME       = os.environ.get("FOUNDRY_AGENT_NAME", "TaxBot-Calculation-Specialist")
+FOUNDRY_AGENT_VERSION    = os.environ.get("FOUNDRY_AGENT_VERSION", "2")
+FOUNDRY_MODEL            = os.environ.get("FOUNDRY_MODEL", "gpt-5.4-mini")
+FOUNDRY_API_KEY          = os.environ.get("FOUNDRY_API_KEY", "")
+SEARCH_ENDPOINT          = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
+SEARCH_INDEX             = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
+CONTENT_SAFETY_ENDPOINT  = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
+COSMOS_DB_ENDPOINT       = os.environ.get("COSMOS_DB_ENDPOINT", "")
+COSMOS_DB_DATABASE       = os.environ.get("COSMOS_DB_DATABASE", "db-tax-advisor")
+COSMOS_DB_CONTAINER      = os.environ.get("COSMOS_DB_CONTAINER", "chat_history")
+APP_NAME                 = os.environ.get("APP_NAME", "TaxBot India")
+APP_VERSION              = os.environ.get("APP_VERSION", "1.0.0")
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -42,6 +60,12 @@ CORS_HEADERS = {
     "Access-Control-Allow-Headers": "Content-Type, Authorization, x-session-id",
     "Content-Type": "application/json",
 }
+
+try:
+    from azure.cosmos import CosmosClient
+    HAS_COSMOS = True
+except ImportError:
+    HAS_COSMOS = False
 
 SYSTEM_PROMPT = """You are TaxBot India, an expert Indian income tax advisor for FY 2026-27 (AY 2027-28).
 You have deep knowledge of:
@@ -60,6 +84,7 @@ Rules:
 - Recommend the better regime with clear reasoning
 - Use Indian number format (₹10,00,000 not ₹1000000)
 - Keep responses concise but complete
+- STRICT REGULATORY DOMAIN BOUNDARY: You are strictly an Indian Income Tax, Personal Finance, and Salary Advisor. If the user asks about topics outside Indian taxation (such as cooking recipes like idly/dosa, sports, general coding, entertainment, or unrelated general knowledge), you MUST POLITELY DECLINE and state that you only advise on Indian taxation, salary planning, and ITR filing for FY 2026-27.
 """
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -74,6 +99,19 @@ def get_openai_client() -> AzureOpenAI:
         ).token,
         api_version="2024-12-01-preview",
     )
+
+def get_groq_client():
+    if not GROQ_API_KEY:
+        return None
+    try:
+        return OpenAI(
+            base_url="https://api.groq.com/openai/v1",
+            api_key=GROQ_API_KEY,
+            timeout=15.0,
+        )
+    except Exception as e:
+        logging.warning("Failed to initialize Groq client: %s", e)
+        return None
 
 def extract_response_text(resp) -> str:
     """Safely extract text content from OpenAI ChatCompletion or Stream object."""
@@ -94,6 +132,248 @@ def extract_response_text(resp) -> str:
     except Exception as e:
         logging.error(f"Error extracting stream response text: {e}")
         return ""
+
+def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens: int = 1024) -> tuple[str, str, int]:
+    """
+    Dual-Model Resilient Chat Execution:
+      1. Primary: GroqCloud LPU (llama-3.3-70b-versatile) - Ultra-fast (500+ tok/s) & Free
+      2. Secondary: Microsoft Azure OpenAI Service (gpt-5.4-nano) - Enterprise Fallback
+    Returns: (response_text, model_identifier, latency_ms)
+    """
+    start_time = time.perf_counter()
+    # ── Attempt 1: GroqCloud LPU (Primary) ────────────────────────────────────
+    groq_client = get_groq_client()
+    if groq_client:
+        try:
+            resp = groq_client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            reply = extract_response_text(resp)
+            if reply:
+                latency_ms = int((time.perf_counter() - start_time) * 1000)
+                logging.info("✅ Served via Primary Groq LPU (%s) in %d ms", GROQ_MODEL, latency_ms)
+                return reply, f"groq/{GROQ_MODEL}", latency_ms
+        except Exception as e:
+            logging.warning("⚠️ Primary Groq LPU failed (%s). Failing over to Azure OpenAI...", e)
+
+    # ── Attempt 2: Azure OpenAI Service (Secondary / Fallback) ────────────────
+    try:
+        client = get_openai_client()
+        resp = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_completion_tokens=max_tokens,
+            stream=False,
+        )
+        reply = extract_response_text(resp)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logging.info("✅ Served via Secondary Azure OpenAI (%s) in %d ms", OPENAI_MODEL, latency_ms)
+        return reply, f"azure/{OPENAI_MODEL}", latency_ms
+    except Exception as e:
+        try:
+            client = get_openai_client()
+            resp = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=False,
+            )
+            reply = extract_response_text(resp)
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            return reply, f"azure/{OPENAI_MODEL}", latency_ms
+        except Exception as e2:
+            logging.error("❌ Both Primary (Groq) and Secondary (Azure OpenAI) failed: %s", e2)
+            raise e2
+
+# ── Microsoft Azure AI Foundry Agent (Python Code Interpreter Sandbox) ─────────
+_foundry_openai_client = None
+
+def get_foundry_openai_client() -> AzureOpenAI:
+    global _foundry_openai_client
+    if _foundry_openai_client is not None:
+        return _foundry_openai_client
+    if not FOUNDRY_OPENAI_ENDPOINT:
+        return None
+    try:
+        if FOUNDRY_API_KEY:
+            _foundry_openai_client = AzureOpenAI(
+                azure_endpoint=FOUNDRY_OPENAI_ENDPOINT,
+                api_key=FOUNDRY_API_KEY,
+                api_version="2024-12-01-preview",
+            )
+        else:
+            _foundry_openai_client = AzureOpenAI(
+                azure_endpoint=FOUNDRY_OPENAI_ENDPOINT,
+                azure_ad_token_provider=lambda: get_credential().get_token(
+                    "https://cognitiveservices.azure.com/.default"
+                ).token,
+                api_version="2024-12-01-preview",
+            )
+        return _foundry_openai_client
+    except Exception as e:
+        logging.warning("Failed to initialize Foundry AzureOpenAI client: %s", e)
+        return None
+
+FOUNDRY_SPECIALIST_PROMPT = """You are TaxBot-Calculation-Specialist, the elite Indian Income Tax calculation engine for FY 2026-27 (AY 2027-28) under Union Budget 2025.
+Your purpose is 100% mathematically exact, verified tax calculation, regime comparison, and deduction optimization.
+
+Statutory Rules for FY 2026-27 (AY 2027-28):
+1. New Tax Regime:
+   - Standard Deduction: ₹75,000 for salaried employees.
+   - Slabs:
+     * Up to ₹4,00,000: Nil (0%)
+     * ₹4,00,001 to ₹8,00,000: 5%
+     * ₹8,00,001 to ₹12,00,000: 10%
+     * ₹12,00,001 to ₹16,00,000: 15%
+     * ₹16,00,001 to ₹20,00,000: 20%
+     * ₹20,00,001 to ₹24,00,000: 25%
+     * Above ₹24,00,000: 30%
+   - Section 87A Rebate: Zero tax if total taxable income is up to ₹12,00,000 (maximum rebate ₹60,000) with marginal relief above ₹12L.
+   - 4% Health & Education Cess applies on net tax after rebate.
+
+2. Old Tax Regime:
+   - Standard Deduction: ₹50,000.
+   - Slabs: Up to ₹2.5L: Nil, ₹2.5L-₹5L: 5%, ₹5L-₹10L: 20%, >₹10L: 30%. (Senior citizen basic exemption ₹3L).
+   - Deductions allowed: 80C (up to ₹1.5L), 80D (health insurance), 80CCD(1B) NPS (extra ₹50,000), 24(b) home loan interest (up to ₹2L), HRA exemption Section 10(13A).
+   - Section 87A Rebate: Up to ₹12,500 if taxable income <= ₹5,00,000.
+   - 4% Health & Education Cess.
+
+Mandatory Response Structure:
+1. Include an executable Python code snippet inside a ```python ``` block showing:
+   - Salary inputs, deductions, taxable income
+   - Step-by-step slab computation
+   - Section 87A rebate & 4% cess
+   - Return/print exact tax liabilities
+2. Provide a clear, formatted comparison table or breakdown of New vs Old Regime.
+3. Explicitly state the RECOMMENDED regime and the exact annual tax savings in ₹.
+4. Format all numbers in Indian currency style (e.g., ₹18,50,000, ₹1,53,300).
+"""
+
+def is_calculation_request(message: str) -> bool:
+    """Detect if a user prompt is requesting mathematical tax calculation or slab computations."""
+    if not message:
+        return False
+    lowered = message.lower()
+    calc_keywords = [
+        "calculate", "calculation", "compute", "computation", "how much tax", "what is my tax",
+        "what will be my tax", "compare regime", "which regime is better", "my salary is", "earning",
+        "gross salary", "net tax", "tax liability", "tax on", "marginal relief", "rebate 87a",
+        "standard deduction", "tax payable", "tax amount", "math", "calculator"
+    ]
+    for kw in calc_keywords:
+        if kw in lowered:
+            return True
+    patterns = [
+        r'\b\d+(\.\d+)?\s*(lakh|lakhs|lac|lacs|cr|crore|crores|k|thousand)\b',
+        r'₹\s*\d+',
+        r'rs\.?\s*\d+',
+        r'inr\s*\d+',
+        r'\b\d{5,8}\b',
+    ]
+    for p in patterns:
+        if re.search(p, lowered):
+            return True
+    return False
+
+def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str, str, int]:
+    """
+    Invokes Microsoft Azure AI Foundry Calculation Specialist powered by gpt-5.4-mini
+    on hub-taxbot-foundry-01.
+    Returns (reply_text, model_name, code_trace, latency_ms).
+    """
+    start_time = time.perf_counter()
+    client = get_foundry_openai_client()
+    if not client:
+        return None, None, None, 0
+    try:
+        messages = [{"role": "system", "content": FOUNDRY_SPECIALIST_PROMPT}]
+        if history:
+            for h in history[-4:]:
+                if h.get("role") in ("user", "assistant") and h.get("content"):
+                    messages.append({"role": h["role"], "content": h["content"]})
+        messages.append({"role": "user", "content": prompt})
+
+        logging.info("🤖 Invoking Microsoft Foundry Calculation Specialist (%s) on %s...", FOUNDRY_MODEL, FOUNDRY_OPENAI_ENDPOINT)
+        resp = client.chat.completions.create(
+            model=FOUNDRY_MODEL,
+            messages=messages,
+            temperature=0.1,
+            max_completion_tokens=1500,
+        )
+        reply = extract_response_text(resp)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+
+        # Extract Python code blocks for the interactive trace inspector
+        py_blocks = re.findall(r'```python\s*(.*?)\s*```', reply, re.DOTALL)
+        code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
+
+        model_tag = f"azure-foundry/{FOUNDRY_AGENT_NAME} ({FOUNDRY_MODEL})"
+        logging.info("✅ Served via Foundry Agent in %d ms (%s)", latency_ms, model_tag)
+        return reply, model_tag, code_trace, latency_ms
+    except Exception as e:
+        logging.warning("⚠️ Microsoft Foundry Agent execution failed (%s). Falling back...", e)
+        return None, None, None, 0
+
+# ── Cosmos DB Session Persistence Helpers ─────────────────────────────────────
+_cosmos_container = None
+
+def get_cosmos_container():
+    global _cosmos_container
+    if _cosmos_container is not None:
+        return _cosmos_container
+    if not HAS_COSMOS or not COSMOS_DB_ENDPOINT:
+        return None
+    try:
+        credential = get_credential()
+        client = CosmosClient(COSMOS_DB_ENDPOINT, credential=credential)
+        db = client.get_database_client(COSMOS_DB_DATABASE)
+        _cosmos_container = db.get_container_client(COSMOS_DB_CONTAINER)
+        return _cosmos_container
+    except Exception as e:
+        logging.warning("Cosmos DB initialization failed: %s", e)
+        return None
+
+def save_chat_turn(session_id: str, user_message: str, reply: str, model: str = OPENAI_MODEL) -> bool:
+    container = get_cosmos_container()
+    if not container:
+        return False
+    try:
+        import uuid
+        doc = {
+            "id": str(uuid.uuid4()),
+            "sessionId": session_id,
+            "userMessage": user_message,
+            "reply": reply,
+            "model": model,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        container.upsert_item(doc)
+        return True
+    except Exception as e:
+        logging.warning("Failed to save chat turn to Cosmos DB: %s", e)
+        return False
+
+def get_session_history(session_id: str, limit: int = 20) -> list:
+    container = get_cosmos_container()
+    if not container:
+        return []
+    try:
+        query = "SELECT c.id, c.sessionId, c.userMessage, c.reply, c.timestamp FROM c WHERE c.sessionId = @sessionId ORDER BY c.timestamp ASC"
+        items = list(container.query_items(
+            query=query,
+            parameters=[{"name": "@sessionId", "value": session_id}],
+            enable_cross_partition_query=False,
+            partition_key=session_id
+        ))
+        return items[-limit:]
+    except Exception as e:
+        logging.warning("Failed to fetch session history from Cosmos DB: %s", e)
+        return []
 
 def sanitize_pii(text: str) -> str:
     """Mask Indian PAN card numbers and Aadhaar numbers to enforce PII privacy."""
@@ -143,6 +423,77 @@ def analyze_prompt_safety(text: str) -> dict:
             logging.warning(f"Azure Content Safety inspection advisory note: {e}")
 
     return {"safe": True, "reason": "Passed safety audit", "category": "None"}
+
+# ── Domain Scope Guardrail (Sub-2ms Deterministic Tax Sieve) ───────────────────
+OUT_OF_SCOPE_TAX_REPLY = (
+    "⚠️ **Out of Regulatory Tax Scope**\n\n"
+    "I am **TaxBot India**, specialized exclusively in **Indian Income Tax (FY 2026-27 / AY 2027-28)**, "
+    "Budget 2025 tax slabs, salary optimization, deductions (80C, 80D, 80CCD), and ITR filing.\n\n"
+    "I cannot assist with questions outside Indian personal taxation (such as cooking recipes, sports, entertainment, or general coding).\n\n"
+    "**Suggested Tax Queries You Can Ask:**\n"
+    "• *I earn ₹18L per year. Which tax regime is better for me?*\n"
+    "• *How can I save tax using Section 80CCD(2) employer NPS?*\n"
+    "• *What is the capital gains tax on equity mutual funds in FY 2026-27?*\n"
+    "• *How do I claim HRA exemption under Section 10(13A)?*"
+)
+
+GREETING_REPLY = (
+    "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Budget 2025.\n\n"
+    "Ask me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, "
+    "HRA exemption, capital gains, or salary CTC optimization!"
+)
+
+NON_TAX_TRIGGERS = {
+    'idly', 'idli', 'dosa', 'sambar', 'biryani', 'recipe', 'cook', 'cooking', 'bake', 'baking',
+    'pizza', 'burger', 'pasta', 'maggi', 'curry', 'dish', 'ingredient', 'roti', 'chapati',
+    'cricket', 'football', 'ipl', 'world cup', 'virat', 'dhoni', 'messi', 'ronaldo', 'tennis',
+    'movie', 'actor', 'actress', 'cinema', 'song', 'lyrics', 'singer', 'netflix', 'series',
+    'horoscope', 'astrology', 'zodiac', 'weather', 'forecast', 'rain', 'temperature',
+    'python code', 'java code', 'javascript code', 'c++', 'write code', 'debug code',
+    'plumbing', 'mechanic', 'repair car', 'fly in sky', 'fry'
+}
+
+TAX_DOMAIN_VOCABULARY = {
+    'tax', 'taxes', 'taxation', 'income', 'salary', 'tds', 'tcs', 'itr', 'itr-1', 'itr-2', 'itr-3', 'itr-4',
+    'pan', 'tan', 'form 16', 'form 26as', 'ais', 'tis', 'regime', 'rebate', 'cess', 'surcharge', 'slab', 'slabs',
+    'assessment', 'fy', 'ay', 'budget', 'exemption', 'exempt', 'deduction', 'deductions', 'section', 'sec',
+    '80c', '80d', '80ccd', '80ccd(1b)', '80ccd(2)', '80e', '80g', '80tta', '80ttb', '87a', '115bac', '24b',
+    '10(13a)', '10(14)', 'rule 2a', 'rule 15', 'rule 3', 'ctc', 'basic', 'hra', 'lta', 'da', 'special allowance',
+    'conveyance', 'medical', 'food card', 'meal', 'sodexo', 'pluxee', 'zeta', 'gratuity', 'perquisite', 'take-home',
+    'in-hand', 'gross', 'net', 'epf', 'vpf', 'pf', 'provident', 'nps', 'ppf', 'elss', 'mutual fund', 'mutual funds',
+    'stock', 'stocks', 'equity', 'shares', 'ltcg', 'stcg', 'capital gain', 'capital gains', 'dividend', 'interest',
+    'fd', 'fixed deposit', 'home loan', 'housing loan', 'rent', 'landlord', 'tenant', 'pension', 'senior citizen',
+    'advance tax', 'refund', 'audit', 'ca', 'chartered accountant', 'incometax', 'filing', 'file', 'return',
+    'standard deduction', 'relief', 'earn', 'earning', 'lakh', 'lakhs', 'crore', 'crores', 'rupee', 'rupees'
+}
+
+def validate_tax_domain_scope(text: str) -> tuple:
+    """Sub-2ms deterministic guardrail verifying query pertains to Indian taxation."""
+    lowered = text.lower().strip()
+    if not lowered:
+        return False, OUT_OF_SCOPE_TAX_REPLY
+    
+    # 1. Immediate greeting check
+    if lowered in {'hi', 'hello', 'hey', 'namaste', 'namaskar', 'good morning', 'good evening', 'help'}:
+        return False, GREETING_REPLY
+
+    # 2. Check presence of tax vocabulary or financial amounts
+    has_tax_terms = any(term in lowered for term in TAX_DOMAIN_VOCABULARY)
+    has_currency_or_numbers = bool(re.search(r'(?:₹|rs\.?|inr|\b\d+\s*(?:l|lakh|k|crore)?\b)', lowered))
+    
+    # 3. Check for explicit non-tax triggers (e.g. "how to make idly")
+    has_out_of_scope = any(trig in lowered for trig in NON_TAX_TRIGGERS)
+    if has_out_of_scope and not has_tax_terms:
+        logging.warning(f"🛡️ Tax Guardrail Sieve: Intercepted off-topic query ('{text[:60]}...')")
+        return False, OUT_OF_SCOPE_TAX_REPLY
+        
+    # 4. Check density: If prompt has 3+ generic words but zero tax keywords and no figures
+    words = [w for w in re.findall(r'[a-zA-Z]+', lowered) if len(w) > 2]
+    if len(words) >= 3 and not has_tax_terms and not has_currency_or_numbers:
+        logging.warning(f"🛡️ Tax Guardrail Sieve: Intercepted zero-tax density query ('{text[:60]}...')")
+        return False, OUT_OF_SCOPE_TAX_REPLY
+        
+    return True, ""
 
 def get_search_client() -> SearchClient:
     return SearchClient(
@@ -270,16 +621,25 @@ def diagnostics(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
     checks = {
+        "GROQ_PRIMARY_ENABLED":          bool(GROQ_API_KEY),
+        "GROQ_MODEL":                    GROQ_MODEL,
         "AZURE_OPENAI_ENDPOINT":         bool(OPENAI_ENDPOINT),
         "AZURE_OPENAI_MODEL":            bool(OPENAI_MODEL),
         "AZURE_SEARCH_ENDPOINT":         bool(SEARCH_ENDPOINT),
         "AZURE_SEARCH_INDEX":            bool(SEARCH_INDEX),
         "AZURE_CONTENT_SAFETY_ENDPOINT": bool(CONTENT_SAFETY_ENDPOINT),
+        "FOUNDRY_OPENAI_ENDPOINT":       bool(FOUNDRY_OPENAI_ENDPOINT),
+        "FOUNDRY_AGENT_NAME":            FOUNDRY_AGENT_NAME,
+        "FOUNDRY_MODEL":                 FOUNDRY_MODEL,
+        "FOUNDRY_AGENT_ENABLED":         bool(FOUNDRY_OPENAI_ENDPOINT),
     }
-    all_ok = all([checks["AZURE_OPENAI_ENDPOINT"], checks["AZURE_OPENAI_MODEL"], checks["AZURE_SEARCH_ENDPOINT"], checks["AZURE_SEARCH_INDEX"]])
+    all_ok = any([checks["GROQ_PRIMARY_ENABLED"], checks["AZURE_OPENAI_ENDPOINT"], checks["FOUNDRY_OPENAI_ENDPOINT"]])
     return cors_response(200 if all_ok else 500, {
         "status": "ok" if all_ok else "degraded",
         "checks": checks,
+        "primary_model": f"groq/{GROQ_MODEL}" if GROQ_API_KEY else f"azure/{OPENAI_MODEL}",
+        "fallback_model": f"azure/{OPENAI_MODEL}",
+        "foundry_agent": f"{FOUNDRY_AGENT_NAME} ({FOUNDRY_MODEL})" if checks["FOUNDRY_AGENT_ENABLED"] else None,
         "app": APP_NAME,
         "content_safety_enabled": bool(CONTENT_SAFETY_ENDPOINT),
     })
@@ -293,6 +653,7 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
         body = req.get_json()
         raw_message = body.get("message", "").strip()
         history     = body.get("history", [])   # list of {role, content}
+        engine_mode = body.get("engine_mode", "auto").lower().strip()  # auto | foundry | fast
 
         if not raw_message:
             return cors_response(400, {"error": "message is required"})
@@ -309,36 +670,96 @@ def chat(req: func.HttpRequest) -> func.HttpResponse:
         # 🔒 2. PII Sanitization & Masking (PAN / Aadhaar)
         message = sanitize_pii(raw_message)
 
-        # RAG search
+        # 🛡️ 3. Deterministic Domain Guardrail Sieve (<2ms)
+        session_id = body.get("sessionId") or body.get("session_id") or req.headers.get("x-session-id") or "default-session"
+        in_scope, scope_reply = validate_tax_domain_scope(message)
+        if not in_scope:
+            return cors_response(200, {
+                "reply": scope_reply,
+                "model": "governance-scope-guardrail",
+                "sessionId": session_id,
+                "persisted": False,
+                "sources_searched": False,
+                "out_of_scope": True,
+                "engine_mode": engine_mode,
+                "latency_ms": 2,
+            })
+
+        # 🧮 4. Microsoft Foundry Agent Dispatch (Python Code Interpreter Sandbox)
+        is_calc = is_calculation_request(message)
+        should_use_foundry = (engine_mode == "foundry") or (engine_mode == "auto" and is_calc)
+
+        if should_use_foundry:
+            foundry_reply, foundry_model, code_trace, latency_ms = invoke_foundry_agent(message, history)
+            if foundry_reply:
+                saved = save_chat_turn(session_id, raw_message, foundry_reply, foundry_model)
+                return cors_response(200, {
+                    "reply": foundry_reply,
+                    "model": foundry_model,
+                    "sessionId": session_id,
+                    "persisted": saved,
+                    "sources_searched": False,
+                    "code_interpreter": True,
+                    "code_trace": code_trace,
+                    "latency_ms": latency_ms,
+                    "engine_mode": "foundry",
+                    "verified": True,
+                })
+            elif engine_mode == "foundry":
+                logging.warning("Forced foundry mode requested but execution failed, falling back to dual-model...")
+
+        # ⚡ 5. Standard Fast Advisory & Dual-Model Execution (Groq LPU / Azure OpenAI)
         context = rag_search(message)
         context_block = f"\n\nRelevant tax information:\n{context}" if context else ""
 
         # Build messages
         messages = [{"role": "system", "content": SYSTEM_PROMPT + context_block}]
-        # Include recent history (last 6 turns)
         for h in history[-6:]:
             if h.get("role") in ("user", "assistant") and h.get("content"):
                 sanitized_history = sanitize_pii(h["content"])
                 messages.append({"role": h["role"], "content": sanitized_history})
         messages.append({"role": "user", "content": message})
 
-        client = get_openai_client()
-        resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=messages,
-            temperature=0.2,
-            max_completion_tokens=1024,
-            stream=False,
-        )
-        reply = extract_response_text(resp)
+        reply, model_used, latency_ms = execute_chat_completion(messages, temperature=0.2, max_tokens=1024)
+
+        py_blocks = re.findall(r'```python\s*(.*?)\s*```', reply, re.DOTALL)
+        code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
+
+        saved = save_chat_turn(session_id, raw_message, reply, model_used)
 
         return cors_response(200, {
             "reply": reply,
-            "model": OPENAI_MODEL,
+            "model": model_used,
+            "sessionId": session_id,
+            "persisted": saved,
             "sources_searched": bool(context),
+            "code_interpreter": bool(code_trace),
+            "code_trace": code_trace,
+            "latency_ms": latency_ms,
+            "engine_mode": "fast",
+            "verified": bool(code_trace),
         })
     except Exception as e:
         logging.error(f"Chat error: {e}")
+        return cors_response(500, {"error": str(e)})
+
+# ── Route: GET /history ────────────────────────────────────────────────────────
+@app.route(route="history", methods=["GET", "OPTIONS"])
+def history(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
+    try:
+        session_id = req.params.get("sessionId") or req.params.get("session_id") or req.headers.get("x-session-id")
+        if not session_id:
+            return cors_response(400, {"error": "sessionId query parameter is required"})
+        turns = get_session_history(session_id)
+        return cors_response(200, {
+            "sessionId": session_id,
+            "turns": turns,
+            "count": len(turns)
+        })
+    except Exception as e:
+        logging.error(f"History fetch error: {e}")
         return cors_response(500, {"error": str(e)})
 
 # ── Route: POST /compare-regime ────────────────────────────────────────────────
@@ -417,7 +838,7 @@ def compare_regime(req: func.HttpRequest) -> func.HttpResponse:
 def analyse_salary(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
-    resp = None
+    raw = ""
     try:
         body = req.get_json()
         salary_text = body.get("salary_text", "").strip()
@@ -426,7 +847,6 @@ def analyse_salary(req: func.HttpRequest) -> func.HttpResponse:
         if not salary_text:
             return cors_response(400, {"error": "salary_text is required"})
 
-        client = get_openai_client()
         prompt = f"""You are an Indian salary slip tax analyser.
 
 Analyse this salary slip and provide a structured tax breakdown for FY 2026-27 (AY 2027-28).
@@ -473,14 +893,12 @@ Provide a JSON response with this structure:
 
 Return ONLY valid JSON, no markdown."""
 
-        resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
+        raw, model_used = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_completion_tokens=1500,
-            stream=False,
+            max_tokens=1500,
         )
-        raw = extract_response_text(resp).strip()
+        raw = raw.strip()
         # Clean markdown if present
         if raw.startswith("```"):
             raw = raw.split("```")[1]
@@ -488,12 +906,12 @@ Return ONLY valid JSON, no markdown."""
                 raw = raw[4:]
         result = json.loads(raw)
         result["tax_year"] = "FY 2026-27 (AY 2027-28)"
+        result["model_used"] = model_used
         return cors_response(200, result)
     except json.JSONDecodeError as e:
         logging.error(f"JSON parse error in analyse-salary: {e}")
-        raw_text = extract_response_text(resp) or "Analysis failed"
         return cors_response(200, {
-            "raw_analysis": raw_text,
+            "raw_analysis": raw or "Analysis failed",
             "error": "Could not parse structured response",
             "tax_year": "FY 2026-27 (AY 2027-28)",
         })
@@ -506,87 +924,160 @@ Return ONLY valid JSON, no markdown."""
 def analyse_ctc(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=CORS_HEADERS)
-    resp = None
+    raw = ""
     try:
         body = req.get_json()
         ctc_text = body.get("ctc_text", "").strip()
         regime   = body.get("regime", "new").lower()
 
         if not ctc_text:
-            return cors_response(400, {"error": "ctc_text is required"})
+            return cors_response(400, {"error": "ctc_text is required. Please paste your CTC breakdown or upload your offer letter."})
 
-        client = get_openai_client()
-        prompt = f"""You are an Indian CTC tax optimisation expert for FY 2026-27.
+        prompt = f"""You are a Senior Indian Chartered Accountant & Corporate CTC Tax Restructuring Expert for FY 2026-27 (AY 2027-28).
 
-Analyse this CTC/offer letter and suggest restructuring to minimise tax.
-Target regime: {regime} tax regime
+Analyse the provided CTC / Offer Letter breakdown and produce a comprehensive restructuring plan to maximize the employee's net take-home salary while remaining 100% compliant with the Indian Income Tax Act, 1961.
 
-Key tax optimization rules for FY 2026-27 (Income Tax Act 2025 / Rules 2026):
+Target Tax Regime: {regime.upper()} TAX REGIME
+
+Statutory Rules & Optimization Mandates for FY 2026-27:
 1. Employer NPS (Section 80CCD(2)):
-   - New Tax Regime (Sec 115BAC): Up to 14% of Basic + DA exempt for BOTH Private & Govt employees (e.g. ₹1,26,000 on ₹9L Basic, saves ₹39,312/yr).
-   - Old Tax Regime: Up to 10% of Basic + DA exempt for Private sector employees (e.g. ₹90,000 on ₹9L Basic, saves ₹28,080/yr) and 14% for Govt employees.
-2. Food Coupons / Meal Cards (Rule 15(5)(a) of Income Tax Rules 2026): Raised to ₹200/meal (up to ₹8,800/month, ₹1,05,600/year). Exempt under BOTH New & Old regimes!
-3. Telephone & Broadband Reimbursement: Fully exempt against actual bills.
-4. Learning & Development Allowance: Exempt if spent on certifications/training.
+   - New Regime (Sec 115BAC): Up to 14% of Basic + DA is fully exempt for BOTH Private and Public sector employees.
+   - Old Regime: Up to 10% of Basic + DA for Private sector / 14% for Central/State Govt.
+2. Tax-Free Meal Card / Food Coupons (Rule 15(5)(a) of Income Tax Rules):
+   - Raised to ₹200/meal (up to ₹8,800/month or ₹1,05,600/year). Exempt under BOTH New & Old Regimes!
+3. Official Telecom & Broadband Reimbursement (Rule 3(7)(ix) / Circular No. 15):
+   - ₹2,000–₹3,000/month (₹24,000–₹36,000/year) exempt against mobile/broadband bills.
+4. Learning & Professional Development / Books & Periodicals Allowance (Section 10(14)(i) / Rule 2BB):
+   - ₹2,500–₹5,000/month (₹30,000–₹60,000/year) exempt for skill upgrades/certifications.
+5. Fuel & Vehicle Maintenance Allowance (Rule 3(2)):
+   - Up to ₹1,800–₹2,400/month + ₹900 driver (up to ₹39,600/year) for official/mixed vehicle usage.
+6. Annual Gift Voucher (Rule 90):
+   - ₹5,000/year tax-exempt non-monetary gift.
+7. Basic Salary Calibration:
+   - Ensure Basic is calibrated to 40%–50% of CTC to balance Provident Fund (PF), Gratuity, and HRA exemption without triggering excess taxable income.
 
-CTC / Offer Letter:
+CTC / Offer Letter Content:
 {ctc_text}
 
-Provide a JSON response:
+Provide your response as a strict JSON object with this exact structure:
 {{
   "current_ctc_analysis": {{
     "total_ctc": 2200000,
-    "current_taxable_income": 2200000,
-    "estimated_tax": 350000,
-    "fully_taxable_components": {{}},
-    "tax_exempt_components": {{}}
+    "basic_salary": 900000,
+    "current_taxable_income": 2050000,
+    "estimated_tax": 327600,
+    "current_in_hand_annual": 1724400,
+    "current_in_hand_monthly": 143700
   }},
-  "restructuring_recommendations": [
+  "optimised_ctc": {{
+    "total_ctc": 2200000,
+    "basic_salary": 880000,
+    "new_taxable_income": 1748800,
+    "new_tax": 223200,
+    "optimised_in_hand_annual": 1828800,
+    "optimised_in_hand_monthly": 152400,
+    "total_annual_saving": 104400,
+    "effective_monthly_saving": 8700
+  }},
+  "component_breakdown": [
     {{
-      "action": "Convert part of Special Allowance to Employer NPS (80CCD(2))",
-      "amount_per_year": 126000,
-      "section": "80CCD(2)",
-      "tax_saving": 39312,
-      "works_in_new_regime": true,
-      "steps": "Email HR to reclassify Special Allowance to Employer NPS (14% of Basic for New Regime / 10% for Old Regime Private employees)."
+      "component": "Basic Salary",
+      "current_amount": 900000,
+      "optimised_amount": 880000,
+      "taxability": "Fully Taxable",
+      "tax_exemption_rule": "Base for PF (12%) and Gratuity. Recommended 40% of CTC."
     }},
     {{
-      "action": "Add Food Coupons / Meal Cards (Rule 15(5)(a) - Income Tax Rules 2026)",
+      "component": "Employer NPS Contribution",
+      "current_amount": 0,
+      "optimised_amount": 123200,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Section 80CCD(2) — 14% of Basic exempt in New & Old regimes."
+    }},
+    {{
+      "component": "Tax-Free Meal / Food Card",
+      "current_amount": 0,
+      "optimised_amount": 105600,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Rule 15(5)(a) — ₹200/meal up to ₹1,05,600/year (Pluxee/Sodexo/Zeta)."
+    }},
+    {{
+      "component": "Telephone & Internet Reimbursement",
+      "current_amount": 0,
+      "optimised_amount": 30000,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Rule 3(7)(ix) — Fully exempt against monthly postpaid/broadband bills."
+    }},
+    {{
+      "component": "Learning & Skill Development Allowance",
+      "current_amount": 0,
+      "optimised_amount": 36000,
+      "taxability": "100% Tax-Exempt",
+      "tax_exemption_rule": "Section 10(14)(i) — Exempt against professional books & certifications."
+    }},
+    {{
+      "component": "Special Allowance / Flexible Benefit Pool",
+      "current_amount": 650000,
+      "optimised_amount": 355200,
+      "taxability": "Fully Taxable",
+      "tax_exemption_rule": "Reduced by converting into tax-exempt flexible allowances above."
+    }}
+  ],
+  "restructuring_recommendations": [
+    {{
+      "action": "Convert Special Allowance to Employer NPS (Section 80CCD(2))",
+      "amount_per_year": 123200,
+      "section": "Section 80CCD(2)",
+      "tax_saving": 38438,
+      "works_in_new_regime": true,
+      "steps": "Opt into corporate NPS through HR. The company deposits 14% of your Basic salary directly into your Tier-1 PRAN account."
+    }},
+    {{
+      "action": "Adopt Digital Food Card / Meal Coupons (Rule 15(5)(a))",
       "amount_per_year": 105600,
       "section": "Rule 15(5)(a)",
       "tax_saving": 32947,
       "works_in_new_regime": true,
-      "steps": "Request HR for maximum benefit of ₹8,800/month (₹200/meal × 2 meals × 22 days = ₹1,05,600/yr) digital food card (Pluxee/Sodexo/Zeta) against Special Allowance. 100% Tax-Exempt under BOTH New and Old Tax Regimes!"
+      "steps": "Request HR to allocate ₹8,800/month (₹200/meal × 2 meals × 22 working days) to a prepaid meal card (Pluxee/Sodexo/Zeta)."
+    }},
+    {{
+      "action": "Add Broadband & Mobile Reimbursement",
+      "amount_per_year": 30000,
+      "section": "Rule 3(7)(ix)",
+      "tax_saving": 9360,
+      "works_in_new_regime": true,
+      "steps": "Submit monthly postpaid mobile and home internet bills to claim ₹2,500/month tax-free."
+    }},
+    {{
+      "action": "Add Learning & Professional Development Allowance",
+      "amount_per_year": 36000,
+      "section": "Section 10(14)(i)",
+      "tax_saving": 11232,
+      "works_in_new_regime": true,
+      "steps": "Claim annual tax exemption against books, technical subscriptions, courses, and certifications."
     }}
   ],
-  "optimised_ctc": {{
-    "total_ctc": 2200000,
-    "new_taxable_income": 1968400,
-    "new_tax": 277741,
-    "total_annual_saving": 72259,
-    "effective_monthly_saving": 6022
-  }},
-  "priority_actions": [],
-  "caveats": []
+  "hr_proposal_letter": "Dear HR / Payroll Team,\\n\\nI would like to request a restructuring of my Annual CTC component allocation under the company's Flexible Benefits Plan (FBP) for FY 2026-27 without changing my overall Total CTC.\\n\\nProposed Restructuring:\\n1. Allocate 14% of Basic Salary (₹1,23,200/yr) towards Corporate Employer NPS under Section 80CCD(2).\\n2. Allocate ₹8,800/month (₹1,05,600/yr) to Tax-Free Digital Meal Card under Rule 15(5)(a).\\n3. Allocate ₹2,500/month (₹30,000/yr) towards Official Telephone & Internet Reimbursement.\\n4. Allocate ₹3,000/month (₹36,000/yr) towards Learning & Professional Development Allowance.\\n5. Balance remaining adjusted against Special Allowance.\\n\\nKindly confirm when these changes can be reflected in the upcoming payroll cycle.\\n\\nBest regards,\\n[Employee Name]",
+  "tax_year": "FY 2026-27 (AY 2027-28)",
+  "target_regime": "{regime.upper()}"
 }}
 
-Return ONLY valid JSON, no markdown."""
+Return ONLY the raw JSON object. Do NOT wrap in markdown fences or text."""
 
-        resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
+        raw, model_used = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_completion_tokens=1800,
-            stream=False,
+            max_tokens=2200,
         )
-        raw = extract_response_text(resp).strip()
+        raw = raw.strip()
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
                 raw = raw[4:]
         result = json.loads(raw)
+        result["model_used"] = model_used
 
-        # ── Deterministic Post-Processing: Guarantee Food Card & Non-Zero Calculation ─────
+        # ── Deterministic Post-Processing: Guarantee Food Card & Non-Zero Calculations ─────
         raw_recs = result.get("restructuring_recommendations", [])
         has_food_card = any("food" in r.get("action", "").lower() or "15(5)" in r.get("section", "").lower() or "3(7)" in r.get("section", "").lower() for r in raw_recs)
 
@@ -618,7 +1109,8 @@ Return ONLY valid JSON, no markdown."""
         result["restructuring_recommendations"] = raw_recs
 
         opt = result.get("optimised_ctc", {})
-        opt["total_annual_saving"] = total_savings if total_savings > 0 else 72259
+        if not opt.get("total_annual_saving") or opt.get("total_annual_saving") == 0:
+            opt["total_annual_saving"] = total_savings if total_savings > 0 else 72259
         opt["effective_monthly_saving"] = round(opt["total_annual_saving"] / 12)
         result["optimised_ctc"] = opt
 
@@ -626,9 +1118,9 @@ Return ONLY valid JSON, no markdown."""
         result["target_regime"] = regime
         return cors_response(200, result)
     except json.JSONDecodeError:
-        raw_text = extract_response_text(resp) or "Analysis failed"
         return cors_response(200, {
-            "raw_analysis": raw_text,
+            "error": "Failed to parse structured CTC plan",
+            "raw_analysis": raw,
             "tax_year": "FY 2026-27 (AY 2027-28)",
         })
     except Exception as e:

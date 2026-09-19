@@ -58,16 +58,6 @@ module "shared_law_name" {
   instance       = var.instance
 }
 
-module "shared_asp_name" {
-  source         = "../../modules/naming"
-  resource_type  = "asp"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
 module "shared_cs_name" {
   source         = "../../modules/naming"
   resource_type  = "cs"
