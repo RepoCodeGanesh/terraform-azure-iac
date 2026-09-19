@@ -5,6 +5,9 @@ import os
 import re
 import time
 from datetime import datetime, timezone
+import urllib.request
+import urllib.error
+from typing import Optional
 
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
@@ -39,12 +42,15 @@ GROQ_API_KEY             = os.environ.get("GROQ_API_KEY", "")
 GROQ_MODEL               = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 OPENAI_ENDPOINT          = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
 OPENAI_MODEL             = os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4-nano")
+GEMINI_API_KEY           = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL             = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 FOUNDRY_PROJECT_ENDPOINT = os.environ.get("FOUNDRY_PROJECT_ENDPOINT", "")
 FOUNDRY_OPENAI_ENDPOINT  = os.environ.get("FOUNDRY_OPENAI_ENDPOINT", "https://hub-taxbot-foundry-01.openai.azure.com/")
 FOUNDRY_AGENT_NAME       = os.environ.get("FOUNDRY_AGENT_NAME", "TaxBot-Calculation-Specialist")
 FOUNDRY_AGENT_VERSION    = os.environ.get("FOUNDRY_AGENT_VERSION", "2")
 FOUNDRY_MODEL            = os.environ.get("FOUNDRY_MODEL", "gpt-5.4-mini")
 FOUNDRY_API_KEY          = os.environ.get("FOUNDRY_API_KEY", "")
+
 SEARCH_ENDPOINT          = os.environ.get("AZURE_SEARCH_ENDPOINT", "")
 SEARCH_INDEX             = os.environ.get("AZURE_SEARCH_INDEX", "tax-docs")
 CONTENT_SAFETY_ENDPOINT  = os.environ.get("AZURE_CONTENT_SAFETY_ENDPOINT", "")
@@ -133,11 +139,55 @@ def extract_response_text(resp) -> str:
         logging.error(f"Error extracting stream response text: {e}")
         return ""
 
+def invoke_gemini(prompt: str, system_instruction: str = None) -> tuple[Optional[str], Optional[str], int]:
+    """
+    Direct REST invocation of Google Gemini API (gemini-2.5-flash) for multi-cloud resilience.
+    Uses standard library urllib.request to guarantee zero additional pip dependencies.
+    Returns: (reply_text, model_identifier, latency_ms)
+    """
+    if not GEMINI_API_KEY:
+        return None, None, 0
+    start_time = time.perf_counter()
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.2,
+                "maxOutputTokens": 1500
+            }
+        }
+        if system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+
+        req_data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=req_data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=12.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            candidates = data.get("candidates", [])
+            if candidates and "content" in candidates[0]:
+                parts = candidates[0]["content"].get("parts", [])
+                if parts and "text" in parts[0]:
+                    reply = parts[0]["text"]
+                    latency_ms = int((time.perf_counter() - start_time) * 1000)
+                    model_tag = f"gemini/{GEMINI_MODEL}"
+                    logging.info("✅ Served via Google Gemini (%s) in %d ms", GEMINI_MODEL, latency_ms)
+                    return reply, model_tag, latency_ms
+    except Exception as e:
+        logging.warning("⚠️ Google Gemini invocation failed: %s", e)
+    return None, None, 0
+
 def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens: int = 1024) -> tuple[str, str, int]:
     """
-    Dual-Model Resilient Chat Execution:
+    Multi-Cloud Resilient Chat Execution:
       1. Primary: GroqCloud LPU (llama-3.3-70b-versatile) - Ultra-fast (500+ tok/s) & Free
       2. Secondary: Microsoft Azure OpenAI Service (gpt-5.4-nano) - Enterprise Fallback
+      3. Tertiary: Google Gemini (gemini-2.5-flash) - Multi-Cloud Resilient Fallback
     Returns: (response_text, model_identifier, latency_ms)
     """
     start_time = time.perf_counter()
@@ -187,8 +237,16 @@ def execute_chat_completion(messages: list, temperature: float = 0.2, max_tokens
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             return reply, f"azure/{OPENAI_MODEL}", latency_ms
         except Exception as e2:
-            logging.error("❌ Both Primary (Groq) and Secondary (Azure OpenAI) failed: %s", e2)
+            logging.warning("⚠️ Azure OpenAI failed (%s). Failing over to Tertiary Gemini...", e2)
+            # ── Attempt 3: Google Gemini Multi-Cloud Fallback ───────────────────
+            last_user_msg = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
+            sys_msg = next((m["content"] for m in messages if m.get("role") == "system"), None)
+            g_reply, g_model, g_latency = invoke_gemini(last_user_msg, system_instruction=sys_msg)
+            if g_reply:
+                return g_reply, g_model, g_latency
+            logging.error("❌ All LLM tiers failed (Groq, Azure OpenAI, Gemini).")
             raise e2
+
 
 # ── Microsoft Azure AI Foundry Agent (Python Code Interpreter Sandbox) ─────────
 _foundry_openai_client = None
@@ -282,11 +340,42 @@ def is_calculation_request(message: str) -> bool:
 
 def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str, str, int]:
     """
-    Invokes Microsoft Azure AI Foundry Calculation Specialist powered by gpt-5.4-mini
-    on hub-taxbot-foundry-01.
+    Multi-Cloud Calculation Specialist Cascade:
+      Tier 1: Azure AI Foundry Agent Service (AIProjectClient SDK)
+      Tier 2: Google Gemini (gemini-2.5-flash) Multi-Cloud Fallback
+      Tier 3: Direct AzureOpenAI (FOUNDRY_OPENAI_ENDPOINT) Zero-Orphan Safety Net
     Returns (reply_text, model_name, code_trace, latency_ms).
     """
     start_time = time.perf_counter()
+
+    # ── Tier 1: Azure AI Foundry Agent Service (AIProjectClient SDK) ───────────
+    if HAS_AZURE_AI_PROJECTS and FOUNDRY_PROJECT_ENDPOINT:
+        try:
+            credential = get_credential()
+            project = AIProjectClient(endpoint=FOUNDRY_PROJECT_ENDPOINT, credential=credential)
+            agent = project.agents.get_agent(FOUNDRY_AGENT_NAME)
+            thread = project.agents.create_thread()
+            project.agents.create_message(thread_id=thread.id, role="user", content=prompt)
+            run = project.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+            messages = project.agents.list_messages(thread_id=thread.id)
+            reply = messages.get_last_message_by_role("assistant").as_dict()["content"][0]["text"]["value"]
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            py_blocks = re.findall(r'```python\s*(.*?)\s*```', reply, re.DOTALL)
+            code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
+            model_tag = f"azure-foundry-agent/{FOUNDRY_AGENT_NAME} ({FOUNDRY_MODEL})"
+            logging.info("✅ Served via Foundry Agent Service in %d ms (%s)", latency_ms, model_tag)
+            return reply, model_tag, code_trace, latency_ms
+        except Exception as e:
+            logging.warning("⚠️ Azure AI Foundry Agent Service failed (%s). Failing over to Gemini fallback...", e)
+
+    # ── Tier 2: Google Gemini Multi-Cloud Fallback ─────────────────────────────
+    gemini_reply, gemini_tag, gemini_latency = invoke_gemini(prompt, system_instruction=FOUNDRY_SPECIALIST_PROMPT)
+    if gemini_reply:
+        py_blocks = re.findall(r'```python\s*(.*?)\s*```', gemini_reply, re.DOTALL)
+        code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
+        return gemini_reply, gemini_tag, code_trace, gemini_latency
+
+    # ── Tier 3: Direct AzureOpenAI (FOUNDRY_OPENAI_ENDPOINT) Safety Net ───────
     client = get_foundry_openai_client()
     if not client:
         return None, None, None, 0
@@ -298,7 +387,7 @@ def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str, s
                     messages.append({"role": h["role"], "content": h["content"]})
         messages.append({"role": "user", "content": prompt})
 
-        logging.info("🤖 Invoking Microsoft Foundry Calculation Specialist (%s) on %s...", FOUNDRY_MODEL, FOUNDRY_OPENAI_ENDPOINT)
+        logging.info("🤖 Invoking AzureOpenAI Direct (%s) on %s...", FOUNDRY_MODEL, FOUNDRY_OPENAI_ENDPOINT)
         resp = client.chat.completions.create(
             model=FOUNDRY_MODEL,
             messages=messages,
@@ -313,11 +402,12 @@ def invoke_foundry_agent(prompt: str, history: list = None) -> tuple[str, str, s
         code_trace = "\n\n# --- Step Execution ---\n".join(b.strip() for b in py_blocks) if py_blocks else ""
 
         model_tag = f"azure-foundry/{FOUNDRY_AGENT_NAME} ({FOUNDRY_MODEL})"
-        logging.info("✅ Served via Foundry Agent in %d ms (%s)", latency_ms, model_tag)
+        logging.info("✅ Served via Direct AzureOpenAI in %d ms (%s)", latency_ms, model_tag)
         return reply, model_tag, code_trace, latency_ms
     except Exception as e:
-        logging.warning("⚠️ Microsoft Foundry Agent execution failed (%s). Falling back...", e)
+        logging.warning("⚠️ Direct AzureOpenAI execution failed (%s).", e)
         return None, None, None, 0
+
 
 # ── Cosmos DB Session Persistence Helpers ─────────────────────────────────────
 _cosmos_container = None

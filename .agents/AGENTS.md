@@ -337,6 +337,16 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** (1) Windows Git checkout with `core.autocrlf = true` formats multiline KQL query heredocs (`<<-KQL`) with CRLF (`\r\n`), which differs from Azure Resource Manager's stored LF (`\n`). (2) Downstream Azure Verified Modules (`avm-res-cognitiveservices-account`) use `azapi` provider data sources for telemetry. Without an explicit `provider "azapi"` block pinned to `var.subscription_id`, `azapi` falls back to whichever subscription is currently active in the local Azure CLI (`az account show`).
 * **Resolution:** (1) Create a root `.gitattributes` file enforcing `* text=auto eol=lf` and `*.tf text eol=lf` across all IaC files. (2) Explicitly declare `provider "azapi" { subscription_id = var.subscription_id }` and declare `azapi = { source = "azure/azapi", version = "~> 2.0" }` in `required_providers` in `versions.tf`.
 
+### 45. Azure AI Foundry Projects on Cognitive Services Accounts (`Microsoft.CognitiveServices/accounts/projects` vs Machine Learning Workspaces)
+* **Symptom:** Creating an Azure AI Foundry Project under an Azure AI Services Cognitive multi-service account (`kind = "AIServices"`) using `azurerm_ai_foundry_project` or `azapi_resource` with `type = "Microsoft.MachineLearningServices/workspaces@2024-10-01-preview"` fails with HTTP 400 `ValidationError: Error parsing hub resource ARM scope: .../Microsoft.CognitiveServices/accounts/hub-taxbot-foundry-01`.
+* **Root Cause:** In Azure AI Foundry, Machine Learning Workspaces (`Microsoft.MachineLearningServices`) expect a parent Machine Learning Workspace Hub (which requires dedicated Storage, Key Vault, and Application Insights). When using the modern Cognitive Services AI Services Hub (`azurerm_cognitive_account` with `kind = "AIServices"` and `project_management_enabled = true`), projects must be declared as child resources of type `Microsoft.CognitiveServices/accounts/projects@2025-06-01` with `parent_id = azurerm_cognitive_account.foundry_hub.id` and `identity { type = "SystemAssigned" }`.
+* **Resolution:** Declare the project via `azapi_resource` with `type = "Microsoft.CognitiveServices/accounts/projects@2025-06-01"` parented to the Cognitive Services account ID and configure `identity { type = "SystemAssigned" }`.
+
+### 46. PowerShell Parameter Truncation on Key Vault Secret References in Azure CLI (`az --%`)
+* **Symptom:** Setting App Service / Function App Key Vault secret references via Azure CLI (`az functionapp config appsettings set --settings GEMINI_API_KEY=@Microsoft.KeyVault(...)`) results in truncated values missing the closing parenthesis: `@Microsoft.KeyVault(VaultName=...;SecretName=...`.
+* **Root Cause:** In Windows PowerShell, unescaped closing parentheses `)` are interpreted by the parser as subexpression boundaries or parameter delimiters, truncating the trailing character before passing the string to `az.cmd`.
+* **Resolution:** Use PowerShell's stop-parsing symbol `--%` (`az --% functionapp config appsettings set --name <name> -g <rg> --settings "KEY=@Microsoft.KeyVault(...)"`) to instruct PowerShell to pass all downstream arguments verbatim to the process.
+
 ---
 
 

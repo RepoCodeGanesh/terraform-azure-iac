@@ -184,6 +184,33 @@ def store_semantic_cache(
     _SEMANTIC_CACHE_STORE.append(entry)
     logger.info(f"💾 Stored semantic cache entry for corpus {corpus_version} (Total cached: {len(_SEMANTIC_CACHE_STORE)})")
 
+# FinOps metrics tracker
+_FINOPS_STATS = {
+    "lookups": 0,
+    "hits": 0,
+    "misses": 0,
+    "bypasses": 0,
+    "tokens_saved_estimate": 0,
+    "usd_saved_estimate": 0.0
+}
+
+def get_cache_finops_summary() -> Dict[str, Any]:
+    """Returns real-time FinOps metrics on semantic cache performance and cost avoidance."""
+    total = max(1, _FINOPS_STATS["lookups"])
+    hit_rate = round((_FINOPS_STATS["hits"] / total) * 100, 2)
+    return {
+        "cache_entries_count": len(_SEMANTIC_CACHE_STORE),
+        "total_lookups": _FINOPS_STATS["lookups"],
+        "cache_hits": _FINOPS_STATS["hits"],
+        "cache_misses": _FINOPS_STATS["misses"],
+        "bypasses": _FINOPS_STATS["bypasses"],
+        "hit_ratio_percent": hit_rate,
+        "estimated_tokens_saved": _FINOPS_STATS["tokens_saved_estimate"],
+        "estimated_usd_saved": round(_FINOPS_STATS["usd_saved_estimate"], 4),
+        "current_corpus_version": CURRENT_CORPUS_VERSION,
+        "status": "HEALTHY_OPTIMIZED"
+    }
+
 def invalidate_semantic_cache(new_corpus_version: str) -> int:
     """
     Invalidates all cache entries that do not match the new corpus version.
@@ -195,3 +222,4 @@ def invalidate_semantic_cache(new_corpus_version: str) -> int:
     purged = old_count - len(_SEMANTIC_CACHE_STORE)
     logger.info(f"🔄 Activated corpus version {new_corpus_version}, purged {purged} stale cache entries.")
     return purged
+

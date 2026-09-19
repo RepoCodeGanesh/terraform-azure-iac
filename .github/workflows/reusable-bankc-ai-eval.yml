@@ -35,6 +35,14 @@ jobs:
         run: |
           python app/bank-compliance/eval/evaluate.py --mode fast --max-cost 0.05
 
+      - name: Run PyRIT Adversarial Red Team Attack Benchmark
+        run: |
+          python app/bank-compliance/eval/redteam_suite.py
+
+      - name: Run 8-Task Enterprise AI Platform Test Suite
+        run: |
+          python app/bank-compliance/backend/test_all_8_tasks_suite.py
+
       - name: Upload GenAIOps Scorecard & FinOps Attestation
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,4 +52,6 @@ jobs:
             app/bank-compliance/eval/eval_results.json
             app/bank-compliance/eval/eval_cost_summary.json
             app/bank-compliance/eval/eval_attestation.json
+            redteam_security_attestation.json
+            merged_compliance_model/v1.0.0/model_card.json
           retention-days: 30

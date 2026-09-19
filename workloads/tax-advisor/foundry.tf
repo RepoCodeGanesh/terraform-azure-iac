@@ -80,3 +80,36 @@ resource "azurerm_role_assignment" "func_foundry_dev" {
   principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
   depends_on           = [time_sleep.wait_for_func_identity, azurerm_cognitive_account.foundry_hub]
 }
+
+# ─── 5. AI Foundry Project (scoped under the Cognitive Services Hub) ───────────
+resource "azapi_resource" "foundry_project" {
+  type                      = "Microsoft.CognitiveServices/accounts/projects@2025-06-01"
+  name                      = "proj-taxbot-foundry-01"
+  location                  = var.foundry_location
+  parent_id                 = azurerm_cognitive_account.foundry_hub.id
+  schema_validation_enabled = false
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  body = {
+    properties = {
+      displayName = "TaxBot AI Foundry Project"
+      description = "Azure AI Foundry Project for TaxBot calculation agent specialization"
+    }
+  }
+
+  tags = local.tags
+}
+
+# ─── 6. RBAC: Grant Function App Managed Identity access to Foundry Project ────
+resource "azurerm_role_assignment" "func_foundry_project_developer" {
+  count                = var.enable_role_assignments ? 1 : 0
+  scope                = azapi_resource.foundry_project.id
+  role_definition_name = "Azure AI Developer"
+  principal_id         = try(data.azurerm_linux_function_app.taxb_func.identity[0].principal_id, module.function_app.principal_id)
+  depends_on           = [time_sleep.wait_for_func_identity, azapi_resource.foundry_project]
+}
+
+

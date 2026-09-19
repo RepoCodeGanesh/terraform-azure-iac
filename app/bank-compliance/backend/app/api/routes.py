@@ -7,12 +7,24 @@ import logging
 
 from app.core.config import settings
 from app.api.pii_shield import redact_pii
-from app.services.qdrant_service import search_rbi_clauses, LOADED_CLAUSES, load_documents_corpus
+from app.services.qdrant_service import search_rbi_clauses, LOADED_CLAUSES, load_documents_corpus, get_provenance_by_id
 from app.services.semantic_cache import (
     lookup_semantic_cache,
     store_semantic_cache,
     invalidate_semantic_cache,
+    get_cache_finops_summary,
     CURRENT_CORPUS_VERSION
+)
+from app.services.escalation_service import (
+    check_hitl_requirement,
+    create_escalation_ticket,
+    list_escalation_tickets,
+    get_escalation_ticket,
+    review_escalation_ticket
+)
+from app.services.drift_monitor import (
+    record_retrieval_event,
+    get_drift_metrics
 )
 from app.services.citation_validator import (
     validate_citations_deterministically,
@@ -21,6 +33,7 @@ from app.services.citation_validator import (
 )
 from app.services.agents.orchestrator import MultiAgentOrchestrator
 from app.services.agents.orchestrator_v2 import LangGraphOrchestrator
+
 
 try:
     from prometheus_client import Counter, Gauge
@@ -261,7 +274,24 @@ async def query_compliance_v2(request: QueryRequest):
             corpus_version=CURRENT_CORPUS_VERSION
         )
 
+    # 5. Record Retrieval Metrics for RAG Drift Monitor (Task 7)
+    record_retrieval_event(sanitized_prompt, [c.model_dump() for c in formatted_citations])
+
+    # 6. Evaluate Human-in-the-Loop (HITL) Statutory Governance (Task 5)
+    hitl_req, hitl_risk, hitl_trigger, hitl_reason = check_hitl_requirement(sanitized_prompt)
+    if hitl_req and hitl_risk in ["CRITICAL", "HIGH"]:
+        create_escalation_ticket(
+            query=sanitized_prompt,
+            preliminary_answer=answer,
+            citations=[c.model_dump() for c in formatted_citations],
+            risk_level=hitl_risk,
+            trigger_name=hitl_trigger,
+            reason=hitl_reason,
+            department=request.department or "compliance"
+        )
+
     latency = round((time.time() - start_time) * 1000, 2)
+
 
     return QueryResponse(
         answer=answer,
@@ -490,6 +520,57 @@ async def generate_attestation_certificate(data: Dict[str, Any]):
     cert_payload["digital_signature_sha256"] = hashlib.sha256(cert_bytes).hexdigest()
     
     return cert_payload
+
+# ── Provenance & Lineage Endpoint (Task 3: AI-300) ─────────────────────────────
+@router.get("/compliance/provenance/{item_id}", tags=["Lineage & Provenance"])
+async def get_provenance(item_id: str):
+    """
+    Cryptographic Provenance Lookup for Regulatory Audits.
+    Traces any citation or chunk ID back to raw PDF SHA-256 byte hashes and byte offsets.
+    """
+    prov = get_provenance_by_id(item_id)
+    if not prov:
+        raise HTTPException(status_code=404, detail=f"Lineage record not found for: {item_id}")
+    return prov
+
+# ── Human-in-the-Loop (HITL) Escalation Endpoints (Task 5: AI-500) ─────────────
+@router.get("/compliance/escalations", tags=["HITL Governance"])
+async def list_escalations(status: Optional[str] = None):
+    """Lists compliance tickets requiring human review/override."""
+    return {"escalations": list_escalation_tickets(status=status)}
+
+class EscalationReviewRequest(BaseModel):
+    officer_name: str
+    verdict: str  # APPROVED | REJECTED | AMENDED
+    officer_notes: str
+    amended_advice: Optional[str] = None
+
+@router.post("/compliance/escalations/{ticket_id}/review", tags=["HITL Governance"])
+async def review_escalation(ticket_id: str, req: EscalationReviewRequest):
+    """Compliance Officer signs off or amends an escalated high-risk compliance ticket."""
+    updated = review_escalation_ticket(
+        ticket_id=ticket_id,
+        officer_name=req.officer_name,
+        verdict=req.verdict,
+        officer_notes=req.officer_notes,
+        amended_advice=req.amended_advice
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail=f"Escalation ticket {ticket_id} not found")
+    return {"message": "Ticket successfully reviewed and signed", "ticket": updated}
+
+# ── Continuous RAG Drift & Blind-Spot Endpoint (Task 7: AI-300) ────────────────
+@router.get("/compliance/drift/stats", tags=["MLOps Monitoring"])
+async def get_drift_stats():
+    """Returns real-time sliding-window vector similarity drift and corpus blind-spot stats."""
+    return get_drift_metrics()
+
+# ── 2-Tier Semantic Cache FinOps Endpoint (Task 8: FinOps / AI-300) ───────────
+@router.get("/compliance/finops/cache-stats", tags=["FinOps Acceleration"])
+async def get_cache_finops():
+    """Returns real-time token savings and cost avoidance stats for the semantic vector cache."""
+    return get_cache_finops_summary()
+
 
 
 

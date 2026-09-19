@@ -140,3 +140,15 @@ output "foundry_hub_endpoint" {
   description = "Endpoint of the Azure AI Foundry Hub account."
   value       = azurerm_cognitive_account.foundry_hub.endpoint
 }
+
+output "foundry_project_id" {
+  description = "Resource ID of the Azure AI Foundry Project."
+  value       = azapi_resource.foundry_project.id
+}
+
+output "foundry_project_name" {
+  description = "Name of the Azure AI Foundry Project."
+  value       = azapi_resource.foundry_project.name
+}
+
+

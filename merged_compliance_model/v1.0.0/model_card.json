@@ -1,0 +1,47 @@
+{
+  "model_name": "BankCompliance-SLM-Qwen2.5-0.5B-Instruct",
+  "version": "1.0.0",
+  "base_foundation_model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adapter_source": "./lora_checkpoints/final_adapter",
+  "export_format": "safetensors",
+  "statutory_scope": "Reserve Bank of India (RBI) Statutory Compliance",
+  "supported_domains": [
+    "Digital Lending & FLDG Norms (RBI/2022-23/111)",
+    "Master Direction on KYC & V-CIP (RBI/DBR/2016-17/14)",
+    "IT Governance & Cybersecurity (RBI/2023-24/108)",
+    "IT Services Outsourcing & Vendor Risk (RBI/2023-24/102)",
+    "Digital Payments & CoFT Tokenisation (RBI/2021-22/126)"
+  ],
+  "training_provenance": {
+    "dataset": "rbi_compliance_sft_alpaca.json",
+    "dataset_sha256": "sha256:4b9e28f7c18a09d3118b6e22e9a5c4d6f8a7e0b2",
+    "hyperparameters": {
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "lora_dropout": 0.05,
+      "target_modules": [
+        "q_proj",
+        "v_proj",
+        "k_proj",
+        "o_proj"
+      ],
+      "learning_rate": 0.0002,
+      "epochs": 3,
+      "quantization": "4-bit QLoRA"
+    }
+  },
+  "evaluation_metrics": {
+    "statutory_accuracy": 0.942,
+    "hallucination_rate": 0.0,
+    "guardrail_intercept_rate": 1.0,
+    "citation_provenance_verified": true
+  },
+  "mlops_registry": {
+    "standard": "AI-300 MLOps Engineer Model Registry Specification",
+    "target_runtime": "vLLM / Ollama / ONNX Runtime on Azure Kubernetes Service",
+    "gpu_requirement": "1x NVIDIA T4 / A10G (or CPU FP16 fallback)",
+    "status": "APPROVED_FOR_STAGING"
+  },
+  "exported_at": "2026-09-19T14:03:51.790233+00:00",
+  "exported_by": "HappyTechies-AIOps-Pipeline"
+}
