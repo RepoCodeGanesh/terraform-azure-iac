@@ -1,11 +1,11 @@
 # ==============================================================================
-# Workflow: App - BankCompliance AI Application CI/CD  (Caller / Orchestrator)
+# Workflow: App - BankCompliance AI Application CI/CD (Enterprise Caller)
 # Provisions & Deploys:
 #   1. DevSecOps SAST & SCA Security Scan         (RepoCodeGanesh/.github)
-#   2. AI Quality & Regression Evaluation Gate    (reusable-bankc-ai-eval.yml)
-#   3. Backend Docker Container → GHCR            (reusable-bankc-backend.yml)
-#   4. Kubernetes Pods → AKS Cluster              (reusable-bankc-backend.yml)
-#   5. React SPA Frontend → Azure Static Web App  (RepoCodeGanesh/.github)
+#   2. AI Quality & Regression Evaluation Gate    (Native In-Repo GenAIOps)
+#   3. Backend Container Build & Trivy Scan       (RepoCodeGanesh/.github)
+#   4. Kubernetes Pods & Helm 3 Deploy to AKS     (RepoCodeGanesh/.github)
+#   5. React SPA Frontend to Azure Static Web App (RepoCodeGanesh/.github)
 # Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
 # ==============================================================================
 
@@ -17,8 +17,6 @@ on:
     paths:
       - 'app/bank-compliance/**'
       - '.github/workflows/app-bank-compliance.yml'
-      - '.github/workflows/reusable-bankc-ai-eval.yml'
-      - '.github/workflows/reusable-bankc-backend.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -37,16 +35,14 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # false: a second push QUEUES behind the current deploy instead of killing it mid-Helm.
-  # Killing helm mid-upgrade leaves the release in a FAILED state requiring manual rollback.
   cancel-in-progress: false
 
 permissions:
   id-token: write
   contents: read
   packages: write
-  security-events: write  # Required for Trivy SARIF upload to GitHub Code Scanning
-  actions: read           # Required by codeql-action/upload-sarif reusable workflow
+  security-events: write
+  actions: read
 
 jobs:
   # ── JOB 0: Detect Path Changes (Smart Selective CI/CD) ─────────────────────
@@ -68,13 +64,11 @@ jobs:
               - 'app/bank-compliance/chart/**'
               - 'app/bank-compliance/eval/**'
               - '.github/workflows/app-bank-compliance.yml'
-              - '.github/workflows/reusable-bankc-ai-eval.yml'
-              - '.github/workflows/reusable-bankc-backend.yml'
             frontend:
               - 'app/bank-compliance/frontend/**'
               - '.github/workflows/app-bank-compliance.yml'
 
-  # ── JOB 1: DevSecOps SAST & SCA Security Scanning (Phase 1) ────────────────
+  # ── JOB 1: DevSecOps SAST & SCA Security Scanning (Central Org Template) ────
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
     needs: [detect-changes]
@@ -87,7 +81,7 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 2: AI Quality & Regression Evaluation Gate (GenAIOps) ───────────────
+  # ── JOB 2: AI Quality & Regression Evaluation Gate (Native Workload Step) ───
   ai-eval-quality-gate:
     name: AI Quality & Regression Gate
     needs: [detect-changes, devsecops-scan]
@@ -97,13 +91,44 @@ jobs:
       needs.devsecops-scan.result == 'success' &&
       ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
        (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true'))
-    uses: ./.github/workflows/reusable-bankc-ai-eval.yml
-    with:
-      skip_eval: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  # ── JOB 3+4: Build Backend Image → GHCR & Deploy to AKS ─────────────────────
-  backend:
-    name: Backend Build & AKS Deploy
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run GenAIOps Regression & Cost Evaluation
+        run: |
+          python app/bank-compliance/eval/evaluate.py --mode fast --max-cost 0.05
+
+      - name: Run PyRIT Adversarial Red Team Attack Benchmark
+        run: |
+          python app/bank-compliance/eval/redteam_suite.py
+
+      - name: Run 8-Task Enterprise AI Platform Test Suite
+        run: |
+          python app/bank-compliance/backend/test_all_8_tasks_suite.py
+
+      - name: Upload GenAIOps Scorecard & FinOps Attestation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genaiops-evaluation-attestation
+          path: |
+            app/bank-compliance/eval/eval_results.json
+            app/bank-compliance/eval/eval_cost_summary.json
+            app/bank-compliance/eval/eval_attestation.json
+            redteam_security_attestation.json
+            merged_compliance_model/v1.0.0/model_card.json
+          retention-days: 30
+
+  # ── JOB 3: Build & Push Backend Container to GHCR (Central Org Template) ───
+  backend-build:
+    name: Backend Container Build
     needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
     if: |
       always() &&
@@ -112,15 +137,39 @@ jobs:
       (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
       ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
        (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true'))
-    uses: ./.github/workflows/reusable-bankc-backend.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/container-build-push.yml@main
     with:
+      context_dir: 'app/bank-compliance/backend'
+      image_name: 'bank-compliance-backend'
       sha: ${{ github.sha }}
-      deploy: true
+
+  # ── JOB 4: Deploy Helm Chart to AKS (Central Org Template) ──────────────────
+  backend-deploy:
+    name: Backend AKS Deploy
+    needs: [backend-build]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push')
+    uses: RepoCodeGanesh/.github/.github/workflows/aks-helm-deploy.yml@main
+    with:
+      cluster_name: 'aks-ht-bankc-p-cin-01'
+      resource_group: 'rg-ht-bankc-p-cin-01'
+      subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+      environment_name: 'bank-compliance-prod'
+      chart_path: './app/bank-compliance/chart'
+      release_name: 'bank-compliance'
+      namespace: 'bank-compliance'
+      image_repository: 'ghcr.io/${{ github.repository_owner }}/bank-compliance-backend'
+      image_tag: ${{ github.sha }}
+      ingress_manifest: './app/bank-compliance/k8s/nginx/ingress-nginx.yaml'
+      tuner_manifest: './app/bank-compliance/k8s/finops-single-node-tuner.yaml'
+      extra_manifests_dir: './app/bank-compliance/k8s/inference'
+      health_endpoint: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query'
     secrets:
       APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 5: Build & Deploy Frontend to Azure Static Web App (Reusable Called) ─
+  # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
   deploy-frontend:
     name: Build & Deploy Frontend SPA
     needs: [detect-changes, devsecops-scan]
@@ -146,7 +195,7 @@ jobs:
   # ── JOB 6: Consolidated Dynamic Release Governance Summary ──────────────────
   summary:
     name: 📊 Release Governance Summary
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend, deploy-frontend]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, backend-deploy, deploy-frontend]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -154,11 +203,12 @@ jobs:
         run: |
           SAST_STATUS="${{ needs.devsecops-scan.result == 'success' && '🟢 PASSED' || (needs.devsecops-scan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           EVAL_STATUS="${{ needs.ai-eval-quality-gate.result == 'success' && '🟢 PASSED' || (needs.ai-eval-quality-gate.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          BACKEND_STATUS="${{ needs.backend.result == 'success' && '🟢 DEPLOYED' || (needs.backend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          BUILD_STATUS="${{ needs.backend-build.result == 'success' && '🟢 BUILT' || (needs.backend-build.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          DEPLOY_STATUS="${{ needs.backend-deploy.result == 'success' && '🟢 DEPLOYED' || (needs.backend-deploy.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           FRONTEND_STATUS="${{ needs.deploy-frontend.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-frontend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
 
           OVERALL="🟢 RELEASE SUCCESSFUL"
-          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ]; then
+          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ]; then
             OVERALL="🔴 PIPELINE FAILED"
           fi
 
@@ -177,8 +227,9 @@ jobs:
           |---|---|:---:|
           | **1. DevSecOps Security Scan** | Bandit Python SAST + pip-audit & npm audit | ${SAST_STATUS} |
           | **2. GenAIOps Quality Gate** | Ragas Triad Groundedness & Citation Evaluation | ${EVAL_STATUS} |
-          | **3. Backend AKS Release** | Multi-stage Docker build + Helm upgrade to AKS | ${BACKEND_STATUS} |
-          | **4. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
+          | **3. Container Packaging** | Multi-stage Docker build + Trivy CVE scan to GHCR | ${BUILD_STATUS} |
+          | **4. Backend AKS Release** | Helm 3 rolling upgrade + Workload Identity on AKS | ${DEPLOY_STATUS} |
+          | **5. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
 
           ---
 

@@ -34,7 +34,7 @@ jobs:
   # ── STAGE 0: DevSecOps IaC Security & Policy Gate (Checkov Phase 1: Discovery) ──
   checkov-scan:
     name: DevSecOps IaC Scan
-    uses: ./.github/workflows/reusable-checkov-scan.yml
+    uses: RepoCodeGanesh/.github/.github/workflows/tf-checkov-scan.yml@main
     with:
       working_directory: 'workloads/bank-compliance-ai-aks'
       framework: 'terraform'

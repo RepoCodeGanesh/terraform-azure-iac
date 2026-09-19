@@ -347,6 +347,16 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** In Windows PowerShell, unescaped closing parentheses `)` are interpreted by the parser as subexpression boundaries or parameter delimiters, truncating the trailing character before passing the string to `az.cmd`.
 * **Resolution:** Use PowerShell's stop-parsing symbol `--%` (`az --% functionapp config appsettings set --name <name> -g <rg> --settings "KEY=@Microsoft.KeyVault(...)"`) to instruct PowerShell to pass all downstream arguments verbatim to the process.
 
+### 47. Two-Tier Enterprise Pipeline Architecture (`RepoCodeGanesh/.github` vs Workload Monorepo)
+* **Architecture Standard:** Strict separation between Central Organization Golden Templates (`RepoCodeGanesh/.github`) and Workload Caller Workflows (`terraform-azure-iac/.github/workflows/`).
+* **Central Golden Templates (`RepoCodeGanesh/.github`):** Universal, workload-agnostic DevOps engines:
+  - `container-build-push.yml`: Multi-stage Docker build, Trivy CVE scan, and GHCR container publishing.
+  - `aks-helm-deploy.yml`: Azure OIDC authentication, Kubelogin, FinOps tuner injection, and Helm 3 rolling upgrades.
+  - `tf-checkov-scan.yml`: Central Checkov IaC policy-as-code gate across all Terraform roots.
+  - `pr-title-check.yml`: Central Conventional Commits validator for automated SemVer tagging.
+  - `app-deploy-func.yml` / `app-deploy-swa.yml` / `app-sec-scan.yml` / `tf-plan.yml` / `tf-apply.yml`.
+* **Workload Monorepo Standards:** Workload caller workflows (`app-bank-compliance.yml`, `app-tax-advisor.yml`, `platform-*.yml`, `workload-*.yml`) run native domain evaluation and test suites in-repo and delegate all packaging and deployment to the central templates, eliminating local reusable workflow duplication.
+
 ---
 
 
