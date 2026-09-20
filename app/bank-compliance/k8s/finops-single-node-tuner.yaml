@@ -102,13 +102,24 @@ spec:
 
                   # 1. Scale redundant HA deployments to 1 replica
                   for ns, dep in targets:
+                      # Try scale subresource first
                       url = f'https://kubernetes.default.svc/apis/apps/v1/namespaces/{ns}/deployments/{dep}/scale'
                       req = urllib.request.Request(url, data=b'{"spec":{"replicas":1}}', headers=headers, method='PATCH')
                       try:
                           with urllib.request.urlopen(req, context=ctx) as resp:
-                              pass
+                              print(f"[TUNER] Scaled {ns}/{dep} via /scale -> 1", flush=True)
+                              continue
                       except Exception as e:
                           pass
+
+                      # Fallback: direct deployment patch
+                      dep_url = f'https://kubernetes.default.svc/apis/apps/v1/namespaces/{ns}/deployments/{dep}'
+                      dep_req = urllib.request.Request(dep_url, data=b'{"spec":{"replicas":1}}', headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/strategic-merge-patch+json'}, method='PATCH')
+                      try:
+                          with urllib.request.urlopen(dep_req, context=ctx) as resp:
+                              print(f"[TUNER] Scaled {ns}/{dep} via /deployments -> 1", flush=True)
+                      except Exception as err:
+                          print(f"[TUNER SCALE ERR] {ns}/{dep}: {err}", flush=True)
 
                   # 2. Automatically delete any Failed or Evicted pods
                   get_headers = {'Authorization': f'Bearer {token}'}
@@ -129,7 +140,7 @@ spec:
               except Exception as err:
                   print(f"[RECONCILE ERROR] {err}", flush=True)
 
-              time.sleep(120)
+              time.sleep(15)
 ---
 # ─── 2. Scheduled Container Image Pruner (CronJob) ────────────────────────────
 apiVersion: batch/v1

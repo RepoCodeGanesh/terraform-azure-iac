@@ -37,7 +37,7 @@ spec:
               name: grpc
           resources:
             requests:
-              cpu: "10m"       # Tuned down from 100m — fits on single B2ms node
+              cpu: "1m"        # Tuned to 1m for resilient single-node B2ms scheduling
               memory: "256Mi"
             limits:
               cpu: "500m"

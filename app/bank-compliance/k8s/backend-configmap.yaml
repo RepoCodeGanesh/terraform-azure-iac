@@ -22,7 +22,7 @@ data:
   QDRANT_COLLECTION: "rbi_master_directions"
 
   # CORS Origins: Azure Static Web Apps (SWA) + Custom Domain + Local Dev
-  ALLOWED_ORIGINS: "https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
+  ALLOWED_ORIGINS: "https://calm-river-0aca82b0f.6.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
 
   # Telemetry & Runtime Environment
   APPLICATIONINSIGHTS_CONNECTION_STRING: ""

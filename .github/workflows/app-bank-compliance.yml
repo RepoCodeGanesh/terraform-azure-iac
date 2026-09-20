@@ -148,7 +148,7 @@ jobs:
     uses: RepoCodeGanesh/.github/.github/workflows/container-build-push.yml@main
     with:
       context_dir: 'app/bank-compliance/backend'
-      image_name: 'bank-compliance-backend'
+      image_name: '${{ github.repository_owner }}/bank-compliance-backend'
       sha: ${{ github.sha }}
     secrets: inherit
 
