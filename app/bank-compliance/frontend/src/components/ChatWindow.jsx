@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle, Shield } from 'lucide-react'
+import { Send, Bot, Sparkles, ArrowRight, ShieldCheck, Download, Zap, Cpu, ChevronDown, ChevronUp, CheckCircle2, ShieldAlert, MinusCircle } from 'lucide-react'
 import MarkdownRenderer from './MarkdownRenderer'
 import CitationCard from './CitationCard'
 import PIIBanner from './PIIBanner'
@@ -773,30 +773,6 @@ Approved for CCO / Internal Audit Review.`
                 fontFamily: 'inherit'
               }}
             />
-
-            {/* Inference Mode Toggle — icon only, compact */}
-            <button
-              type="button"
-              onClick={() => setInferenceMode(inferenceMode === 'cloud' ? 'sovereign' : 'cloud')}
-              title={inferenceMode === 'sovereign' ? 'Sovereign SLM (Qwen 2.5 — AKS In-Cluster). Click to switch to Multi-Cloud Fleet.' : 'Multi-Cloud Fleet (Groq / Gemini). Click to switch to Sovereign SLM.'}
-              style={{
-                background: inferenceMode === 'sovereign' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.12)',
-                border: inferenceMode === 'sovereign' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(99, 102, 241, 0.3)',
-                borderRadius: '8px',
-                padding: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: 'all 0.18s ease',
-                boxShadow: inferenceMode === 'sovereign' ? '0 0 8px rgba(16, 185, 129, 0.25)' : '0 0 8px rgba(99, 102, 241, 0.2)'
-              }}
-            >
-              {inferenceMode === 'sovereign'
-                ? <Shield size={15} color="#34d399" />
-                : <Zap size={15} color="#818cf8" />}
-            </button>
             <button
               type="submit"
               disabled={loading || !input.trim()}

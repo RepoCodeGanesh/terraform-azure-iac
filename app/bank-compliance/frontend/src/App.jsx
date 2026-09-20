@@ -5,7 +5,8 @@ import {
   FileCheck,
   MessageSquare,
   Sliders,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import GenAIOpsDashboard from './components/GenAIOpsDashboard'
@@ -201,6 +202,36 @@ export default function App() {
             <span className="nav-btn-text">Policy Redliner</span>
           </button>
         </nav>
+
+        {/* Right: Inference Engine Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {inferenceMode === 'sovereign'
+            ? <Shield size={13} color="#34d399" />
+            : <Zap size={13} color="#818cf8" />}
+          <select
+            value={inferenceMode}
+            onChange={(e) => setInferenceMode(e.target.value)}
+            title="Switch inference engine"
+            style={{
+              background: 'rgba(15, 23, 42, 0.85)',
+              border: inferenceMode === 'sovereign'
+                ? '1px solid rgba(16, 185, 129, 0.45)'
+                : '1px solid rgba(99, 102, 241, 0.4)',
+              color: inferenceMode === 'sovereign' ? '#34d399' : '#c7d2fe',
+              borderRadius: '7px',
+              padding: '4px 8px',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              outline: 'none',
+              fontFamily: 'inherit',
+              transition: 'border-color 0.18s ease'
+            }}
+          >
+            <option value="cloud" style={{ background: '#0f172a', color: '#c7d2fe' }}>Multi-Cloud Fleet</option>
+            <option value="sovereign" style={{ background: '#0f172a', color: '#34d399' }}>Sovereign SLM</option>
+          </select>
+        </div>
       </header>
 
       {/* ── Main Dynamic Workspace View ────────────────────────────────────── */}
