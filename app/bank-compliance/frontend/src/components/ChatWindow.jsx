@@ -410,7 +410,7 @@ Approved for CCO / Internal Audit Review.`
             title="Inspect 2026/2027 LangGraph StateGraph, GraphRAG & MCP Tool Bridge"
           >
             <Sparkles size={11} color="#818cf8" />
-            <span>Architecture &amp; Interview Inspector</span>
+            <span>Architecture &amp; Systems Inspector</span>
           </button>
         )}
       </div>

@@ -44,12 +44,12 @@ class TestUIComponentsIntegrity(unittest.TestCase):
         with open(modal_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Check for 5 core frontier interview tabs
+        # Check for 5 core frontier architecture tabs
         self.assertIn("stategraph", content)
         self.assertIn("graphrag", content)
         self.assertIn("mcp", content)
         self.assertIn("dossier", content)
-        self.assertIn("interview", content)
+        self.assertIn("adrs", content)
 
         # Check for 3 MCP tools
         self.assertIn("calculate_fldg_cap", content)
@@ -79,7 +79,7 @@ class TestUIComponentsIntegrity(unittest.TestCase):
 
         self.assertIn("onOpenInspector", content)
         self.assertTrue(
-            "Architecture & Interview Inspector" in content or "Architecture &amp; Interview Inspector" in content,
+            "Architecture & Systems Inspector" in content or "Architecture &amp; Systems Inspector" in content,
             "ChatWindow should contain Architecture Inspector button text"
         )
 

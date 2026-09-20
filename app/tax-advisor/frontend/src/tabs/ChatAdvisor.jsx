@@ -30,7 +30,7 @@ export default function ChatAdvisor() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Union Budget 2025.\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!\n\n💡 *Ask for a tax calculation to see the **Microsoft AI Foundry Python Specialist** compute exact statutory slabs with verified code.*",
+      content: "Welcome 🙏 I am **TaxBot India**, your AI tax advisor for **FY 2026-27 (AY 2027-28)** under Union Budget 2025.\n\nAsk me anything about income tax slabs, deductions (80C, 80D, 80CCD), Old vs New regime comparison, HRA exemption, or capital gains tax!\n\n💡 *Tip: Enter your salary and deduction details to receive exact statutory slabs, automated deduction optimization, and verified net tax computations.*",
       model: "system-welcome",
     },
   ])

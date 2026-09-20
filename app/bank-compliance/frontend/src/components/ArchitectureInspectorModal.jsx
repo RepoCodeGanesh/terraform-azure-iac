@@ -275,7 +275,7 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
             { id: 'graphrag', label: '2. GraphRAG Knowledge Mesh', icon: Network },
             { id: 'mcp', label: '3. MCP Agent Tool Bridge', icon: Terminal },
             { id: 'dossier', label: '4. Signed Compliance Dossier', icon: Award },
-            { id: 'interview', label: '5. Staff Architect Cheat Sheet', icon: BookOpen }
+            { id: 'adrs', label: '5. Architectural Decision Records (ADR)', icon: BookOpen }
           ].map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -329,7 +329,7 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
                     LangGraph Cyclic Multi-Agent Topology (Zero-Hallucination Reflection Loop)
                   </div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: '2px' }}>
-                    Click any node in the pipeline below to inspect its operational logic, data inputs/outputs, and interview soundbite.
+                    Click any node in the pipeline below to inspect its operational logic, data inputs/outputs, and architectural rationale.
                   </div>
                 </div>
                 <span style={{
@@ -484,31 +484,31 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
 
                   <div style={{ background: 'rgba(0, 0, 0, 0.3)', borderRadius: '8px', padding: '12px', fontSize: '0.76rem' }}>
                     <div style={{ color: '#34d399', fontWeight: 600, marginBottom: '6px' }}>
-                      🎯 How to Explain in a Staff/Principal Architect Interview:
+                      🎯 Architectural Invariant &amp; Design Trade-off:
                     </div>
                     {selectedNode === 'ingress' && (
                       <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                        <em>"We enforce Shift-Left PII Defense. Regulators like RBI and DPDP mandate that personal identifiers are masked at the tenant boundary before entering any vector lake or LLM context window."</em>
+                        Enforces Shift-Left PII Defense: Regulators like RBI and DPDP mandate that personal identifiers are masked at the tenant boundary before entering any vector lake or LLM context window.
                       </p>
                     )}
                     {selectedNode === 'supervisor' && (
                       <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                        <em>"Rather than paying $0.002 per off-topic query with an LLM classifier, our Layer-1 Vector Centroid Sieve checks mathematical cosine distance in memory in 2ms. It achieves 100% boundary enforcement with zero compute egress."</em>
+                        Layer-1 Vector Centroid Sieve evaluates mathematical cosine distance in memory in &lt;3ms. It intercepts non-banking queries with zero compute egress and zero token cost.
                       </p>
                     )}
                     {selectedNode === 'retriever' && (
                       <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                        <em>"Legal chunking is notoriously brittle. A 500-token chunk from Clause 4.2 loses the title of Chapter II. Our GraphRAG reconstructs the hierarchical DAG (Circular ➔ Chapter ➔ Clause) at query time."</em>
+                        Hierarchical DAG Reconstruction: GraphRAG reconstructs the hierarchical relationship (Circular ➔ Chapter ➔ Clause) at query time, eliminating context loss across 500-token chunk boundaries.
                       </p>
                     )}
                     {selectedNode === 'auditor' && (
                       <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                        <em>"We treat statutory citation verification as a deterministic gate. If the retrieved evidence lacks ground truth circular numbers, our LangGraph StateGraph loops back to re-retrieve rather than synthesizing hallucinations."</em>
+                        Deterministic Grounding Gate: Evaluates retrieved evidence against ground-truth circular identifiers. If grounding criteria are unmet, the LangGraph StateGraph loops back to re-retrieve rather than synthesizing hallucinations.
                       </p>
                     )}
                     {selectedNode === 'synthesizer' && (
                       <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                        <em>"We designed a multi-cloud fallback matrix. Production queries run on Groq LPUs with Gemini backup; air-gapped banking workloads execute on our zero-cost in-cluster Qwen 2.5 SLM without external API egress."</em>
+                        Multi-Cloud Fallback Matrix: Production queries run on high-speed cloud LPUs with multi-region fallback; air-gapped confidential banking workloads execute on the in-cluster Qwen 2.5 Sovereign SLM without external API egress.
                       </p>
                     )}
                   </div>
@@ -1119,9 +1119,9 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              TAB 5: Staff Architect System Design Cheat Sheet
+              TAB 5: Enterprise Architectural Decision Records (ADR)
              ══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'interview' && (
+          {activeTab === 'adrs' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{
                 background: 'rgba(139, 92, 246, 0.08)',
@@ -1130,33 +1130,38 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
                 padding: '14px 18px'
               }}>
                 <div style={{ fontWeight: 700, color: '#c4b5fd', fontSize: '0.88rem' }}>
-                  High-Package Interview Cheat Sheet (Staff AI Platform / GenAI Architect)
+                  Enterprise Architectural Decision Records (ADR) &amp; Systems Invariants
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: '2px' }}>
-                  Exact, battle-tested system design soundbites to stand out in the top 0.1% of engineering candidates.
+                  Production design invariants, trade-off evaluations, and architectural rationale for the BankCompliance AI platform.
                 </div>
               </div>
 
               {[
                 {
-                  q: "1. Why LangGraph StateGraph over simple linear chains or vanilla LangChain?",
-                  a: "Linear chains assume deterministic forward progress. Regulatory compliance requires cyclical reflection: if the Auditor Gate determines that retrieved clauses have a grounding score < 0.8, the StateGraph automatically routes back to the Retriever with refined regulatory terms (max 2 loops) before final synthesis. This eliminates 100% of hallucinations."
+                  id: "ADR-001",
+                  title: "ADR-001: Cyclic StateGraph vs. Linear Chains for Regulatory Verification",
+                  tradeoff: "Linear chains assume deterministic forward progress. Regulatory compliance requires cyclical reflection: if the Auditor Gate determines that retrieved clauses have a grounding score < 0.8, the StateGraph automatically routes back to the Retriever with refined regulatory terms (max 2 loops) before final synthesis. This eliminates hallucinations deterministically."
                 },
                 {
-                  q: "2. Why GraphRAG Hierarchical Knowledge Mesh over flat chunking?",
-                  a: "Chunking legal text at 500 tokens breaks chapter boundaries. A clause like 'Section 4.1' becomes meaningless without knowing it belongs to 'Chapter III: Cloud Outsourcing' of 'RBI Circular 102'. GraphRAG builds a Directed Acyclic Graph (Circular ➔ Chapter ➔ Section ➔ Clause), dynamically injecting parent chapter metadata and sibling clauses into the prompt."
+                  id: "ADR-002",
+                  title: "ADR-002: Hierarchical GraphRAG vs. Flat Dense Vector Chunking for Legal Ontologies",
+                  tradeoff: "Chunking legal text at 500 tokens breaks chapter boundaries. A clause like 'Section 4.1' becomes ambiguous without knowing it belongs to 'Chapter III: Cloud Outsourcing' of 'RBI Circular 102'. GraphRAG builds a Directed Acyclic Graph (Circular ➔ Chapter ➔ Section ➔ Clause), dynamically injecting parent chapter metadata and sibling clauses into the prompt."
                 },
                 {
-                  q: "3. Why Model Context Protocol (MCP) instead of OpenAI function calling?",
-                  a: "Proprietary function calling locks architecture into a single vendor's API format. Anthropic & Microsoft's MCP JSON-RPC v2024-11-05 decouples tool definitions from LLM providers. Any agent (Groq, Gemini, or Sovereign Qwen) invokes identical deterministic compliance tools with standard JSON-RPC 2.0 schemas."
+                  id: "ADR-003",
+                  title: "ADR-003: Model Context Protocol (MCP) RPC Specification vs. Proprietary Function Calling",
+                  tradeoff: "Proprietary function calling locks architecture into a single vendor's API format. Anthropic & Microsoft's MCP JSON-RPC v2024-11-05 decouples tool definitions from LLM providers. Any agent (Groq, Gemini, or Sovereign Qwen) invokes identical deterministic compliance tools with standard JSON-RPC 2.0 schemas."
                 },
                 {
-                  q: "4. How do you guarantee $0.00 idle cost on Azure Kubernetes Service (AKS)?",
-                  a: "We run AKS Free Tier with single-node B2s/D2s CPU scheduling, KEDA scale-to-zero for batch evaluators, and ephemeral container storage with 4GB CSI disks. Furthermore, our 2-tier in-memory semantic cache achieves a 94.2% hit rate, serving identical statutory queries in <8ms with $0.00 LLM token cost."
+                  id: "ADR-004",
+                  title: "ADR-004: FinOps Cost Optimization & Zero-Idle Compute Allocation on AKS Free Tier",
+                  tradeoff: "The platform operates on AKS Free Tier with single-node B2s/D2s CPU scheduling, KEDA scale-to-zero for batch evaluators, and ephemeral container storage with 4GB CSI disks. Furthermore, the 2-tier in-memory semantic cache achieves a 94.2% hit rate, serving identical statutory queries in <8ms with $0.00 LLM token cost."
                 },
                 {
-                  q: "5. How do you satisfy statutory data sovereignty under the DPDP Act 2023 and RBI Mandates?",
-                  a: "We implement a 3-layer guardrail: (1) Shift-Left in-memory regex & entropy PII masking at ingress, (2) Layer-1 mathematical vector centroid sieve (<3ms) to deflect out-of-scope queries with zero cloud egress, and (3) Dual-engine inference supporting an air-gapped Sovereign SLM (Qwen2.5-0.5B) running on in-cluster AKS CPU nodes."
+                  id: "ADR-005",
+                  title: "ADR-005: Multi-Tier Data Sovereignty & Statutory DPDP Act 2023 Enforcement",
+                  tradeoff: "Enforces a 3-layer guardrail: (1) Shift-Left in-memory regex & entropy PII masking at ingress, (2) Layer-1 mathematical vector centroid sieve (<3ms) to deflect out-of-scope queries with zero cloud egress, and (3) Dual-engine inference supporting an air-gapped Sovereign SLM (Qwen2.5-0.5B) running on in-cluster AKS CPU nodes."
                 }
               ].map((item, idx) => (
                 <div
@@ -1169,10 +1174,10 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
                   }}
                 >
                   <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#818cf8', marginBottom: '8px' }}>
-                    {item.q}
+                    {item.title}
                   </div>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.55', margin: 0 }}>
-                    {item.a}
+                    {item.tradeoff}
                   </p>
                 </div>
               ))}
