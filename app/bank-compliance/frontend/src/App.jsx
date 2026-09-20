@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import {
   Building2,
-  Sliders,
   Shield,
-  Activity,
   FileCheck,
-  Zap,
   MessageSquare,
+  Sliders,
   Sparkles
 } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
@@ -29,6 +27,7 @@ function getPillarFromPath(pathname) {
 export default function App() {
   const [lakeStats, setLakeStats] = useState({ total_circulars: 12, total_indexed_clauses: 120 })
   const [isInspectorOpen, setIsInspectorOpen] = useState(false)
+  const [inferenceMode, setInferenceMode] = useState('cloud')
 
   // ── Global Enterprise Architecture Navigation & URL Deep-Linking ───────────
   // activePillar: 'copilot' | 'command' | 'governance' | 'monitoring' | 'redline'
@@ -63,9 +62,6 @@ export default function App() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
-
-  // Global Inference Engine Mode: 'cloud' | 'sovereign'
-  const [inferenceMode, setInferenceMode] = useState('cloud')
 
   const triggerDataLakeSync = async () => {
     try {
@@ -119,9 +115,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Center: Streamlined Enterprise Command Pillars + Architecture Inspector */}
+        {/* Center: Enterprise Command Pillars */}
         <nav className="header-nav" style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
-          {/* Pillar 1: Copilot */}
           <button
             onClick={() => navigateToPillar('copilot')}
             style={{
@@ -143,7 +138,6 @@ export default function App() {
             <span>Regulatory Copilot</span>
           </button>
 
-          {/* Pillar 2: Command & FinOps */}
           <button
             onClick={() => navigateToPillar('command')}
             style={{
@@ -165,7 +159,6 @@ export default function App() {
             <span>Command &amp; FinOps</span>
           </button>
 
-          {/* Pillar 3: Governance & Audit */}
           <button
             onClick={() => navigateToPillar('governance')}
             style={{
@@ -187,7 +180,6 @@ export default function App() {
             <span>Governance &amp; Audit</span>
           </button>
 
-          {/* Pillar 4: Policy Redliner */}
           <button
             onClick={() => navigateToPillar('redline')}
             style={{
@@ -208,115 +200,7 @@ export default function App() {
             <FileCheck size={13} />
             <span className="nav-btn-text">Policy Redliner</span>
           </button>
-
-          {/* Special Action: Architecture & Learning Inspector */}
-          <button
-            type="button"
-            onClick={() => setIsInspectorOpen(true)}
-            style={{
-              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(6, 182, 212, 0.25))',
-              border: '1px solid rgba(99, 102, 241, 0.6)',
-              color: '#ffffff',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              boxShadow: '0 0 14px rgba(79, 70, 229, 0.35)',
-              transition: 'all 0.18s ease',
-              marginLeft: '4px'
-            }}
-            title="Open 2026/2027 Frontier Platform Architecture & Learning Inspector"
-          >
-            <Sparkles size={13} color="#a5b4fc" />
-            <span className="desktop-only">Architecture Inspector</span>
-            <span style={{
-              background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
-              color: '#fff',
-              fontSize: '0.62rem',
-              padding: '1px 5px',
-              borderRadius: '4px',
-              fontWeight: 800
-            }}>2026/27</span>
-          </button>
         </nav>
-
-        {/* Right: Global Inference Engine Switcher & APIM Health */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <div style={{
-            display: 'inline-flex',
-            background: 'rgba(15, 23, 42, 0.85)',
-            padding: '3px',
-            borderRadius: '9px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            gap: '3px'
-          }}>
-            <button
-              type="button"
-              onClick={() => setInferenceMode('cloud')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '5px 11px',
-                borderRadius: '6px',
-                fontSize: '0.73rem',
-                fontWeight: 600,
-                border: inferenceMode === 'cloud' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
-                background: inferenceMode === 'cloud' ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
-                color: inferenceMode === 'cloud' ? '#c7d2fe' : 'var(--text-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <Zap size={12} color={inferenceMode === 'cloud' ? '#818cf8' : 'currentColor'} />
-              <span className="engine-btn-text-desktop">Multi-Cloud Fleet (Groq/Gemini)</span>
-              <span className="engine-btn-text-mobile">Cloud</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setInferenceMode('sovereign')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '5px 11px',
-                borderRadius: '6px',
-                fontSize: '0.73rem',
-                fontWeight: 600,
-                border: inferenceMode === 'sovereign' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
-                background: inferenceMode === 'sovereign' ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
-                color: inferenceMode === 'sovereign' ? '#34d399' : 'var(--text-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.18s ease'
-              }}
-            >
-              <Shield size={12} color={inferenceMode === 'sovereign' ? '#34d399' : 'currentColor'} />
-              <span className="engine-btn-text-desktop">Sovereign SLM (Qwen 2.5)</span>
-              <span className="engine-btn-text-mobile">SLM</span>
-            </button>
-          </div>
-
-          <span style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            color: '#34d399',
-            fontSize: '0.68rem',
-            padding: '4px 9px',
-            borderRadius: '9999px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px'
-          }}>
-            <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-            <span className="desktop-only">APIM 200 OK</span>
-          </span>
-        </div>
       </header>
 
       {/* ── Main Dynamic Workspace View ────────────────────────────────────── */}
