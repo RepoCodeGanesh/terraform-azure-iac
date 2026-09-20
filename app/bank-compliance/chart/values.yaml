@@ -9,7 +9,7 @@ namespace: bank-compliance
 serviceAccount:
   create: true
   name: bankc-sa
-  clientId: "0db122a8-1966-4955-8c97-74f1b540ca45"
+  clientId: "316abc31-9155-4dab-a378-ebfa8e6b12bb"
 
 # FastAPI Backend
 backend:
@@ -37,7 +37,7 @@ backend:
     qdrantHost: "qdrant"
     qdrantPort: "6333"
     qdrantCollection: "rbi_master_directions"
-    allowedOrigins: "https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
+    allowedOrigins: "https://calm-river-0aca82b0f.6.azurestaticapps.net,https://happy-coast-00666250f.7.azurestaticapps.net,https://bank.mytaxbot.site,http://bank.mytaxbot.site,http://localhost:3000,http://localhost:8000,*"
     environment: "production"
     langfuseHost: "https://cloud.langfuse.com"
     langfuseTracingEnabled: "true"
