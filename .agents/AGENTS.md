@@ -356,6 +356,31 @@ State files are path-keyed — **git repo location does not affect state**.
   - `app-deploy-func.yml` / `app-deploy-swa.yml` / `app-sec-scan.yml` / `tf-plan.yml` / `tf-apply.yml`.
 * **Workload Monorepo Standards:** Workload caller workflows (`app-bank-compliance.yml`, `app-tax-advisor.yml`, `platform-*.yml`, `workload-*.yml`) run native domain evaluation and test suites in-repo and delegate all packaging and deployment to the central templates, eliminating local reusable workflow duplication.
 
+### 48. Azure Static Web Apps Pre-Built Vite Bundle Upload (`skip_app_build: true` & Direct `dist` Upload)
+* **Symptom:** Deploying a Vite React SPA via `Azure/static-web-apps-deploy@v1` with pre-built artifacts results in the website loading the unbundled development HTML (`<script type="module" src="/src/main.jsx"></script>`) instead of compiled assets, or `/assets/index-*.js` returning 404.
+* **Root Cause:** By default, `static-web-apps-deploy` invokes Microsoft Oryx to build the codebase a second time unless `skip_app_build: true` is explicitly passed. Furthermore, when `skip_app_build: true` is set, `app_location` must point directly to the directory containing the compiled `index.html` (e.g. `${{ inputs.working_directory }}/${{ inputs.output_location }}`), and `output_location` must be set to an empty string `""` so the action does not search for an extraneous nested subfolder (`dist/dist`).
+* **Resolution:** In reusable `app-deploy-swa.yml`, set:
+  ```yaml
+  app_location: ${{ inputs.working_directory }}/${{ inputs.output_location }}
+  output_location: ""
+  skip_app_build: true
+  ```
+  Also copy `staticwebapp.config.json` directly into `dist/` before deployment to ensure navigation fallbacks and security headers (CSP, HSTS) are applied.
+
+### 49. Helm 3 Adoption of Pre-Existing Kubernetes Workloads (`invalid ownership metadata`)
+* **Symptom:** `helm upgrade --install` fails during CI/CD with `Error: rendered manifests contain a resource that already exists. Unable to continue with install: Deployment "bankc-backend" in namespace "bank-compliance" exists and cannot be imported into the current release: invalid ownership metadata; label validation error: missing key "app.kubernetes.io/managed-by": must be set to "Helm"; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "<release-name>"`.
+* **Root Cause:** When Kubernetes resources (Deployments, Services, ConfigMaps, Secrets, ServiceAccounts) are initially provisioned via `kubectl apply`, they lack Helm metadata. Helm strictly verifies ownership annotations to prevent accidental overwrites.
+* **Resolution:** Annotate and label the pre-existing resources to adopt them into Helm management:
+  ```bash
+  kubectl annotate <resource> -n <ns> meta.helm.sh/release-name=<release-name> meta.helm.sh/release-namespace=<ns> --overwrite
+  kubectl label <resource> -n <ns> app.kubernetes.io/managed-by=Helm --overwrite
+  ```
+
+### 50. Reusable GHCR Container Push Image Namespace Resolution (`${{ github.repository_owner }}`)
+* **Symptom:** Multi-stage Docker build step succeeds, but push to GitHub Container Registry (`ghcr.io`) fails with `denied: installation not allowed to Create organization package` or `HTTP 403 Forbidden`.
+* **Root Cause:** In reusable workflow calls, passing a plain image name (e.g. `image_name: 'bank-compliance-backend'`) causes the target tag to resolve to `ghcr.io/bank-compliance-backend:latest`. GHCR strictly mandates image names in the format `ghcr.io/<owner>/<image-name>`.
+* **Resolution:** (1) Pass `image_name: '${{ github.repository_owner }}/bank-compliance-backend'` in caller workflows. (2) In reusable `container-build-push.yml`, implement automatic namespace fallback: if `inputs.image_name` contains no `/`, automatically prepend `${{ github.repository_owner }}/`.
+
 ---
 
 
