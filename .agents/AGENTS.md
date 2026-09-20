@@ -381,6 +381,15 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** In reusable workflow calls, passing a plain image name (e.g. `image_name: 'bank-compliance-backend'`) causes the target tag to resolve to `ghcr.io/bank-compliance-backend:latest`. GHCR strictly mandates image names in the format `ghcr.io/<owner>/<image-name>`.
 * **Resolution:** (1) Pass `image_name: '${{ github.repository_owner }}/bank-compliance-backend'` in caller workflows. (2) In reusable `container-build-push.yml`, implement automatic namespace fallback: if `inputs.image_name` contains no `/`, automatically prepend `${{ github.repository_owner }}/`.
 
+### 51. Azure API Management to Linux Function App TLS 1.3 / mTLS Handshake Failure (`HTTP 500 Internal Server Error`)
+* **Symptom:** In TaxBot India (`www.mytaxbot.site`), sending chat queries or hitting `/tax-advisor/health` via APIM returns `HTTP 500 Internal Server Error` with `{"statusCode": 500, "message": "Internal server error"}`. Direct curls to the Function App fail with Windows Schannel `SEC_E_ILLEGAL_MESSAGE (0x80090326)`.
+* **Root Cause:** (1) The Function App's `site_config.minimum_tls_version` was set to `"1.3"`. Azure API Management Consumption tier instances only support outbound communication up to TLS 1.2, causing TLS negotiation failure. (2) In Azure Verified Module (`Azure/avm-res-web-site/azurerm`), `client_certificate_mode` defaults to `"Required"`, triggering mutual TLS certificate request prompts on the front door that drop connections from standard HTTP clients.
+* **Resolution:** (1) In `modules/function_app/main.tf`, set `minimum_tls_version = "1.2"`, `client_certificate_enabled = false`, and `client_certificate_mode = "Optional"`. (2) Update the live Function App via Azure CLI:
+  ```bash
+  az functionapp update --name <func-name> --resource-group <rg-name> --set clientCertMode=Optional clientCertEnabled=false
+  az functionapp config set --name <func-name> --resource-group <rg-name> --min-tls-version 1.2
+  ```
+
 ---
 
 

@@ -49,10 +49,14 @@ module "function_app" {
     }
   )
 
+  # Client certificate authentication (disabled for APIM compatibility)
+  client_certificate_enabled = false
+  client_certificate_mode    = "Optional"
+
   # Python runtime stack
   site_config = {
     always_on           = false
-    minimum_tls_version = "1.3"
+    minimum_tls_version = "1.2"
 
     application_stack = {
       python = {
