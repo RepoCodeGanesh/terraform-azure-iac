@@ -150,6 +150,7 @@ jobs:
       context_dir: 'app/bank-compliance/backend'
       image_name: 'bank-compliance-backend'
       sha: ${{ github.sha }}
+    secrets: inherit
 
   # ── JOB 4: Deploy Helm Chart to AKS (Central Org Template) ──────────────────
   backend-deploy:
