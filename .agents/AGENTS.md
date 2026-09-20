@@ -443,6 +443,13 @@ State files are path-keyed — **git repo location does not affect state**.
 
 ---
 
+### 50. Azure SWA Root Path 404 — `staticwebapp.config.json` Not in Vite `public/` Directory
+* **Symptom:** `https://bank.mytaxbot.site/` and `/index.html` return `404 Not Found`, while nested SPA routes (e.g. `/chat`) return `200 OK` with the correct React app.
+* **Root Cause:** The `staticwebapp.config.json` (containing `navigationFallback` → `/index.html`) was placed in the frontend project root, but **not** inside `public/`. Vite only copies the `public/` directory into `dist/`. Without `staticwebapp.config.json` in `dist/`, Azure SWA cannot apply the fallback routing rule, so direct root requests 404.
+* **Resolution:** Copy `staticwebapp.config.json` into `app/bank-compliance/frontend/public/staticwebapp.config.json` so Vite includes it in `dist/` at build time. The Azure SWA deploy action (`output_location: 'dist'`) will then pick it up and activate the `navigationFallback` rule.
+
+---
+
 ## 🤖 Developer AI Tooling & Environment Context
 - **Primary Focus:** Enterprise AI Platform Engineering, GenAIOps, LLMOps, and Cloud-Native DataOps.
 - **AI Ecosystem:** Google AI Plus (Gemini Pro long-context analysis), Antigravity IDE, NotebookLM (regulatory PDF analysis), Azure AI Services.
