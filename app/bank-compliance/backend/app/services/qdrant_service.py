@@ -94,7 +94,7 @@ def load_documents_corpus() -> List[Dict[str, Any]]:
 # Initialize the corpus on module load
 load_documents_corpus()
 
-async def search_rbi_clauses(query: str, limit: int = 3) -> List[Dict[str, Any]]:
+def search_rbi_clauses_sync(query: str, limit: int = 3) -> List[Dict[str, Any]]:
     global LOADED_CLAUSES
     if not LOADED_CLAUSES:
         load_documents_corpus()
@@ -148,6 +148,11 @@ async def search_rbi_clauses(query: str, limit: int = 3) -> List[Dict[str, Any]]
     scored_results.sort(key=lambda x: x["_raw_score"], reverse=True)
     return scored_results[:limit]
 
+
+async def search_rbi_clauses(query: str, limit: int = 3) -> List[Dict[str, Any]]:
+    return search_rbi_clauses_sync(query, limit=limit)
+
+
 def get_provenance_by_id(item_id: str) -> Optional[Dict[str, Any]]:
     """
     Cryptographic Provenance Lookup for Regulatory Audits (AI-300).
@@ -190,5 +195,37 @@ def get_provenance_by_id(item_id: str) -> Optional[Dict[str, Any]]:
             }
             
     return None
+
+
+def search_with_graph_hierarchy(query: str, limit: int = 3) -> List[Dict[str, Any]]:
+    """
+    GraphRAG Context-Expanded Search.
+    Retrieves matching clauses via hybrid search and dynamically expands their
+    parent chapter, sibling clauses, and root circular context from the regulatory DAG.
+    """
+    from app.services.graph_rag import get_regulatory_graph
+    graph = get_regulatory_graph()
+    
+    global LOADED_CLAUSES
+    if not LOADED_CLAUSES:
+        load_documents_corpus()
+    if len(graph.nodes) < len(LOADED_CLAUSES):
+        graph.ingest_chunk_list(LOADED_CLAUSES)
+        
+    results = search_rbi_clauses_sync(query, limit=limit)
+    enhanced_results = []
+    
+    for r in results:
+        chunk_id = r.get("chunk_id")
+        if chunk_id:
+            expanded = graph.expand_context(chunk_id)
+            r_copy = dict(r)
+            r_copy["graph_rag"] = expanded
+            enhanced_results.append(r_copy)
+        else:
+            enhanced_results.append(r)
+            
+    return enhanced_results
+
 
 

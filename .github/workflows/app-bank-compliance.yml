@@ -113,6 +113,14 @@ jobs:
         run: |
           python app/bank-compliance/backend/test_all_8_tasks_suite.py
 
+      - name: Run 2026/2027 Frontier Test Suite (GraphRAG, MCP, Dossier)
+        run: |
+          python app/bank-compliance/backend/test_2026_frontier_suite.py
+
+      - name: Run Frontend UI Integrity & Component Test Suite
+        run: |
+          python app/bank-compliance/frontend/test_ui_syntax_and_integrity.py
+
       - name: Upload GenAIOps Scorecard & FinOps Attestation
         if: always()
         uses: actions/upload-artifact@v4

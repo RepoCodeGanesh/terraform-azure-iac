@@ -246,7 +246,7 @@ function getExecutionTrace(m) {
 }
 
 
-export default function ChatWindow({ inferenceMode: propInferenceMode, onToggleInferenceMode }) {
+export default function ChatWindow({ inferenceMode: propInferenceMode, onToggleInferenceMode, onOpenInspector }) {
   const [internalInferenceMode, setInternalInferenceMode] = useState('cloud')
   const inferenceMode = propInferenceMode !== undefined ? propInferenceMode : internalInferenceMode
   const setInferenceMode = onToggleInferenceMode || setInternalInferenceMode
@@ -373,6 +373,48 @@ Approved for CCO / Internal Audit Review.`
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent' }}>
+      {/* ── Sub-Header: Regulatory Status & Quick Architecture Access ── */}
+      <div style={{
+        padding: '7px 20px',
+        background: 'rgba(15, 23, 42, 0.65)',
+        borderBottom: '1px solid var(--border-subtle)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '8px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+          <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+          <span>Knowledge Mesh: <strong>14 RBI Master Directions</strong> • In-Cluster Qdrant Lake (Verified)</span>
+        </div>
+
+        {onOpenInspector && (
+          <button
+            type="button"
+            onClick={onOpenInspector}
+            style={{
+              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(6, 182, 212, 0.15))',
+              border: '1px solid rgba(99, 102, 241, 0.4)',
+              color: '#c7d2fe',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.18s ease'
+            }}
+            title="Inspect 2026/2027 LangGraph StateGraph, GraphRAG & MCP Tool Bridge"
+          >
+            <Sparkles size={11} color="#818cf8" />
+            <span>Architecture &amp; Interview Inspector</span>
+          </button>
+        )}
+      </div>
+
       {/* Messages Scroll Area */}
       <div className="chat-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
         <div style={{
@@ -557,6 +599,33 @@ Approved for CCO / Internal Audit Review.`
                             )
                           })}
                         </div>
+
+                        {onOpenInspector && (
+                          <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
+                            <button
+                              type="button"
+                              onClick={onOpenInspector}
+                              style={{
+                                background: 'rgba(99, 102, 241, 0.15)',
+                                border: '1px solid rgba(99, 102, 241, 0.4)',
+                                color: '#c7d2fe',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                padding: '5px 12px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.18s ease'
+                              }}
+                            >
+                              <Sparkles size={12} color="#818cf8" />
+                              <span>Inspect Full StateGraph, GraphRAG &amp; MCP in Architecture Inspector</span>
+                              <ArrowRight size={11} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )
                   })()}

@@ -571,6 +571,59 @@ async def get_cache_finops():
     """Returns real-time token savings and cost avoidance stats for the semantic vector cache."""
     return get_cache_finops_summary()
 
+# ── 2026/2027 Frontier Endpoints: Dossier, MCP & GraphRAG ────────────────────
+
+@router.get("/compliance/dossier", tags=["2026/2027 Regulatory Governance"])
+async def get_dossier():
+    """
+    Algorithmic Compliance Attestation Dossier.
+    Returns regulator-ready audit package compiling Model Card v1.0.0,
+    25-attack PyRIT Red Team security attestation, and GenAIOps Ragas quality scorecard.
+    """
+    from app.services.compliance_dossier import get_compliance_dossier_generator
+    generator = get_compliance_dossier_generator()
+    return generator.compile_dossier()
+
+@router.get("/compliance/mcp/tools", tags=["2026/2027 Model Context Protocol"])
+async def list_mcp_tools():
+    """Returns the Model Context Protocol (MCP) tools manifest."""
+    from app.services.mcp_bridge import get_mcp_bridge
+    bridge = get_mcp_bridge()
+    return bridge.list_tools()
+
+class MCPCallRequest(BaseModel):
+    tool_name: str
+    arguments: Dict[str, Any]
+
+@router.post("/compliance/mcp/call", tags=["2026/2027 Model Context Protocol"])
+async def call_mcp_tool(req: MCPCallRequest):
+    """Executes a Model Context Protocol tool (calculate_fldg_cap, check_data_localization, verify_vcip_identity_step)."""
+    from app.services.mcp_bridge import get_mcp_bridge
+    bridge = get_mcp_bridge()
+    try:
+        result = bridge.call_tool(req.tool_name, req.arguments)
+        return {"tool_name": req.tool_name, "status": "SUCCESS", "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/compliance/graph/traverse/{item_id}", tags=["2026/2027 GraphRAG"])
+async def traverse_graph(item_id: str):
+    """
+    GraphRAG Context Traversal.
+    Returns the expanded hierarchical context (parent chapter, sibling clauses, root circular).
+    """
+    from app.services.graph_rag import get_regulatory_graph
+    graph = get_regulatory_graph()
+    global LOADED_CLAUSES
+    if not LOADED_CLAUSES:
+        load_documents_corpus()
+    if len(graph.nodes) < len(LOADED_CLAUSES):
+        graph.ingest_chunk_list(LOADED_CLAUSES)
+        
+    expanded = graph.expand_context(item_id)
+    return expanded
+
+
 
 
 

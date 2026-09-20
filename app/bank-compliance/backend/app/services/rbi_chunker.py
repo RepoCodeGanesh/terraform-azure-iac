@@ -113,6 +113,9 @@ def chunk_rbi_markdown(file_path_or_text: str, circular_id: str = None, circular
             "char_start": max(0, char_start),
             "char_end": max(len(section), char_end),
             "ingested_at": datetime.now(timezone.utc).isoformat(),
+            "graph_node_type": "CLAUSE",
+            "parent_chapter_title": current_chapter,
+            "hierarchical_path": f"{circular_no} > {current_chapter} > {clause_header}",
             "provenance_chain": {
                 "verified": True,
                 "algorithm": "sha256",

@@ -6,13 +6,15 @@ import {
   Activity,
   FileCheck,
   Zap,
-  MessageSquare
+  MessageSquare,
+  Sparkles
 } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import GenAIOpsDashboard from './components/GenAIOpsDashboard'
 import RedlineStudio from './components/RedlineStudio'
 import CommandCenter from './components/CommandCenter'
 import GovernanceCenter from './components/GovernanceCenter'
+import ArchitectureInspectorModal from './components/ArchitectureInspectorModal'
 
 const VALID_PILLARS = ['copilot', 'command', 'governance', 'monitoring', 'redline']
 
@@ -26,6 +28,7 @@ function getPillarFromPath(pathname) {
 
 export default function App() {
   const [lakeStats, setLakeStats] = useState({ total_circulars: 12, total_indexed_clauses: 120 })
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false)
 
   // ── Global Enterprise Architecture Navigation & URL Deep-Linking ───────────
   // activePillar: 'copilot' | 'command' | 'governance' | 'monitoring' | 'redline'
@@ -116,8 +119,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Center: 5 Core Enterprise Command Pillars */}
-        <nav className="header-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+        {/* Center: Streamlined Enterprise Command Pillars + Architecture Inspector */}
+        <nav className="header-nav" style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
           {/* Pillar 1: Copilot */}
           <button
             onClick={() => navigateToPillar('copilot')}
@@ -140,13 +143,13 @@ export default function App() {
             <span>Regulatory Copilot</span>
           </button>
 
-          {/* Pillar 2: Command Center */}
+          {/* Pillar 2: Command & FinOps */}
           <button
             onClick={() => navigateToPillar('command')}
             style={{
-              background: activePillar === 'command' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
-              border: activePillar === 'command' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
-              color: activePillar === 'command' ? '#c7d2fe' : 'var(--text-muted)',
+              background: (activePillar === 'command' || activePillar === 'monitoring') ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
+              border: (activePillar === 'command' || activePillar === 'monitoring') ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+              color: (activePillar === 'command' || activePillar === 'monitoring') ? '#c7d2fe' : 'var(--text-muted)',
               padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -159,10 +162,10 @@ export default function App() {
             }}
           >
             <Sliders size={13} />
-            <span>Command Center</span>
+            <span>Command &amp; FinOps</span>
           </button>
 
-          {/* Pillar 3: Governance Center */}
+          {/* Pillar 3: Governance & Audit */}
           <button
             onClick={() => navigateToPillar('governance')}
             style={{
@@ -181,32 +184,10 @@ export default function App() {
             }}
           >
             <Shield size={13} />
-            <span>Governance &amp; DPDP</span>
+            <span>Governance &amp; Audit</span>
           </button>
 
-          {/* Pillar 4: Live Monitoring */}
-          <button
-            onClick={() => navigateToPillar('monitoring')}
-            style={{
-              background: activePillar === 'monitoring' ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.2))' : 'transparent',
-              border: activePillar === 'monitoring' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid transparent',
-              color: activePillar === 'monitoring' ? '#38bdf8' : 'var(--text-muted)',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              transition: 'all 0.18s ease'
-            }}
-          >
-            <Activity size={13} />
-            <span>Live Monitoring</span>
-          </button>
-
-          {/* Pillar 5: Policy Redliner */}
+          {/* Pillar 4: Policy Redliner */}
           <button
             onClick={() => navigateToPillar('redline')}
             style={{
@@ -226,6 +207,40 @@ export default function App() {
           >
             <FileCheck size={13} />
             <span className="nav-btn-text">Policy Redliner</span>
+          </button>
+
+          {/* Special Action: Architecture & Learning Inspector */}
+          <button
+            type="button"
+            onClick={() => setIsInspectorOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(6, 182, 212, 0.25))',
+              border: '1px solid rgba(99, 102, 241, 0.6)',
+              color: '#ffffff',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxShadow: '0 0 14px rgba(79, 70, 229, 0.35)',
+              transition: 'all 0.18s ease',
+              marginLeft: '4px'
+            }}
+            title="Open 2026/2027 Frontier Platform Architecture & Learning Inspector"
+          >
+            <Sparkles size={13} color="#a5b4fc" />
+            <span className="desktop-only">Architecture Inspector</span>
+            <span style={{
+              background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
+              color: '#fff',
+              fontSize: '0.62rem',
+              padding: '1px 5px',
+              borderRadius: '4px',
+              fontWeight: 800
+            }}>2026/27</span>
           </button>
         </nav>
 
@@ -340,6 +355,7 @@ export default function App() {
             <ChatWindow
               inferenceMode={inferenceMode}
               onToggleInferenceMode={setInferenceMode}
+              onOpenInspector={() => setIsInspectorOpen(true)}
             />
           </div>
         )}
@@ -376,22 +392,30 @@ export default function App() {
 
         <button
           type="button"
-          onClick={() => navigateToPillar('monitoring')}
-          className={`mobile-dock-btn ${activePillar === 'monitoring' ? 'active' : ''}`}
-        >
-          <Activity size={18} />
-          <span>Monitoring</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => navigateToPillar('redline')}
           className={`mobile-dock-btn ${activePillar === 'redline' ? 'active' : ''}`}
         >
           <FileCheck size={18} />
           <span>Redliner</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setIsInspectorOpen(true)}
+          className="mobile-dock-btn"
+          style={{ color: '#818cf8' }}
+        >
+          <Sparkles size={18} />
+          <span>Inspector</span>
+        </button>
       </nav>
+
+      {/* ── 2026/2027 Architecture & Learning Inspector Modal ───────────────── */}
+      <ArchitectureInspectorModal
+        isOpen={isInspectorOpen}
+        onClose={() => setIsInspectorOpen(false)}
+      />
     </div>
   )
 }
+
