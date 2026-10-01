@@ -23,18 +23,18 @@ resource "azurerm_management_group" "landingzones" {
   parent_management_group_id = "/providers/Microsoft.Management/managementGroups/${var.root_management_group_id}"
 
   subscription_ids = [
-    "f4ffefe1-d689-4059-969c-ccc73e2a11d4"  # Apps-prod
+    "f4ffefe1-d689-4059-969c-ccc73e2a11d4" # Apps-prod
   ]
 }
 
 # ─── 2. Enterprise Governance & Security Initiative (Top 10 Baseline) ────────
 
 resource "azurerm_management_group_policy_set_definition" "enterprise_baseline" {
-  name                 = "initiative-ht-enterprise-baseline"
-  policy_type          = "Custom"
-  display_name         = "HappyTechies Enterprise Governance Baseline"
-  description          = "Enterprise Security, FinOps Tagging, Zero-Trust, and Data Protection Guardrails across all Landing Zones."
-  management_group_id  = "/providers/Microsoft.Management/managementGroups/${var.root_management_group_id}"
+  name                = "initiative-ht-enterprise-baseline"
+  policy_type         = "Custom"
+  display_name        = "HappyTechies Enterprise Governance Baseline"
+  description         = "Enterprise Security, FinOps Tagging, Zero-Trust, and Data Protection Guardrails across all Landing Zones."
+  management_group_id = "/providers/Microsoft.Management/managementGroups/${var.root_management_group_id}"
 
   # ─── Core Region & Data Residency Guardrails ───────────────────────────────
   # 1. Allowed Deployment Locations (India + AI Regions)
@@ -50,7 +50,7 @@ resource "azurerm_management_group_policy_set_definition" "enterprise_baseline" 
           "southeastasia", # AI Content Safety
           "eastus",        # Azure OpenAI
           "eastus2",
-          "global"         # Front Door / Static Web Apps
+          "global" # Front Door / Static Web Apps
         ]
       }
     })

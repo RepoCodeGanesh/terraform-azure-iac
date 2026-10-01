@@ -17,7 +17,7 @@ provider "azurerm" {
 }
 
 provider "azurerm" {
-  alias           = "bootstrap"
+  alias = "bootstrap"
   features {}
   subscription_id = var.bootstrap_subscription_id
 }

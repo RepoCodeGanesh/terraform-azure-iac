@@ -205,3 +205,4 @@ resource "azurerm_role_assignment" "amba_policy_action_group_reader" {
   principal_id         = azurerm_subscription_policy_assignment.amba_storage_bootstrap.identity[0].principal_id
 }
 
+
