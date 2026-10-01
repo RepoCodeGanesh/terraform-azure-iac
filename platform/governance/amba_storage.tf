@@ -196,3 +196,12 @@ resource "azurerm_role_assignment" "amba_policy_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_subscription_policy_assignment.amba_storage_bootstrap.identity[0].principal_id
 }
+
+# Cross-subscription permission: Policy Managed Identity needs read access
+# to the centralized Action Group in Shared-services to link alert notifications.
+resource "azurerm_role_assignment" "amba_policy_action_group_reader" {
+  scope                = var.shared_services_action_group_id
+  role_definition_name = "Monitoring Reader"
+  principal_id         = azurerm_subscription_policy_assignment.amba_storage_bootstrap.identity[0].principal_id
+}
+
