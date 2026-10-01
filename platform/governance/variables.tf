@@ -15,3 +15,14 @@ variable "location" {
   description = "Primary deployment location for policy assignment identity"
   default     = "centralindia"
 }
+
+variable "bootstrap_subscription_id" {
+  type        = string
+  description = "Target subscription ID for Bootstrap environment where AMBA learning lab is scoped"
+}
+
+variable "shared_services_action_group_id" {
+  type        = string
+  description = "Resource ID of the central action group for alert notifications"
+}
+
