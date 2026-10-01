@@ -448,7 +448,31 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** The `staticwebapp.config.json` (containing `navigationFallback` → `/index.html`) was placed in the frontend project root, but **not** inside `public/`. Vite only copies the `public/` directory into `dist/`. Without `staticwebapp.config.json` in `dist/`, Azure SWA cannot apply the fallback routing rule, so direct root requests 404.
 * **Resolution:** Copy `staticwebapp.config.json` into `app/bank-compliance/frontend/public/staticwebapp.config.json` so Vite includes it in `dist/` at build time. The Azure SWA deploy action (`output_location: 'dist'`) will then pick it up and activate the `navigationFallback` rule.
 
+### 51. Azure Policy DINE Governance Tag Collision on Automated Remediation (`RequestDisallowedByPolicy`)
+* **Symptom:** Policy remediation tasks for `DeployIfNotExists` fail with `400 Bad Request: RequestDisallowedByPolicy: Resource '<resource-name>' was disallowed by policy. Policy identifiers: [{"policyDefinition":{"name":"Require a tag on resources"}}]`.
+* **Root Cause:** When an enterprise root governance policy enforces mandatory tags (`Environment`, `ManagedBy`), any nested ARM template executed by an automated Azure Policy (`DeployIfNotExists`) will be rejected by the policy engine if the deployed resource template omits the required governance tags.
+* **Resolution:** In the `DeployIfNotExists` ARM deployment template, explicitly declare the required governance tags on all nested resources:
+  ```json
+  "tags": {
+    "Environment": "p",
+    "ManagedBy": "AMBA"
+  }
+  ```
+
+### 52. Cross-Subscription Azure Action Group Linkage (`LinkedAuthorizationFailed` on `microsoft.insights/actiongroups/read`)
+* **Symptom:** Azure Monitor metric alert deployment fails during policy remediation with `LinkedAuthorizationFailed: The client with object id '...' has permission to perform action 'Microsoft.Insights/metricAlerts/write' on scope '...'; however, it does not have permission to perform action(s) 'microsoft.insights/actiongroups/read' on the linked scope(s) '/subscriptions/<shared-sub>/resourceGroups/<rg>/providers/microsoft.insights/actiongroups/<action-group>'`.
+* **Root Cause:** When a metric alert in subscription A (`Bootstrap`) references a centralized Action Group in subscription B (`Shared-services`), Azure Resource Manager checks linked authorization. The Policy Managed Identity had RBAC only within subscription A, lacking read access to the linked resource in subscription B.
+* **Resolution:** Grant the `Monitoring Reader` role to the Policy System-Assigned Managed Identity on the target Action Group in the Shared-services subscription (`var.shared_services_action_group_id`):
+  ```hcl
+  resource "azurerm_role_assignment" "amba_policy_action_group_reader" {
+    scope                = var.shared_services_action_group_id
+    role_definition_name = "Monitoring Reader"
+    principal_id         = azurerm_subscription_policy_assignment.amba_storage_bootstrap.identity[0].principal_id
+  }
+  ```
+
 ---
+
 
 ## 🤖 Developer AI Tooling & Environment Context
 - **Primary Focus:** Enterprise AI Platform Engineering, GenAIOps, LLMOps, and Cloud-Native DataOps.
