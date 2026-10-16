@@ -21,6 +21,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | **Phase 11** | LLMOps Skill Bridge Phase 1 — Trivy CVE Scan, SecurityContext, KQL Workbook, Ollama SLM, Langfuse Tracing, Token Budget, MCP Server, AI Red-Team | `app/bank-compliance/` & `platform/shared-services/` | ✅ Completed |
 | **Phase 12** | LLMOps Skill Bridge Phase 2 — LangGraph StateGraph Cyclic Multi-Agent Orchestrator (A1) & GPU vLLM Inference Benchmark (A3) | `app/bank-compliance/` & `workloads/bank-compliance-ai-aks/` | ✅ Completed |
 | **Phase 13** | Enterprise Command & Governance Platform Refactoring, Air-Gapped SLM Alignment & Live Observability | `app/bank-compliance/` | ✅ Completed |
+| **Phase 14** | Platform Governance Hardening — OPA Gatekeeper ConstraintTemplates + AMBA Baseline Alerts (Static & Dynamic) | `platform/governance/` & `app/bank-compliance/k8s/gatekeeper/` | ✅ Completed |
 
 ---
 
@@ -183,7 +184,10 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 | Item | Status | Strategic / Interview Justification |
 |:---|:---|:---|
 | **S2 — NetworkPolicy** | Documented | Topology mapped: `backend ➔ qdrant:6333`, `backend ➔ litellm:4000`, `litellm ➔ external AI endpoints`. In enterprise banking, enforce deny-by-default with explicit allow egress rules. |
-| **G1 — OPA Gatekeeper** | Concept Live | `azure_policy_enabled = true` is active on AKS; Gatekeeper admission controller webhook is live. In enterprise, add ConstraintTemplates for registry allowlists and `runAsNonRoot` enforcement. |
+| **G1 — OPA Gatekeeper** | ✅ Deployed (warn) | `K8sRequireNonRoot` (CIS 5.2.6) + `K8sAllowedRegistries` (CIS 5.5.1) ConstraintTemplates deployed in `bank-compliance` ns. `enforcementAction: warn` — surfaces violations without blocking. Upgrade path: set `deny` after zero-violation confirmation. Scripts: `scripts/deploy-gatekeeper.sh --dry-run` then `apply`. |
+| **AMBA Static Alert** | ✅ Deployed | `DeployIfNotExists` policy at Root MG — Storage Availability <99%, Sev 1, Bootstrap sub only. Pattern: Policy Definition → Subscription Assignment → SystemAssigned RBAC → ARM remediation template. |
+| **AMBA Dynamic Alert** | ✅ Deployed | `DynamicThresholdCriterion` on Storage Transactions — ML-learned baseline, `alertSensitivity: Medium`, 3/4 `failingPeriods` debounce, `PT1H` window. No hardcoded threshold — Azure learns from 7–15 days history. |
+| **HashiCorp Terraform 004** | ✅ Certified | Terraform Associate (003/004) certification confirmed. |
 | **S1 (ReadOnlyRootFS)** | Omitted | Intentionally skipped `readOnlyRootFilesystem: true` because it breaks Qdrant local write buffers and LiteLLM socket logging. Non-root user 1000 + drop ALL capabilities provides full CIS compliance without runtime crashes. |
 | **FinOps Teardown** | Verified | Strict declarative destruction (`terraform destroy -var-file="prod.tfvars" -auto-approve`) of `rg-ht-bankc-p-cin-01`. State cleanly preserved in `sthtbootpcin01`; 0 active cloud cost when idle. |
 
