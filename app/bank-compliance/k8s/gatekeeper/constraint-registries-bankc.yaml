@@ -1,0 +1,45 @@
+# ==============================================================================
+# OPA Gatekeeper Constraint: K8sAllowedRegistries → bank-compliance namespace
+# ------------------------------------------------------------------------------
+# This is the JURISDICTION — WHERE and HOW to enforce K8sAllowedRegistries
+# (defined in ct-allowed-registries.yaml).
+#
+# Approved registries (mapped to actual images in use):
+#   ghcr.io            → ghcr.io/repocodeganesh/bank-compliance-backend:*
+#   ghcr.io/berriai    → ghcr.io/berriai/litellm:*
+#   docker.io/qdrant   → docker.io/qdrant/qdrant:*
+#   docker.io/ollama   → docker.io/ollama/ollama:*
+#   mcr.microsoft.com  → MCR init containers / sidecars
+#
+# Scope:            bank-compliance namespace only
+# enforcementAction: warn  ← safe: surfaces violations without blocking
+#
+# To see violations after applying:
+#   kubectl get k8sallowedregistries allowed-registries-bank-compliance -o yaml
+# ==============================================================================
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRegistries
+metadata:
+  name: allowed-registries-bank-compliance
+  annotations:
+    description: "Only allow images from approved registries in bank-compliance namespace"
+    enforcement: "warn — observe violations without blocking deployments"
+    upgrade-path: "Set enforcementAction: deny once zero violations confirmed"
+spec:
+  enforcementAction: warn
+
+  match:
+    namespaces:
+      - bank-compliance
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+
+  parameters:
+    # All registry prefixes used by BankCompliance AI workloads.
+    # Add new entries here if you introduce a new image source.
+    repos:
+      - "ghcr.io"              # Backend CI builds + LiteLLM official
+      - "docker.io/qdrant"     # Qdrant vector database
+      - "docker.io/ollama"     # Ollama sovereign SLM runtime
+      - "mcr.microsoft.com"    # Microsoft Container Registry (init containers)

@@ -1,0 +1,67 @@
+# ==============================================================================
+# OPA Gatekeeper ConstraintTemplate: K8sRequireNonRoot
+# ------------------------------------------------------------------------------
+# Defines the Rego policy (the LAW). This creates a new CRD kind:
+#   K8sRequireNonRoot
+# which Constraints (separate files) will reference to define WHERE to enforce.
+#
+# What it checks:
+#   - Every container in a pod spec must set securityContext.runAsNonRoot: true
+#   - Applies to both containers[] and initContainers[]
+#
+# Why: Running as root inside a container can allow container escape vulnerabilities.
+# CIS Kubernetes Benchmark: 5.2.6
+# ==============================================================================
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequirenonroot
+  annotations:
+    description: "Requires all containers to set runAsNonRoot: true in securityContext."
+    benchmark: "CIS Kubernetes 5.2.6"
+    source: "BankCompliance AI — G1 Governance Hardening"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireNonRoot
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            message:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequirenonroot
+
+        # Violation: a regular container does not set runAsNonRoot: true
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.runAsNonRoot
+          msg := sprintf(
+            "Container '%v' in pod '%v' must set securityContext.runAsNonRoot: true (CIS 5.2.6)",
+            [container.name, input.review.object.metadata.name]
+          )
+        }
+
+        # Violation: an initContainer does not set runAsNonRoot: true
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.initContainers[_]
+          not container.securityContext.runAsNonRoot
+          msg := sprintf(
+            "initContainer '%v' in pod '%v' must set securityContext.runAsNonRoot: true (CIS 5.2.6)",
+            [container.name, input.review.object.metadata.name]
+          )
+        }
+
+        # Violation: runAsNonRoot explicitly set to false
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          container.securityContext.runAsNonRoot == false
+          msg := sprintf(
+            "Container '%v' in pod '%v' explicitly sets runAsNonRoot: false — this is forbidden (CIS 5.2.6)",
+            [container.name, input.review.object.metadata.name]
+          )
+        }

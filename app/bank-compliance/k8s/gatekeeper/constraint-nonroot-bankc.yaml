@@ -1,0 +1,35 @@
+# ==============================================================================
+# OPA Gatekeeper Constraint: K8sRequireNonRoot → bank-compliance namespace
+# ------------------------------------------------------------------------------
+# This is the JURISDICTION — it says WHERE and HOW to enforce the
+# K8sRequireNonRoot ConstraintTemplate (defined in ct-require-nonroot.yaml).
+#
+# Scope:            bank-compliance namespace only
+# enforcementAction: warn  ← safe: logs violations, never blocks pods
+#                   (change to 'deny' after verifying zero violations)
+#
+# To see violations after applying:
+#   kubectl get k8srequirenonroot require-nonroot-bank-compliance -o yaml
+#   kubectl describe k8srequirenonroot require-nonroot-bank-compliance
+# ==============================================================================
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequireNonRoot
+metadata:
+  name: require-nonroot-bank-compliance
+  annotations:
+    description: "Enforce runAsNonRoot: true on all pods in bank-compliance namespace"
+    enforcement: "warn — observe violations without blocking deployments"
+    upgrade-path: "Set enforcementAction: deny once zero violations confirmed"
+spec:
+  # warn = violations are logged and surfaced in .status.violations
+  # but pods are NOT blocked. Safe for initial rollout.
+  enforcementAction: warn
+
+  match:
+    # Only enforce in bank-compliance — never touches kube-system or monitoring
+    namespaces:
+      - bank-compliance
+    # Apply to Pods (covers Deployments, StatefulSets, DaemonSets via pod spec)
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]

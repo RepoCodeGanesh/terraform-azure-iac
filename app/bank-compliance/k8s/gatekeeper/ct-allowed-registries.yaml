@@ -1,0 +1,71 @@
+# ==============================================================================
+# OPA Gatekeeper ConstraintTemplate: K8sAllowedRegistries
+# ------------------------------------------------------------------------------
+# Defines the Rego policy (the LAW). Creates CRD kind: K8sAllowedRegistries
+#
+# What it checks:
+#   - Every container image must be pulled from an approved registry prefix
+#   - Prevents supply-chain attacks via rogue Docker Hub or unknown images
+#   - Parameters: repos[] — list of allowed registry prefixes
+#
+# Approved registries for BankCompliance AI:
+#   ghcr.io          — GitHub Container Registry (backend, frontend builds)
+#   ghcr.io/berriai  — LiteLLM official image
+#   docker.io/qdrant — Qdrant official image
+#   docker.io/ollama — Ollama official SLM image
+#   mcr.microsoft.com — Microsoft Container Registry (init containers, sidecars)
+#
+# CIS Kubernetes Benchmark: 5.5.1
+# ==============================================================================
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sallowedregistries
+  annotations:
+    description: "Restricts container images to approved registry prefixes only."
+    benchmark: "CIS Kubernetes 5.5.1"
+    source: "BankCompliance AI — G1 Governance Hardening"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sAllowedRegistries
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            repos:
+              type: array
+              items:
+                type: string
+              description: "List of allowed registry prefixes (e.g. ghcr.io, mcr.microsoft.com)"
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sallowedregistries
+
+        # Helper: check if image starts with any approved prefix
+        approved(image) {
+          repo := input.parameters.repos[_]
+          startswith(image, repo)
+        }
+
+        # Violation: regular container image not from approved registry
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not approved(container.image)
+          msg := sprintf(
+            "Container '%v' uses image '%v' which is not from an approved registry. Allowed: %v (CIS 5.5.1)",
+            [container.name, container.image, input.parameters.repos]
+          )
+        }
+
+        # Violation: initContainer image not from approved registry
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.initContainers[_]
+          not approved(container.image)
+          msg := sprintf(
+            "initContainer '%v' uses image '%v' which is not from an approved registry. Allowed: %v (CIS 5.5.1)",
+            [container.name, container.image, input.parameters.repos]
+          )
+        }
