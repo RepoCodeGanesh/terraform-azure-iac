@@ -1,0 +1,65 @@
+# ==============================================================================
+# NetworkPolicy: backend → qdrant:6333 (gRPC) + qdrant:6334 (HTTP REST)
+# ==============================================================================
+# Allows bankc-backend to reach the qdrant vector database.
+# Qdrant is a StatefulSet in the bank-compliance namespace.
+#
+# Pod selectors confirmed from k8s/qdrant/qdrant.yaml:
+#   backend pod label:  app: bankc-backend
+#   qdrant pod label:   app: qdrant
+#
+# Ports:
+#   6333 — Qdrant HTTP REST API (used by Python qdrant-client)
+#   6334 — Qdrant gRPC API (optional, open for forward compatibility)
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-qdrant
+  namespace: bank-compliance
+  annotations:
+    description: "backend → qdrant:6333/6334 for vector search and RAG retrieval"
+    security: "zero-trust-east-west"
+spec:
+  # Egress rule: backend is allowed to initiate connections to qdrant
+  podSelector:
+    matchLabels:
+      app: bankc-backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: qdrant
+      ports:
+        - port: 6333
+          protocol: TCP
+        - port: 6334
+          protocol: TCP
+---
+# Ingress rule: qdrant accepts connections FROM backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-qdrant-ingress-from-backend
+  namespace: bank-compliance
+  annotations:
+    description: "qdrant accepts ingress from bankc-backend only"
+    security: "zero-trust-east-west"
+spec:
+  podSelector:
+    matchLabels:
+      app: qdrant
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: bankc-backend
+      ports:
+        - port: 6333
+          protocol: TCP
+        - port: 6334
+          protocol: TCP

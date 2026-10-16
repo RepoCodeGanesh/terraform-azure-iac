@@ -1,0 +1,81 @@
+# ==============================================================================
+# NetworkPolicy: Allow External Egress for AI Model Inference & Cloud APIs
+# ==============================================================================
+# In a Zero-Trust Kubernetes cluster with default-deny-all, egress to external
+# internet services must be explicitly permitted by port and protocol.
+#
+# Workload Requirements:
+# 1. litellm-proxy:
+#    - Egress to TCP 443 (HTTPS) for model inference:
+#      - Google Gemini (generativelanguage.googleapis.com)
+#      - Groq Cloud (api.groq.com)
+#      - Azure OpenAI (*.openai.azure.com)
+# 2. bankc-backend:
+#    - Egress to TCP 443 (HTTPS) for platform governance & telemetry:
+#      - Azure Content Safety (*.cognitiveservices.azure.com)
+#      - Azure Document Intelligence (*.cognitiveservices.azure.com)
+#      - Azure AI Search (*.search.windows.net)
+#      - Microsoft Entra ID Token Endpoint (login.microsoftonline.com)
+#      - Langfuse Cloud Tracing (cloud.langfuse.com)
+#    - Egress to TCP 80 for Azure IMDS (Instance Metadata Service):
+#      - 169.254.169.254:80 (Azure Workload Identity credential acquisition)
+# ==============================================================================
+
+# ── 1. LiteLLM Proxy HTTPS Egress ─────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-litellm-external-egress
+  namespace: bank-compliance
+  annotations:
+    description: "Allow litellm-proxy to call external LLM providers over HTTPS (443)"
+    security: "zero-trust-egress"
+spec:
+  podSelector:
+    matchLabels:
+      app: litellm-proxy
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              # Protect internal RFC 1918 private subnets from direct egress
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - port: 443
+          protocol: TCP
+---
+# ── 2. Backend HTTPS & Azure IMDS Egress ──────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-external-egress
+  namespace: bank-compliance
+  annotations:
+    description: "Allow backend to reach Azure Cognitive Services, Entra ID, Langfuse, and IMDS"
+    security: "zero-trust-egress"
+spec:
+  podSelector:
+    matchLabels:
+      app: bankc-backend
+  policyTypes:
+    - Egress
+  egress:
+    # External HTTPS APIs (Content Safety, Entra ID, Langfuse)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+          protocol: TCP
+    # Azure IMDS endpoint for Workload Identity MSI token retrieval
+    - to:
+        - ipBlock:
+            cidr: 169.254.169.254/32
+      ports:
+        - port: 80
+          protocol: TCP

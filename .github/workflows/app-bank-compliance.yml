@@ -183,7 +183,7 @@ jobs:
   # enforcementAction: warn in all constraints — NEVER blocks pods.
   # Runs after Helm deploy so cluster is guaranteed running.
   gatekeeper-policies:
-    name: 🛡️ OPA Gatekeeper Policy Sync
+    name: 🛡️ Security Policies Sync (Gatekeeper & NetworkPolicy)
     needs: [backend-deploy]
     if: |
       needs.backend-deploy.result == 'success'
@@ -235,6 +235,16 @@ jobs:
           echo "► K8sAllowedRegistries violations:"
           kubectl get k8sallowedregistries allowed-registries-bank-compliance \
             -o jsonpath='{.status.totalViolations}' || echo "0"
+
+      # ── S2: Zero-Trust East-West NetworkPolicy Sync ───────────────────────────
+      - name: Validate & Apply NetworkPolicies (S2 Zero-Trust)
+        run: |
+          echo "► Pre-flight server-side dry-run for NetworkPolicies"
+          kubectl apply --dry-run=server -f app/bank-compliance/k8s/networkpolicy/ -n bank-compliance
+          echo "► Atomically applying Zero-Trust NetworkPolicies"
+          kubectl apply -f app/bank-compliance/k8s/networkpolicy/ -n bank-compliance
+          echo "► Active NetworkPolicies:"
+          kubectl get networkpolicy -n bank-compliance
 
   # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
   deploy-frontend:

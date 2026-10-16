@@ -1,0 +1,40 @@
+# ==============================================================================
+# NetworkPolicy: Allow Prometheus / OpenTelemetry Metrics Scraping
+# ==============================================================================
+# Permits monitoring agents (kube-prometheus-stack or Azure Monitor) in the
+# 'monitoring' or 'kube-system' namespace to scrape telemetry endpoints:
+#   - bankc-backend: port 8000 (/metrics)
+#   - litellm-proxy: port 4000 (/metrics)
+#   - qdrant:        port 6333 (/metrics)
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-scraping
+  namespace: bank-compliance
+  annotations:
+    description: "Allow Prometheus in monitoring or kube-system to scrape /metrics"
+    security: "zero-trust-telemetry"
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["bankc-backend", "litellm-proxy", "qdrant"]
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 4000
+          protocol: TCP
+        - port: 6333
+          protocol: TCP

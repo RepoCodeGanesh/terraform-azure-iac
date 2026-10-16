@@ -1,0 +1,52 @@
+# ==============================================================================
+# NetworkPolicy: Ingress to Backend from Ingress Controller
+# ==============================================================================
+# Allows ingress-nginx (or Azure Web App Routing) controller to route public/HTTP
+# requests into the bankc-backend FastAPI service on port 8000.
+#
+# Without this policy, when default-deny-all is active, all external API traffic
+# hitting the ingress will result in 504 Gateway Timeout or connection refused.
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-backend
+  namespace: bank-compliance
+  annotations:
+    description: "Allow ingress controller to reach bankc-backend on port 8000"
+    security: "zero-trust-east-west"
+spec:
+  podSelector:
+    matchLabels:
+      app: bankc-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    # 1. Ingress from custom ingress-nginx namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 80
+          protocol: TCP
+    # 2. Ingress from Azure Web App Routing addon namespace (if enabled)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: app-routing-system
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 80
+          protocol: TCP
+    # 3. Ingress from kube-system (health probes / port-forward / kubelet)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 8000
+          protocol: TCP

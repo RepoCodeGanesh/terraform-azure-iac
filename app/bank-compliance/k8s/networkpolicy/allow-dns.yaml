@@ -1,0 +1,35 @@
+# ==============================================================================
+# NetworkPolicy: Allow DNS — ALL pods → kube-dns:53
+# ==============================================================================
+# THIS IS THE MOST CRITICAL POLICY IN THE SET.
+# Without DNS, pods cannot resolve service names. Everything breaks silently.
+# Must be applied alongside default-deny-all — never after.
+#
+# Allows: UDP/TCP port 53 egress from ALL pods to kube-dns in kube-system.
+# kube-dns pod label: k8s-app=kube-dns (standard across AKS/EKS/GKE)
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: bank-compliance
+  annotations:
+    description: "Critical: allow all pods to reach kube-dns for name resolution"
+    security: "zero-trust-east-west"
+spec:
+  podSelector: {}    # ALL pods in bank-compliance need DNS
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - ipBlock:
+            cidr: 0.0.0.0/0
+

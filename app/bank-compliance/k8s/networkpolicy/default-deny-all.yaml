@@ -1,0 +1,26 @@
+# ==============================================================================
+# NetworkPolicy: Default Deny All — bank-compliance namespace
+# ==============================================================================
+# Kubernetes is OPEN by default — all pods can talk to all pods.
+# This policy closes the namespace: deny ALL ingress and ALL egress.
+# Then individual allow policies open only the required communication paths.
+#
+# CRITICAL: Never apply this alone. Apply the full set atomically:
+#   kubectl apply -f k8s/networkpolicy/
+#
+# This follows the Zero-Trust principle: deny by default, allow by exception.
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: bank-compliance
+  annotations:
+    description: "Baseline deny-all. Individual allow policies open specific paths."
+    security: "zero-trust-east-west"
+spec:
+  podSelector: {}        # selects ALL pods in the namespace
+  policyTypes:
+    - Ingress
+    - Egress
+  # No ingress/egress rules = deny everything

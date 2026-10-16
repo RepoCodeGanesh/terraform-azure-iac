@@ -1,0 +1,57 @@
+# ==============================================================================
+# NetworkPolicy: backend → litellm:4000 (LLM Proxy)
+# ==============================================================================
+# Allows bankc-backend to reach the LiteLLM proxy gateway for all LLM calls.
+# LiteLLM then routes to Gemini / Groq / Azure OpenAI externally (separate policy).
+#
+# Pod selectors confirmed from k8s/litellm/deployment.yaml:
+#   backend pod label:  app: bankc-backend
+#   litellm pod label:  app: litellm-proxy
+#
+# Port 4000 — LiteLLM OpenAI-compatible proxy endpoint
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-litellm
+  namespace: bank-compliance
+  annotations:
+    description: "backend → litellm-proxy:4000 for all LLM inference calls"
+    security: "zero-trust-east-west"
+spec:
+  podSelector:
+    matchLabels:
+      app: bankc-backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: litellm-proxy
+      ports:
+        - port: 4000
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-litellm-ingress-from-backend
+  namespace: bank-compliance
+  annotations:
+    description: "litellm-proxy accepts ingress from bankc-backend only"
+    security: "zero-trust-east-west"
+spec:
+  podSelector:
+    matchLabels:
+      app: litellm-proxy
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: bankc-backend
+      ports:
+        - port: 4000
+          protocol: TCP
