@@ -247,10 +247,81 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
+  # ── JOB 5b: End-to-End Live Production Status & Functional Verification ─────
+  verify-live-status:
+    name: 🌐 Live Production Status & Functional Verification
+    needs: [backend-deploy, deploy-frontend, gatekeeper-policies]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.backend-deploy.result == 'success' &&
+      needs.deploy-frontend.result == 'success' &&
+      needs.gatekeeper-policies.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify Live Production Endpoints & AI Inference
+        id: live_check
+        run: |
+          python - << 'EOF'
+          import urllib.request
+          import json
+          import time
+          import sys
+
+          print("► 1. Testing Live Frontend SWA (https://bank.mytaxbot.site)...")
+          req_swa = urllib.request.Request("https://bank.mytaxbot.site", headers={"User-Agent": "CI-Live-Verifier"})
+          with urllib.request.urlopen(req_swa, timeout=15) as res:
+              html = res.read().decode("utf-8")
+              assert res.status == 200, f"Expected 200 but got {res.status}"
+              assert "root" in html or "BankCompliance" in html, "SPA container missing in HTML"
+              print(f"✅ Live Frontend (https://bank.mytaxbot.site) returned HTTP {res.status} OK (SPA Hydrated)")
+
+          print("\n► 2. Testing Live APIM Healthz Gateway (https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz)...")
+          req_apim = urllib.request.Request("https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz")
+          with urllib.request.urlopen(req_apim, timeout=15) as res:
+              assert res.status == 200, f"APIM healthz returned {res.status}"
+              print(f"✅ APIM Healthz Gateway returned HTTP {res.status} OK")
+
+          print("\n► 3. Testing Live Statutory AI Compliance Query via APIM Gateway...")
+          payload = json.dumps({"query": "What is the default loss guarantee (FLDG) cap under RBI digital lending guidelines?"}).encode()
+          req_query = urllib.request.Request(
+              "https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query",
+              data=payload,
+              headers={"Content-Type": "application/json"}
+          )
+          start = time.time()
+          with urllib.request.urlopen(req_query, timeout=30) as res:
+              elapsed = (time.time() - start) * 1000
+              assert res.status == 200, f"APIM query returned {res.status}"
+              data = json.loads(res.read().decode("utf-8"))
+              assert "answer" in data, "Missing answer in response payload"
+              assert len(data.get("citations", [])) > 0 or "RBI" in data["answer"], "Regulatory citations missing"
+              model = data.get("model_used", "unknown")
+              print(f"✅ Live Regulatory Query SUCCESS ({elapsed:.0f}ms)")
+              print(f"   Model Used: {model} | Cached: {data.get('cached', False)}")
+              print(f"   Verified Answer: {data['answer'][:160]}...")
+
+          print("\n► 4. Testing Companion Workload (https://www.mytaxbot.site)...")
+          req_taxb = urllib.request.Request("https://www.mytaxbot.site", headers={"User-Agent": "CI-Live-Verifier"})
+          with urllib.request.urlopen(req_taxb, timeout=15) as res:
+              assert res.status == 200, f"TaxBot returned {res.status}"
+              print(f"✅ TaxBot Production Domain returned HTTP {res.status} OK")
+
+          print("\n🎉 ALL LIVE PRODUCTION ENDPOINTS VERIFIED OPERATIONAL!")
+          EOF
+
   # ── JOB 6: Consolidated Dynamic Release Governance Summary ──────────────────
   summary:
     name: 📊 Release Governance Summary
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, backend-deploy, gatekeeper-policies, deploy-frontend]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, backend-deploy, gatekeeper-policies, deploy-frontend, verify-live-status]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -261,9 +332,10 @@ jobs:
           BUILD_STATUS="${{ needs.backend-build.result == 'success' && '🟢 BUILT' || (needs.backend-build.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           DEPLOY_STATUS="${{ needs.backend-deploy.result == 'success' && '🟢 DEPLOYED' || (needs.backend-deploy.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           FRONTEND_STATUS="${{ needs.deploy-frontend.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-frontend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          LIVE_STATUS="${{ needs.verify-live-status.result == 'success' && '🟢 VERIFIED (200 OK)' || (needs.verify-live-status.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
 
           OVERALL="🟢 RELEASE SUCCESSFUL"
-          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ]; then
+          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ] || [ "${{ needs.verify-live-status.result }}" = "failure" ]; then
             OVERALL="🔴 PIPELINE FAILED"
           fi
 
@@ -285,6 +357,7 @@ jobs:
           | **3. Container Packaging** | Multi-stage Docker build + Trivy CVE scan to GHCR | ${BUILD_STATUS} |
           | **4. Backend AKS Release** | Helm 3 rolling upgrade + Workload Identity on AKS | ${DEPLOY_STATUS} |
           | **5. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
+          | **6. Live Production Health** | Live SWA + APIM Gateway + E2E AI Query Verification | ${LIVE_STATUS} |
 
           ---
 

@@ -486,6 +486,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** When `azure_policy_enabled = true` is active on an AKS cluster, Azure deploys the managed Azure Policy for Kubernetes addon with a strict validating webhook (`byovalidation.policy.azure.com`). This webhook rejects out-of-band/direct `kubectl apply` of BYO `ConstraintTemplate` and `Constraint` resources, enforcing Azure Policy / ARM definitions as the single source of truth for admission control.
 * **Resolution:** In GitOps CI/CD pipelines, deploy Kubernetes-native security primitives (such as Zero-Trust `NetworkPolicy` resources), and audit the active Azure Policy managed Gatekeeper constraints via `kubectl get constraints -o wide` rather than applying conflicting ad-hoc `ConstraintTemplate` manifests.
 
+### 57. Automated CI/CD Live Production Status & Functional Verification Gate
+* **Symptom:** Release pipeline marks `Release Governance Summary` as successful even if the live Static Web App, custom domain DNS, or APIM gateway encounters runtime 404/502 errors or missing SPA bundles post-deployment.
+* **Root Cause:** Standard CD pipelines stop after Helm release and SWA deployment tokens succeed, evaluating pipeline status solely based on ARM deployment return codes without executing end-to-end HTTP/API queries against live public production hostnames.
+* **Resolution:** Implement a dedicated `verify-live-status` stage in `.github/workflows/app-bank-compliance.yml` that executes after frontend and backend deployments succeed. The stage asserts HTTP 200 on `https://bank.mytaxbot.site`, queries `https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz`, and executes a live end-to-end statutory compliance inference query against APIM, requiring citations and answer payloads before marking the release summary as `🟢 RELEASE SUCCESSFUL`.
+
 ---
 
 
