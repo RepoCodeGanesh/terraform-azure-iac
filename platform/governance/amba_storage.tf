@@ -2,6 +2,7 @@
 # AMBA Learning Lab: Azure Monitor Baseline Alerts for Storage Accounts
 # Architecture: Cloud Adoption Framework (CAF) Policy-Driven Governance
 # Target: Exclusively scoped to Bootstrap Subscription (7689ad81-71ba-481b-a17c-e1b6be61bab1)
+# Cross-Subscription RBAC: Action Group Reader in Shared-Services (859a785c-bd38-402d-b595-1f44f40fb9bf)
 # ==============================================================================
 
 # ─── 1. AMBA Storage Account Availability Policy Definition ────────────────────

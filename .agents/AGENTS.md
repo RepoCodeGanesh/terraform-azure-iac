@@ -471,10 +471,15 @@ State files are path-keyed — **git repo location does not affect state**.
   }
   ```
 
-### 53. AKS Network Policy Terraform In-Place Modification vs Cluster Recreation (`forces new resource`)
-* **Symptom:** Adding or modifying `network_profile.network_policy` (e.g. from omitted/`null` to `"azure"` or `"calico"`) inside `azurerm_kubernetes_cluster` causes Terraform plan to report `~ network_profile { ... } (forces new resource)`, which destroys and recreates the live AKS cluster.
-* **Root Cause:** In Azure Resource Manager, foundational network policy engines cannot be retrofitted in-place onto existing clusters via simple ARM template property updates if not specified during initial cluster provisioning.
-* **Resolution:** (1) Keep cluster-level Terraform definitions stable to prevent unintentional cluster destruction and remote state drift. (2) Deploy Kubernetes NetworkPolicy manifests (`networking.k8s.io/v1`) directly and declaratively at the application layer (`app/bank-compliance/k8s/networkpolicy/`). (3) Enforce atomic rollout (`scripts/deploy-networkpolicies.sh`) pairing `default-deny-all` with allow policies (`allow-dns`, `allow-ingress-to-backend`, `allow-backend-to-qdrant`, `allow-backend-to-litellm`, `allow-external-egress`, `allow-monitoring-scraping`) to avoid CoreDNS or Ingress blackholing.
+### 54. CI/CD Deployment Service Principal Cross-Subscription RBAC for Policy Role Assignments
+* **Symptom:** `Platform - Governance & Policy-as-Code` GitHub Actions pipeline fails at `Plan / Terraform Plan` with `403 AuthorizationFailed: The client '934ab83b-...' does not have authorization to perform action 'Microsoft.Authorization/roleAssignments/read' over scope '/subscriptions/859a785c-.../actiongroups/ag-ht-ss-p-cin-01'`.
+* **Root Cause:** When `platform/governance` declares role assignments granting cross-subscription permissions (e.g. `azurerm_role_assignment.amba_policy_action_group_reader` on `Shared-services`), the pipeline deployment identity (`BOOTSTRAP_CLIENT_ID`) requires RBAC permissions on the target subscription.
+* **Resolution:** Assign `Contributor` role to `BOOTSTRAP_CLIENT_ID` Enterprise App (`f3a1b19b-11b8-4e13-8499-7f83ea39547a`) on the target subscription (`/subscriptions/859a785c-bd38-402d-b595-1f44f40fb9bf`).
+
+### 55. AKS Standard_B2ms Node Pool Managed OS Disk Requirement
+* **Symptom:** AKS cluster deployment fails on ARM with `EphemeralOSDiskNotSupportedForVmSize: VM size Standard_B2ms does not support Ephemeral OS`.
+* **Root Cause:** Azure Ephemeral OS requires VM series with local temporary cache disks (such as D-series or E-series). Burstable B-series VMs (`Standard_B2ms`) do not support Ephemeral OS.
+* **Resolution:** Set `os_disk_type = "Managed"` in `workloads/bank-compliance-ai-aks/aks_cluster.tf` for default and spot node pools using `Standard_B2ms`.
 
 ---
 

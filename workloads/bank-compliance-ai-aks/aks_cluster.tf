@@ -20,7 +20,7 @@ module "bank_compliance_aks" {
   enable_web_app_routing     = false # FinOps: Disabled — community Ingress-NGINX at 1m CPU used instead
   node_count                 = var.aks_node_count
   vm_size                    = var.aks_vm_size
-  os_disk_type               = "Ephemeral"
+  os_disk_type               = "Managed"
   os_disk_size_gb            = var.aks_os_disk_size_gb
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
   tags                       = local.tags
@@ -62,7 +62,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "spot" {
   kubernetes_cluster_id = module.bank_compliance_aks.id
   vm_size               = var.aks_spot_vm_size
   vnet_subnet_id        = module.bankc_vnet.subnet_ids[0] # snet-aks
-  os_disk_type          = "Ephemeral"
+  os_disk_type          = "Managed"
   os_disk_size_gb       = 30
 
   # Spot Pricing & Eviction Policy
