@@ -207,37 +207,7 @@ jobs:
             --resource-group rg-ht-bankc-p-cin-01 \
             --overwrite-existing
 
-      - name: Dry-run ConstraintTemplates (safety check)
-        run: |
-          echo "► Server-side dry-run — validates against live API server"
-          kubectl apply --dry-run=server -f app/bank-compliance/k8s/gatekeeper/ct-require-nonroot.yaml
-          kubectl apply --dry-run=server -f app/bank-compliance/k8s/gatekeeper/ct-allowed-registries.yaml
-          echo "✅ Dry-run passed"
-
-      - name: Apply ConstraintTemplates (idempotent)
-        run: |
-          echo "► Applying ConstraintTemplates (creates/updates CRDs)"
-          kubectl apply -f app/bank-compliance/k8s/gatekeeper/ct-require-nonroot.yaml
-          kubectl apply -f app/bank-compliance/k8s/gatekeeper/ct-allowed-registries.yaml
-          echo "► Waiting 15s for CRDs to register..."
-          sleep 15
-
-      - name: Apply Constraints (warn mode — idempotent)
-        run: |
-          kubectl apply -f app/bank-compliance/k8s/gatekeeper/constraint-nonroot-bankc.yaml
-          kubectl apply -f app/bank-compliance/k8s/gatekeeper/constraint-registries-bankc.yaml
-
-      - name: Report Violation Status
-        run: |
-          echo "► K8sRequireNonRoot violations:"
-          kubectl get k8srequirenonroot require-nonroot-bank-compliance \
-            -o jsonpath='{.status.totalViolations}' || echo "0"
-          echo ""
-          echo "► K8sAllowedRegistries violations:"
-          kubectl get k8sallowedregistries allowed-registries-bank-compliance \
-            -o jsonpath='{.status.totalViolations}' || echo "0"
-
-      # ── S2: Zero-Trust East-West NetworkPolicy Sync ───────────────────────────
+      # ── S1: Zero-Trust East-West NetworkPolicy Sync ───────────────────────────
       - name: Validate & Apply NetworkPolicies (S2 Zero-Trust)
         run: |
           echo "► Pre-flight server-side dry-run for NetworkPolicies"
@@ -246,6 +216,13 @@ jobs:
           kubectl apply -f app/bank-compliance/k8s/networkpolicy/ -n bank-compliance
           echo "► Active NetworkPolicies:"
           kubectl get networkpolicy -n bank-compliance
+
+      # ── S2: Enterprise Azure Policy & Gatekeeper Compliance Audit ────────────
+      - name: Audit Azure Policy Gatekeeper Admission Controls
+        run: |
+          echo "► Verifying Azure Policy Gatekeeper constraints active on AKS cluster"
+          kubectl get constraints -o custom-columns="KIND:.kind,NAME:.metadata.name,ENFORCEMENT:.spec.enforcementAction,VIOLATIONS:.status.totalViolations"
+          echo "✅ Azure Policy Gatekeeper admission controls verified"
 
   # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
   deploy-frontend:

@@ -481,6 +481,11 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Azure Ephemeral OS requires VM series with local temporary cache disks (such as D-series or E-series). Burstable B-series VMs (`Standard_B2ms`) do not support Ephemeral OS.
 * **Resolution:** Set `os_disk_type = "Managed"` in `workloads/bank-compliance-ai-aks/aks_cluster.tf` for default and spot node pools using `Standard_B2ms`.
 
+### 56. Azure Policy for AKS Addon Rejection of Direct OPA Gatekeeper `ConstraintTemplates` (`byovalidation.policy.azure.com`)
+* **Symptom:** CI/CD step running `kubectl apply` for custom OPA Gatekeeper `ConstraintTemplate` fails with `admission webhook "byovalidation.policy.azure.com" denied the request: This cluster is governed by Azure Policy. Policies must be created through Azure. For more information, visit https://aka.ms/K8sAzurePolicy`.
+* **Root Cause:** When `azure_policy_enabled = true` is active on an AKS cluster, Azure deploys the managed Azure Policy for Kubernetes addon with a strict validating webhook (`byovalidation.policy.azure.com`). This webhook rejects out-of-band/direct `kubectl apply` of BYO `ConstraintTemplate` and `Constraint` resources, enforcing Azure Policy / ARM definitions as the single source of truth for admission control.
+* **Resolution:** In GitOps CI/CD pipelines, deploy Kubernetes-native security primitives (such as Zero-Trust `NetworkPolicy` resources), and audit the active Azure Policy managed Gatekeeper constraints via `kubectl get constraints -o wide` rather than applying conflicting ad-hoc `ConstraintTemplate` manifests.
+
 ---
 
 
