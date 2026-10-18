@@ -188,6 +188,7 @@ jobs:
     if: |
       needs.backend-deploy.result == 'success'
     runs-on: ubuntu-latest
+    environment: bank-compliance-prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
