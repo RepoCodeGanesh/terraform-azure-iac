@@ -390,12 +390,23 @@ State files are path-keyed — **git repo location does not affect state**.
   az functionapp config set --name <func-name> --resource-group <rg-name> --min-tls-version 1.2
   ```
 
+### 52. AKS Single-Node Capacity Deadlock from Multi-Replica System Deployments & Mutating Webhook Timeout
+* **Symptom:** In single-node AKS Free Tier (`Standard_B2ms`), application pods fail to schedule or stay in `Pending (Insufficient cpu)`. Helm upgrades time out with `Error: UPGRADE FAILED: context deadline exceeded`. `kubectl describe rs` shows `Error creating: Internal error occurred: failed calling webhook "mutation.azure-workload-identity.io": no endpoints available for service "azure-wi-webhook-webhook-service"`.
+* **Root Cause:** System deployments (`gatekeeper-controller`, `keda-*`, `metrics-server`, `konnectivity-agent`, `coredns`) were provisioned with 2 replicas for HA, consuming 1884m of 1900m (99%) allocatable CPU. When a pod labeled `azure.workload.identity/use: "true"` is submitted, it calls the mutating webhook whose pod was starved of CPU, creating a circular scheduling deadlock.
+* **Resolution:** (1) Scale redundant system deployments down to 1 replica. (2) Deploy `finops-single-node-tuner` in `kube-system` to continuously pin system deployments to 1 replica and purge failed/evicted pods. (3) Ensure `finops-single-node-tuner` runs with lightweight resource requests (`1m` CPU / `16Mi` RAM).
+
+### 53. Azure Static Web App Custom Domain `Failed` State Collision in Terraform Apply
+* **Symptom:** `terraform apply` fails when managing `azurerm_static_web_app_custom_domain` with `409 Conflict` or persistent timeout: `An unknown error has occurred while adding your custom domain`.
+* **Root Cause:** If an initial attempt to register a custom domain fails during validation (e.g. before DNS edge propagation completes), Azure Static Web App records the hostname in `Failed` state in ARM. Subsequent Terraform runs attempt to create the resource and fail because the hostname already exists in a failed state.
+* **Resolution:** Purge the failed hostname from the Static Web App before re-applying Terraform:
+  ```bash
+  az staticwebapp hostname delete --name <swa-name> --resource-group <rg-name> --hostname <custom-domain> --subscription <sub-id> --yes
+  ```
+  Then re-run `terraform apply`. Terraform re-submits validation cleanly and SWA issues the managed SSL certificate.
+
 ---
 
 
-
-
-## 🚀 AI Platform Engineering, GenAIOps, LLMOps & DataOps Core Competencies
 
 ### 1. 🏗️ AI Platform Engineering (Azure CAF & Zero-Trust Cloud)
 * **Topology:** 4-Subscription CAF Enterprise Landing Zone (`bootstrap`, `hub`, `shared-services`, `apps-prod`).
