@@ -76,12 +76,12 @@ def should_bypass_cache(query: str) -> Tuple[bool, Optional[str]]:
         if re.search(pattern, query_lower):
             return True, f"Temporal anchor detected ({pattern})"
             
-    # 2. Specific Circular IDs (e.g., 'RBI/2023-24/108', 'RBI/DBR/...')
-    if re.search(r'rbi\s*[/:\-]\s*[0-9]{4}', query_lower) or re.search(r'section\s+[0-9]+(\.[0-9]+)*', query_lower):
-        # We allow cache only if exact match, but flag for fresh compliance verification
-        pass
-        
+    # 2. Specific Circular IDs with exact date anchors bypass for fresh retrieval
+    if re.search(r'rbi\s*[/:\-]\s*[0-9]{4}', query_lower) and re.search(r'(latest|recent|new|amended)', query_lower):
+        return True, "Circular ID with recency qualifier detected"
+
     return False, None
+
 
 def lookup_semantic_cache(
     query: str,
@@ -96,8 +96,11 @@ def lookup_semantic_cache(
     bypass, reason = should_bypass_cache(query)
     if bypass:
         logger.info(f"⚡ Semantic cache bypassed: {reason}")
+        _FINOPS_STATS["lookups"] += 1
+        _FINOPS_STATS["bypasses"] += 1
         return None
 
+    _FINOPS_STATS["lookups"] += 1
     query_vec = _compute_sparse_embedding(query)
     if not query_vec:
         return None
@@ -129,6 +132,9 @@ def lookup_semantic_cache(
             best_match = entry
 
     if best_match:
+        _FINOPS_STATS["hits"] += 1
+        _FINOPS_STATS["tokens_saved_estimate"] += 1500
+        _FINOPS_STATS["usd_saved_estimate"] += 0.0035
         logger.info(f"🎯 Semantic Cache HIT (Score: {best_score:.3f} >= {threshold}, Scope: {model_scope}) for query: '{query[:50]}...'")
         return {
             "answer": best_match["answer"],
@@ -140,6 +146,7 @@ def lookup_semantic_cache(
             "corpus_version": corpus_version
         }
 
+    _FINOPS_STATS["misses"] += 1
     return None
 
 def store_semantic_cache(

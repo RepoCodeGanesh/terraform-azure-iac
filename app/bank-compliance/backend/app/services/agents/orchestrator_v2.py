@@ -21,6 +21,7 @@ from app.services.agents.auditor_agent import AuditorAgent
 from app.services.agents.orchestrator import (
     MultiAgentOrchestrator,
     _check_and_increment_token_budget,
+    TOKEN_BUDGET_EXCEEDED_RESPONSE,
     SYSTEM_PROMPT,
     GREETING_RESPONSE
 )
@@ -214,16 +215,10 @@ class LangGraphOrchestrator:
         session_id: str = "default-session",
         history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
-        # G2 Token Budget Circuit Breaker Pre-Flight Check
+        # G2 Token Budget: pre-flight check (~2,000 tokens/query, resets at UTC midnight)
         if not _check_and_increment_token_budget(estimated_tokens=2000):
             return {
-                "answer": (
-                    "⚠️ **Daily AI Token Budget Reached**\n\n"
-                    "The BankCompliance AI token budget for today has been exhausted. "
-                    "The system will automatically reset at midnight UTC. "
-                    "Please try again tomorrow, or contact your platform administrator "
-                    "to increase the `DAILY_TOKEN_BUDGET` limit."
-                ),
+                "answer": TOKEN_BUDGET_EXCEEDED_RESPONSE,
                 "citations": [],
                 "suggested_queries": [],
                 "model_used": "token-budget-circuit-breaker"

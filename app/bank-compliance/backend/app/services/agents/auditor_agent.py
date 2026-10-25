@@ -100,7 +100,7 @@ class AuditorAgent:
             except Exception as e:
                 logger.debug("AuditorAgent thinking model audit skipped/fallback: %s", e)
 
-        # 4. Standard Reflection logic (only if identified domains exist)
+        # 5. Standard Reflection logic (only if identified domains exist)
         if not evidence or len(validated_citations) == 0:
             if state.get("iteration_count", 0) < 2 and state.get("identified_domains"):
                 state["audit_passed"] = False

@@ -126,4 +126,3 @@ resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
     module.bank_compliance_aks
   ]
 }
-

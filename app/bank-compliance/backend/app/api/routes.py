@@ -87,16 +87,20 @@ class QueryResponse(BaseModel):
     latency_ms: float = 0.0
     corpus_version: str = CURRENT_CORPUS_VERSION
 
-SYSTEM_PROMPT = """You are BankCompliance AI, the official Banking Regulatory & Compliance Copilot for Indian Scheduled Commercial Banks and NBFCs.
-You provide precise, legally auditable interpretations of Reserve Bank of India (RBI) Master Directions, KYC norms, IT Governance, Digital Lending, and Digital Payment regulations.
-
-Rules:
-1. Always quote the exact RBI Circular number, Master Direction title, and Section/Clause (e.g. "Under Section 4.2(a) of the RBI Master Direction on KYC...").
-2. State clear actionable compliance steps and mandatory statutory penalties for non-compliance.
-3. If PII is redacted, explain requirements using sanitized operational language.
-4. If the retrieved context is insufficient or conflicting, state so clearly and recommend escalating to the Chief Compliance Officer.
-5. Conclude with a recommendation for Bank Internal Audit & Chief Compliance Officer (CCO) review.
-"""
+def _format_citations(raw_citations: List[Dict[str, Any]]) -> List["Citation"]:
+    """Converts raw agent citation dicts into validated Citation response models."""
+    return [
+        Citation(
+            circular_no=c.get("circular_no", "RBI/Master-Direction"),
+            title=c.get("title", "Reserve Bank of India Compliance Framework"),
+            clause=c.get("clause", "Regulatory Requirement"),
+            text=c.get("text", ""),
+            score=c.get("score", 0.95),
+            provenance_hash=c.get("provenance_hash", "verified-agent"),
+            verified=c.get("verified", True)
+        )
+        for c in raw_citations
+    ]
 
 @router.post("/compliance/query", response_model=QueryResponse)
 async def query_compliance(request: QueryRequest):
@@ -155,18 +159,7 @@ async def query_compliance(request: QueryRequest):
     raw_citations = agent_output["citations"]
     suggested_queries = agent_output.get("suggested_queries", [])
 
-    formatted_citations = [
-        Citation(
-            circular_no=c.get("circular_no", "RBI/Master-Direction"),
-            title=c.get("title", "Reserve Bank of India Compliance Framework"),
-            clause=c.get("clause", "Regulatory Requirement"),
-            text=c.get("text", ""),
-            score=c.get("score", 0.95),
-            provenance_hash=c.get("provenance_hash", "verified-agent"),
-            verified=c.get("verified", True)
-        )
-        for c in raw_citations
-    ]
+    formatted_citations = _format_citations(raw_citations)
 
     # 4. Store in Semantic Cache for Future Instant Retrieval (Scoped by sovereign vs cloud)
     if raw_citations:
@@ -249,18 +242,7 @@ async def query_compliance_v2(request: QueryRequest):
     raw_citations = agent_output["citations"]
     suggested_queries = agent_output.get("suggested_queries", [])
 
-    formatted_citations = [
-        Citation(
-            circular_no=c.get("circular_no", "RBI/Master-Direction"),
-            title=c.get("title", "Reserve Bank of India Compliance Framework"),
-            clause=c.get("clause", "Regulatory Requirement"),
-            text=c.get("text", ""),
-            score=c.get("score", 0.95),
-            provenance_hash=c.get("provenance_hash", "verified-agent"),
-            verified=c.get("verified", True)
-        )
-        for c in raw_citations
-    ]
+    formatted_citations = _format_citations(raw_citations)
 
     # 4. Store in Semantic Cache for Future Instant Retrieval
     if raw_citations:
@@ -622,8 +604,3 @@ async def traverse_graph(item_id: str):
         
     expanded = graph.expand_context(item_id)
     return expanded
-
-
-
-
-

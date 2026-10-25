@@ -80,6 +80,16 @@ Output ONLY JSON:
 }
 """
 
+
+def _set_out_of_scope(state: AgentExecutionState) -> AgentExecutionState:
+    """Sets state fields for an out-of-scope query and returns immediately."""
+    state["intent"] = "out_of_scope"
+    state["sub_tasks"] = []
+    state["identified_domains"] = []
+    state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
+    return state
+
+
 class SupervisorAgent:
     """Planner Agent: Classifies intent, mathematically guards domain boundaries, and resolves history."""
     
@@ -149,20 +159,12 @@ class SupervisorAgent:
             if not disambiguated and not is_in_domain:
                 # If offline/fallback and raw query has zero mathematical domain similarity -> Hard Out-of-Scope
                 logger.info("SupervisorAgent intercepted off-topic query in multi-turn chat: '%s'", raw_query)
-                state["intent"] = "out_of_scope"
-                state["sub_tasks"] = []
-                state["identified_domains"] = []
-                state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
-                return state
+                return _set_out_of_scope(state)
         else:
             # Standalone single-turn query: If mathematically out of domain, immediately reject
             if not is_in_domain:
                 logger.info("SupervisorAgent mathematically intercepted off-topic query in <3ms: '%s'", raw_query)
-                state["intent"] = "out_of_scope"
-                state["sub_tasks"] = []
-                state["identified_domains"] = []
-                state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
-                return state
+                return _set_out_of_scope(state)
 
         # ── 4. Call Gemini 2.0 Flash-Lite via LiteLLM for Intent Planning ─────
         planned_via_llm = False
@@ -197,13 +199,9 @@ class SupervisorAgent:
             except Exception as e:
                 logger.debug("SupervisorAgent LLM call fell back to vector taxonomy: %s", e)
 
-        # Post-validation check using mathematical criterion
+        # Post-validation: mathematical criterion overrides LLM if domain sieve rejects
         if state.get("intent") == "out_of_scope" or not is_in_domain:
-            state["intent"] = "out_of_scope"
-            state["sub_tasks"] = []
-            state["identified_domains"] = []
-            state["suggested_followups"] = DOMAIN_SUGGESTIONS["general"]
-            return state
+            return _set_out_of_scope(state)
 
         if not planned_via_llm or state.get("intent") != "compliance_query":
             state["intent"] = "compliance_query"

@@ -35,6 +35,15 @@ logger = logging.getLogger(__name__)
 _TOKEN_BUDGET_DAILY: int = int(os.getenv("DAILY_TOKEN_BUDGET", "500000"))
 _token_usage: Dict[str, Any] = {"date": "", "count": 0}
 
+# Shared response string — imported by orchestrator_v2.py to avoid duplication
+TOKEN_BUDGET_EXCEEDED_RESPONSE = (
+    "⚠️ **Daily AI Token Budget Reached**\n\n"
+    "The BankCompliance AI token budget for today has been exhausted. "
+    "The system will automatically reset at midnight UTC. "
+    "Please try again tomorrow, or contact your platform administrator "
+    "to increase the `DAILY_TOKEN_BUDGET` limit."
+)
+
 
 def _check_and_increment_token_budget(estimated_tokens: int = 2000) -> bool:
     """
@@ -103,19 +112,10 @@ class MultiAgentOrchestrator:
         target_model: Optional[str] = None
     ) -> Dict[str, Any]:
 
-        # ── G2: Token Budget Circuit Breaker (pre-flight check) ───────────────
-        # Each compliance query costs ~2,000 tokens on average (system prompt +
-        # context + response). Check budget BEFORE any LLM call to prevent
-        # runaway spend. Circuit auto-resets at UTC midnight.
+        # G2 Token Budget: pre-flight check (~2,000 tokens/query, resets at UTC midnight)
         if not _check_and_increment_token_budget(estimated_tokens=2000):
             return {
-                "answer": (
-                    "⚠️ **Daily AI Token Budget Reached**\n\n"
-                    "The BankCompliance AI token budget for today has been exhausted. "
-                    "The system will automatically reset at midnight UTC. "
-                    "Please try again tomorrow, or contact your platform administrator "
-                    "to increase the `DAILY_TOKEN_BUDGET` limit."
-                ),
+                "answer": TOKEN_BUDGET_EXCEEDED_RESPONSE,
                 "citations": [],
                 "suggested_queries": [],
                 "model_used": "token-budget-circuit-breaker"

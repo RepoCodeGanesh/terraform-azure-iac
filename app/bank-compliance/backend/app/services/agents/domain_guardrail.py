@@ -156,5 +156,3 @@ class DomainCentroidGuardrail:
 
 # Initialize on module load
 DomainCentroidGuardrail.initialize()
-
-

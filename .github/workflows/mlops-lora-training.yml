@@ -138,9 +138,10 @@ jobs:
           import json, os
 
           report_path = 'app/bank-compliance/training/benchmark_evaluation_report.json'
-          groundedness_base = '72.4%'
-          groundedness_ft = '97.2%'
-          lift = '+34.25%'
+          # Dry-run / pre-training estimated baselines (replaced by real values when report exists)
+          groundedness_base = '72.4% (estimated)'
+          groundedness_ft = '97.2% (estimated)'
+          lift = '+34.25% (estimated)'
 
           if os.path.exists(report_path):
               try:
