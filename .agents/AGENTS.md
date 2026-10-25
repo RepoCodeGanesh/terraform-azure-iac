@@ -404,6 +404,14 @@ State files are path-keyed — **git repo location does not affect state**.
   ```
   Then re-run `terraform apply`. Terraform re-submits validation cleanly and SWA issues the managed SSL certificate.
 
+### 54. Frontend Chat Loading Indicator Mismatch for Sovereign SLM Mode
+* **Symptom:** When selecting "Sovereign SLM" from the engine dropdown, sending a query displayed a loading message: `"Multi-Agent Fleet auditing RBI Master Directions against vector lake..."` with an indigo `Sparkles` icon, rather than reflecting the local in-cluster execution mode.
+* **Root Cause:** In `ChatWindow.jsx`, while execution traces properly branched on `inferenceMode === 'sovereign'` (displaying green badges and in-cluster steps once the answer arrived), the intermediate `loading` block, the input placeholder, and the sub-header static note had hardcoded strings assuming the multi-agent cloud fleet.
+* **Resolution:** In `ChatWindow.jsx`:
+  1. Condition the `{loading && (...)}` block on `inferenceMode === 'sovereign'`, rendering a green `<Cpu size={16} color="#10b981" />` icon and `"Sovereign SLM (Local AKS CPU) synthesizing on-premise without cloud egress..."`.
+  2. Add an explicit **Active Engine** badge (`🛡️ Sovereign SLM (AKS CPU Node • Zero Egress)` vs `⚡ Multi-Cloud Fleet (4 Agents)`) in the chat sub-header next to the Knowledge Mesh indicator.
+  3. Tailor the input placeholder and compliance memo export note dynamically according to the active engine.
+
 ---
 
 
