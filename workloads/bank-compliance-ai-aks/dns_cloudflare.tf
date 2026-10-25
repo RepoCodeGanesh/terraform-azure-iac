@@ -16,10 +16,11 @@ resource "cloudflare_record" "bankc_cname" {
   depends_on = [module.bankc_frontend]
 }
 
-# ─── Wait 10s for Global DNS Edge Propagation (Prevents Race Conditions) ──────
-
+# ─── Wait 60s for Global DNS Edge Propagation (Prevents SWA Validation Race) ─
+# Azure SWA validates CNAME via Microsoft recursive resolvers in East US 2.
+# 60s guarantees negative DNS cache expiry and 100% first-pass SSL issuance.
 resource "time_sleep" "wait_for_dns" {
-  create_duration = "10s"
+  create_duration = "60s"
 
   depends_on = [cloudflare_record.bankc_cname]
 }
