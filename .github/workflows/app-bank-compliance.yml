@@ -233,7 +233,7 @@ jobs:
       !cancelled() &&
       needs.devsecops-scan.result == 'success' &&
       ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'frontend-only')) ||
-       (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.frontend == 'true')) &&
+       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))) &&
       (github.event_name == 'workflow_dispatch' ||
        ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push'))
     uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
@@ -254,9 +254,9 @@ jobs:
     if: |
       always() &&
       !cancelled() &&
-      needs.backend-deploy.result == 'success' &&
-      needs.deploy-frontend.result == 'success' &&
-      needs.gatekeeper-policies.result == 'success'
+      (needs.backend-deploy.result == 'success' || needs.backend-deploy.result == 'skipped') &&
+      (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') &&
+      (needs.gatekeeper-policies.result == 'success' || needs.gatekeeper-policies.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
