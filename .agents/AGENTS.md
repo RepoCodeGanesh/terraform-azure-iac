@@ -510,6 +510,12 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Standard CD pipelines stop after Helm release and SWA deployment tokens succeed, evaluating pipeline status solely based on ARM deployment return codes without executing end-to-end HTTP/API queries against live public production hostnames.
 * **Resolution:** Implement a dedicated `verify-live-status` stage in `.github/workflows/app-bank-compliance.yml` that executes after frontend and backend deployments succeed. The stage asserts HTTP 200 on `https://bank.mytaxbot.site`, queries `https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz`, and executes a live end-to-end statutory compliance inference query against APIM, requiring citations and answer payloads before marking the release summary as `🟢 RELEASE SUCCESSFUL`.
 
+### 58. FastMCP Dynamic Schema Deserialization (`Root` Object Exception) & APIM Operations Gap
+* **Symptom:** In CI/CD, the `FastMCP Functional & CPU/Memory Check` step fails with `AttributeError: 'Root' object has no attribute 'get'`. The pipeline triggers its safety handler (`kubectl scale deployment/bankc-mcp-server --replicas=0`), leaving the MCP microservice dead in AKS. Concurrently, public web calls to `${getApiBase()}/compliance/mcp/call` return HTTP 404.
+* **Root Cause:** (1) When an MCP tool returns an untyped `list[dict]`, FastMCP 2.x client deserializes each item into a dynamic dataclass instance named `Root()`. Calling `item.get("title")` crashes because `Root()` has no dictionary methods, and FastAPI serializes it as empty `{}`. (2) In APIM Terraform IaC (`workloads/bank-compliance-ai-aks/apim.tf`), operations for `/api/v1/compliance/mcp/tools` (GET) and `/api/v1/compliance/mcp/call` (POST) were missing, causing APIM to reject external requests with 404.
+* **Resolution:** (1) Update `mcp_client.py` to extract `result.structured_content["result"]` or parse `result.content[0].text` into clean Python dictionaries. (2) Use a typed Pydantic `RegulatoryClause` model for `search_rbi_regulations` in `mcp_server.py`. (3) In `mcp_smoke.py`, inspect both dict and object attributes defensively. (4) Codify `compliance-mcp-tools-get`, `compliance-mcp-call-post`, and `compliance-dossier-get` in `apim.tf`.
+
+
 ---
 
 

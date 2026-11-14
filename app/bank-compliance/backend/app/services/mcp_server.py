@@ -22,8 +22,18 @@ MCP Tool exposed:
 import asyncio
 import logging
 from typing import Optional
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("BankCompliance-MCP")
+
+
+class RegulatoryClause(BaseModel):
+    circular_no: str = Field(default="", description="RBI Circular / Master Direction reference")
+    title: str = Field(default="", description="Master Direction title")
+    clause: str = Field(default="", description="Specific section / clause identifier")
+    text: str = Field(default="", description="Full clause text")
+    score: float = Field(default=0.0, description="Relevance score (0.0–1.0, higher is more relevant)")
+
 
 try:
     from fastmcp import FastMCP  # type: ignore
@@ -54,7 +64,7 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-async def search_rbi_regulations(query: str, top_k: int = 5) -> list[dict]:
+async def search_rbi_regulations(query: str, top_k: int = 5) -> list[RegulatoryClause]:
     """
     Search RBI Master Directions and Circulars for regulatory clauses relevant to
     the compliance query.
@@ -83,13 +93,13 @@ async def search_rbi_regulations(query: str, top_k: int = 5) -> list[dict]:
     try:
         results = await _search_fn(query=query, limit=top_k)
         return [
-            {
-                "circular_no": r.get("circular_no", ""),
-                "title":       r.get("title", ""),
-                "clause":      r.get("clause", ""),
-                "text":        r.get("text", ""),
-                "score":       round(float(r.get("score", 0.0)), 4),
-            }
+            RegulatoryClause(
+                circular_no=r.get("circular_no", ""),
+                title=r.get("title", ""),
+                clause=r.get("clause", ""),
+                text=r.get("text", ""),
+                score=round(float(r.get("score", 0.0)), 4),
+            )
             for r in results
         ]
     except Exception as exc:

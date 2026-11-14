@@ -46,6 +46,24 @@ module "bankc_apim_api" {
       url_template = "/api/v1/compliance/circulars"
       description  = "Returns list of indexed RBI circulars"
     }
+    "compliance-mcp-tools-get" = {
+      display_name = "List MCP Tools"
+      method       = "GET"
+      url_template = "/api/v1/compliance/mcp/tools"
+      description  = "Returns local bridge manifest and live FastMCP server tool catalog"
+    }
+    "compliance-mcp-call-post" = {
+      display_name = "Call MCP Tool"
+      method       = "POST"
+      url_template = "/api/v1/compliance/mcp/call"
+      description  = "Executes a regulatory FastMCP tool or deterministic compliance bridge tool"
+    }
+    "compliance-dossier-get" = {
+      display_name = "Regulatory Compliance Dossier"
+      method       = "GET"
+      url_template = "/api/v1/compliance/dossier"
+      description  = "Compiles auditor-ready compliance attestation dossier"
+    }
   }
 }
 

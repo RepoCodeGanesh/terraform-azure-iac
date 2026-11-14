@@ -25,7 +25,13 @@ async def main() -> None:
         "search_rbi_regulations",
         {"query": "digital lending rules for Lending Service Providers", "top_k": 5},
     )
-    if not results or not any("digital lending" in item.get("title", "").lower() for item in results):
+
+    def _get_title(item):
+        if isinstance(item, dict):
+            return item.get("title", "")
+        return getattr(item, "title", "")
+
+    if not results or not any("digital lending" in _get_title(item).lower() for item in results):
         raise AssertionError("MCP regulatory search returned no matching RBI result")
 
     print(f"MCP tools discovered: {sorted(names)}")
