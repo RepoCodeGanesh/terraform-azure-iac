@@ -69,6 +69,8 @@ The React SPA supports 4 interactive modes selectable from the top navigation ba
 
 The FastMCP server is deployed by Helm as `bankc-mcp-server` (internal `ClusterIP`, SSE on port 8080). The backend is its only allowed caller. CI/CD verifies tool discovery and an RBI search from the backend pod, then records AKS node and MCP pod CPU/memory samples.
 
+Provision or restore the AKS workload first with `.github/workflows/workload-bank-compliance-aks.yml`; application CI/CD then builds and deploys this chart and runs the live MCP checks.
+
 ---
 
 ## 📦 Helm Chart Package (`app/bank-compliance/chart/`)
