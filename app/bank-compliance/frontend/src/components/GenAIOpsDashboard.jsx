@@ -61,7 +61,7 @@ export default function GenAIOpsDashboard({ onBackToChat }) {
         }))
       }
     } catch (err) {
-      console.warn('Live stats fetch fallback:', err)
+      if (import.meta.env.DEV) console.warn('Live stats fetch fallback:', err)
     } finally {
       setTimeout(() => {
         setRefreshing(false)

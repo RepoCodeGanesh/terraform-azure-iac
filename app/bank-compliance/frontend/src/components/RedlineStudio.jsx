@@ -258,7 +258,7 @@ export default function RedlineStudio() {
         setAuditResult(localResult)
       }
     } catch (err) {
-      console.warn('Network redline failed, applying in-browser statutory audit engine:', err)
+      if (import.meta.env.DEV) console.warn('Network redline failed, applying in-browser statutory audit engine:', err)
       const localResult = auditContractLocally(contractText, documentName)
       setAuditResult(localResult)
     } finally {

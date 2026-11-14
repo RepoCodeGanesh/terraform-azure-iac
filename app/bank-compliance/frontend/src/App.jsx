@@ -78,7 +78,7 @@ export default function App() {
       const data = await res.json()
       setLakeStats({ total_circulars: data.total_circulars || 12, total_indexed_clauses: data.total_clauses || 120 })
     } catch (err) {
-      console.warn('Ingestion sync fallback:', err)
+      if (import.meta.env.DEV) console.warn('Ingestion sync fallback:', err)
     }
   }
 
