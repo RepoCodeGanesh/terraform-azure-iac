@@ -49,6 +49,10 @@ This directory contains the Terraform infrastructure code for **BankCompliance A
 
 ## 🚀 Automated Deployment Instructions
 
+### GitHub Actions Provisioning / Recovery
+
+The authoritative provisioning workflow is `.github/workflows/workload-bank-compliance-aks.yml`. A push to `develop` that changes this workload directory runs Checkov, creates a Terraform plan against the remote production state, then applies the saved plan through the `bank-compliance-prod` environment. Review the plan and any configured environment approval before resources are created; this workload provisions AKS, networking, identity, monitoring, storage, and the frontend, not just the MCP pod. After infrastructure succeeds, trigger the BankCompliance application workflow to deploy the app and MCP server.
+
 ### 1. Initialize Terraform Backend & Providers
 ```bash
 terraform init -backend-config=backend.hcl
