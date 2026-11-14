@@ -1,4 +1,8 @@
-"""Pipeline smoke test for the live in-cluster FastMCP server."""
+"""Pipeline smoke test for the live in-cluster FastMCP server.
+
+This test runs inside the deployed backend pod and exercises the network MCP
+transport, not the in-process deterministic compliance bridge.
+"""
 
 import asyncio
 
