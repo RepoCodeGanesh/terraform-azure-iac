@@ -1,0 +1,53 @@
+# Restrict FastMCP access to the BankCompliance backend only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-mcp
+  namespace: bank-compliance
+  annotations:
+    description: "Allow backend MCP client traffic to the internal FastMCP service"
+    security: "zero-trust-east-west"
+spec:
+  podSelector:
+    matchLabels:
+      app: bankc-backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: bankc-mcp-server
+      ports:
+        - port: 8080
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mcp-from-backend
+  namespace: bank-compliance
+  annotations:
+    description: "Allow FastMCP service ingress from the BankCompliance backend only"
+    security: "zero-trust-east-west"
+spec:
+  podSelector:
+    matchLabels:
+      app: bankc-mcp-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: bankc-backend
+      ports:
+        - port: 8080
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 8080
+          protocol: TCP

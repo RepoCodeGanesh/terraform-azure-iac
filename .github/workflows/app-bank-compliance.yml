@@ -224,6 +224,77 @@ jobs:
           kubectl get constraints -o custom-columns="KIND:.kind,NAME:.metadata.name,ENFORCEMENT:.spec.enforcementAction,VIOLATIONS:.status.totalViolations"
           echo "✅ Azure Policy Gatekeeper admission controls verified"
 
+  # ── JOB 4c: Real FastMCP Smoke Test & Resource Monitoring ───────────────────
+  mcp-functional-monitor:
+    name: 🔌 FastMCP Functional & CPU/Memory Check
+    needs: [backend-deploy, gatekeeper-policies]
+    if: needs.backend-deploy.result == 'success' && needs.gatekeeper-policies.result == 'success'
+    runs-on: ubuntu-latest
+    environment: bank-compliance-prod
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --name aks-ht-bankc-p-cin-01 \
+            --resource-group rg-ht-bankc-p-cin-01 \
+            --overwrite-existing
+
+      - name: Wait for MCP Rollout and Record Pre-Test Baseline
+        run: |
+          kubectl rollout status deployment/bankc-mcp-server -n bank-compliance --timeout=180s
+          echo "► Cluster CPU/memory baseline before MCP calls"
+          kubectl top nodes
+          kubectl top pods -n bank-compliance
+          kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
+
+      - name: Call Actual MCP Tools from Backend Pod
+        run: |
+          if ! kubectl exec -n bank-compliance deployment/bankc-backend -- python -m app.services.mcp_smoke; then
+            echo "MCP smoke test failed; scaling only the MCP server to zero for safety."
+            kubectl scale deployment/bankc-mcp-server -n bank-compliance --replicas=0
+            exit 1
+          fi
+
+      - name: Monitor Cluster and MCP Pod Resources
+        shell: bash
+        run: |
+          high_samples=0
+          for sample in 1 2 3 4 5; do
+            echo "► Resource sample ${sample}/5"
+            kubectl top nodes
+            metrics=$(kubectl top pod -n bank-compliance -l app=bankc-mcp-server --no-headers)
+            echo "$metrics"
+            cpu=$(echo "$metrics" | awk 'NR==1 {print $2}')
+            memory=$(echo "$metrics" | awk 'NR==1 {print $3}')
+            cpu_m=${cpu%m}
+            memory_mib=${memory%Mi}
+            if [[ "$memory" == *Gi ]]; then
+              memory_mib=$(awk -v value="${memory%Gi}" 'BEGIN {printf "%d", value * 1024}')
+            fi
+            if (( cpu_m >= 180 || memory_mib >= 230 )); then
+              high_samples=$((high_samples + 1))
+            else
+              high_samples=0
+            fi
+            restarts=$(kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o jsonpath='{.items[0].status.containerStatuses[0].restartCount}')
+            echo "MCP CPU=${cpu}, memory=${memory}, restarts=${restarts}"
+            if (( high_samples >= 2 )) || (( restarts > 0 )); then
+              echo "MCP resource guardrail or restart check failed; scaling only the MCP server to zero."
+              kubectl scale deployment/bankc-mcp-server -n bank-compliance --replicas=0
+              exit 1
+            fi
+            if (( sample < 5 )); then sleep 15; fi
+          done
+          echo "✅ MCP remained healthy through five resource samples."
+          kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
+
   # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
   deploy-frontend:
     name: Build & Deploy Frontend SPA
@@ -250,13 +321,14 @@ jobs:
   # ── JOB 5b: End-to-End Live Production Status & Functional Verification ─────
   verify-live-status:
     name: 🌐 Live Production Status & Functional Verification
-    needs: [backend-deploy, deploy-frontend, gatekeeper-policies]
+    needs: [backend-deploy, deploy-frontend, gatekeeper-policies, mcp-functional-monitor]
     if: |
       always() &&
       !cancelled() &&
       (needs.backend-deploy.result == 'success' || needs.backend-deploy.result == 'skipped') &&
       (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') &&
-      (needs.gatekeeper-policies.result == 'success' || needs.gatekeeper-policies.result == 'skipped')
+      (needs.gatekeeper-policies.result == 'success' || needs.gatekeeper-policies.result == 'skipped') &&
+      (needs.mcp-functional-monitor.result == 'success' || needs.mcp-functional-monitor.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -321,7 +393,7 @@ jobs:
   # ── JOB 6: Consolidated Dynamic Release Governance Summary ──────────────────
   summary:
     name: 📊 Release Governance Summary
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, backend-deploy, gatekeeper-policies, deploy-frontend, verify-live-status]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, backend-deploy, gatekeeper-policies, mcp-functional-monitor, deploy-frontend, verify-live-status]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -333,9 +405,10 @@ jobs:
           DEPLOY_STATUS="${{ needs.backend-deploy.result == 'success' && '🟢 DEPLOYED' || (needs.backend-deploy.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           FRONTEND_STATUS="${{ needs.deploy-frontend.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-frontend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           LIVE_STATUS="${{ needs.verify-live-status.result == 'success' && '🟢 VERIFIED (200 OK)' || (needs.verify-live-status.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          MCP_STATUS="${{ needs.mcp-functional-monitor.result == 'success' && '🟢 TOOLS + RESOURCES VERIFIED' || (needs.mcp-functional-monitor.result == 'failure' && '🔴 FAILED / SCALED TO ZERO' || '⚪ SKIPPED') }}"
 
           OVERALL="🟢 RELEASE SUCCESSFUL"
-          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ] || [ "${{ needs.verify-live-status.result }}" = "failure" ]; then
+          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.gatekeeper-policies.result }}" = "failure" ] || [ "${{ needs.mcp-functional-monitor.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ] || [ "${{ needs.verify-live-status.result }}" = "failure" ]; then
             OVERALL="🔴 PIPELINE FAILED"
           fi
 
@@ -356,6 +429,7 @@ jobs:
           | **2. GenAIOps Quality Gate** | Ragas Triad Groundedness & Citation Evaluation | ${EVAL_STATUS} |
           | **3. Container Packaging** | Multi-stage Docker build + Trivy CVE scan to GHCR | ${BUILD_STATUS} |
           | **4. Backend AKS Release** | Helm 3 rolling upgrade + Workload Identity on AKS | ${DEPLOY_STATUS} |
+          | **4b. MCP Functional & Resource Check** | FastMCP tool discovery/search + AKS CPU/memory samples | ${MCP_STATUS} |
           | **5. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
           | **6. Live Production Health** | Live SWA + APIM Gateway + E2E AI Query Verification | ${LIVE_STATUS} |
 

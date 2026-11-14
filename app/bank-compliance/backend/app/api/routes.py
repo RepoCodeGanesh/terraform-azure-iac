@@ -568,10 +568,23 @@ async def get_dossier():
 
 @router.get("/compliance/mcp/tools", tags=["2026/2027 Model Context Protocol"])
 async def list_mcp_tools():
-    """Returns the Model Context Protocol (MCP) tools manifest."""
+    """Returns the local bridge manifest and live FastMCP server tool catalog."""
+    from app.services.mcp_client import list_regulatory_mcp_tools
     from app.services.mcp_bridge import get_mcp_bridge
+
     bridge = get_mcp_bridge()
-    return bridge.list_tools()
+    manifest = bridge.list_tools()
+    try:
+        server_tools = await list_regulatory_mcp_tools()
+        server_available = True
+    except Exception:
+        logger.exception("FastMCP tool discovery failed")
+        server_tools = []
+        server_available = False
+    return {
+        **manifest,
+        "fastmcp_server": {"available": server_available, "tools": server_tools},
+    }
 
 class MCPCallRequest(BaseModel):
     tool_name: str
@@ -579,12 +592,24 @@ class MCPCallRequest(BaseModel):
 
 @router.post("/compliance/mcp/call", tags=["2026/2027 Model Context Protocol"])
 async def call_mcp_tool(req: MCPCallRequest):
-    """Executes a Model Context Protocol tool (calculate_fldg_cap, check_data_localization, verify_vcip_identity_step)."""
+    """Executes a regulatory FastMCP tool or deterministic compliance bridge tool."""
+    from app.services.mcp_client import REGULATORY_MCP_TOOLS, call_regulatory_mcp_tool
     from app.services.mcp_bridge import get_mcp_bridge
+
+    if req.tool_name in REGULATORY_MCP_TOOLS:
+        try:
+            result = await call_regulatory_mcp_tool(req.tool_name, req.arguments)
+            return {"tool_name": req.tool_name, "status": "SUCCESS", "result": result, "transport": "fastmcp-sse"}
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception:
+            logger.exception("FastMCP regulatory tool call failed: %s", req.tool_name)
+            raise HTTPException(status_code=503, detail="Regulatory MCP service is unavailable")
+
     bridge = get_mcp_bridge()
     try:
         result = bridge.call_tool(req.tool_name, req.arguments)
-        return {"tool_name": req.tool_name, "status": "SUCCESS", "result": result}
+        return {"tool_name": req.tool_name, "status": "SUCCESS", "result": result, "transport": "backend-bridge"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

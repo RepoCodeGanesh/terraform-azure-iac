@@ -224,7 +224,7 @@ The following capabilities were added as part of the LLMOps Skill Bridge to qual
 | **O1 — Langfuse LLM Tracing** | Per-agent waterfall traces (50k free/month, graceful no-op if keys absent) | `backend/app/services/telemetry.py` |
 | **A3 — Ollama SLM initContainer** | `qwen2.5:0.5b` pre-pulled via initContainer; sub-second inference post-init | `k8s/inference/private-slm-deployment.yaml` |
 | **G2 — Token Budget Circuit Breaker** | In-memory daily token counter; auto-resets UTC midnight | `backend/app/services/agents/orchestrator.py` |
-| **A2 — FastMCP Server** | `search_rbi_regulations` + `list_regulatory_domains` MCP tools | `backend/app/services/mcp_server.py` |
+| **A2 — FastMCP Server** | Helm-managed internal SSE server; backend proxies RBI tools over MCP and CI/CD smoke-tests calls and resource use | `backend/app/services/mcp_server.py`, `chart/templates/mcp-server.yaml` |
 | **S5 — AI Red-Team Report** | 10 attack patterns, 4-layer defence documented, 100% interception | `docs/ai-red-team-report.md` |
 
 ### New Resume Headline (Phase 11)

@@ -43,6 +43,18 @@ backend:
     langfuseTracingEnabled: "true"
     dailyTokenBudget: "500000"
 
+# Internal FastMCP regulatory-search service
+mcp:
+  replicaCount: 1
+  serverUrl: "http://bankc-mcp-server:8080/sse"
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
 # LiteLLM AI Gateway Proxy
 litellm:
   replicaCount: 1

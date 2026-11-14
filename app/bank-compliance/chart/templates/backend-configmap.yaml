@@ -12,6 +12,7 @@ data:
   QDRANT_HOST: {{ .Values.backend.env.qdrantHost | quote }}
   QDRANT_PORT: {{ .Values.backend.env.qdrantPort | quote }}
   QDRANT_COLLECTION: {{ .Values.backend.env.qdrantCollection | quote }}
+  MCP_SERVER_URL: {{ .Values.mcp.serverUrl | quote }}
   ALLOWED_ORIGINS: {{ .Values.backend.env.allowedOrigins | quote }}
   ENVIRONMENT: {{ .Values.backend.env.environment | quote }}
   # O1: Langfuse Tracing Configuration

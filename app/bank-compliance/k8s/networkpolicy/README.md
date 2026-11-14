@@ -67,6 +67,7 @@ In regulated banking environments (RBI Master Directions on Cyber Security Frame
 | `allow-ingress-to-backend` | `app: bankc-backend` | Ingress | TCP 8000, 80 | `ingress-nginx`, `app-routing-system`, `kube-system` |
 | `allow-backend-to-qdrant` | `app: bankc-backend`, `app: qdrant` | Bidirectional | TCP 6333, 6334 | `backend` ⇄ `qdrant` |
 | `allow-backend-to-litellm` | `app: bankc-backend`, `app: litellm-proxy` | Bidirectional | TCP 4000 | `backend` ⇄ `litellm-proxy` |
+| `allow-backend-to-mcp` / `allow-mcp-from-backend` | `app: bankc-backend`, `app: bankc-mcp-server` | Bidirectional | TCP 8080 | `backend` ⇄ FastMCP; no public ingress |
 | `allow-external-egress` | `app: litellm-proxy`, `app: bankc-backend` | Egress | TCP 443, TCP 80 | External HTTPS APIs (Gemini, Groq, Azure Content Safety, Entra ID) + IMDS (`169.254.169.254:80`) |
 | `allow-monitoring-scraping`| `backend`, `litellm`, `qdrant` | Ingress | TCP 8000, 4000, 6333 | `monitoring` & `kube-system` (Prometheus) |
 

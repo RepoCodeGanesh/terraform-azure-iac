@@ -37,7 +37,7 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
   const [graphLoading, setGraphLoading] = useState(false)
 
   // ── Tab 3: MCP Tools State ──
-  const [selectedMcpTool, setSelectedMcpTool] = useState('calculate_fldg_cap')
+  const [selectedMcpTool, setSelectedMcpTool] = useState('search_rbi_regulations')
   const [fldgPortfolio, setFldgPortfolio] = useState(10000000)
   const [fldgGuarantee, setFldgGuarantee] = useState(450000)
   const [locDataCategory, setLocDataCategory] = useState('card_payment_data')
@@ -46,6 +46,7 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
   const [vcipGeotag, setVcipGeotag] = useState(true)
   const [vcipLiveness, setVcipLiveness] = useState(true)
   const [vcipAadhaar, setVcipAadhaar] = useState(true)
+  const [mcpSearchQuery, setMcpSearchQuery] = useState('What are RBI rules for digital lending service providers?')
   const [mcpResult, setMcpResult] = useState(null)
   const [mcpLoading, setMcpLoading] = useState(false)
 
@@ -117,7 +118,10 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
   const runMcpTool = async () => {
     setMcpLoading(true)
     let payload = {}
-    if (selectedMcpTool === 'calculate_fldg_cap') {
+    const isFastMcpTool = selectedMcpTool === 'search_rbi_regulations' || selectedMcpTool === 'list_regulatory_domains'
+    if (selectedMcpTool === 'search_rbi_regulations') {
+      payload = { query: mcpSearchQuery, top_k: 5 }
+    } else if (selectedMcpTool === 'calculate_fldg_cap') {
       payload = { total_portfolio_inr: Number(fldgPortfolio), guarantee_amount_inr: Number(fldgGuarantee) }
     } else if (selectedMcpTool === 'check_data_localization') {
       payload = { data_category: locDataCategory, storage_region: locRegion, is_cross_border_transaction: locCrossBorder }
@@ -134,14 +138,13 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
           arguments: payload
         })
       })
-      if (res.ok) {
-        const data = await res.json()
-        setMcpResult(data.result)
-      } else {
-        setMcpResult(executeLocalMcpFallback(selectedMcpTool, payload))
-      }
-    } catch {
-      setMcpResult(executeLocalMcpFallback(selectedMcpTool, payload))
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || `MCP request failed (${res.status})`)
+      setMcpResult(data.result)
+    } catch (error) {
+      setMcpResult(isFastMcpTool
+        ? { error: error.message || 'FastMCP server is unavailable' }
+        : executeLocalMcpFallback(selectedMcpTool, payload))
     } finally {
       setMcpLoading(false)
     }
@@ -705,7 +708,7 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
                     Model Context Protocol (MCP) JSON-RPC v2024-11-05 Tool Bridge
                   </div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: '2px' }}>
-                    Federating deterministic banking calculations and identity verification for autonomous AI agents.
+                    Regulatory search runs through the in-cluster FastMCP server; deterministic checks use the backend tool bridge.
                   </div>
                 </div>
                 <span style={{
@@ -717,13 +720,15 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
                   padding: '4px 10px',
                   borderRadius: '9999px'
                 }}>
-                  3 Tools Registered
+                  2 FastMCP Tools · 3 Bridge Tools
                 </span>
               </div>
 
               {/* Tool Selection Tabs */}
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {[
+                  { id: 'search_rbi_regulations', name: 'RBI Regulatory Search' },
+                  { id: 'list_regulatory_domains', name: 'Regulatory Domains' },
                   { id: 'calculate_fldg_cap', name: 'FLDG 5% Cap Calculator' },
                   { id: 'check_data_localization', name: 'Data Localization Check' },
                   { id: 'verify_vcip_identity_step', name: 'V-CIP Identity Verifier' }
@@ -754,6 +759,35 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
                 borderRadius: '12px',
                 padding: '18px 22px'
               }}>
+                {selectedMcpTool === 'search_rbi_regulations' && (
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '12px' }}>
+                      Search the RBI regulatory corpus via the in-cluster FastMCP server:
+                    </div>
+                    <input
+                      type="text"
+                      aria-label="RBI regulatory search query"
+                      value={mcpSearchQuery}
+                      onChange={(e) => setMcpSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid var(--border-glass)',
+                        borderRadius: '8px',
+                        color: '#ffffff',
+                        padding: '9px 12px',
+                        fontSize: '0.85rem'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {selectedMcpTool === 'list_regulatory_domains' && (
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Calls the FastMCP server to list regulatory areas covered by its RBI knowledge base.
+                  </div>
+                )}
+
                 {selectedMcpTool === 'calculate_fldg_cap' && (
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '12px' }}>
@@ -921,32 +955,40 @@ export default function ArchitectureInspectorModal({ isOpen, onClose }) {
               {mcpResult && (
                 <div style={{
                   background: 'rgba(15, 23, 42, 0.8)',
-                  border: `1px solid ${mcpResult.compliant ? '#10b981' : '#f43f5e'}55`,
+                  border: `1px solid ${mcpResult.error || mcpResult.compliant === false ? '#f43f5e' : '#10b981'}55`,
                   borderRadius: '12px',
                   padding: '16px 20px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {mcpResult.compliant ? (
+                      {mcpResult.error || mcpResult.compliant === false ? (
+                        <AlertTriangle size={16} color="#f43f5e" />
+                      ) : mcpResult.compliant === true ? (
                         <CheckCircle2 size={16} color="#10b981" />
                       ) : (
-                        <AlertTriangle size={16} color="#f43f5e" />
+                        <CheckCircle2 size={16} color="#10b981" />
                       )}
-                      <span style={{ fontSize: '0.86rem', fontWeight: 700, color: mcpResult.compliant ? '#34d399' : '#fb7185' }}>
-                        MCP Verdict: {mcpResult.status}
+                      <span style={{ fontSize: '0.86rem', fontWeight: 700, color: mcpResult.error || mcpResult.compliant === false ? '#fb7185' : '#34d399' }}>
+                        {mcpResult.error
+                          ? 'FastMCP call failed'
+                          : typeof mcpResult.compliant === 'boolean'
+                            ? `MCP Verdict: ${mcpResult.status}`
+                            : `FastMCP result: ${selectedMcpTool}`}
                       </span>
                     </div>
-                    <span style={{
-                      background: mcpResult.compliant ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)',
-                      border: `1px solid ${mcpResult.compliant ? '#10b981' : '#f43f5e'}55`,
-                      color: mcpResult.compliant ? '#34d399' : '#fb7185',
-                      fontSize: '0.68rem',
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: '4px'
-                    }}>
-                      {mcpResult.compliant ? 'COMPLIANT' : 'STATUTORY VIOLATION'}
-                    </span>
+                    {typeof mcpResult.compliant === 'boolean' && (
+                      <span style={{
+                        background: mcpResult.compliant ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)',
+                        border: `1px solid ${mcpResult.compliant ? '#10b981' : '#f43f5e'}55`,
+                        color: mcpResult.compliant ? '#34d399' : '#fb7185',
+                        fontSize: '0.68rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        {mcpResult.compliant ? 'COMPLIANT' : 'STATUTORY VIOLATION'}
+                      </span>
+                    )}
                   </div>
 
                   <pre style={{

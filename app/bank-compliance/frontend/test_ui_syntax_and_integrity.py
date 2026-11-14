@@ -55,6 +55,9 @@ class TestUIComponentsIntegrity(unittest.TestCase):
         self.assertIn("calculate_fldg_cap", content)
         self.assertIn("check_data_localization", content)
         self.assertIn("verify_vcip_identity_step", content)
+        self.assertIn("search_rbi_regulations", content)
+        self.assertIn("list_regulatory_domains", content)
+        self.assertIn("FastMCP call failed", content)
 
         # Check for cryptographic SHA-256 digest reference
         self.assertIn("SHA-256", content)

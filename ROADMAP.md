@@ -127,7 +127,7 @@ This document tracks the progress, completed milestones, and upcoming phases of 
 
 ### Track A: AI Capabilities
 * [x] **A3 Phase 1 — Ollama CPU SLM (qwen2.5:0.5b):** Created `k8s/inference/private-slm-deployment.yaml` with `initContainer` that pre-pulls `qwen2.5:0.5b` into shared emptyDir volume before main Ollama server starts. Right-sized CPU requests to `10m` to avoid single-node scheduling deadlocks. Service `private-slm-inference:11434` live and verified.
-* [x] **A2 — FastMCP Regulatory Search Server:** Created `backend/app/services/mcp_server.py` with FastMCP exposing `search_rbi_regulations(query, top_k)` and `list_regulatory_domains()` tools. Created `k8s/inference/mcp-deployment.yaml` (ClusterIP `bankc-mcp-server:8080`, SSE transport, explicit binding to `0.0.0.0:8080`). Added `fastmcp>=0.1.0` to `requirements.txt`.
+* [x] **A2 — FastMCP Regulatory Search Server:** FastMCP exposes `search_rbi_regulations(query, top_k)` and `list_regulatory_domains()` through an internal Helm-managed `ClusterIP` service. The backend invokes the server through an allow-listed SSE MCP client; NetworkPolicy limits access to the backend. CI/CD smoke-tests tool discovery/search and records cluster/pod CPU and memory. See `app/bank-compliance/chart/templates/mcp-server.yaml`.
 
 ### Track G: Governance
 * [x] **G2 — AI Token Budget Circuit Breaker:** Added in-memory daily token counter (`_TOKEN_BUDGET_DAILY=500000`, auto-resets UTC midnight) to `orchestrator.py` & `orchestrator_v2.py`. Pre-flight check blocks requests when budget exhausted with user-friendly message. Added `DAILY_TOKEN_BUDGET: "500000"` to `backend-configmap.yaml`.

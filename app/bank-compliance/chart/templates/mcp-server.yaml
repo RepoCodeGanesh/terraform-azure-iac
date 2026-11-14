@@ -1,26 +1,15 @@
-# ==============================================================================
-# A2: BankCompliance AI — MCP (Model Context Protocol) Regulatory Search Server
-# Exposes search_rbi_regulations FastMCP tool for Claude Desktop / Cursor / etc.
-# Namespace: bank-compliance
-# Service:   bankc-mcp-server (ClusterIP, port 8080)
-# Image:     Same as backend (shares QdrantService and document corpus)
-# FinOps:    $0 — runs on existing AKS Free-Tier CPU node
-# ==============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bankc-mcp-server
-  namespace: bank-compliance
+  namespace: {{ .Release.Namespace }}
   labels:
     app: bankc-mcp-server
     app.kubernetes.io/name: bankc-mcp-server
     app.kubernetes.io/part-of: bank-compliance-ai
     app.kubernetes.io/component: mcp-server
-  annotations:
-    skill-bridge/phase: "A2"
-    skill-bridge/tool: "FastMCP"
 spec:
-  replicas: 0
+  replicas: {{ .Values.mcp.replicaCount }}
   selector:
     matchLabels:
       app: bankc-mcp-server
@@ -30,16 +19,15 @@ spec:
         app: bankc-mcp-server
         app.kubernetes.io/part-of: bank-compliance-ai
     spec:
-      serviceAccountName: bankc-sa
+      serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
         - name: mcp-server
-          image: ghcr.io/repocodeganesh/bank-compliance-backend:latest
-          imagePullPolicy: Always
-          # Run the MCP server module directly
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           command: ["python", "-m", "app.services.mcp_server"]
           env:
             - name: MCP_TRANSPORT
-              value: "sse"  # Server-Sent Events transport for HTTP MCP clients
+              value: "sse"
             - name: MCP_HOST
               value: "0.0.0.0"
             - name: MCP_PORT
@@ -54,7 +42,6 @@ spec:
             - secretRef:
                 name: bankc-langfuse-secret
                 optional: true
-          # S1: Pod Security Context — non-root, no escalation
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
@@ -63,12 +50,7 @@ spec:
               drop:
                 - ALL
           resources:
-            requests:
-              cpu: "10m"
-              memory: "64Mi"
-            limits:
-              cpu: "200m"
-              memory: "256Mi"
+            {{- toYaml .Values.mcp.resources | nindent 12 }}
           livenessProbe:
             tcpSocket:
               port: 8080
@@ -84,7 +66,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: bankc-mcp-server
-  namespace: bank-compliance
+  namespace: {{ .Release.Namespace }}
   labels:
     app: bankc-mcp-server
     app.kubernetes.io/part-of: bank-compliance-ai

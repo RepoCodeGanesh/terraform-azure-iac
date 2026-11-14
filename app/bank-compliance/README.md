@@ -63,7 +63,11 @@ The React SPA supports 4 interactive modes selectable from the top navigation ba
 | `GET` | `/api/v1/compliance/document/{id}` | Returns parsed full markdown, section map, and SHA-256 hash |
 | `POST` | `/api/v1/compliance/ingest` | Triggers raw regulatory ingestion into Qdrant Vector DB |
 | `GET` | `/api/v1/compliance/stats` | Real-time vector collection and data lake statistics |
+| `GET` | `/api/v1/compliance/mcp/tools` | Lists deterministic bridge tools and live FastMCP server tools/status |
+| `POST` | `/api/v1/compliance/mcp/call` | Calls a deterministic tool or proxies RBI tools to the in-cluster FastMCP server |
 | `POST` | `/api/v1/compliance/cache/invalidate` | Purges semantic cache upon new circular releases |
+
+The FastMCP server is deployed by Helm as `bankc-mcp-server` (internal `ClusterIP`, SSE on port 8080). The backend is its only allowed caller. CI/CD verifies tool discovery and an RBI search from the backend pod, then records AKS node and MCP pod CPU/memory samples.
 
 ---
 
@@ -76,6 +80,7 @@ The application is fully packaged as a parameterized, atomic **Helm Chart**:
   * `serviceaccount.yaml`: Workload Identity annotated ServiceAccount (`azure.workload.identity/use: "true"`).
   * `backend-deployment.yaml` & `backend-service.yaml`: FastAPI backend with LoadBalancer & Azure DNS label.
   * `backend-configmap.yaml`: App configuration parameters.
+  * `mcp-server.yaml`: Internal FastMCP deployment and service, sharing the backend image tag.
   * `litellm-deployment.yaml` & `litellm-service.yaml`: Multi-model AI gateway on port 4000.
   * `litellm-configmap.yaml`: Multi-model routing (Gemini 2.0 Flash + Azure OpenAI `gpt-5.4-nano` fallback).
   * `litellm-secret.yaml`: Key Vault-injected AI endpoints.
@@ -186,4 +191,4 @@ python training/eval_fine_tuned.py
 | **LiteLLM Proxy Tunnel**| `kubectl port-forward svc/litellm-proxy 4000:4000 -n bank-compliance` | Direct access to test model routing endpoints (`localhost:4000/v1/models`). |
 | **Stuck Helm Unlock** | `kubectl delete secret -l owner=helm,name=bank-compliance,status=failed -n bank-compliance` | Clears orphan lock secret to unblock failed or stuck Helm deployments. |
 | **FinOps Scale-to-0** | `kubectl scale deploy/vllm-benchmark-inference --replicas=0 -n bank-compliance` | Shuts down GPU/heavy inference benchmark pods to conserve node capacity. |
-| **Cache Invalidation** | `kubectl exec -it deploy/bankc-backend -n bank-compliance -- curl -X POST http://localhost:8000/api/v1/compliance/cache/invalidate` | Purges semantic vector cache in Qdrant after uploading new RBI circulars. |
+| **Cache Invalidation** | `kubectl exec -it deploy/bankc-backend -n bank-compliance -- curl -X POST http://localhost:8000/api/v1/compliance/cache/invalidate` | Purges semantic vector cache in Qdrant after uploading new RBI circulars. |

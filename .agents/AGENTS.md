@@ -253,7 +253,7 @@ State files are path-keyed — **git repo location does not affect state**.
 ### 27. FastMCP Server Host & Interface Binding in Kubernetes (`connection refused` on 8080)
 * **Symptom:** FastMCP pod `bankc-mcp-server` enters CrashLoopBackOff or fails readiness/liveness probes (`dial tcp 10.244.0.X:8080: connect: connection refused`).
 * **Root Cause:** FastMCP SSE transport defaults to binding `127.0.0.1:8000`. Kubernetes kubelet probes connect from outside localhost via the pod's container IP. When probe targets port 8080 while FastMCP binds `127.0.0.1:8000`, the connection is actively refused.
-* **Resolution:** In `mcp_server.py`, pass `host=os.getenv("MCP_HOST", "0.0.0.0")` and `port=int(os.getenv("MCP_PORT", "8080"))` to `mcp.run(transport="sse", host=host, port=port)`. In `mcp-deployment.yaml`, set `MCP_HOST: "0.0.0.0"` and `MCP_PORT: "8080"`.
+* **Resolution:** In `mcp_server.py`, pass `host=os.getenv("MCP_HOST", "0.0.0.0")` and `port=int(os.getenv("MCP_PORT", "8080"))` to `mcp.run(transport="sse", host=host, port=port)`. In `chart/templates/mcp-server.yaml`, set `MCP_HOST: "0.0.0.0"` and `MCP_PORT: "8080"`; keep the service internal and verify the backend-to-MCP NetworkPolicy.
 
 ### 28. In-Cluster Sovereign SLM CPU Scheduling Deadlock on Single-Node AKS (`Insufficient cpu`)
 * **Symptom:** Ollama SLM pod `private-slm-inference` remains in `Pending` state indefinitely with `0/1 nodes are available: 1 Insufficient cpu`.

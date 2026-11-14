@@ -5,7 +5,7 @@ Exposes the RBI regulatory search capability as a FastMCP tool that any
 MCP-compatible client (Claude Desktop, Cursor, etc.) can call directly.
 
 Architecture:
-  - Uses FastMCP (fastmcp>=0.1.0) for ergonomic MCP server definition
+    - Uses FastMCP (fastmcp>=2.0.0,<3.0.0) for ergonomic MCP server definition
   - Wraps the existing QdrantService / search_rbi_clauses function
   - Runs as a standalone process in the bank-compliance namespace
   - Exposed as ClusterIP service `bankc-mcp-server` on port 8080
@@ -30,7 +30,7 @@ try:
 except ImportError:
     raise ImportError(
         "fastmcp is required for the MCP server. "
-        "Install with: pip install fastmcp>=0.1.0"
+        "Install with: pip install 'fastmcp>=2.0.0,<3.0.0'"
     )
 
 # Import the existing regulatory search function
