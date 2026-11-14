@@ -111,6 +111,7 @@ XML
 
   depends_on = [
     azapi_resource.api,
+    azapi_resource.operations,
     azurerm_api_management_backend.this
   ]
 }
