@@ -94,7 +94,7 @@ export default function RedlineStudio() {
         category: "IT Outsourcing & FinTech Risk",
         violated_circular: "RBI/2023-24/102",
         violated_clause: "Clause 12.2: Data Sovereignty within India",
-        pattern: /\b(?:store|stored|storing|host|hosted|hosting|replicate|replicated|replicating|transfer|transferred|transferring|process|processed|processing|maintain|maintained|maintaining|reside|resided|residing)\b.*?\b(?:outside\s+(?:of\s+)?(?:the\s+)?(?:territory\s+of\s+)?india|offshore|overseas|abroad|foreign\s+(?:cloud|region|server|country|jurisdiction)|cross-border|singapore|frankfurt|dubai|ireland|\b(?:the\s+)?(?:us|usa|united\s+states|eu|europe)\b)/i,
+        pattern: /\b(?:store|stored|storing|host|hosted|hosting|replicate|replicated|replicating|transfer|transferred|transferring|process|processed|processing|maintain|maintained|maintaining|reside|resided|residing)\b.*?(?:\b(?:outside\s+(?:of\s+)?(?:the\s+)?(?:territory\s+of\s+)?india|offshore|overseas|abroad|foreign\s+(?:cloud|region|server|country|jurisdiction)|cross-border|singapore|frankfurt|dubai|ireland|\b(?:the\s+)?(?:us|usa|united\s+states|eu|europe)\b)|\b(?:within|in)\s+(?:the\s+)?(?:territory\s+of\s+|country\s+of\s+|region\s+of\s+|state\s+of\s+)(?!india\b)[a-z]+)/i,
         severity: "CRITICAL",
         explanation: "RBI strictly mandates all banking transaction data, logs, and customer PII to reside exclusively on sovereign Indian cloud regions.",
         suggested_replacement: "All Bank data, customer PII, and system logs shall be stored and processed exclusively within sovereign cloud regions located in the territory of India."
