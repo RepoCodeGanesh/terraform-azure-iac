@@ -515,6 +515,12 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** (1) When an MCP tool returns an untyped `list[dict]`, FastMCP 2.x client deserializes each item into a dynamic dataclass instance named `Root()`. Calling `item.get("title")` crashes because `Root()` has no dictionary methods, and FastAPI serializes it as empty `{}`. (2) In APIM Terraform IaC (`workloads/bank-compliance-ai-aks/apim.tf`), operations for `/api/v1/compliance/mcp/tools` (GET) and `/api/v1/compliance/mcp/call` (POST) were missing, causing APIM to reject external requests with 404.
 * **Resolution:** (1) Update `mcp_client.py` to extract `result.structured_content["result"]` or parse `result.content[0].text` into clean Python dictionaries. (2) Use a typed Pydantic `RegulatoryClause` model for `search_rbi_regulations` in `mcp_server.py`. (3) In `mcp_smoke.py`, inspect both dict and object attributes defensively. (4) Codify `compliance-mcp-tools-get`, `compliance-mcp-call-post`, and `compliance-dossier-get` in `apim.tf`.
 
+### 59. Frontend-to-APIM Routing Coverage Gap (`/compliance/stats`, `/redline`, `/ingest`, `/attestation` 404s) & FinOps Redeployment Cycle
+* **Symptom:** In the web application, clicking `GenAIOps Monitor` or loading statutory contract redlines / audit attestation certificates results in HTTP 404 errors or fallback warning banners (`Resource not found`).
+* **Root Cause:** While the primary `/compliance/query` route was declared in `apim.tf`, secondary frontend endpoints (`/compliance/stats`, `/compliance/redline`, `/compliance/ingest`, `/compliance/attestation/generate`) lacked declared operations in APIM, causing APIM to reject requests with `404 Resource not found`.
+* **Resolution:** (1) Codified all 4 missing operations in `workloads/bank-compliance-ai-aks/apim.tf` under `module.bankc_apim_api.operations` and verified 200 OK via public APIM URL. (2) Synchronized `k8s/serviceaccount.yaml`, `chart/values.yaml`, and `k8s/backend-configmap.yaml` with the regenerated Workload Identity Client ID and SWA default hostname following declarative cluster provisioning.
+
+
 
 ---
 
