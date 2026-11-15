@@ -42,7 +42,8 @@ PAGES_MAP = [
     {"num": "14", "file": "14-iam-and-rbac-security-matrix.md", "title": "14. Enterprise Identity & Access Management (IAM) & RBAC Security Matrix"},
     {"num": "15", "file": "15-enterprise-c4-architecture-and-data-flows.md", "title": "15. Enterprise C4 Architecture & End-to-End Data Flows"},
     {"num": "16", "file": "16-devsecops-policy-as-code-and-checkov.md", "title": "16. DevSecOps, Policy-as-Code & Checkov Security Framework"},
-    {"num": "17", "file": "17-central-observability-workbooks-and-metrics.md", "title": "17. Centralized Observability, Azure Monitor Workbooks & Telemetry Catalog"}
+    {"num": "17", "file": "17-central-observability-workbooks-and-metrics.md", "title": "17. Centralized Observability, Azure Monitor Workbooks & Telemetry Catalog"},
+    {"num": "18", "file": "18-ai300-azure-mlops-for-devops-engineers.md", "title": "18. AI-300: Azure Machine Learning & MLOps for DevOps Engineers"}
 ]
 
 HOMEPAGE_STORAGE = """

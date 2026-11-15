@@ -2,7 +2,7 @@
 
 [← Back to Master Documentation Hub](../README.md)
 
-The complete **17-document company-level engineering suite** is live on Atlassian Confluence in your space: **`HappyTechies Cloud & AI Platform` (`HT`)** at **[https://happytechies.atlassian.net/wiki/spaces/HT/overview](https://happytechies.atlassian.net/wiki/spaces/HT/overview)**.
+The complete **18-document company-level engineering suite** is live on Atlassian Confluence in your space: **`HappyTechies Cloud & AI Platform` (`HT`)** at **[https://happytechies.atlassian.net/wiki/spaces/HT/overview](https://happytechies.atlassian.net/wiki/spaces/HT/overview)**.
 
 ---
 
@@ -44,6 +44,7 @@ The complete **17-document company-level engineering suite** is live on Atlassia
 | **03** | **[03. Workload 2: BankCompliance AI (Cloud-Native AKS Copilot)](03-workload-bank-compliance-aks.md)** | AKS Free Tier + Qdrant 4GB CSI + LiteLLM Gateway on [bank.mytaxbot.site](https://bank.mytaxbot.site) | [Open Page 03 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/7700481) |
 | **12** | **[12. Parameter-Efficient Fine-Tuning (LoRA), Sovereign SLMs & GenAIOps](12-fine-tuning-and-private-slm-guide.md)** | LoRA SFT Training Engine, In-Cluster Sovereign SLM (CPU), RAG vs LoRA Matrix | [Open Page 12 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/10420242) |
 | **15** | **[15. Enterprise C4 Architecture & End-to-End Data Flows](15-enterprise-c4-architecture-and-data-flows.md)** | C4 Context, Container, Component Diagrams & Sequence Data Paths | [Open Page 15](15-enterprise-c4-architecture-and-data-flows.md) |
+| **18** | **[18. AI-300: Azure Machine Learning & MLOps for DevOps Engineers](18-ai300-azure-mlops-for-devops-engineers.md)** | Azure DevOps vs AML Rosetta Stone, Pipeline Caching, MLOps CI/CD & Exam Digest | [Open Page 18 (Live)](https://happytechies.atlassian.net/wiki/spaces/HT/pages/229377) |
 
 ---
 
