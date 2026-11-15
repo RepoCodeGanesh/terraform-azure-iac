@@ -354,6 +354,36 @@ jobs:
           echo "✅ MCP remained healthy through five resource samples."
           kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
 
+  # ── JOB 4d: Zero-Cost APIM Zero-Drift & Gateway Synchronization ────────────
+  apim-resilience-sync:
+    name: 🌐 APIM Resilience & Zero-Drift Route Sync
+    needs: [backend-deploy]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.backend-deploy.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login (Shared Services APIM)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.SHARED_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+
+      - name: Auto-Sync OpenAPI Endpoints to Azure APIM (Protection #1 & #5)
+        run: |
+          echo "► Importing latest live FastAPI OpenAPI schema into Azure APIM (Zero-Drift)..."
+          az apim api import \
+            --subscription "859a785c-bd38-402d-b595-1f44f40fb9bf" \
+            --resource-group "rg-ht-ss-p-cin-01" \
+            --service-name "apim-ht-ss-p-cin-01" \
+            --api-id "bankc-compliance-api" \
+            --path "bankc" \
+            --specification-url "http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/openapi.json" \
+            --specification-format OpenApiJson
+          echo "✅ All microservice routes dynamically synchronized into Azure APIM"
+
   # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
   deploy-frontend:
     name: Build & Deploy Frontend SPA
@@ -380,14 +410,15 @@ jobs:
   # ── JOB 5b: End-to-End Live Production Status & Functional Verification ─────
   verify-live-status:
     name: 🌐 Live Production Status & Functional Verification
-    needs: [backend-deploy, deploy-frontend, gatekeeper-policies, mcp-functional-monitor]
+    needs: [backend-deploy, deploy-frontend, gatekeeper-policies, mcp-functional-monitor, apim-resilience-sync]
     if: |
       always() &&
       !cancelled() &&
       (needs.backend-deploy.result == 'success' || needs.backend-deploy.result == 'skipped') &&
       (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') &&
       (needs.gatekeeper-policies.result == 'success' || needs.gatekeeper-policies.result == 'skipped') &&
-      (needs.mcp-functional-monitor.result == 'success' || needs.mcp-functional-monitor.result == 'skipped')
+      (needs.mcp-functional-monitor.result == 'success' || needs.mcp-functional-monitor.result == 'skipped') &&
+      (needs.apim-resilience-sync.result == 'success' || needs.apim-resilience-sync.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -452,7 +483,7 @@ jobs:
   # ── JOB 6: Consolidated Dynamic Release Governance Summary ──────────────────
   summary:
     name: 📊 Release Governance Summary
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, ensure-aks-running, backend-deploy, gatekeeper-policies, mcp-functional-monitor, deploy-frontend, verify-live-status]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, ensure-aks-running, backend-deploy, gatekeeper-policies, mcp-functional-monitor, apim-resilience-sync, deploy-frontend, verify-live-status]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -463,12 +494,13 @@ jobs:
           BUILD_STATUS="${{ needs.backend-build.result == 'success' && '🟢 BUILT' || (needs.backend-build.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           AKS_STATUS="${{ needs.ensure-aks-running.result == 'success' && '🟢 READY' || (needs.ensure-aks-running.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           DEPLOY_STATUS="${{ needs.backend-deploy.result == 'success' && '🟢 DEPLOYED' || (needs.backend-deploy.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
+          APIM_STATUS="${{ needs.apim-resilience-sync.result == 'success' && '🟢 ZERO-DRIFT SYNCED' || (needs.apim-resilience-sync.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           FRONTEND_STATUS="${{ needs.deploy-frontend.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-frontend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           LIVE_STATUS="${{ needs.verify-live-status.result == 'success' && '🟢 VERIFIED (200 OK)' || (needs.verify-live-status.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
           MCP_STATUS="${{ needs.mcp-functional-monitor.result == 'success' && '🟢 TOOLS + RESOURCES VERIFIED' || (needs.mcp-functional-monitor.result == 'failure' && '🔴 FAILED / SCALED TO ZERO' || '⚪ SKIPPED') }}"
 
           OVERALL="🟢 RELEASE SUCCESSFUL"
-          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.ensure-aks-running.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.gatekeeper-policies.result }}" = "failure" ] || [ "${{ needs.mcp-functional-monitor.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ] || [ "${{ needs.verify-live-status.result }}" = "failure" ]; then
+          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.ensure-aks-running.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.gatekeeper-policies.result }}" = "failure" ] || [ "${{ needs.mcp-functional-monitor.result }}" = "failure" ] || [ "${{ needs.apim-resilience-sync.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ] || [ "${{ needs.verify-live-status.result }}" = "failure" ]; then
             OVERALL="🔴 PIPELINE FAILED"
           fi
 
@@ -491,6 +523,7 @@ jobs:
           | **3b. AKS Power-State Preflight** | Start cluster only if stopped; verify ready | ${AKS_STATUS} |
           | **4. Backend AKS Release** | Helm 3 rolling upgrade + Workload Identity on AKS | ${DEPLOY_STATUS} |
           | **4b. MCP Functional & Resource Check** | FastMCP tool discovery/search + AKS CPU/memory samples | ${MCP_STATUS} |
+          | **4c. APIM Zero-Drift Route Sync** | Automated OpenAPI schema ingestion & 180s buffer | ${APIM_STATUS} |
           | **5. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
           | **6. Live Production Health** | Live SWA + APIM Gateway + E2E AI Query Verification | ${LIVE_STATUS} |
 

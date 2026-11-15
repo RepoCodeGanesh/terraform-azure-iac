@@ -78,3 +78,9 @@ variable "custom_policy_xml" {
   type        = string
   default     = null
 }
+
+variable "backend_timeout" {
+  description = "Timeout in seconds for backend requests forwarded by APIM."
+  type        = number
+  default     = 180
+}

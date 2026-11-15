@@ -20,6 +20,7 @@ module "bankc_apim_api" {
   api_name                 = "bankc-compliance-api"
   display_name             = "BankCompliance AI — Regulatory Copilot"
   path                     = "bankc"
+  backend_timeout          = 180
 
   operations = {
     # ─── Governed Catch-All Proxy (Universal Microservice Routing) ────────────
