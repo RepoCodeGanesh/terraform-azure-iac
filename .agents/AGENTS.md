@@ -520,6 +520,14 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** While the primary `/compliance/query` route was declared in `apim.tf`, secondary frontend endpoints (`/compliance/stats`, `/compliance/redline`, `/compliance/ingest`, `/compliance/attestation/generate`) lacked declared operations in APIM, causing APIM to reject requests with `404 Resource not found`.
 * **Resolution:** (1) Codified all 4 missing operations in `workloads/bank-compliance-ai-aks/apim.tf` under `module.bankc_apim_api.operations` and verified 200 OK via public APIM URL. (2) Synchronized `k8s/serviceaccount.yaml`, `chart/values.yaml`, and `k8s/backend-configmap.yaml` with the regenerated Workload Identity Client ID and SWA default hostname following declarative cluster provisioning.
 
+### 60. Azure API Management Governed Wildcard Catch-All Proxy Pattern (`/*`)
+* **Symptom:** Adding new FastAPI routes, dynamic path parameters (`/graph/traverse/{item_id}`), or FastMCP endpoints caused frontend 404s unless an engineer manually codified each individual operation in `apim.tf` and waited for a Terraform apply cycle.
+* **Root Cause:** APIM operates as a closed-by-default enterprise gateway where unmapped paths are rejected. Individual operation codification creates dual-source-of-truth drift between backend code and gateway IaC, slowing developer iteration.
+* **Resolution:** Implemented a hybrid routing architecture in `workloads/bank-compliance-ai-aks/apim.tf`:
+  1. Retained explicit named operations for core audited business endpoints (`/query`, `/mcp/tools`, `/stats`) for discrete Azure Monitor metric telemetry and policy tracking.
+  2. Deployed an `all-routes-proxy` operation (`method = "*"`, `url_template = "/*"`) that catches all dynamic, parameterized, and newly added endpoints, passing them through to AKS Ingress while enforcing edge rate-limiting (60 req/min) and CORS.
+
+
 
 
 ---

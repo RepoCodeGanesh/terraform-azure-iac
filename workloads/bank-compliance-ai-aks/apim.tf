@@ -22,6 +22,17 @@ module "bankc_apim_api" {
   path                     = "bankc"
 
   operations = {
+    # ─── Governed Catch-All Proxy (Universal Microservice Routing) ────────────
+    # Automatically routes ANY new or dynamic FastAPI endpoint, FastMCP SSE route,
+    # or parameterized sub-path (e.g. /graph/traverse/{item_id}) without requiring
+    # manual ARM operation schema definitions or causing 404s.
+    "all-routes-proxy" = {
+      display_name = "Backend Microservice Route Proxy"
+      method       = "*"
+      url_template = "/*"
+      description  = "Governed edge pass-through for all FastAPI & FastMCP microservice endpoints"
+    }
+
     "compliance-query-post" = {
       display_name = "Query Compliance"
       method       = "POST"
