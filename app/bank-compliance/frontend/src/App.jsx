@@ -6,7 +6,8 @@ import {
   MessageSquare,
   Sliders,
   Sparkles,
-  Zap
+  Zap,
+  Activity
 } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import GenAIOpsDashboard from './components/GenAIOpsDashboard'
@@ -142,9 +143,9 @@ export default function App() {
           <button
             onClick={() => navigateToPillar('command')}
             style={{
-              background: (activePillar === 'command' || activePillar === 'monitoring') ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
-              border: (activePillar === 'command' || activePillar === 'monitoring') ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
-              color: (activePillar === 'command' || activePillar === 'monitoring') ? '#c7d2fe' : 'var(--text-muted)',
+              background: activePillar === 'command' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2))' : 'transparent',
+              border: activePillar === 'command' ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid transparent',
+              color: activePillar === 'command' ? '#c7d2fe' : 'var(--text-muted)',
               padding: '6px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -200,6 +201,27 @@ export default function App() {
           >
             <FileCheck size={13} />
             <span className="nav-btn-text">Policy Redliner</span>
+          </button>
+
+          <button
+            onClick={() => navigateToPillar('monitoring')}
+            style={{
+              background: activePillar === 'monitoring' ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.2))' : 'transparent',
+              border: activePillar === 'monitoring' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid transparent',
+              color: activePillar === 'monitoring' ? '#22d3ee' : 'var(--text-muted)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              transition: 'all 0.18s ease'
+            }}
+          >
+            <Activity size={13} />
+            <span className="nav-btn-text">GenAIOps Monitor</span>
           </button>
         </nav>
 
@@ -312,6 +334,15 @@ export default function App() {
         >
           <FileCheck size={18} />
           <span>Redliner</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToPillar('monitoring')}
+          className={`mobile-dock-btn ${activePillar === 'monitoring' ? 'active' : ''}`}
+        >
+          <Activity size={18} />
+          <span>Monitor</span>
         </button>
 
         <button
