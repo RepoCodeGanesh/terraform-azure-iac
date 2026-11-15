@@ -94,7 +94,7 @@ export default function RedlineStudio() {
         category: "IT Outsourcing & FinTech Risk",
         violated_circular: "RBI/2023-24/102",
         violated_clause: "Clause 12.2: Data Sovereignty within India",
-        pattern: /(?:store|host|replicate|transfer|process|maintain).*?(?:outside india|in offshore|in foreign|in overseas|in singapore|in frankfurt|in us|in eu|in europe)/i,
+        pattern: /\b(?:store|stored|storing|host|hosted|hosting|replicate|replicated|replicating|transfer|transferred|transferring|process|processed|processing|maintain|maintained|maintaining|reside|resided|residing)\b.*?\b(?:outside\s+(?:of\s+)?(?:the\s+)?(?:territory\s+of\s+)?india|offshore|overseas|abroad|foreign\s+(?:cloud|region|server|country|jurisdiction)|cross-border|singapore|frankfurt|dubai|ireland|\b(?:the\s+)?(?:us|usa|united\s+states|eu|europe)\b)/i,
         severity: "CRITICAL",
         explanation: "RBI strictly mandates all banking transaction data, logs, and customer PII to reside exclusively on sovereign Indian cloud regions.",
         suggested_replacement: "All Bank data, customer PII, and system logs shall be stored and processed exclusively within sovereign cloud regions located in the territory of India."
@@ -105,7 +105,7 @@ export default function RedlineStudio() {
         category: "IT Governance & Cybersecurity",
         violated_circular: "RBI/2023-24/108",
         violated_clause: "Clause 5.1: 6-Hour Cyber Incident SLA",
-        pattern: /(?:notify|inform|report|alert).*?(?:within|in|after).*?(\b(?:24|48|72|[2-9]\d+)\s*(?:hours|hrs|days|calendar days|business days)\b)/i,
+        pattern: /\b(?:notify|notified|notifying|inform|informed|informing|report|reported|reporting|alert|alerted|alerting)\b.*?\b(?:within|in|after|exceeding|more\s+than)\b.*?(\b(?:[7-9]|1\d|2\d|[3-9]\d+)\s*(?:hours|hrs)\b|\b(?:[1-9]\d*)\s*(?:days|calendar\s+days|business\s+days|weeks)\b)/i,
         severity: "CRITICAL",
         explanation: "RBI IT Governance mandates that all cyber incidents must be reported to the Bank CISO and CERT-In within 6 hours of discovery.",
         suggested_replacement: "The Vendor shall immediately notify the Bank CISO of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery."
@@ -116,7 +116,7 @@ export default function RedlineStudio() {
         category: "Digital Lending & FinTech Norms",
         violated_circular: "RBI/2022-23/111",
         violated_clause: "Section 4: Default Loss Guarantee Cap",
-        pattern: /(?:default loss guarantee|fldg|dlg|credit enhancement).*?(\b(?:[6-9]|[1-9]\d+)\s*%)/i,
+        pattern: /\b(?:default\s+loss\s+guarantee|fldg|dlg|credit\s+enhancement|first\s+loss)\b.*?\b([6-9]|[1-9]\d+)\s*%/i,
         severity: "HIGH",
         explanation: "RBI Digital Lending Guidelines strictly cap First Loss Default Guarantees (FLDG) at 5% of the total loan portfolio.",
         suggested_replacement: "The total First Loss Default Guarantee (FLDG) provided by the LSP shall be strictly capped at 5% of the total disbursed portfolio."
@@ -127,7 +127,7 @@ export default function RedlineStudio() {
         category: "IT Outsourcing & FinTech Risk",
         violated_circular: "RBI/2023-24/102",
         violated_clause: "Chapter III, Clause 7: Right to Audit",
-        pattern: /(?:exempt from.*?audit|no audit|confidential and not subject to audit|audit fees shall apply|bank shall not have the right to inspect|not subject to.*?inspection)/i,
+        pattern: /(?:exempt\s+from\s+.*?audits?|no\s+audits?|confidential\s+and\s+not\s+subject\s+to\s+audits?|audit\s+fees\s+shall\s+apply|bank\s+shall\s+not\s+have\s+the\s+right\s+to\s+inspect|not\s+subject\s+to\s+.*?inspections?|refuse\s+.*?audits?|cannot\s+.*?audits?)/i,
         severity: "HIGH",
         explanation: "Contracts must grant unhindered audit rights to both the Bank and RBI officers.",
         suggested_replacement: "The Bank and authorized officers of the Reserve Bank of India shall have unhindered right to inspect, examine, and audit vendor systems."
@@ -138,7 +138,7 @@ export default function RedlineStudio() {
         category: "KYC & AML Compliance",
         violated_circular: "RBI/DBR/2016-17/14",
         violated_clause: "Section 16: Aadhaar Redaction & DPDP Act",
-        pattern: /(?:store|retain|archive|save).*?(?:full aadhaar|12-digit.*?aadhaar|raw aadhaar|complete aadhaar)/i,
+        pattern: /\b(?:store|stored|storing|retain|retained|retaining|archive|archived|archiving|save|saved|saving|keep|kept|keeping)\b.*?\b(?:full\s+aadhaar|12-digit\s+(?:raw\s+)?aadhaar|raw\s+aadhaar|complete\s+aadhaar|unmasked\s+aadhaar|plaintext\s+aadhaar)\b/i,
         severity: "CRITICAL",
         explanation: "Storing raw 12-digit Aadhaar numbers in plaintext violates UIDAI & RBI rules. Only masked Aadhaar (XXXX-XXXX-1234) is permitted.",
         suggested_replacement: "The Vendor shall ensure all Aadhaar numbers are immediately masked (e.g. XXXX-XXXX-1234), and raw Aadhaar numbers shall never be stored in plaintext."
@@ -149,7 +149,7 @@ export default function RedlineStudio() {
         category: "Customer Protection & Grievance",
         violated_circular: "RBI/2021-22/126",
         violated_clause: "Chapter I, Clause 1.2: Grievance Turnaround",
-        pattern: /(?:complaint|grievance|dispute)s?.*?(?:resolved|responded to|addressed).*?(?:within|in).*?(\b(?:45|60|90|[4-9]\d+)\s*(?:days|calendar days)\b)/i,
+        pattern: /\b(?:complaints?|grievances?|disputes?)\b.*?\b(?:processed|resolved|responded\s+to|addressed|settled)\b.*?\b(?:within|in|after|exceeding|more\s+than)\b.*?\b(3[1-9]|[4-9]\d|\d{3,})\s*(?:days|calendar\s+days|business\s+days)\b/i,
         severity: "HIGH",
         explanation: "Customer complaints must be resolved within a statutory maximum of thirty (30) days.",
         suggested_replacement: "The Bank and its partner shall investigate and resolve all customer complaints within a maximum period of thirty (30) calendar days from receipt."
@@ -224,6 +224,9 @@ export default function RedlineStudio() {
     setActiveSampleType('custom')
     if (!text.trim()) {
       setAuditResult(null)
+    } else {
+      const localResult = auditContractLocally(text, documentName)
+      setAuditResult(localResult)
     }
   }
 

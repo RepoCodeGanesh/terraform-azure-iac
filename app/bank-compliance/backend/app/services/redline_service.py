@@ -23,7 +23,7 @@ STATUTORY_RULES = [
         "category": "IT Governance & Cybersecurity",
         "circular_no": "RBI/2023-24/108",
         "clause": "Chapter II, Clause 5.1: Cyber Incident Reporting",
-        "pattern": r"(?:notify|inform|report|alert).*?(?:within|in|after).*?(\b(?:24|48|72|[2-9]\d+)\s*(?:hours|hrs|days|calendar days|business days)\b)",
+        "pattern": r"\b(?:notify|notified|notifying|inform|informed|informing|report|reported|reporting|alert|alerted|alerting)\b.*?\b(?:within|in|after|exceeding|more\s+than)\b.*?(\b(?:[7-9]|1\d|2\d|[3-9]\d+)\s*(?:hours|hrs)\b|\b(?:[1-9]\d*)\s*(?:days|calendar\s+days|business\s+days|weeks)\b)",
         "severity": "CRITICAL",
         "explanation": "RBI IT Governance Master Direction mandates that all cybersecurity incidents must be reported to the Bank's CISO and RBI/CERT-In within six (6) hours of discovery. Notification windows of 24h, 48h, or longer violate statutory timelines.",
         "replacement": "The Vendor shall immediately notify the Bank's Chief Information Security Officer (CISO) and incident response team of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery, accompanied by a preliminary root cause analysis."
@@ -34,7 +34,7 @@ STATUTORY_RULES = [
         "category": "Digital Lending & FinTech Norms",
         "circular_no": "RBI/2022-23/111",
         "clause": "Guidelines on Default Loss Guarantee (DLG), Section 4",
-        "pattern": r"(?:default loss guarantee|fldg|dlg|credit enhancement).*?(\b(?:[6-9]|[1-9]\d+)\s*%)",
+        "pattern": r"\b(?:default\s+loss\s+guarantee|fldg|dlg|credit\s+enhancement|first\s+loss)\b.*?\b([6-9]|[1-9]\d+)\s*%",
         "severity": "HIGH",
         "explanation": "RBI Digital Lending Norms mandate that Default Loss Guarantee (FLDG) arrangements between Regulated Entities and Lending Service Providers (LSPs) must be strictly capped at 5% of the total loan portfolio. DLG guarantees above 5% are illegal under RBI guidelines.",
         "replacement": "The total First Loss Default Guarantee (FLDG) provided by the Lending Service Provider (LSP) shall be strictly capped at five percent (5%) of the total disbursed loan portfolio, backed by an explicit bank guarantee or fixed deposit lien in favor of the Bank."
@@ -45,7 +45,7 @@ STATUTORY_RULES = [
         "category": "IT Outsourcing & FinTech Risk",
         "circular_no": "RBI/2023-24/102",
         "clause": "Chapter IV, Clause 12.2: Data Sovereignty & Cloud Hosting",
-        "pattern": r"(?:store|host|replicate|transfer|process|maintain).*?(?:outside india|in offshore|in foreign|in overseas|in singapore|in frankfurt|in us|in eu|in europe)",
+        "pattern": r"\b(?:store|stored|storing|host|hosted|hosting|replicate|replicated|replicating|transfer|transferred|transferring|process|processed|processing|maintain|maintained|maintaining|reside|resided|residing)\b.*?\b(?:outside\s+(?:of\s+)?(?:the\s+)?(?:territory\s+of\s+)?india|offshore|overseas|abroad|foreign\s+(?:cloud|region|server|country|jurisdiction)|cross-border|singapore|frankfurt|dubai|ireland|\b(?:the\s+)?(?:us|usa|united\s+states|eu|europe)\b)",
         "severity": "CRITICAL",
         "explanation": "RBI IT Outsourcing & Cloud Directives strictly mandate that all banking transaction data, customer records, system logs, and backups must reside within the territorial boundary of India. Foreign hosting without onshore primary residency is non-compliant.",
         "replacement": "All Bank data, including customer PII, transaction records, application code, and audit logs, shall be stored, processed, and maintained exclusively within sovereign cloud regions located in the territory of India."
@@ -56,7 +56,7 @@ STATUTORY_RULES = [
         "category": "IT Outsourcing & FinTech Risk",
         "circular_no": "RBI/2023-24/102",
         "clause": "Chapter III, Clause 7: Audit Rights of Bank and RBI",
-        "pattern": r"(?:exempt from.*?audit|no audit|confidential and not subject to audit|audit fees shall apply|bank shall not have the right to inspect|not subject to.*?inspection)",
+        "pattern": r"(?:exempt\s+from\s+.*?audits?|no\s+audits?|confidential\s+and\s+not\s+subject\s+to\s+audits?|audit\s+fees\s+shall\s+apply|bank\s+shall\s+not\s+have\s+the\s+right\s+to\s+inspect|not\s+subject\s+to\s+.*?inspections?|refuse\s+.*?audits?|cannot\s+.*?audits?)",
         "severity": "HIGH",
         "explanation": "RBI IT Outsourcing directions mandate that contracts must grant unhindered, full inspection and audit rights to both the Bank's internal/external auditors and officials of the Reserve Bank of India. Any clause restricting audit access is strictly void.",
         "replacement": "The Bank, its internal and statutory auditors, and authorized officers of the Reserve Bank of India (RBI) shall have the unhindered right to inspect, examine, and audit the Vendor's facilities, systems, processes, and records relating to the outsourced operations at any time."
@@ -78,7 +78,7 @@ STATUTORY_RULES = [
         "category": "Customer Protection & Grievance",
         "circular_no": "RBI/2021-22/126",
         "clause": "Chapter I, Clause 1.2: Grievance Turnaround Time",
-        "pattern": r"(?:complaint|grievance|dispute)s?.*?(?:resolved|responded to|addressed).*?(?:within|in).*?(\b(?:45|60|90|[4-9]\d+)\s*(?:days|calendar days)\b)",
+        "pattern": r"\b(?:complaints?|grievances?|disputes?)\b.*?\b(?:processed|resolved|responded\s+to|addressed|settled)\b.*?\b(?:within|in|after|exceeding|more\s+than)\b.*?\b(3[1-9]|[4-9]\d|\d{3,})\s*(?:days|calendar\s+days|business\s+days)\b",
         "severity": "HIGH",
         "explanation": "Under the Reserve Bank Integrated Ombudsman Scheme, customer grievances must be completely addressed and resolved within a statutory maximum of thirty (30) calendar days from receipt.",
         "replacement": "The Bank shall investigate, resolve, and formally respond to all customer complaints within a maximum period of thirty (30) calendar days from the date of receipt, with auto-escalation to the Internal Ombudsman for any rejected claims."
@@ -89,7 +89,7 @@ STATUTORY_RULES = [
         "category": "KYC & AML Compliance",
         "circular_no": "RBI/DBR/2016-17/14",
         "clause": "Section 16: Aadhaar Redaction Guidelines & DPDP Act",
-        "pattern": r"(?:store|retain|archive|save).*?(?:full aadhaar|12-digit.*?aadhaar|raw aadhaar|complete aadhaar)",
+        "pattern": r"\b(?:store|stored|storing|retain|retained|retaining|archive|archived|archiving|save|saved|saving|keep|kept|keeping)\b.*?\b(?:full\s+aadhaar|12-digit\s+(?:raw\s+)?aadhaar|raw\s+aadhaar|complete\s+aadhaar|unmasked\s+aadhaar|plaintext\s+aadhaar)\b",
         "severity": "CRITICAL",
         "explanation": "Under RBI KYC Master Direction and UIDAI regulations, banks and partners are prohibited from storing full 12-digit Aadhaar numbers. The first eight (8) digits must be masked in all storage formats (XXXX-XXXX-1234).",
         "replacement": "The Vendor shall ensure that all Aadhaar numbers received during verification are immediately masked, redacting the first eight digits (e.g. XXXX-XXXX-1234), and raw unmasked Aadhaar numbers shall never be stored in plaintext or database columns."
@@ -149,7 +149,7 @@ class RedlineEngine:
             clause_violated = False
             
             for rule in STATUTORY_RULES:
-                if re.search(rule["pattern"], clause_text, re.IGNORECASE):
+                if re.search(rule["pattern"], clause_text, re.IGNORECASE | re.DOTALL):
                     clause_violated = True
                     violations.append({
                         "clause_id": clause["clause_id"],
