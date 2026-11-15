@@ -247,12 +247,18 @@ export default function RedlineStudio() {
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: contractText, document_name: documentName })
+        body: JSON.stringify({ text: contractText, contract_text: contractText, document_name: documentName })
       })
 
       if (res.ok) {
         const data = await res.json()
-        setAuditResult(data)
+        // If backend returned the fallback sample while auditing a compliant or custom document:
+        if (data.document_name === 'Sample_Vendor_Cloud_SOW.pdf' && documentName !== 'Sample_Vendor_Cloud_SOW.pdf' && documentName !== 'HighRisk_FinTech_Vendor_SOW.pdf') {
+          const localResult = auditContractLocally(contractText, documentName)
+          setAuditResult(localResult)
+        } else {
+          setAuditResult(data)
+        }
       } else {
         const localResult = auditContractLocally(contractText, documentName)
         setAuditResult(localResult)

@@ -1,5 +1,5 @@
 import time
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Form
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import httpx
@@ -422,6 +422,7 @@ async def get_compliance_stats():
 
 @router.post("/compliance/redline")
 async def redline_contract_endpoint(
+    request: Request,
     file: Optional[UploadFile] = None,
     text: Optional[str] = None,
     document_name: Optional[str] = "Bank_Agreement_Draft.pdf"
@@ -438,19 +439,45 @@ async def redline_contract_endpoint(
     contract_text = ""
     filename = document_name or "Agreement.pdf"
 
-    if file:
-        filename = file.filename
-        content = await file.read()
-        if filename.lower().endswith(".pdf"):
-            pages = PDFIngestService.extract_text_from_pdf_bytes(content)
-            contract_text = "\n\n".join([p["text"] for p in pages if p.get("text")])
-        else:
-            try:
-                contract_text = content.decode("utf-8")
-            except Exception:
-                contract_text = content.decode("latin-1", errors="ignore")
-    elif text:
-        contract_text = text
+    # Support JSON request bodies (from React SPA)
+    content_type = request.headers.get("content-type", "").lower()
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                contract_text = body.get("text") or body.get("contract_text") or ""
+                if body.get("document_name"):
+                    filename = body.get("document_name")
+        except Exception:
+            pass
+
+    # Support multipart/form-data and form fields
+    if not contract_text and ("multipart" in content_type or "form" in content_type):
+        try:
+            form = await request.form()
+            if "text" in form and form["text"]:
+                contract_text = str(form["text"])
+            if "document_name" in form and form["document_name"]:
+                filename = str(form["document_name"])
+            if "file" in form and hasattr(form["file"], "read"):
+                file = form["file"]
+        except Exception:
+            pass
+
+    if not contract_text:
+        if file:
+            filename = file.filename
+            content = await file.read()
+            if filename.lower().endswith(".pdf"):
+                pages = PDFIngestService.extract_text_from_pdf_bytes(content)
+                contract_text = "\n\n".join([p["text"] for p in pages if p.get("text")])
+            else:
+                try:
+                    contract_text = content.decode("utf-8")
+                except Exception:
+                    contract_text = content.decode("latin-1", errors="ignore")
+        elif text:
+            contract_text = text
 
     if not contract_text.strip():
         # Baseline sample agreement for demo / interactive testing

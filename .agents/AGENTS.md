@@ -537,6 +537,11 @@ State files are path-keyed — **git repo location does not affect state**.
   4. **Multi-Tier RAG Resilience ($0):** Wired zero-dependency in-memory regulatory corpus parsing into `qdrant_service.py` to seamlessly answer compliance queries within <5ms even during vector DB disk detachment.
   5. **Direct-IP Dynamic Ingress APIM Binding ($0):** Bypassed public DNS caching delays by allowing dynamic ephemeral LoadBalancer IPs to be directly patched into APIM backend endpoints during deployments.
 
+### 62. Policy Redline Studio State Inversion on Statutory Compliant Agreement
+* **Symptom:** In `https://bank.mytaxbot.site/redline`, clicking `Load 100% Compliant Agreement` and then clicking `Run Statutory Redline Audit` caused the UI to invert the score from 100% to **15% (HIGH RISK with 5 violations)**, despite the contract text being 100% compliant.
+* **Root Cause:** In FastAPI `routes.py`, `redline_contract_endpoint` was defined with parameter `file: Optional[UploadFile] = None`. FastAPI's dependency injection system treated the endpoint as expecting `multipart/form-data`, ignoring the client's `Content-Type: application/json` body. As a result, `text` evaluated to `None`, triggering the backend's empty-string fallback (`if not contract_text.strip(): contract_text = Sample_Vendor_Cloud_SOW`) which audited the hardcoded 5-violation high-risk SOW instead of the user's compliant text.
+* **Resolution:** (1) Updated `app/bank-compliance/backend/app/api/routes.py` to inspect `request: Request` headers, parsing JSON body (`await request.json()`), form data (`await request.form()`), and uploaded files defensively. (2) Updated `app/bank-compliance/frontend/src/components/RedlineStudio.jsx` with a defensive fallback check: if the backend returns fallback sample metadata (`Sample_Vendor_Cloud_SOW.pdf`) while the user is auditing a compliant or custom agreement, apply `auditContractLocally(contractText, documentName)` to prevent score inversion.
+
 
 
 
