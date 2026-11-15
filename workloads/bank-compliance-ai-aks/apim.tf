@@ -64,6 +64,30 @@ module "bankc_apim_api" {
       url_template = "/api/v1/compliance/dossier"
       description  = "Compiles auditor-ready compliance attestation dossier"
     }
+    "compliance-stats-get" = {
+      display_name = "Regulatory Compliance Stats"
+      method       = "GET"
+      url_template = "/api/v1/compliance/stats"
+      description  = "Returns regulatory lake indexing and corpus statistics"
+    }
+    "compliance-ingest-post" = {
+      display_name = "Trigger Corpus Ingestion"
+      method       = "POST"
+      url_template = "/api/v1/compliance/ingest"
+      description  = "Triggers live ingestion of RBI circulars into vector store"
+    }
+    "compliance-redline-post" = {
+      display_name = "Redline Contract Clause"
+      method       = "POST"
+      url_template = "/api/v1/compliance/redline"
+      description  = "Audits contract clause text against regulatory rules"
+    }
+    "compliance-attestation-generate-post" = {
+      display_name = "Generate Attestation Certificate"
+      method       = "POST"
+      url_template = "/api/v1/compliance/attestation/generate"
+      description  = "Generates signed Board / RBI Audit Readiness Attestation Certificate"
+    }
   }
 }
 
