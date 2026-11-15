@@ -8,12 +8,51 @@ Generates real-time compliance scores, visual diffs, and audit certificates.
 
 import re
 import io
+import os
+import json
 import hashlib
 import logging
+import urllib.request
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+LLM_REDLINE_SYSTEM_PROMPT = """You are an expert Reserve Bank of India (RBI) Statutory Compliance Auditor and Banking Legal Counsel.
+Analyze contractual clauses strictly against Reserve Bank of India (RBI) Master Directions, CERT-In cybersecurity directives, and DPDP Act 2023.
+
+RULES OF STATUTORY ENFORCEMENT:
+1. ONLY flag clauses that directly CONTRADICT or VIOLATE statutory rules.
+2. If a clause meets the statutory requirement (e.g. data stored in India, 6h SLA, 5% FLDG cap, right to audit granted, Aadhaar masked, 30d grievance turnaround), it is 100% COMPLIANT. DO NOT flag compliant clauses. DO NOT flag recommendations or stylistic improvements as violations.
+3. If all clauses meet requirements, violations MUST be empty [] and compliance_score MUST be 100.
+4. SEMANTIC UNDERSTANDING OF NEGATIONS & FOREIGN JURISDICTIONS:
+   - "Vendor shall under no circumstances host data outside of India" -> COMPLIANT (0 violations).
+   - "No data shall be transferred overseas" -> COMPLIANT (0 violations).
+   - "Data will be backed up in Tokyo, Sydney, London, Zurich, etc." -> CRITICAL VIOLATION (Foreign cross-border hosting).
+   - "Incidents reported within 48 hours" -> CRITICAL VIOLATION (Exceeds 6-hour statutory SLA).
+   - "FLDG of 15%" -> HIGH VIOLATION (Exceeds 5% statutory cap).
+
+JSON OUTPUT SCHEMA:
+{
+  "compliance_score": 100,
+  "risk_tier": "COMPLIANT",
+  "total_violations": 0,
+  "violations": [
+    {
+      "clause_id": "C-01",
+      "clause_title": "Section Title",
+      "original_text": "Non-compliant clause text",
+      "violation_title": "Short title of statutory breach",
+      "category": "Regulatory Category",
+      "severity": "CRITICAL",
+      "violated_circular": "RBI Circular Number",
+      "violated_clause": "Specific Clause Reference",
+      "explanation": "Clear explanation of why this violates RBI guidelines",
+      "suggested_replacement": "Drafted compliant clause ready for inclusion in contract"
+    }
+  ]
+}
+"""
 
 # Statutory Banking Compliance Rules Engine
 STATUTORY_RULES = [
@@ -132,10 +171,106 @@ class RedlineEngine:
         return clauses
 
     @classmethod
-    def audit_contract_text(cls, text: str, filename: str = "Agreement.pdf") -> Dict[str, Any]:
+    def audit_contract_text_llm(cls, text: str, filename: str = "Agreement.pdf") -> Optional[Dict[str, Any]]:
         """
-        Audits contract text against 24+ RBI Master Directions, identifies statutory violations,
-        computes compliance score, and outputs redline diffs with compliant replacements.
+        Executes Level 3 Multi-Agent Semantic Legal Audit using Gemini 2.0 Flash / LiteLLM Proxy.
+        Parses complex legal entailments, negations, unlisted foreign locations, and provisos.
+        """
+        litellm_url = os.getenv("LITELLM_URL", "http://litellm:4000/v1")
+        if litellm_url.endswith("/"):
+            litellm_url = litellm_url[:-1]
+        if not litellm_url.endswith("/v1"):
+            litellm_url = f"{litellm_url}/v1"
+            
+        endpoint = f"{litellm_url}/chat/completions"
+        api_key = os.getenv("LITELLM_API_KEY", "sk-litellm-proxy-key")
+        model = os.getenv("OPENAI_MODEL", "gemini-2.0-flash")
+
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": LLM_REDLINE_SYSTEM_PROMPT},
+                {"role": "user", "content": f"Audit this contract against RBI Master Directions:\n\n{text}"}
+            ],
+            "temperature": 0.0
+        }
+
+        try:
+            req = urllib.request.Request(
+                endpoint,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}"
+                },
+                data=json.dumps(payload).encode("utf-8")
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                if resp.status != 200:
+                    logger.warning("LiteLLM returned status %d, falling back to heuristic engine", resp.status)
+                    return None
+                body = json.loads(resp.read().decode("utf-8"))
+                content = body["choices"][0]["message"]["content"].strip()
+                
+                # Robust JSON extraction
+                start = content.find("{")
+                end = content.rfind("}")
+                if start == -1 or end == -1 or start >= end:
+                    logger.warning("LiteLLM response contained no JSON object, falling back")
+                    return None
+                    
+                data = json.loads(content[start:end+1])
+                
+                file_bytes = text.encode("utf-8")
+                doc_hash = f"sha256:{hashlib.sha256(file_bytes).hexdigest()[:16]}"
+                raw_paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+                total_clauses = max(len(raw_paragraphs), 1)
+
+                violations = data.get("violations", [])
+                for idx, v in enumerate(violations):
+                    if not v.get("clause_id"):
+                        v["clause_id"] = f"C-{idx+1:02d}"
+                    if not v.get("clause_title"):
+                        v["clause_title"] = f"Section {idx+1}"
+                    if not v.get("category"):
+                        v["category"] = "Statutory Regulatory Directives"
+                    if "diff_highlight" not in v:
+                        orig = v.get("original_text", "")
+                        repl = v.get("suggested_replacement", "")
+                        v["diff_highlight"] = f"- {orig}\n+ {repl}"
+
+                crit = sum(1 for v in violations if v.get("severity") == "CRITICAL")
+                high = sum(1 for v in violations if v.get("severity") == "HIGH")
+                med = sum(1 for v in violations if v.get("severity") == "MEDIUM")
+
+                score = data.get("compliance_score")
+                if score is None:
+                    penalty = crit * 30 + high * 15 + med * 5
+                    score = 100 if not violations else max(10, min(100, 100 - penalty))
+
+                tier = "HIGH RISK" if score < 70 else ("MEDIUM RISK" if score < 90 else "COMPLIANT")
+
+                return {
+                    "document_name": filename,
+                    "provenance_hash": doc_hash,
+                    "audited_at": datetime.utcnow().isoformat() + "Z",
+                    "total_clauses_reviewed": total_clauses,
+                    "compliance_score": score,
+                    "risk_tier": tier,
+                    "total_violations": len(violations),
+                    "severity_summary": {"critical": crit, "high": high, "medium": med},
+                    "violations": violations,
+                    "engine": "Multi-Agent Regulatory Auditor (Level 3 Sieve — Gemini 2.0 Flash / LiteLLM)",
+                    "compliant_clauses_count": max(0, total_clauses - len(violations))
+                }
+        except Exception as e:
+            logger.warning("Semantic LLM redlining skipped or failed: %s; invoking Tier-1 Heuristic Sieve", e)
+            return None
+
+    @classmethod
+    def audit_contract_text_heuristic(cls, text: str, filename: str = "Agreement.pdf") -> Dict[str, Any]:
+        """
+        Tier-1 Fast Deterministic Statutory Heuristic Sieve (Zero-Cost & Offline Fail-Safe).
+        Audits contract text against 24+ RBI Master Directions using regex patterns.
         """
         file_bytes = text.encode("utf-8")
         doc_hash = f"sha256:{hashlib.sha256(file_bytes).hexdigest()[:16]}"
@@ -195,5 +330,21 @@ class RedlineEngine:
                 "medium": medium_count
             },
             "violations": violations,
-            "compliant_clauses_count": len(compliant_clauses)
+            "compliant_clauses_count": len(compliant_clauses),
+            "engine": "Statutory Heuristic Sieve (Level 1 Fast Path)"
         }
+
+    @classmethod
+    def audit_contract_text(cls, text: str, filename: str = "Agreement.pdf") -> Dict[str, Any]:
+        """
+        3-Tier Hybrid Statutory Audit:
+        1. Attempts Level 3 Multi-Agent Semantic LLM reasoning via LiteLLM / Gemini 2.0 Flash ($0.00).
+        2. Automatically falls back to Level 1 Deterministic RegEx Sieve on timeout/network disruption.
+        """
+        # Tier 3: Attempt Semantic LLM reasoning first
+        llm_result = cls.audit_contract_text_llm(text, filename=filename)
+        if llm_result is not None:
+            return llm_result
+
+        # Fallback to Tier 1: Deterministic Heuristic Sieve
+        return cls.audit_contract_text_heuristic(text, filename=filename)

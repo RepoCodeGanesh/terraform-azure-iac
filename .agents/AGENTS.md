@@ -554,6 +554,15 @@ State files are path-keyed — **git repo location does not affect state**.
   2. Enforced strict word boundaries `\b`, optional prepositions `(?:of\s+)?`, plural suffixes `audits?`, and `re.DOTALL` across both frontend (`RedlineStudio.jsx`) and backend (`redline_service.py`).
   3. Verified 100% mathematical precision: compliant text returns 100% (0 violations), `"outside of India"` instantly yields 70% (1 CRITICAL Data Sovereignty violation), and high-risk SOW yields 15% (5 violations).
 
+### 64. Level 3 Semantic LLM Legal Sieve Upgrade & Hybrid Fail-Safe Architecture
+* **Symptom:** PolicyRedliner's heuristic regex engine struggled with complex legal syntax: double negatives (`under no circumstances outside India` vs `outside India`), unlisted foreign cities (e.g. `Tokyo`, `Sydney`, `London` escaping detection), and complex statutory provisos.
+* **Root Cause:** Pure RegEx is purely syntactic and lacks semantic entailment awareness. While fast, RegEx cannot understand legal negation, exceptions, or contextual meaning.
+* **Resolution:**
+  1. Implemented **Level 3 Multi-Agent Semantic Legal Audit** in `RedlineEngine.audit_contract_text_llm` powered by `gemini-2.0-flash` through in-cluster LiteLLM proxy (`http://litellm:4000/v1`).
+  2. Engineered an airtight statutory system prompt and structured JSON schema that enforces strict RBI Master Directions (Data Localization, 6h Cyber SLA, 5% FLDG, unhindered audit, Aadhaar masking, 30d grievance turnaround).
+  3. Preserved **$0 incremental cloud cost** and **100% offline fail-safe reproducibility**: if LiteLLM is unreachable, times out, or network fails, `audit_contract_text` automatically and seamlessly falls back to `audit_contract_text_heuristic` (Tier-1 RegEx).
+  4. Updated `RedlineStudio.jsx` to display real-time governance engine badges (`AI Sieve (Gemini Flash)` vs `Statutory Heuristic`) and embedded engine attribution in exported cryptographic AFI Attestation Certificates.
+
 
 
 

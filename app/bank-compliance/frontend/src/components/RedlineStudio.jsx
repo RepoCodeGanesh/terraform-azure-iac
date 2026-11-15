@@ -190,7 +190,8 @@ export default function RedlineStudio() {
       total_violations: violations.length,
       total_clauses_reviewed: Math.max(1, paras.length),
       severity_summary: { critical: criticalCount, high: highCount, medium: mediumCount },
-      violations: violations
+      violations: violations,
+      engine: "Statutory Heuristic Sieve (Level 1 Fast Path)"
     }
   }
 
@@ -300,7 +301,7 @@ export default function RedlineStudio() {
         total_statutory_violations: auditResult?.total_violations || 0,
         total_clauses_reviewed: auditResult?.total_clauses_reviewed || 6,
         cryptographic_hash: auditResult?.provenance_hash || "sha256:7f83ea39547a89b1e4444",
-        governance_engine: "Multi-Agent Regulatory Auditor (Level 3 Sieve)",
+        governance_engine: auditResult?.engine || "Multi-Agent Regulatory Auditor (Level 3 Sieve — Gemini 2.0 Flash / LiteLLM)",
         signature_sha256: "sha256:f3a1b19b11b84e1384997f83ea39547ad8db0f576e9c99ab7987"
       }
 
@@ -679,6 +680,12 @@ export default function RedlineStudio() {
               <div style={{ fontSize: '0.66rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Status: <strong style={{ color: '#ffffff' }}>{auditResult ? auditResult.risk_tier : 'Awaiting Audit'}</strong>
               </div>
+              {auditResult?.engine && (
+                <div style={{ fontSize: '0.60rem', color: '#38bdf8', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={auditResult.engine}>
+                  <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', background: '#38bdf8' }} />
+                  {auditResult.engine.includes('Gemini') ? 'AI Sieve (Gemini Flash)' : 'Statutory Heuristic'}
+                </div>
+              )}
             </div>
 
             {/* Card 2: Statutory Violations Count */}
