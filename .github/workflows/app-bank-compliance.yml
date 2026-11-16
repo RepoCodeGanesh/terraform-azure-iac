@@ -57,6 +57,6 @@ jobs:
       apim_path: 'bankc'
       apim_spec_url: 'http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/openapi.json'
       live_url: 'https://bank.mytaxbot.site'
-      apim_gateway_url: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/health'
+      apim_gateway_url: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz'
       target: ${{ inputs.target || 'all' }}
     secrets: inherit

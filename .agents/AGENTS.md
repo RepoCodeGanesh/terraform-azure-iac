@@ -648,6 +648,16 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** A called reusable workflow (`reusable-serverless-workload-pipeline.yml`) passed `environment_name` to downstream template `app-deploy-func.yml`, but `app-deploy-func.yml` only defined `function_app_name`, `working_directory`, and `app_subscription_id`. GitHub Actions strictly validates and rejects any caller passing undeclared inputs across workflow boundaries.
 * **Resolution:** Declare `environment_name` under `on.workflow_call.inputs` with a default in the target template (`app-deploy-func.yml`), allowing dynamic environment parameterization across environments (`tax-advisor-prod`).
 
+### 75. Single-Node AKS System Addon CPU Request Math & Safe cgroups Sizing
+* **Symptom:** Application pods or metrics-server pods enter `Pending` state with `0/1 nodes are available: 1 Insufficient cpu. preemption: 0/1 nodes are available: 1 Insufficient cpu`.
+* **Root Cause:** Standard Azure managed system addons (Gatekeeper Admission Controller, Azure Monitor Container Insights AMA Logs, CoreDNS, KEDA operator, KEDA metrics API server) deploy dual replicas by default for multi-node high availability. On a single-node `Standard_B2ms` cluster (1900m allocatable CPU out of 2000m total), platform addons consume 1884m CPU requests (99% capacity). If custom application workloads request standard CPU values (e.g. 50m-100m), the Kubernetes scheduler rejects them or deadlocks with mutating webhooks.
+* **Resolution:** Configure low-request, burstable cgroups for single-node workloads (`requests: {cpu: 10m, memory: 64Mi}`, `limits: {cpu: 150m, memory: 200Mi}`). Application pods consume less than 1% CPU requests total (13m across all services: 1m backend + 10m FastMCP + 1m LiteLLM + 1m Ingress), ensuring instant scheduling and zero starvation.
+
+### 76. APIM Zero-Drift OpenAPI Health Route (`/healthz` vs `/health`)
+* **Symptom:** CI/CD Canary verification or external health monitor returns `404 Resource Not Found` when probing `https://apim-.../bankc/health`.
+* **Root Cause:** FastAPI route definition in the application's generated OpenAPI specification exposes `/healthz` for Kubernetes liveness/readiness, while the caller workflow passed `apim_gateway_url: '.../bankc/health'`.
+* **Resolution:** Align the APIM health probe URL in caller workflows to match the generated OpenAPI specification route `/bankc/healthz`.
+
 
 
 
