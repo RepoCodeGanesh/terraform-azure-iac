@@ -620,6 +620,14 @@ State files are path-keyed — **git repo location does not affect state**.
   2. **Ultra-Lean Workload Caller (62 lines):** `app-bank-compliance.yml` was compressed from 566 lines to 62 lines (89% reduction), consisting solely of triggers, permissions, and workload parameters.
   3. **Standardized Platform Experience:** Any new AI workload in the landing zone monorepo can now achieve enterprise-grade security, FinOps, and deployment automation with ~35-60 lines of YAML.
 
+### 72. Universal Platform Level 3 Golden Path & Declarative FinOps Lifecycle Teardown
+* **Symptom:** Disparate CI/CD pipelines across platform roots (`platform-bootstrap`, `platform-hub`, `platform-shared-services`, `platform-governance`, `workload-tax-advisor`, `workload-bank-compliance-aks`) duplicated 103+ lines of Checkov, Terraform Plan, Apply, and Summary boilerplate each, while idle AKS VM compute and OS disk charges accrued continuously (~$45–$65/month).
+* **Root Cause:** (1) Lack of a centralized, reusable Terraform Golden Path template for infrastructure roots. (2) Failure to enforce declarative lifecycle boundaries between stateless serverless workloads (TaxBot, APIM, Storage) and expensive Kubernetes node pool compute.
+* **Resolution:**
+  1. **Central Terraform Golden Path (`reusable-tf-workload-pipeline.yml@main`):** Centralized the full Checkov SAST -> OIDC Plan -> Production Approval Gate Apply -> Markdown Step Summary release chain into `RepoCodeGanesh/.github`.
+  2. **Monorepo Caller Optimization:** Refactored all 6 Terraform workflow callers (`platform-*.yml` and `workload-*.yml`) down to ~35 lines each, eliminating 387 lines of duplicate CI/CD code.
+  3. **Zero-Drift FinOps Teardown:** After verifying successful Level 3 AI Golden Path end-to-end deployment (Run `43822759769`), executed a strictly scoped declarative `terraform destroy` on `workloads/bank-compliance-ai-aks` against remote state (`sthtbootpcin01`). This wiped the AKS cluster and VM node pools to reach $0.00 compute idle billing, while preserving all shared platform foundations (Bootstrap, Hub, Shared-Services APIM, and Serverless TaxBot).
+
 
 
 
