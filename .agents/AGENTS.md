@@ -584,6 +584,21 @@ State files are path-keyed — **git repo location does not affect state**.
   3. Decoupled Score from Risk Tier: The score reflects mathematical clause compliance ($83.33\%$), while the Risk Tier reflects statutory severity (`HIGH RISK` if `crit > 0`), ensuring users see both accurate clause ratios and statutory warnings.
   4. Added `test_09_llm_hallucinated_zero_score_is_proportionally_corrected` to the backend test suite.
 
+### 67. APIM Zero-Drift Route Sync Entra ID WIF OIDC Failure on Missing Environment Claim
+* **Symptom:** In `.github/workflows/app-bank-compliance.yml`, job `apim-resilience-sync` failed at `azure/login@v2` with `AADSTS700213: No matching federated identity record found`.
+* **Root Cause:** `SHARED_CLIENT_ID` in the Shared Services subscription (`859a785c-bd38-402d-b595-1f44f40fb9bf`) has its Entra ID Federated Identity Credential scoped strictly to the environment `shared-services-prod`. Because `apim-resilience-sync` omitted `environment: shared-services-prod`, the OIDC token subject claim was `ref:refs/heads/develop` instead of the required `environment:shared-services-prod`.
+* **Resolution:** Declared `environment: shared-services-prod` in `apim-resilience-sync` so GitHub Actions requests an OIDC token with the correct subject claim.
+
+### 68. Reusable SWA Workflow Environment Hardcoding & CI/CD Governance Gate Convergence
+* **Symptom:** In GitHub Actions DAG, `Build & Deploy Frontend SPA` ran concurrently with `AI Quality & Regression Gate`, deploying directly to production before AI and UI tests had completed. Furthermore, the UI displayed `Deploying to tax-advisor-prod` on BankCompliance runs.
+* **Root Causes:**
+  1. `deploy-frontend` lacked `ai-eval-quality-gate` in its `needs:` array, bypassing the quality gate.
+  2. The central reusable workflow `RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml` had hardcoded `environment: tax-advisor-prod`.
+* **Resolution:**
+  1. Updated `app-deploy-swa.yml` to accept `environment_name` input (defaulting to `tax-advisor-prod` for backward compatibility) and parameterized the environment block: `environment: ${{ inputs.environment_name || 'tax-advisor-prod' }}`.
+  2. Updated `app-bank-compliance.yml` so `deploy-frontend` lists `needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]` and passes `environment_name: 'bank-compliance-prod'`. Neither frontend nor backend can deploy to production if any test or security scan fails.
+  3. Optimized `mcp-functional-monitor` resource sampling from 5 samples (75s idle sleep) to 3 samples (10s), saving over a minute per release.
+
 
 
 
