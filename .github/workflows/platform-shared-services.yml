@@ -1,8 +1,8 @@
 # ==============================================================================
-# Workflow: Platform - Shared Services IaC (Uses Central Organization Templates)
+# Workflow: Platform - Shared Services IaC (True Level 3 Golden Path)
 # Provisions: APIM Gateway, Log Analytics, Key Vault & Private DNS Zones
 # Target Subscription: Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)
-# Central Template Repo: RepoCodeGanesh/.github
+# Central Standard: RepoCodeGanesh/.github (reusable-tf-workload-pipeline.yml@main)
 # ==============================================================================
 
 name: Platform - Shared Services IaC
@@ -31,73 +31,15 @@ permissions:
   actions: read
 
 jobs:
-  # ── STAGE 0: DevSecOps IaC Security & Policy Gate (Checkov Phase 1: Discovery) ──
-  checkov-scan:
-    name: DevSecOps IaC Scan
-    uses: RepoCodeGanesh/.github/.github/workflows/tf-checkov-scan.yml@main
+  shared-services-iac:
+    name: ⚙️ Shared Services IaC
+    uses: RepoCodeGanesh/.github/.github/workflows/reusable-tf-workload-pipeline.yml@main
     with:
       working_directory: 'platform/shared-services'
-      framework: 'terraform'
+      subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+      environment_name: 'shared-services-prod'
+      artifact_name: 'shared-tfplan'
       soft_fail: true
-
-  # ── STAGE 1: Terraform Plan ──────────────────────────────────────────────────
-  plan:
-    name: Plan
-    needs: checkov-scan
-    uses: RepoCodeGanesh/.github/.github/workflows/tf-plan.yml@main
-    with:
-      working_directory: 'platform/shared-services'
-      subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-      environment_name: 'shared-services-prod'
-      artifact_name: 'shared-tfplan'
     secrets:
       CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── STAGE 2: Terraform Apply ─────────────────────────────────────────────────
-  apply:
-    name: Apply
-    needs: plan
-    if: github.event_name == 'workflow_dispatch' || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push')
-    uses: RepoCodeGanesh/.github/.github/workflows/tf-apply.yml@main
-    with:
-      working_directory: 'platform/shared-services'
-      subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-      environment_name: 'shared-services-prod'
-      artifact_name: 'shared-tfplan'
-    secrets:
-      CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── STAGE 3: Infrastructure Release Summary ──────────────────────────────────
-  summary:
-    name: 📊 Infrastructure Release Summary
-    needs: [checkov-scan, plan, apply]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          CHECKOV_RES="${{ needs.checkov-scan.result == 'success' && '🟡 ADVISORY (Discovery Mode)' || (needs.checkov-scan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          PLAN_RES="${{ needs.plan.result == 'success' && '🟢 SUCCESS' || (needs.plan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          APPLY_RES="${{ needs.apply.result == 'success' && '🟢 APPLIED' || (needs.apply.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED (PR Mode)') }}"
-          OVERALL="🟢 INFRASTRUCTURE READY"
-          if [ "${{ needs.plan.result }}" = "failure" ] || [ "${{ needs.apply.result }}" = "failure" ]; then
-            OVERALL="🔴 PIPELINE FAILED"
-          fi
-
-          cat << EOF >> $GITHUB_STEP_SUMMARY
-          # 🏛️ Platform - Shared Services IaC Summary
-
-          > **Overall Outcome:** \`${OVERALL}\`
-          > **Target Subscription:** \`Shared-services (859a785c-bd38-402d-b595-1f44f40fb9bf)\`
-          > **State Key:** \`sthtbootpcin01/tfstate/shared-services/prod.tfstate\`
-
-          ---
-
-          ### 📋 Pipeline Execution Matrix
-          | Stage | Result |
-          |---|:---:|
-          | **0. Checkov IaC Security Gate** | ${CHECKOV_RES} |
-          | **1. Terraform Plan** | ${PLAN_RES} |
-          | **2. Terraform Apply** | ${APPLY_RES} |
-          EOF
