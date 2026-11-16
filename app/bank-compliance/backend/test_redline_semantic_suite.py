@@ -245,6 +245,55 @@ class TestRedlineSemanticSuite(unittest.TestCase):
         self.assertEqual(res["total_violations"], 2)
         self.assertEqual(res["severity_summary"]["critical"], 2)
 
+    @patch("urllib.request.urlopen")
+    def test_09_llm_hallucinated_zero_score_is_proportionally_corrected(self, mock_urlopen):
+        """Verify that when LLM returns 0 score for 1 violation in 6 clauses (e.g. UAE case),
+        the platform calculates the deterministic 83.33% proportional compliance score."""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        llm_payload = {
+            "choices": [{
+                "message": {
+                    "content": json.dumps({
+                        "compliance_score": 0,  # LLM hallucinated 0
+                        "risk_tier": "HIGH RISK",
+                        "total_violations": 1,
+                        "violations": [{
+                            "clause_id": "C-01",
+                            "clause_title": "Section 1: Sovereign Data Hosting",
+                            "original_text": "Data stored in UAE.",
+                            "violation_title": "Violation of RBI Data-Localization Requirement",
+                            "category": "IT Outsourcing & FinTech Risk",
+                            "severity": "CRITICAL",
+                            "violated_circular": "RBI/2020/IT-1",
+                            "violated_clause": "Section III, Clause 1",
+                            "explanation": "Hosting in UAE violates onshore data residency.",
+                            "suggested_replacement": "Data stored in India."
+                        }]
+                    })
+                }
+            }]
+        }
+        mock_response.read.return_value = json.dumps(llm_payload).encode("utf-8")
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        # 6-clause contract with 1 violation
+        text = (
+            "### Section 1: Sovereign Data Hosting\nData stored in UAE.\n\n"
+            "### Section 2: Cyber SLA\n6-hour SLA.\n\n"
+            "### Section 3: FLDG\n5% cap.\n\n"
+            "### Section 4: Audit\nFull audit.\n\n"
+            "### Section 5: Ombudsman\n30-day turnaround.\n\n"
+            "### Section 6: Aadhaar\nMasked storage."
+        )
+        res = RedlineEngine.audit_contract_text(text, "UAETest.pdf")
+        
+        # Must be 83.33% (5 out of 6 clauses compliant), NOT 0%!
+        self.assertEqual(res["compliance_score"], 83.33)
+        self.assertEqual(res["risk_tier"], "HIGH RISK")
+        self.assertEqual(res["total_violations"], 1)
+        self.assertEqual(res["total_clauses_reviewed"], 6)
+
 
 if __name__ == "__main__":
     unittest.main()

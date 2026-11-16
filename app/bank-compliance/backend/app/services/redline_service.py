@@ -24,7 +24,11 @@ Analyze contractual clauses strictly against Reserve Bank of India (RBI) Master 
 RULES OF STATUTORY ENFORCEMENT:
 1. ONLY flag clauses that directly CONTRADICT or VIOLATE statutory rules.
 2. If a clause meets the statutory requirement (e.g. data stored in India, 6h SLA, 5% FLDG cap, right to audit granted, Aadhaar masked, 30d grievance turnaround), it is 100% COMPLIANT. DO NOT flag compliant clauses. DO NOT flag recommendations or stylistic improvements as violations.
-3. If all clauses meet requirements, violations MUST be empty [] and compliance_score MUST be 100.
+3. SCORING RULES:
+   - If all clauses meet requirements, violations MUST be empty [] and compliance_score MUST be 100.
+   - If violations exist, calculate compliance_score proportionally:
+     compliance_score = round(((total_clauses - total_violations) / total_clauses) * 100, 2)
+   - For example: In a 6-clause contract with 1 violation, compliance_score is 83.33. NEVER return compliance_score: 0 if valid compliant clauses exist in the contract.
 4. SEMANTIC UNDERSTANDING OF NEGATIONS & FOREIGN JURISDICTIONS:
    - "Vendor shall under no circumstances host data outside of India" -> COMPLIANT (0 violations).
    - "No data shall be transferred overseas" -> COMPLIANT (0 violations).
@@ -245,12 +249,23 @@ class RedlineEngine:
                 high = sum(1 for v in violations if v.get("severity") == "HIGH")
                 med = sum(1 for v in violations if v.get("severity") == "MEDIUM")
 
-                score = data.get("compliance_score")
-                if score is None:
-                    penalty = crit * 30 + high * 15 + med * 5
-                    score = 100 if not violations else max(10, min(100, 100 - penalty))
+                total_violations = len(violations)
+                compliant_clauses = max(0, total_clauses - total_violations)
 
-                tier = "HIGH RISK" if score < 70 else ("MEDIUM RISK" if score < 90 else "COMPLIANT")
+                # Deterministic scoring: protect against LLM hallucinating 0% on partial compliance
+                llm_score = data.get("compliance_score")
+                if total_violations == 0:
+                    score = 100.0
+                    tier = "LOW RISK / COMPLIANT"
+                elif llm_score is not None and float(llm_score) > 0 and float(llm_score) <= 100:
+                    score = round(float(llm_score), 2)
+                    tier = "HIGH RISK" if crit > 0 or score < 70 else ("MEDIUM RISK" if score < 90 else "COMPLIANT")
+                else:
+                    # Deterministic mathematical calculation if LLM returns 0 or None:
+                    # Proportional clause compliance ratio: (compliant / total) * 100
+                    clause_ratio = (compliant_clauses / total_clauses) * 100.0
+                    score = round(max(15.0, clause_ratio), 2)
+                    tier = "HIGH RISK" if crit > 0 or score < 70 else ("MEDIUM RISK" if score < 90 else "COMPLIANT")
 
                 return {
                     "document_name": filename,
