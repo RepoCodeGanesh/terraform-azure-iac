@@ -67,12 +67,24 @@ const STATUTORY_VERIFICATIONS = [
   { label: 'DPDP Aadhaar Masking', status: 'Zero Plaintext Aadhaar', circular: 'RBI/DBR/2016-17/14 (Section 16)', icon: ShieldCheck }
 ]
 
+// ── Default Initial Statutory Compliance State ────────────────────────────────
+const INITIAL_COMPLIANT_RESULT = {
+  document_name: 'RBI_Compliant_FinTech_Agreement_2026.pdf',
+  compliance_score: 100,
+  risk_tier: 'LOW RISK / COMPLIANT',
+  total_violations: 0,
+  total_clauses_reviewed: 6,
+  severity_summary: { critical: 0, high: 0, medium: 0 },
+  violations: [],
+  engine: "Multi-Agent Regulatory Auditor (Level 3 Sieve — Gemini 2.0 Flash / LiteLLM)"
+}
+
 export default function RedlineStudio() {
   const [contractText, setContractText] = useState(COMPLIANT_AGREEMENT)
   const [documentName, setDocumentName] = useState('RBI_Compliant_FinTech_Agreement_2026.pdf')
   const [activeSampleType, setActiveSampleType] = useState('compliant') // 'compliant' | 'non-compliant' | 'custom'
   const [auditing, setAuditing] = useState(false)
-  const [auditResult, setAuditResult] = useState(() => auditContractLocally(COMPLIANT_AGREEMENT, 'RBI_Compliant_FinTech_Agreement_2026.pdf'))
+  const [auditResult, setAuditResult] = useState(INITIAL_COMPLIANT_RESULT)
   const [copiedIdx, setCopiedIdx] = useState(null)
   const [downloadingCert, setDownloadingCert] = useState(false)
   const [mobileTab, setMobileTab] = useState('redline')
@@ -82,16 +94,7 @@ export default function RedlineStudio() {
     setContractText(COMPLIANT_AGREEMENT)
     setDocumentName('RBI_Compliant_FinTech_Agreement_2026.pdf')
     setActiveSampleType('compliant')
-    setAuditResult({
-      document_name: 'RBI_Compliant_FinTech_Agreement_2026.pdf',
-      compliance_score: 100,
-      risk_tier: 'LOW RISK / COMPLIANT',
-      total_violations: 0,
-      total_clauses_reviewed: 6,
-      severity_summary: { critical: 0, high: 0, medium: 0 },
-      violations: [],
-      engine: "Multi-Agent Regulatory Auditor (Level 3 Sieve — Gemini 2.0 Flash / LiteLLM)"
-    })
+    setAuditResult(INITIAL_COMPLIANT_RESULT)
   }
 
   const loadNonCompliantSample = () => {
