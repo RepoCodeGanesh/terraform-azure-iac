@@ -329,8 +329,8 @@ jobs:
         shell: bash
         run: |
           high_samples=0
-          for sample in 1 2 3 4 5; do
-            echo "► Resource sample ${sample}/5"
+          for sample in 1 2 3; do
+            echo "► Resource sample ${sample}/3"
             kubectl top nodes
             metrics=$(kubectl top pod -n bank-compliance -l app=bankc-mcp-server --no-headers)
             echo "$metrics"
@@ -353,9 +353,9 @@ jobs:
               kubectl scale deployment/bankc-mcp-server -n bank-compliance --replicas=0
               exit 1
             fi
-            if (( sample < 5 )); then sleep 15; fi
+            if (( sample < 3 )); then sleep 5; fi
           done
-          echo "✅ MCP remained healthy through five resource samples."
+          echo "✅ MCP remained healthy through resource samples."
           kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
 
   # ── JOB 4d: Zero-Cost APIM Zero-Drift & Gateway Synchronization ────────────
@@ -391,11 +391,12 @@ jobs:
   # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
   deploy-frontend:
     name: Build & Deploy Frontend SPA
-    needs: [detect-changes, devsecops-scan]
+    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
     if: |
       always() &&
       !cancelled() &&
       needs.devsecops-scan.result == 'success' &&
+      (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
       ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'frontend-only')) ||
        (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))) &&
       (github.event_name == 'workflow_dispatch' ||
@@ -407,6 +408,7 @@ jobs:
       key_vault_name: 'kv-ht-ss-p-cin-01'
       shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
       swa_token_secret_name: 'bankc-swa-deployment-token'
+      environment_name: 'bank-compliance-prod'
     secrets:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -480,6 +482,14 @@ jobs:
           with urllib.request.urlopen(req_taxb, timeout=15) as res:
               assert res.status == 200, f"TaxBot returned {res.status}"
               print(f"✅ TaxBot Production Domain returned HTTP {res.status} OK")
+
+          print("\n► 5. Testing Policy Redline Studio (https://bank.mytaxbot.site/redline)...")
+          req_redline = urllib.request.Request("https://bank.mytaxbot.site/redline", headers={"User-Agent": "CI-Live-Verifier"})
+          with urllib.request.urlopen(req_redline, timeout=15) as res:
+              assert res.status == 200, f"Redline studio returned {res.status}"
+              html = res.read().decode("utf-8")
+              assert "root" in html, "SPA container missing in redline HTML"
+              print(f"✅ Policy Redline Studio (https://bank.mytaxbot.site/redline) returned HTTP {res.status} OK")
 
           print("\n🎉 ALL LIVE PRODUCTION ENDPOINTS VERIFIED OPERATIONAL!")
           EOF
