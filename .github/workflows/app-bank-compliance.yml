@@ -367,6 +367,7 @@ jobs:
       !cancelled() &&
       needs.backend-deploy.result == 'success'
     runs-on: ubuntu-latest
+    environment: shared-services-prod
     steps:
       - name: Azure Login (Shared Services APIM)
         uses: azure/login@v2
