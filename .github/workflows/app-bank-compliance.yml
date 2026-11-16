@@ -117,6 +117,10 @@ jobs:
         run: |
           python app/bank-compliance/backend/test_2026_frontier_suite.py
 
+      - name: Run Policy & Contract Redline Semantic Test Suite
+        run: |
+          python app/bank-compliance/backend/test_redline_semantic_suite.py
+
       - name: Run Frontend UI Integrity & Component Test Suite
         run: |
           python app/bank-compliance/frontend/test_ui_syntax_and_integrity.py

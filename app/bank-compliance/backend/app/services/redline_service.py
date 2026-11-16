@@ -14,7 +14,7 @@ import hashlib
 import logging
 import urllib.request
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +151,8 @@ STATUTORY_RULES = [
 class RedlineEngine:
     """Automated Statutory Contract Auditing and Policy Redline Engine."""
 
+    _REDLINE_CACHE: Dict[str, Dict[str, Any]] = {}
+
     @classmethod
     def segment_clauses(cls, text: str) -> List[Dict[str, Any]]:
         """Segments contractual text into distinct clauses and numbered sections."""
@@ -158,9 +160,10 @@ class RedlineEngine:
         clauses = []
         
         for idx, para in enumerate(raw_paragraphs):
-            # Detect clause headers (e.g. "Section 1", "Clause 4.2", "12.")
-            header_match = re.match(r'^(?:Clause|Section|Article|\d+\.|\d+\.\d+)\s*([^:\n]+)[:\n]?', para, re.IGNORECASE)
-            clause_title = header_match.group(0).strip() if header_match else f"Clause {idx + 1}"
+            # Detect clause headers (e.g. "### Section 1", "Section 1", "Clause 4.2", "12.")
+            clean_para = re.sub(r'^[#\*\s]+', '', para)
+            header_match = re.match(r'^(?:Clause|Section|Article|\d+\.|\d+\.\d+)\s*([^:\n]+)[:\n]?', clean_para, re.IGNORECASE)
+            clause_title = header_match.group(0).strip(" :\n\t") if header_match else f"Clause {idx + 1}"
             
             clauses.append({
                 "clause_id": f"C-{idx + 1:02d}",
@@ -252,7 +255,7 @@ class RedlineEngine:
                 return {
                     "document_name": filename,
                     "provenance_hash": doc_hash,
-                    "audited_at": datetime.utcnow().isoformat() + "Z",
+                    "audited_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     "total_clauses_reviewed": total_clauses,
                     "compliance_score": score,
                     "risk_tier": tier,
@@ -319,7 +322,7 @@ class RedlineEngine:
         return {
             "document_name": filename,
             "provenance_hash": doc_hash,
-            "audited_at": datetime.utcnow().isoformat() + "Z",
+            "audited_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "total_clauses_reviewed": len(clauses),
             "compliance_score": compliance_score,
             "risk_tier": risk_tier,
@@ -338,12 +341,24 @@ class RedlineEngine:
     def audit_contract_text(cls, text: str, filename: str = "Agreement.pdf") -> Dict[str, Any]:
         """
         3-Tier Hybrid Statutory Audit:
-        1. Attempts Level 3 Multi-Agent Semantic LLM reasoning via LiteLLM / Gemini 2.0 Flash ($0.00).
-        2. Automatically falls back to Level 1 Deterministic RegEx Sieve on timeout/network disruption.
+        1. Checks in-memory SHA-256 audit cache (<2ms, $0.00).
+        2. Attempts Level 3 Multi-Agent Semantic LLM reasoning via LiteLLM / Gemini 2.0 Flash ($0.00).
+        3. Automatically falls back to Level 1 Deterministic Heuristic Sieve on timeout/network disruption.
         """
+        cache_key = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
+        if cache_key in cls._REDLINE_CACHE:
+            logger.info("Serving statutory redline audit from SHA-256 cache (%s)", cache_key[:12])
+            cached = dict(cls._REDLINE_CACHE[cache_key])
+            cached["document_name"] = filename
+            cached["audited_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            return cached
+
         # Tier 3: Attempt Semantic LLM reasoning first
         llm_result = cls.audit_contract_text_llm(text, filename=filename)
         if llm_result is not None:
+            cls._REDLINE_CACHE[cache_key] = llm_result
+            if len(cls._REDLINE_CACHE) > 500:
+                cls._REDLINE_CACHE.pop(next(iter(cls._REDLINE_CACHE)))
             return llm_result
 
         # Fallback to Tier 1: Deterministic Heuristic Sieve

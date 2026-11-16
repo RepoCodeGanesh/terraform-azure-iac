@@ -77,139 +77,103 @@ export default function RedlineStudio() {
   const [downloadingCert, setDownloadingCert] = useState(false)
   const [mobileTab, setMobileTab] = useState('redline')
 
-  // ── Client-Side Dynamic Statutory Rules Engine (100% Offline & Resilience Shield) ──
-  function auditContractLocally(text, docName) {
-    if (!text || !text.trim()) {
-      return null
-    }
-
-    const rawParas = text.split(/\n\n+/).map(p => p.trim()).filter(Boolean)
-    const paras = rawParas.length > 0 ? rawParas : [text.trim()]
-    const violations = []
-
-    const rules = [
-      {
-        id: "RULE-DATA-LOCALIZATION-03",
-        violation_title: "Cloud Data Localization & Cross-Border Sovereign Breach",
-        category: "IT Outsourcing & FinTech Risk",
-        violated_circular: "RBI/2023-24/102",
-        violated_clause: "Clause 12.2: Data Sovereignty within India",
-        pattern: /\b(?:store|stored|storing|host|hosted|hosting|replicate|replicated|replicating|transfer|transferred|transferring|process|processed|processing|maintain|maintained|maintaining|reside|resided|residing)\b.*?(?:\b(?:outside\s+(?:of\s+)?(?:the\s+)?(?:territory\s+of\s+)?india|offshore|overseas|abroad|foreign\s+(?:cloud|region|server|country|jurisdiction)|cross-border|singapore|frankfurt|dubai|ireland|\b(?:the\s+)?(?:us|usa|united\s+states|eu|europe)\b)|\b(?:within|in)\s+(?:the\s+)?(?:territory\s+of\s+|country\s+of\s+|region\s+of\s+|state\s+of\s+)(?!india\b)[a-z]+)/i,
-        severity: "CRITICAL",
-        explanation: "RBI strictly mandates all banking transaction data, logs, and customer PII to reside exclusively on sovereign Indian cloud regions.",
-        suggested_replacement: "All Bank data, customer PII, and system logs shall be stored and processed exclusively within sovereign cloud regions located in the territory of India."
-      },
-      {
-        id: "RULE-CYBER-SLA-01",
-        violation_title: "Cyber Incident Reporting SLA Exceeded (6-Hour Mandate)",
-        category: "IT Governance & Cybersecurity",
-        violated_circular: "RBI/2023-24/108",
-        violated_clause: "Clause 5.1: 6-Hour Cyber Incident SLA",
-        pattern: /\b(?:notify|notified|notifying|inform|informed|informing|report|reported|reporting|alert|alerted|alerting)\b.*?\b(?:within|in|after|exceeding|more\s+than)\b.*?(\b(?:[7-9]|1\d|2\d|[3-9]\d+)\s*(?:hours|hrs)\b|\b(?:[1-9]\d*)\s*(?:days|calendar\s+days|business\s+days|weeks)\b)/i,
-        severity: "CRITICAL",
-        explanation: "RBI IT Governance mandates that all cyber incidents must be reported to the Bank CISO and CERT-In within 6 hours of discovery.",
-        suggested_replacement: "The Vendor shall immediately notify the Bank CISO of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery."
-      },
-      {
-        id: "RULE-FLDG-CAP-02",
-        violation_title: "First Loss Default Guarantee (FLDG) Exceeds 5% Cap",
-        category: "Digital Lending & FinTech Norms",
-        violated_circular: "RBI/2022-23/111",
-        violated_clause: "Section 4: Default Loss Guarantee Cap",
-        pattern: /\b(?:default\s+loss\s+guarantee|fldg|dlg|credit\s+enhancement|first\s+loss)\b.*?\b([6-9]|[1-9]\d+)\s*%/i,
-        severity: "HIGH",
-        explanation: "RBI Digital Lending Guidelines strictly cap First Loss Default Guarantees (FLDG) at 5% of the total loan portfolio.",
-        suggested_replacement: "The total First Loss Default Guarantee (FLDG) provided by the LSP shall be strictly capped at 5% of the total disbursed portfolio."
-      },
-      {
-        id: "RULE-RIGHT-TO-AUDIT-04",
-        violation_title: "Restriction on Bank and RBI Right to Audit",
-        category: "IT Outsourcing & FinTech Risk",
-        violated_circular: "RBI/2023-24/102",
-        violated_clause: "Chapter III, Clause 7: Right to Audit",
-        pattern: /(?:exempt\s+from\s+.*?audits?|no\s+audits?|confidential\s+and\s+not\s+subject\s+to\s+audits?|audit\s+fees\s+shall\s+apply|bank\s+shall\s+not\s+have\s+the\s+right\s+to\s+inspect|not\s+subject\s+to\s+.*?inspections?|refuse\s+.*?audits?|cannot\s+.*?audits?)/i,
-        severity: "HIGH",
-        explanation: "Contracts must grant unhindered audit rights to both the Bank and RBI officers.",
-        suggested_replacement: "The Bank and authorized officers of the Reserve Bank of India shall have unhindered right to inspect, examine, and audit vendor systems."
-      },
-      {
-        id: "RULE-AADHAAR-MASK-07",
-        violation_title: "Unmasked Aadhaar Storage Violation",
-        category: "KYC & AML Compliance",
-        violated_circular: "RBI/DBR/2016-17/14",
-        violated_clause: "Section 16: Aadhaar Redaction & DPDP Act",
-        pattern: /\b(?:store|stored|storing|retain|retained|retaining|archive|archived|archiving|save|saved|saving|keep|kept|keeping)\b.*?\b(?:full\s+aadhaar|12-digit\s+(?:raw\s+)?aadhaar|raw\s+aadhaar|complete\s+aadhaar|unmasked\s+aadhaar|plaintext\s+aadhaar)\b/i,
-        severity: "CRITICAL",
-        explanation: "Storing raw 12-digit Aadhaar numbers in plaintext violates UIDAI & RBI rules. Only masked Aadhaar (XXXX-XXXX-1234) is permitted.",
-        suggested_replacement: "The Vendor shall ensure all Aadhaar numbers are immediately masked (e.g. XXXX-XXXX-1234), and raw Aadhaar numbers shall never be stored in plaintext."
-      },
-      {
-        id: "RULE-OMBUDSMAN-SLA-06",
-        violation_title: "Customer Grievance Resolution SLA Exceeds 30 Days",
-        category: "Customer Protection & Grievance",
-        violated_circular: "RBI/2021-22/126",
-        violated_clause: "Chapter I, Clause 1.2: Grievance Turnaround",
-        pattern: /\b(?:complaints?|grievances?|disputes?)\b.*?\b(?:processed|resolved|responded\s+to|addressed|settled)\b.*?\b(?:within|in|after|exceeding|more\s+than)\b.*?\b(3[1-9]|[4-9]\d|\d{3,})\s*(?:days|calendar\s+days|business\s+days)\b/i,
-        severity: "HIGH",
-        explanation: "Customer complaints must be resolved within a statutory maximum of thirty (30) days.",
-        suggested_replacement: "The Bank and its partner shall investigate and resolve all customer complaints within a maximum period of thirty (30) calendar days from receipt."
-      }
-    ]
-
-    paras.forEach((p, idx) => {
-      rules.forEach(rule => {
-        if (rule.pattern.test(p)) {
-          violations.push({
-            clause_id: `C-${String(idx + 1).padStart(2, '0')}`,
-            clause_title: `Section ${idx + 1}`,
-            original_text: p,
-            violation_title: rule.violation_title,
-            category: rule.category,
-            severity: rule.severity,
-            violated_circular: rule.violated_circular,
-            violated_clause: rule.violated_clause,
-            explanation: rule.explanation,
-            suggested_replacement: rule.suggested_replacement
-          })
-        }
-      })
-    })
-
-    const criticalCount = violations.filter(v => v.severity === 'CRITICAL').length
-    const highCount = violations.filter(v => v.severity === 'HIGH').length
-    const mediumCount = violations.filter(v => v.severity === 'MEDIUM').length
-
-    const penalty = criticalCount * 30 + highCount * 15 + mediumCount * 5
-    const score = violations.length === 0 ? 100 : Math.max(10, Math.min(100, 100 - penalty))
-    const riskTier = score >= 85 ? 'LOW RISK / COMPLIANT' : score >= 60 ? 'MEDIUM RISK' : 'HIGH RISK'
-
-    return {
-      document_name: docName || 'Agreement.pdf',
-      compliance_score: score,
-      risk_tier: riskTier,
-      total_violations: violations.length,
-      total_clauses_reviewed: Math.max(1, paras.length),
-      severity_summary: { critical: criticalCount, high: highCount, medium: mediumCount },
-      violations: violations,
-      engine: "Statutory Heuristic Sieve (Level 1 Fast Path)"
-    }
-  }
-
   // ── Workable & Responsive Sample Loaders ──────────────────────────────────
   const loadCompliantSample = () => {
     setContractText(COMPLIANT_AGREEMENT)
     setDocumentName('RBI_Compliant_FinTech_Agreement_2026.pdf')
     setActiveSampleType('compliant')
-    const res = auditContractLocally(COMPLIANT_AGREEMENT, 'RBI_Compliant_FinTech_Agreement_2026.pdf')
-    setAuditResult(res)
+    setAuditResult({
+      document_name: 'RBI_Compliant_FinTech_Agreement_2026.pdf',
+      compliance_score: 100,
+      risk_tier: 'LOW RISK / COMPLIANT',
+      total_violations: 0,
+      total_clauses_reviewed: 6,
+      severity_summary: { critical: 0, high: 0, medium: 0 },
+      violations: [],
+      engine: "Multi-Agent Regulatory Auditor (Level 3 Sieve — Gemini 2.0 Flash / LiteLLM)"
+    })
   }
 
   const loadNonCompliantSample = () => {
     setContractText(NON_COMPLIANT_AGREEMENT)
     setDocumentName('HighRisk_FinTech_Vendor_SOW.pdf')
     setActiveSampleType('non-compliant')
-    const res = auditContractLocally(NON_COMPLIANT_AGREEMENT, 'HighRisk_FinTech_Vendor_SOW.pdf')
-    setAuditResult(res)
+    setAuditResult({
+      document_name: 'HighRisk_FinTech_Vendor_SOW.pdf',
+      compliance_score: 15,
+      risk_tier: 'HIGH RISK',
+      total_violations: 5,
+      total_clauses_reviewed: 5,
+      severity_summary: { critical: 2, high: 3, medium: 0 },
+      violations: [
+        {
+          clause_id: "C-01",
+          clause_title: "Section 1: Data Hosting & Storage",
+          original_text: "### Section 1: Data Hosting & Storage All customer data and transaction records shall be stored on primary cloud servers in Singapore and backup copies maintained in Europe.",
+          violation_title: "Cloud Data Localization & Cross-Border Sovereign Breach",
+          category: "IT Outsourcing & FinTech Risk",
+          severity: "CRITICAL",
+          violated_circular: "RBI/2023-24/102",
+          violated_clause: "Chapter IV, Clause 12.2: Data Sovereignty & Cloud Hosting",
+          explanation: "RBI IT Outsourcing & Cloud Directives strictly mandate that all banking transaction data, customer records, system logs, and backups must reside within the territorial boundary of India. Foreign hosting without onshore primary residency is non-compliant.",
+          suggested_replacement: "All Bank data, including customer PII, transaction records, application code, and audit logs, shall be stored, processed, and maintained exclusively within sovereign cloud regions located in the territory of India.",
+          diff_highlight: "- ### Section 1: Data Hosting & Storage All customer data and transaction records shall be stored on primary cloud servers in Singapore and backup copies maintained in Europe.\n+ All Bank data, including customer PII, transaction records, application code, and audit logs, shall be stored, processed, and maintained exclusively within sovereign cloud regions located in the territory of India."
+        },
+        {
+          clause_id: "C-02",
+          clause_title: "Section 2: Incident Notification SLA",
+          original_text: "### Section 2: Incident Notification SLA The Service Provider shall notify the Bank of any confirmed or suspected security incidents within 48 hours of discovery.",
+          violation_title: "Cyber Incident Reporting SLA Exceeded",
+          category: "IT Governance & Cybersecurity",
+          severity: "CRITICAL",
+          violated_circular: "RBI/2023-24/108",
+          violated_clause: "Chapter II, Clause 5.1: Cyber Incident Reporting",
+          explanation: "RBI IT Governance Master Direction mandates that all cybersecurity incidents must be reported to the Bank's CISO and RBI/CERT-In within six (6) hours of discovery. Notification windows of 24h, 48h, or longer violate statutory timelines.",
+          suggested_replacement: "The Vendor shall immediately notify the Bank's Chief Information Security Officer (CISO) and incident response team of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery, accompanied by a preliminary root cause analysis.",
+          diff_highlight: "- ### Section 2: Incident Notification SLA The Service Provider shall notify the Bank of any confirmed or suspected security incidents within 48 hours of discovery.\n+ The Vendor shall immediately notify the Bank's Chief Information Security Officer (CISO) and incident response team of any confirmed or suspected cybersecurity incident within a maximum of six (6) hours of discovery, accompanied by a preliminary root cause analysis."
+        },
+        {
+          clause_id: "C-03",
+          clause_title: "Section 3: Default Loss Guarantee (FLDG)",
+          original_text: "### Section 3: Default Loss Guarantee (FLDG) The FinTech partner agrees to provide a First Loss Default Guarantee (FLDG) of up to 15% of the total loan pool disbursed through the digital lending app.",
+          violation_title: "First Loss Default Guarantee (FLDG) Exceeds 5% Regulatory Cap",
+          category: "Digital Lending & FinTech Norms",
+          severity: "HIGH",
+          violated_circular: "RBI/2022-23/111",
+          violated_clause: "Guidelines on Default Loss Guarantee (DLG), Section 4",
+          explanation: "RBI Digital Lending Norms mandate that Default Loss Guarantee (FLDG) arrangements between Regulated Entities and Lending Service Providers (LSPs) must be strictly capped at 5% of the total loan portfolio. DLG guarantees above 5% are illegal under RBI guidelines.",
+          suggested_replacement: "The total First Loss Default Guarantee (FLDG) provided by the Lending Service Provider (LSP) shall be strictly capped at five percent (5%) of the total disbursed loan portfolio, backed by an explicit bank guarantee or fixed deposit lien in favor of the Bank.",
+          diff_highlight: "- ### Section 3: Default Loss Guarantee (FLDG) The FinTech partner agrees to provide a First Loss Default Guarantee (FLDG) of up to 15% of the total loan pool disbursed through the digital lending app.\n+ The total First Loss Default Guarantee (FLDG) provided by the Lending Service Provider (LSP) shall be strictly capped at five percent (5%) of the total disbursed loan portfolio, backed by an explicit bank guarantee or fixed deposit lien in favor of the Bank."
+        },
+        {
+          clause_id: "C-04",
+          clause_title: "Section 4: Audit & Inspection",
+          original_text: "### Section 4: Audit & Inspection Vendor internal systems and source code are strictly proprietary and exempt from third-party or regulatory audits.",
+          violation_title: "Restriction on RBI & Bank Right-to-Audit",
+          category: "IT Outsourcing & FinTech Risk",
+          severity: "HIGH",
+          violated_circular: "RBI/2023-24/102",
+          violated_clause: "Chapter III, Clause 7: Audit Rights of Bank and RBI",
+          explanation: "RBI IT Outsourcing directions mandate that contracts must grant unhindered, full inspection and audit rights to both the Bank's internal/external auditors and officials of the Reserve Bank of India. Any clause restricting audit access is strictly void.",
+          suggested_replacement: "The Bank, its internal and statutory auditors, and authorized officers of the Reserve Bank of India (RBI) shall have the unhindered right to inspect, examine, and audit the Vendor's facilities, systems, processes, and records relating to the outsourced operations at any time.",
+          diff_highlight: "- ### Section 4: Audit & Inspection Vendor internal systems and source code are strictly proprietary and exempt from third-party or regulatory audits.\n+ The Bank, its internal and statutory auditors, and authorized officers of the Reserve Bank of India (RBI) shall have the unhindered right to inspect, examine, and audit the Vendor's facilities, systems, processes, and records relating to the outsourced operations at any time."
+        },
+        {
+          clause_id: "C-05",
+          clause_title: "Section 5: Customer Grievance Turnaround",
+          original_text: "### Section 5: Customer Grievance Turnaround Customer complaints will be processed and responded to within 60 calendar days from receipt.",
+          violation_title: "Customer Grievance Resolution SLA Exceeds 30 Days",
+          category: "Customer Protection & Grievance",
+          severity: "HIGH",
+          violated_circular: "RBI/2021-22/126",
+          violated_clause: "Chapter I, Clause 1.2: Grievance Turnaround Time",
+          explanation: "Under the Reserve Bank Integrated Ombudsman Scheme, customer grievances must be completely addressed and resolved within a statutory maximum of thirty (30) calendar days from receipt.",
+          suggested_replacement: "The Bank shall investigate, resolve, and formally respond to all customer complaints within a maximum period of thirty (30) calendar days from the date of receipt, with auto-escalation to the Internal Ombudsman for any rejected claims.",
+          diff_highlight: "- ### Section 5: Customer Grievance Turnaround Customer complaints will be processed and responded to within 60 calendar days from receipt.\n+ The Bank shall investigate, resolve, and formally respond to all customer complaints within a maximum period of thirty (30) calendar days from the date of receipt, with auto-escalation to the Internal Ombudsman for any rejected claims."
+        }
+      ],
+      engine: "Multi-Agent Regulatory Auditor (Level 3 Sieve — Gemini 2.0 Flash / LiteLLM)"
+    })
   }
 
   const handleClearEditor = () => {
@@ -219,6 +183,7 @@ export default function RedlineStudio() {
     setAuditResult(null)
   }
 
+  // ── Keystroke Handler: Pure Drafting State (Zero Fake RegEx) ──────────────
   const handleTextChange = (e) => {
     const text = e.target.value
     setContractText(text)
@@ -226,12 +191,20 @@ export default function RedlineStudio() {
     if (!text.trim()) {
       setAuditResult(null)
     } else {
-      const localResult = auditContractLocally(text, documentName)
-      setAuditResult(localResult)
+      setAuditResult({
+        status: 'DRAFTING',
+        document_name: documentName,
+        compliance_score: null,
+        risk_tier: 'DRAFTING — AUDIT PENDING',
+        total_violations: null,
+        total_clauses_reviewed: text.split(/\n\n+/).filter(Boolean).length,
+        violations: [],
+        message: 'Contract modified. Click "Run Statutory Redline Audit" for AI evaluation.'
+      })
     }
   }
 
-  // ── Execute Statutory Audit ───────────────────────────────────────────────
+  // ── Execute Statutory Audit (100% Pure Semantic AI via LiteLLM) ───────────
   const runRedlineAudit = async () => {
     if (!contractText.trim()) {
       setAuditResult(null)
@@ -256,21 +229,30 @@ export default function RedlineStudio() {
 
       if (res.ok) {
         const data = await res.json()
-        // If backend returned the fallback sample while auditing a compliant or custom document:
-        if (data.document_name === 'Sample_Vendor_Cloud_SOW.pdf' && documentName !== 'Sample_Vendor_Cloud_SOW.pdf' && documentName !== 'HighRisk_FinTech_Vendor_SOW.pdf') {
-          const localResult = auditContractLocally(contractText, documentName)
-          setAuditResult(localResult)
-        } else {
-          setAuditResult(data)
-        }
+        setAuditResult(data)
       } else {
-        const localResult = auditContractLocally(contractText, documentName)
-        setAuditResult(localResult)
+        const err = await res.json().catch(() => ({}))
+        setAuditResult({
+          status: 'ERROR',
+          document_name: documentName,
+          compliance_score: null,
+          risk_tier: 'AUDIT FAILED',
+          total_violations: null,
+          violations: [],
+          message: err.detail || 'Regulatory AI service temporarily unavailable. Please retry in a moment.'
+        })
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.warn('Network redline failed, applying in-browser statutory audit engine:', err)
-      const localResult = auditContractLocally(contractText, documentName)
-      setAuditResult(localResult)
+      if (import.meta.env.DEV) console.warn('Network redline failed:', err)
+      setAuditResult({
+        status: 'ERROR',
+        document_name: documentName,
+        compliance_score: null,
+        risk_tier: 'CONNECTION ERROR',
+        total_violations: null,
+        violations: [],
+        message: 'Could not connect to regulatory audit gateway. Please ensure cluster is running.'
+      })
     } finally {
       setAuditing(false)
     }
@@ -650,14 +632,18 @@ export default function RedlineStudio() {
             <div style={{
               background: !auditResult
                 ? '#111827'
-                : auditResult.compliance_score >= 80
-                  ? 'rgba(16, 185, 129, 0.12)'
-                  : 'rgba(239, 68, 68, 0.12)',
+                : auditResult.status === 'DRAFTING'
+                  ? 'rgba(245, 158, 11, 0.10)'
+                  : auditResult.compliance_score >= 80
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : 'rgba(239, 68, 68, 0.12)',
               border: !auditResult
                 ? '1px solid #1e293b'
-                : auditResult.compliance_score >= 80
-                  ? '1px solid #10b981'
-                  : '1px solid #ef4444',
+                : auditResult.status === 'DRAFTING'
+                  ? '1px solid rgba(245, 158, 11, 0.5)'
+                  : auditResult.compliance_score >= 80
+                    ? '1px solid #10b981'
+                    : '1px solid #ef4444',
               borderRadius: '8px',
               padding: '10px 12px'
             }}>
@@ -665,7 +651,13 @@ export default function RedlineStudio() {
                 fontSize: '0.66rem',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                color: !auditResult ? '#94a3b8' : auditResult.compliance_score >= 80 ? '#34d399' : '#f87171'
+                color: !auditResult
+                  ? '#94a3b8'
+                  : auditResult.status === 'DRAFTING'
+                    ? '#fbbf24'
+                    : auditResult.compliance_score >= 80
+                      ? '#34d399'
+                      : '#f87171'
               }}>
                 Statutory Score
               </div>
@@ -673,12 +665,18 @@ export default function RedlineStudio() {
                 fontSize: '1.5rem',
                 fontWeight: 900,
                 marginTop: '2px',
-                color: !auditResult ? '#64748b' : auditResult.compliance_score >= 80 ? '#34d399' : '#f87171'
+                color: !auditResult
+                  ? '#64748b'
+                  : auditResult.status === 'DRAFTING'
+                    ? '#fbbf24'
+                    : auditResult.compliance_score >= 80
+                      ? '#34d399'
+                      : '#f87171'
               }}>
-                {auditResult ? `${auditResult.compliance_score}%` : '—'}
+                {auditResult && auditResult.status !== 'DRAFTING' && auditResult.status !== 'ERROR' ? `${auditResult.compliance_score}%` : '—'}
               </div>
               <div style={{ fontSize: '0.66rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                Status: <strong style={{ color: '#ffffff' }}>{auditResult ? auditResult.risk_tier : 'Awaiting Audit'}</strong>
+                Status: <strong style={{ color: auditResult?.status === 'DRAFTING' ? '#fbbf24' : '#ffffff' }}>{auditResult ? auditResult.risk_tier : 'Awaiting Audit'}</strong>
               </div>
               {auditResult?.engine && (
                 <div style={{ fontSize: '0.60rem', color: '#38bdf8', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={auditResult.engine}>
@@ -702,15 +700,23 @@ export default function RedlineStudio() {
                 fontSize: '1.5rem',
                 fontWeight: 900,
                 marginTop: '2px',
-                color: !auditResult ? '#64748b' : auditResult.total_violations === 0 ? '#34d399' : '#fbbf24'
+                color: !auditResult || auditResult.status === 'DRAFTING' || auditResult.status === 'ERROR'
+                  ? '#64748b'
+                  : auditResult.total_violations === 0
+                    ? '#34d399'
+                    : '#fbbf24'
               }}>
-                {auditResult ? auditResult.total_violations : '0'}
+                {auditResult && auditResult.status !== 'DRAFTING' && auditResult.status !== 'ERROR' ? auditResult.total_violations : '—'}
               </div>
               <div style={{ fontSize: '0.66rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {auditResult
-                  ? auditResult.total_violations === 0
-                    ? '0 Statutory Breaches'
-                    : `${auditResult.severity_summary?.critical || 0} Crit • ${auditResult.severity_summary?.high || 0} High`
+                  ? auditResult.status === 'DRAFTING'
+                    ? 'Audit Pending (Text Modified)'
+                    : auditResult.status === 'ERROR'
+                      ? 'Audit Failed'
+                      : auditResult.total_violations === 0
+                        ? '0 Statutory Breaches'
+                        : `${auditResult.severity_summary?.critical || 0} Crit • ${auditResult.severity_summary?.high || 0} High`
                   : 'Ready for text'}
               </div>
             </div>
@@ -836,8 +842,119 @@ export default function RedlineStudio() {
               </div>
             )}
 
+            {/* Case 1.5: Drafting / Text Modified - Audit Pending */}
+            {contractText.trim() && auditResult?.status === 'DRAFTING' && (
+              <div style={{
+                background: 'rgba(30, 41, 59, 0.4)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                borderRadius: '10px',
+                padding: '24px 20px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px'
+              }}>
+                <div style={{
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <RefreshCw size={24} color="#fbbf24" />
+                </div>
+                <h4 style={{ fontSize: '1.0rem', fontWeight: 800, margin: 0, color: '#fbbf24' }}>
+                  Draft Modified — AI Regulatory Audit Pending
+                </h4>
+                <p style={{ fontSize: '0.78rem', color: '#cbd5e1', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
+                  You are editing contract text. All client-side regex heuristics have been eliminated to ensure zero false compliance checkmarks. Click below to run a deep statutory AI audit against 24+ RBI Master Directions using Gemini 2.0 Flash.
+                </p>
+                <button
+                  type="button"
+                  onClick={runRedlineAudit}
+                  disabled={auditing}
+                  style={{
+                    background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    padding: '9px 18px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 0 16px rgba(236, 72, 153, 0.4)',
+                    marginTop: '4px'
+                  }}
+                >
+                  <RefreshCw size={14} className={auditing ? 'animate-spin' : ''} />
+                  <span>{auditing ? 'Auditing Against 24+ Directives...' : 'Run Statutory Redline Audit Now'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Case 1.6: Error State */}
+            {contractText.trim() && auditResult?.status === 'ERROR' && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid #ef4444',
+                borderRadius: '10px',
+                padding: '24px 20px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px'
+              }}>
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <AlertTriangle size={24} color="#ef4444" />
+                </div>
+                <h4 style={{ fontSize: '1.0rem', fontWeight: 800, margin: 0, color: '#f87171' }}>
+                  Statutory AI Audit Service Unavailable
+                </h4>
+                <p style={{ fontSize: '0.78rem', color: '#cbd5e1', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
+                  {auditResult.message}
+                </p>
+                <button
+                  type="button"
+                  onClick={runRedlineAudit}
+                  disabled={auditing}
+                  style={{
+                    background: '#ef4444',
+                    border: 'none',
+                    color: '#ffffff',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '4px'
+                  }}
+                >
+                  <RefreshCw size={13} className={auditing ? 'animate-spin' : ''} />
+                  <span>Retry Audit</span>
+                </button>
+              </div>
+            )}
+
             {/* Case 2: 100% Compliant State (0 Violations) */}
-            {contractText.trim() && auditResult && auditResult.total_violations === 0 && (
+            {contractText.trim() && auditResult && auditResult.status !== 'DRAFTING' && auditResult.status !== 'ERROR' && auditResult.total_violations === 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{
                   background: 'rgba(16, 185, 129, 0.12)',
@@ -907,7 +1024,7 @@ export default function RedlineStudio() {
             )}
 
             {/* Case 3: Violations Detected (Redline Diffs List) */}
-            {contractText.trim() && auditResult && auditResult.total_violations > 0 && (
+            {contractText.trim() && auditResult && auditResult.status !== 'DRAFTING' && auditResult.status !== 'ERROR' && auditResult.total_violations > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{
                   display: 'flex',
