@@ -628,6 +628,21 @@ State files are path-keyed — **git repo location does not affect state**.
   2. **Monorepo Caller Optimization:** Refactored all 6 Terraform workflow callers (`platform-*.yml` and `workload-*.yml`) down to ~35 lines each, eliminating 387 lines of duplicate CI/CD code.
   3. **Zero-Drift FinOps Teardown:** After verifying successful Level 3 AI Golden Path end-to-end deployment (Run `43822759769`), executed a strictly scoped declarative `terraform destroy` on `workloads/bank-compliance-ai-aks` against remote state (`sthtbootpcin01`). This wiped the AKS cluster and VM node pools to reach $0.00 compute idle billing, while preserving all shared platform foundations (Bootstrap, Hub, Shared-Services APIM, and Serverless TaxBot).
 
+### 73. Native Kubernetes cgroups & CFS Quotas vs Brittle CI/CD Bash Watchdog Scripts
+* **Symptom:** Deployment workflows incorporated a 45-line bash watchdog in CI/CD that polled `kubectl top`, parsed ASCII metrics with `awk`, evaluated regex thresholds, and killed the pod (`kubectl scale --replicas=0`) if CPU exceeded 180m twice. On a single-node burstable dev cluster (`Standard_B2ms`), this crashed the pipeline whenever `metrics-server` restarted or experienced cold-start latency.
+* **Root Cause:** Over-engineering application performance monitoring (APM) and self-healing into user-space CI/CD runner scripts instead of delegating to native Linux kernel cgroup controllers and Kubernetes container runtime primitives.
+* **Resolution:** Replaced the CI/CD bash watchdog with declarative Kubernetes resource requests and limits:
+  ```yaml
+  resources:
+    requests:
+      cpu: "10m"
+      memory: "64Mi"
+    limits:
+      cpu: "150m"
+      memory: "200Mi"
+  ```
+  The Linux kernel Completely Fair Scheduler (CFS) smoothly throttles CPU bursts in milliseconds without killing the pod or causing service outages, while Kubelet enforces hard memory limits at the kernel level 24/7/365, eliminating brittle CI/CD monitoring code entirely.
+
 
 
 
