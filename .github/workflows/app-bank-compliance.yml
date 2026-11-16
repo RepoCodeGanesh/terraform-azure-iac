@@ -1,7 +1,6 @@
 # ==============================================================================
-# Enterprise BankCompliance AI — Lean Production Caller Orchestrator
-# Follows Enterprise Modular DAG Pattern:
-# Central Reusable Templates (RepoCodeGanesh/.github) + Composite Actions (.github/actions/)
+# Enterprise BankCompliance AI — True Level 3 Golden Path Caller
+# Central Org Standard: RepoCodeGanesh/.github
 # ==============================================================================
 
 name: App - BankCompliance AI CI/CD
@@ -12,13 +11,11 @@ on:
     paths:
       - 'app/bank-compliance/**'
       - '.github/workflows/app-bank-compliance.yml'
-      - '.github/actions/**'
   pull_request:
     branches: [main, develop]
     paths:
       - 'app/bank-compliance/**'
       - '.github/workflows/app-bank-compliance.yml'
-      - '.github/actions/**'
   workflow_dispatch:
     inputs:
       target:
@@ -44,317 +41,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── 1. Smart Change Detection ───────────────────────────────────────────────
-  detect-changes:
-    name: 🔍 Path Change Detection
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      eval: ${{ steps.filter.outputs.eval }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Filter Path Changes
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            backend:
-              - 'app/bank-compliance/backend/**'
-              - 'app/bank-compliance/chart/**'
-              - 'app/bank-compliance/k8s/**'
-            frontend:
-              - 'app/bank-compliance/frontend/**'
-            eval:
-              - 'app/bank-compliance/eval/**'
-              - 'app/bank-compliance/backend/**'
-
-  # ── 2. DevSecOps SAST & SCA Scan (Central Org Template) ─────────────────────
-  devsecops-scan:
-    name: DevSecOps SAST & SCA Scan
-    needs: [detect-changes]
-    uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
+  golden-path-release:
+    name: 🚀 Production AI Delivery
+    uses: RepoCodeGanesh/.github/.github/workflows/reusable-ai-workload-pipeline.yml@main
     with:
+      app_name: 'bank-compliance'
       working_directory: 'app/bank-compliance'
-      key_vault_name: 'kv-ht-ss-p-cin-01'
-      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-    secrets:
-      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── 3. AI Quality & Regression Gate (Composite Action) ──────────────────────
-  ai-eval-quality-gate:
-    name: AI Quality & Regression Gate
-    needs: [detect-changes, devsecops-scan]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.devsecops-scan.result == 'success' &&
-      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'quality-gate-only' || inputs.target == 'backend-only')) ||
-       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.eval == 'true' || needs.detect-changes.outputs.backend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Run AI Quality & Semantic Sieve Gate
-        uses: ./.github/actions/ai-quality-gate
-
-  # ── 4. Build & Package Backend Container (Central Org Template) ─────────────
-  backend-build:
-    name: Backend Container Build
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.devsecops-scan.result == 'success' &&
-      (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
-      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
-       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.backend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
-    uses: RepoCodeGanesh/.github/.github/workflows/container-build-push.yml@main
-    with:
-      context_dir: 'app/bank-compliance/backend'
-      image_name: '${{ github.repository_owner }}/bank-compliance-backend'
-      sha: ${{ github.sha }}
-    secrets: inherit
-
-  # ── 5. Ensure AKS Is Running for Deployment (Central Org Template) ──────────
-  ensure-aks-running:
-    name: AKS Power-State Preflight
-    needs: [backend-build]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.backend-build.result == 'success'
-    uses: RepoCodeGanesh/.github/.github/workflows/aks-power-preflight.yml@main
-    with:
       cluster_name: 'aks-ht-bankc-p-cin-01'
       resource_group: 'rg-ht-bankc-p-cin-01'
       subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
       environment_name: 'bank-compliance-prod'
-    secrets:
-      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── 6. Deploy Backend to AKS (Central Org Template) ─────────────────────────
-  backend-deploy:
-    name: Backend AKS Deploy
-    needs: [backend-build, ensure-aks-running]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.backend-build.result == 'success' &&
-      needs.ensure-aks-running.result == 'success'
-    uses: RepoCodeGanesh/.github/.github/workflows/aks-helm-deploy.yml@main
-    with:
-      cluster_name: 'aks-ht-bankc-p-cin-01'
-      resource_group: 'rg-ht-bankc-p-cin-01'
-      subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
-      environment_name: 'bank-compliance-prod'
-      chart_path: './app/bank-compliance/chart'
-      release_name: 'bank-compliance'
-      namespace: 'bank-compliance'
-      image_repository: 'ghcr.io/${{ github.repository_owner }}/bank-compliance-backend'
-      image_tag: ${{ github.sha }}
-      ingress_manifest: './app/bank-compliance/k8s/nginx/ingress-nginx.yaml'
-      tuner_manifest: './app/bank-compliance/k8s/finops-single-node-tuner.yaml'
-      extra_manifests_dir: './app/bank-compliance/k8s/inference'
-      health_endpoint: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query'
-    secrets:
-      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── 7. Security Policies & Gatekeeper Admission Sync (Central Org Template) ─
-  gatekeeper-policies:
-    name: Security Policies Sync
-    needs: [backend-deploy]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.backend-deploy.result == 'success'
-    uses: RepoCodeGanesh/.github/.github/workflows/aks-security-sync.yml@main
-    with:
-      cluster_name: 'aks-ht-bankc-p-cin-01'
-      resource_group: 'rg-ht-bankc-p-cin-01'
-      subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
-      namespace: 'bank-compliance'
-      network_policy_dir: 'app/bank-compliance/k8s/networkpolicy/'
-      environment_name: 'bank-compliance-prod'
-    secrets:
-      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── 8. FastMCP Functional Smoke & Memory Profiler (Composite Action) ────────
-  mcp-functional-monitor:
-    name: 🔌 FastMCP Functional & CPU/Memory Check
-    needs: [backend-deploy, gatekeeper-policies]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.backend-deploy.result == 'success' &&
-      needs.gatekeeper-policies.result == 'success'
-    runs-on: ubuntu-latest
-    environment: bank-compliance-prod
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
-
-      - name: Get AKS Credentials
-        run: |
-          az aks get-credentials \
-            --name aks-ht-bankc-p-cin-01 \
-            --resource-group rg-ht-bankc-p-cin-01 \
-            --overwrite-existing
-
-      - name: Run FastMCP Smoke & Resource Profiler
-        uses: ./.github/actions/mcp-functional-monitor
-        with:
-          namespace: 'bank-compliance'
-          mcp_deployment: 'bankc-mcp-server'
-          backend_deployment: 'bankc-backend'
-
-  # ── 9. APIM Zero-Drift Route Sync (Central Org Template) ────────────────────
-  apim-resilience-sync:
-    name: APIM Route Sync
-    needs: [backend-deploy]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.backend-deploy.result == 'success'
-    uses: RepoCodeGanesh/.github/.github/workflows/app-apim-sync.yml@main
-    with:
-      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-      resource_group: 'rg-ht-ss-p-cin-01'
-      service_name: 'apim-ht-ss-p-cin-01'
-      api_id: 'bankc-compliance-api'
-      api_path: 'bankc'
-      specification_url: 'http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/openapi.json'
-      environment_name: 'shared-services-prod'
-    secrets:
-      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── 10. Deploy Frontend SPA to Azure SWA (Central Org Template) ─────────────
-  deploy-frontend:
-    name: Build & Deploy Frontend SPA
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
-    if: |
-      always() &&
-      !cancelled() &&
-      needs.devsecops-scan.result == 'success' &&
-      (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
-      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'frontend-only')) ||
-       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
-    uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
-    with:
       static_web_app_name: 'stapp-ht-bankc-p-cin-01'
-      working_directory: 'app/bank-compliance/frontend'
-      key_vault_name: 'kv-ht-ss-p-cin-01'
-      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
       swa_token_secret_name: 'bankc-swa-deployment-token'
-      environment_name: 'bank-compliance-prod'
-    secrets:
-      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  # ── 11. End-to-End Live Production Status & Functional Verification ─────────
-  verify-live-status:
-    name: 🌐 Live Production Status & Functional Verification
-    needs: [backend-deploy, deploy-frontend, gatekeeper-policies, mcp-functional-monitor, apim-resilience-sync]
-    if: |
-      always() &&
-      !cancelled() &&
-      (needs.backend-deploy.result == 'success' || needs.backend-deploy.result == 'skipped') &&
-      (needs.deploy-frontend.result == 'success' || needs.deploy-frontend.result == 'skipped') &&
-      (needs.gatekeeper-policies.result == 'success' || needs.gatekeeper-policies.result == 'skipped') &&
-      (needs.mcp-functional-monitor.result == 'success' || needs.mcp-functional-monitor.result == 'skipped') &&
-      (needs.apim-resilience-sync.result == 'success' || needs.apim-resilience-sync.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Verify Live Production Canary
-        uses: ./.github/actions/verify-live-canary
-        with:
-          swa_url: 'https://bank.mytaxbot.site'
-          apim_gateway_url: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/health'
-
-  # ── 12. Release Governance Summary ──────────────────────────────────────────
-  summary:
-    name: 📊 Release Governance Summary
-    needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, ensure-aks-running, backend-deploy, gatekeeper-policies, mcp-functional-monitor, apim-resilience-sync, deploy-frontend, verify-live-status]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate True Release Summary
-        run: |
-          SAST_STATUS="${{ needs.devsecops-scan.result == 'success' && '🟢 PASSED' || (needs.devsecops-scan.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          EVAL_STATUS="${{ needs.ai-eval-quality-gate.result == 'success' && '🟢 PASSED' || (needs.ai-eval-quality-gate.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          BUILD_STATUS="${{ needs.backend-build.result == 'success' && '🟢 BUILT' || (needs.backend-build.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          AKS_STATUS="${{ needs.ensure-aks-running.result == 'success' && '🟢 READY' || (needs.ensure-aks-running.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          DEPLOY_STATUS="${{ needs.backend-deploy.result == 'success' && '🟢 DEPLOYED' || (needs.backend-deploy.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          APIM_STATUS="${{ needs.apim-resilience-sync.result == 'success' && '🟢 ZERO-DRIFT SYNCED' || (needs.apim-resilience-sync.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          FRONTEND_STATUS="${{ needs.deploy-frontend.result == 'success' && '🟢 DEPLOYED' || (needs.deploy-frontend.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          LIVE_STATUS="${{ needs.verify-live-status.result == 'success' && '🟢 VERIFIED (200 OK)' || (needs.verify-live-status.result == 'failure' && '🔴 FAILED' || '⚪ SKIPPED') }}"
-          MCP_STATUS="${{ needs.mcp-functional-monitor.result == 'success' && '🟢 TOOLS + RESOURCES VERIFIED' || (needs.mcp-functional-monitor.result == 'failure' && '🔴 FAILED / SCALED TO ZERO' || '⚪ SKIPPED') }}"
-
-          OVERALL="🟢 RELEASE SUCCESSFUL"
-          if [ "${{ needs.devsecops-scan.result }}" = "failure" ] || [ "${{ needs.ai-eval-quality-gate.result }}" = "failure" ] || [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.ensure-aks-running.result }}" = "failure" ] || [ "${{ needs.backend-deploy.result }}" = "failure" ] || [ "${{ needs.gatekeeper-policies.result }}" = "failure" ] || [ "${{ needs.mcp-functional-monitor.result }}" = "failure" ] || [ "${{ needs.apim-resilience-sync.result }}" = "failure" ] || [ "${{ needs.deploy-frontend.result }}" = "failure" ] || [ "${{ needs.verify-live-status.result }}" = "failure" ]; then
-            OVERALL="🔴 PIPELINE FAILED"
-          fi
-
-          cat <<EOF >> $GITHUB_STEP_SUMMARY
-          # 🚀 BankCompliance AI — Production Pipeline Release Summary
-
-          > **Overall Outcome:** \`${OVERALL}\`
-          > **Architecture Pattern:** Modular Caller Orchestrator + Central Reusable Templates
-          > **Target Environment:** \`bank-compliance-prod\` (Apps-prod Subscription)
-          > **Commit SHA:** \`${{ github.sha }}\` | **Trigger:** \`${{ github.event_name }}\`
-
-          ---
-
-          ### 📋 Multi-Stage Pipeline Execution Matrix
-
-          | Pipeline Stage | Responsibilities | Execution Result |
-          |---|---|:---:|
-          | **1. DevSecOps Security Scan** | Bandit Python SAST + pip-audit & npm audit | ${SAST_STATUS} |
-          | **2. GenAIOps Quality Gate** | Ragas Triad Groundedness & 9-Case Semantic Suite | ${EVAL_STATUS} |
-          | **3. Container Packaging** | Multi-stage Docker build + Trivy CVE scan to GHCR | ${BUILD_STATUS} |
-          | **3b. AKS Power-State Preflight** | Start cluster only if stopped; verify ready | ${AKS_STATUS} |
-          | **4. Backend AKS Release** | Helm 3 rolling upgrade + Workload Identity on AKS | ${DEPLOY_STATUS} |
-          | **4b. FastMCP Functional & Resource Check** | FastMCP tool discovery/search + AKS CPU/memory samples | ${MCP_STATUS} |
-          | **4c. APIM Zero-Drift Route Sync** | Automated OpenAPI schema ingestion & 180s buffer | ${APIM_STATUS} |
-          | **5. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
-          | **6. Live Production Health** | Live SWA + APIM Gateway + E2E AI Query Verification | ${LIVE_STATUS} |
-
-          ---
-
-          ### 🌐 Live Production Endpoints:
-          * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
-          * **Policy Redliner Studio:** [https://bank.mytaxbot.site/redline](https://bank.mytaxbot.site/redline)
-          * **APIM Gateway Endpoint:** \`https://apim-ht-ss-p-cin-01.azure-api.net/bankc\`
-          EOF
-
-  # ── 13. Enterprise SemVer Release Tagging (Central Org Template) ────────────
-  create-release:
-    name: Enterprise SemVer Release
-    needs: [summary]
-    if: |
-      needs.summary.result == 'success' &&
-      (github.event_name == 'workflow_dispatch' ||
-       ((github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event_name == 'push'))
-    uses: RepoCodeGanesh/.github/.github/workflows/app-tag-semver.yml@main
-    with:
-      artifact_name: 'genaiops-evaluation-attestation'
-      release_artifacts: 'redteam_security_attestation.json'
-      tag_prefix: 'bankc-v'
+      apim_api_id: 'bankc-compliance-api'
+      apim_path: 'bankc'
+      apim_spec_url: 'http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/openapi.json'
+      live_url: 'https://bank.mytaxbot.site'
+      apim_gateway_url: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/health'
+      target: ${{ inputs.target || 'all' }}
+    secrets: inherit
