@@ -573,6 +573,17 @@ State files are path-keyed — **git repo location does not affect state**.
   4. **In-Memory SHA-256 Caching:** Added `_REDLINE_CACHE` in `redline_service.py` to cache clause hash digests, serving repeated identical audits in `<2ms` at $0.00 token cost.
   5. **Automated 8-Case Semantic Regression Test Suite:** Created `app/bank-compliance/backend/test_redline_semantic_suite.py` and integrated it into `.github/workflows/app-bank-compliance.yml`, verifying Uganda detection, negation handling, offshore cloud regions, and 100% compliant contracts across every CI/CD cycle.
 
+### 66. LLM Hallucinated 0% Compliance Score on Partial Breach & Deterministic Proportional Scoring Sieve
+* **Symptom:** In `https://bank.mytaxbot.site/redline`, auditing a contract containing 6 clauses where 5 are compliant and 1 contains a critical cross-border infraction (e.g. data stored in `"territory of UAE"`) resulted in `STATUTORY SCORE: 0%` despite 5 clauses being compliant.
+* **Root Cause:**
+  1. The LLM's system prompt lacked an explicit formula for proportional compliance, causing the model to treat any CRITICAL violation as a binary zero multiplier (`compliance_score: 0`).
+  2. The backend Python service checked `if score is None:`, but because `0 is not None`, it trusted the LLM's raw score and returned 0%.
+* **Resolution:**
+  1. Added explicit proportional scoring rules to `LLM_REDLINE_SYSTEM_PROMPT` in `redline_service.py`: `compliance_score = round(((total_clauses - total_violations) / total_clauses) * 100, 2)`.
+  2. Implemented platform-side mathematical override in `audit_contract_text_llm`: whenever an LLM returns `0` or `None` on a partially compliant contract, the service deterministically computes `(compliant_clauses / total_clauses) * 100.0` (e.g., $5/6 = 83.33\%$).
+  3. Decoupled Score from Risk Tier: The score reflects mathematical clause compliance ($83.33\%$), while the Risk Tier reflects statutory severity (`HIGH RISK` if `crit > 0`), ensuring users see both accurate clause ratios and statutory warnings.
+  4. Added `test_09_llm_hallucinated_zero_score_is_proportionally_corrected` to the backend test suite.
+
 
 
 
