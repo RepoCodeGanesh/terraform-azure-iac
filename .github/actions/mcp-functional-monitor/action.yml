@@ -1,0 +1,72 @@
+name: 'FastMCP Functional Smoke & Resource Profiler'
+description: 'Waits for MCP rollout, executes in-cluster tool smoke tests, and samples pod CPU/memory'
+
+inputs:
+  namespace:
+    description: 'Kubernetes namespace'
+    required: false
+    default: 'bank-compliance'
+  mcp_deployment:
+    description: 'Name of MCP server deployment'
+    required: false
+    default: 'bankc-mcp-server'
+  backend_deployment:
+    description: 'Name of backend deployment'
+    required: false
+    default: 'bankc-backend'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Wait for MCP Rollout and Record Pre-Test Baseline
+      shell: bash
+      run: |
+        kubectl rollout status deployment/${{ inputs.mcp_deployment }} -n ${{ inputs.namespace }} --timeout=180s
+        echo "► Cluster CPU/memory baseline before MCP calls"
+        kubectl top nodes || true
+        kubectl top pods -n ${{ inputs.namespace }} || true
+        kubectl get pods -n ${{ inputs.namespace }} -l app=${{ inputs.mcp_deployment }} -o wide
+
+    - name: Call Actual MCP Tools from Backend Pod
+      shell: bash
+      run: |
+        if ! kubectl exec -n ${{ inputs.namespace }} deployment/${{ inputs.backend_deployment }} -- python -m app.services.mcp_smoke; then
+          echo "MCP smoke test failed; scaling only the MCP server to zero for safety."
+          kubectl scale deployment/${{ inputs.mcp_deployment }} -n ${{ inputs.namespace }} --replicas=0
+          exit 1
+        fi
+
+    - name: Monitor Cluster and MCP Pod Resources
+      shell: bash
+      run: |
+        high_samples=0
+        for sample in 1 2 3; do
+          echo "► Resource sample ${sample}/3"
+          kubectl top nodes || true
+          metrics=$(kubectl top pod -n ${{ inputs.namespace }} -l app=${{ inputs.mcp_deployment }} --no-headers 2>/dev/null || echo "")
+          echo "$metrics"
+          cpu=$(echo "$metrics" | awk 'NR==1 {print $2}')
+          memory=$(echo "$metrics" | awk 'NR==1 {print $3}')
+          cpu_m=${cpu%m}
+          memory_mib=${memory%Mi}
+          if [[ "$memory" == *Gi ]]; then
+            memory_mib=$(awk -v value="${memory%Gi}" 'BEGIN {printf "%d", value * 1024}')
+          fi
+          if [[ "$cpu_m" =~ ^[0-9]+$ ]] && [[ "$memory_mib" =~ ^[0-9]+$ ]]; then
+            if (( cpu_m >= 180 || memory_mib >= 230 )); then
+              high_samples=$((high_samples + 1))
+            else
+              high_samples=0
+            fi
+          fi
+          restarts=$(kubectl get pods -n ${{ inputs.namespace }} -l app=${{ inputs.mcp_deployment }} -o jsonpath='{.items[0].status.containerStatuses[0].restartCount}' 2>/dev/null || echo "0")
+          echo "MCP CPU=${cpu:-0m}, memory=${memory:-0Mi}, restarts=${restarts:-0}"
+          if (( high_samples >= 2 )) || (( restarts > 0 )); then
+            echo "MCP resource guardrail or restart check failed; scaling only the MCP server to zero."
+            kubectl scale deployment/${{ inputs.mcp_deployment }} -n ${{ inputs.namespace }} --replicas=0
+            exit 1
+          fi
+          if (( sample < 3 )); then sleep 5; fi
+        done
+        echo "✅ MCP remained healthy through resource samples."
+        kubectl get pods -n ${{ inputs.namespace }} -l app=${{ inputs.mcp_deployment }} -o wide

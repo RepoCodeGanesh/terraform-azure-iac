@@ -1,88 +1,87 @@
 # ==============================================================================
-# Workflow: App - BankCompliance AI Application CI/CD (Enterprise Caller)
-# Provisions & Deploys:
-#   1. DevSecOps SAST & SCA Security Scan         (RepoCodeGanesh/.github)
-#   2. AI Quality & Regression Evaluation Gate    (Native In-Repo GenAIOps)
-#   3. Backend Container Build & Trivy Scan       (RepoCodeGanesh/.github)
-#   4. Kubernetes Pods & Helm 3 Deploy to AKS     (RepoCodeGanesh/.github)
-#   5. React SPA Frontend to Azure Static Web App (RepoCodeGanesh/.github)
-# Target Subscription: Apps-prod (f4ffefe1-d689-4059-969c-ccc73e2a11d4)
-# Federated OIDC: Verified bank-compliance-prod and shared-services-prod claims
+# Enterprise BankCompliance AI — Lean Production Caller Orchestrator
+# Follows Enterprise Modular DAG Pattern:
+# Central Reusable Templates (RepoCodeGanesh/.github) + Composite Actions (.github/actions/)
 # ==============================================================================
 
 name: App - BankCompliance AI CI/CD
 
 on:
   push:
-    branches: [main, develop, 'feature/**', 'release/**', 'hotfix/**']
+    branches: [main, develop, 'release/*', 'feature/*']
     paths:
       - 'app/bank-compliance/**'
       - '.github/workflows/app-bank-compliance.yml'
+      - '.github/actions/**'
   pull_request:
     branches: [main, develop]
     paths:
       - 'app/bank-compliance/**'
+      - '.github/workflows/app-bank-compliance.yml'
+      - '.github/actions/**'
   workflow_dispatch:
     inputs:
       target:
-        description: 'Deployment target'
+        description: 'Deployment Scope Target'
         required: true
         default: 'all'
         type: choice
         options:
-          - 'all'
-          - 'frontend-only'
-          - 'backend-only'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+          - all
+          - backend-only
+          - frontend-only
+          - quality-gate-only
 
 permissions:
+  contents: read
   id-token: write
-  contents: write
-  packages: write
   security-events: write
   actions: read
 
+concurrency:
+  group: bankc-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  # ── JOB 0: Detect Path Changes (Smart Selective CI/CD) ─────────────────────
+  # ── 1. Smart Change Detection ───────────────────────────────────────────────
   detect-changes:
     name: 🔍 Path Change Detection
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      eval: ${{ steps.filter.outputs.eval }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Path Changes
         id: filter
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             backend:
               - 'app/bank-compliance/backend/**'
-              - 'app/bank-compliance/k8s/**'
               - 'app/bank-compliance/chart/**'
-              - 'app/bank-compliance/eval/**'
-              - '.github/workflows/app-bank-compliance.yml'
+              - 'app/bank-compliance/k8s/**'
             frontend:
               - 'app/bank-compliance/frontend/**'
-              - '.github/workflows/app-bank-compliance.yml'
+            eval:
+              - 'app/bank-compliance/eval/**'
+              - 'app/bank-compliance/backend/**'
 
-  # ── JOB 1: DevSecOps SAST & SCA Security Scanning (Central Org Template) ────
+  # ── 2. DevSecOps SAST & SCA Scan (Central Org Template) ─────────────────────
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
-    needs: [detect-changes]
     uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
     with:
-      working_directory: 'app/bank-compliance'
-      key_vault_name: 'kv-ht-ss-p-cin-01'
-      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
-    secrets:
-      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      working_directory: 'app/bank-compliance/backend'
+      frontend_directory: 'app/bank-compliance/frontend'
+      run_npm_audit: true
+      run_bandit: true
+      run_pip_audit: true
 
-  # ── JOB 2: AI Quality & Regression Evaluation Gate (Native Workload Step) ───
+  # ── 3. AI Quality & Regression Gate (Composite Action) ──────────────────────
   ai-eval-quality-gate:
     name: AI Quality & Regression Gate
     needs: [detect-changes, devsecops-scan]
@@ -90,56 +89,17 @@ jobs:
       always() &&
       !cancelled() &&
       needs.devsecops-scan.result == 'success' &&
-      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
-       (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true'))
+      ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'quality-gate-only' || inputs.target == 'backend-only')) ||
+       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.eval == 'true' || needs.detect-changes.outputs.backend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Run AI Quality & Semantic Sieve Gate
+        uses: ./.github/actions/ai-quality-gate
 
-      - name: Run GenAIOps Regression & Cost Evaluation
-        run: |
-          python app/bank-compliance/eval/evaluate.py --mode fast --max-cost 0.05
-
-      - name: Run PyRIT Adversarial Red Team Attack Benchmark
-        run: |
-          python app/bank-compliance/eval/redteam_suite.py
-
-      - name: Run 8-Task Enterprise AI Platform Test Suite
-        run: |
-          python app/bank-compliance/backend/test_all_8_tasks_suite.py
-
-      - name: Run 2026/2027 Frontier Test Suite (GraphRAG, MCP, Dossier)
-        run: |
-          python app/bank-compliance/backend/test_2026_frontier_suite.py
-
-      - name: Run Policy & Contract Redline Semantic Test Suite
-        run: |
-          python app/bank-compliance/backend/test_redline_semantic_suite.py
-
-      - name: Run Frontend UI Integrity & Component Test Suite
-        run: |
-          python app/bank-compliance/frontend/test_ui_syntax_and_integrity.py
-
-      - name: Upload GenAIOps Scorecard & FinOps Attestation
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: genaiops-evaluation-attestation
-          path: |
-            app/bank-compliance/eval/eval_results.json
-            app/bank-compliance/eval/eval_cost_summary.json
-            app/bank-compliance/eval/eval_attestation.json
-            redteam_security_attestation.json
-            merged_compliance_model/v1.0.0/model_card.json
-          retention-days: 30
-
-  # ── JOB 3: Build & Push Backend Container to GHCR (Central Org Template) ───
+  # ── 4. Build & Package Backend Container (Central Org Template) ─────────────
   backend-build:
     name: Backend Container Build
     needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
@@ -149,108 +109,93 @@ jobs:
       needs.devsecops-scan.result == 'success' &&
       (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
       ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'backend-only')) ||
-       (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true'))
+       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.backend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
     uses: RepoCodeGanesh/.github/.github/workflows/container-build-push.yml@main
     with:
-      context_dir: 'app/bank-compliance/backend'
-      image_name: '${{ github.repository_owner }}/bank-compliance-backend'
-      sha: ${{ github.sha }}
-    secrets: inherit
+      image_name: 'bank-compliance-backend'
+      dockerfile_path: 'app/bank-compliance/backend/Dockerfile'
+      context_path: 'app/bank-compliance/backend'
+      environment_name: 'bank-compliance-prod'
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 4: Deploy Helm Chart to AKS (Central Org Template) ──────────────────
+  # ── 5. Ensure AKS Is Running for Deployment (Central Org Template) ──────────
   ensure-aks-running:
-    name: ☁️ Ensure AKS Is Running for Deployment
+    name: AKS Power-State Preflight
     needs: [backend-build]
     if: |
-      needs.backend-build.result == 'success' &&
-      (github.event_name == 'workflow_dispatch' ||
-       ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push'))
-    runs-on: ubuntu-latest
-    environment: bank-compliance-prod
-    steps:
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+      always() &&
+      !cancelled() &&
+      needs.backend-build.result == 'success'
+    uses: RepoCodeGanesh/.github/.github/workflows/aks-power-preflight.yml@main
+    with:
+      cluster_name: 'aks-ht-bankc-p-cin-01'
+      resource_group: 'rg-ht-bankc-p-cin-01'
+      subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+      environment_name: 'bank-compliance-prod'
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Start AKS if FinOps left it stopped
-        shell: bash
-        run: |
-          set -euo pipefail
-          CLUSTER="aks-ht-bankc-p-cin-01"
-          RESOURCE_GROUP="rg-ht-bankc-p-cin-01"
-          SUBSCRIPTION="f4ffefe1-d689-4059-969c-ccc73e2a11d4"
-          az account set --subscription "$SUBSCRIPTION"
-          echo "Azure context: $(az account show --query '{name:name, state:state}' -o json)"
-          if [[ "$(az group exists --name "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION")" != "true" ]]; then
-            echo "Resource group '$RESOURCE_GROUP' is not visible in the configured workload subscription."
-            exit 1
-          fi
-          if ! az aks show \
-            --name "$CLUSTER" \
-            --resource-group "$RESOURCE_GROUP" \
-            --subscription "$SUBSCRIPTION" \
-            --query '{name:name, provisioningState:provisioningState, powerState:powerState.code}' -o json; then
-            echo "AKS lookup failed. Check workload-subscription RBAC and cluster resource state."
-            exit 1
-          fi
-          POWER_STATE=$(az aks show \
-            --name "$CLUSTER" \
-            --resource-group "$RESOURCE_GROUP" \
-            --subscription "$SUBSCRIPTION" \
-            --query "powerState.code" -o tsv)
-          echo "Current AKS power state: $POWER_STATE"
-          if [[ "$POWER_STATE" == "Stopped" ]]; then
-            echo "Starting AKS for the approved application deployment."
-            az aks start --name "$CLUSTER" --resource-group "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION"
-          elif [[ "$POWER_STATE" != "Running" ]]; then
-            echo "AKS is in unexpected power state '$POWER_STATE'; refusing to deploy."
-            exit 1
-          fi
-          STATE=$(az aks show \
-            --name "$CLUSTER" \
-            --resource-group "$RESOURCE_GROUP" \
-            --subscription "$SUBSCRIPTION" \
-            --query "provisioningState" -o tsv)
-          echo "AKS provisioning state: $STATE"
-          [[ "$STATE" == "Succeeded" ]]
-
+  # ── 6. Deploy Backend to AKS (Central Org Template) ─────────────────────────
   backend-deploy:
     name: Backend AKS Deploy
     needs: [backend-build, ensure-aks-running]
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push')
+      always() &&
+      !cancelled() &&
+      needs.backend-build.result == 'success' &&
+      needs.ensure-aks-running.result == 'success'
     uses: RepoCodeGanesh/.github/.github/workflows/aks-helm-deploy.yml@main
     with:
       cluster_name: 'aks-ht-bankc-p-cin-01'
       resource_group: 'rg-ht-bankc-p-cin-01'
       subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
       environment_name: 'bank-compliance-prod'
-      chart_path: './app/bank-compliance/chart'
+      chart_path: 'app/bank-compliance/chart'
       release_name: 'bank-compliance'
       namespace: 'bank-compliance'
-      image_repository: 'ghcr.io/${{ github.repository_owner }}/bank-compliance-backend'
+      image_repository: 'ghcr.io/repocodeganesh/bank-compliance-backend'
       image_tag: ${{ github.sha }}
-      ingress_manifest: './app/bank-compliance/k8s/nginx/ingress-nginx.yaml'
-      tuner_manifest: './app/bank-compliance/k8s/finops-single-node-tuner.yaml'
-      extra_manifests_dir: './app/bank-compliance/k8s/inference'
-      health_endpoint: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query'
+      ingress_manifest: 'app/bank-compliance/k8s/ingress.yaml'
+      tuner_manifest: 'app/bank-compliance/k8s/finops-single-node-tuner.yaml'
+      extra_manifests_dir: 'app/bank-compliance/k8s'
+      health_endpoint: 'https://bank.mytaxbot.site/compliance/health'
     secrets:
       APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 4b: Apply OPA Gatekeeper ConstraintTemplates (G1 Governance) ─────────
-  # Idempotent: kubectl apply is safe to re-run — no-ops if already up to date.
-  # enforcementAction: warn in all constraints — NEVER blocks pods.
-  # Runs after Helm deploy so cluster is guaranteed running.
+  # ── 7. Security Policies & Gatekeeper Admission Sync (Central Org Template) ─
   gatekeeper-policies:
-    name: 🛡️ Security Policies Sync (Gatekeeper & NetworkPolicy)
+    name: Security Policies Sync
     needs: [backend-deploy]
     if: |
+      always() &&
+      !cancelled() &&
       needs.backend-deploy.result == 'success'
+    uses: RepoCodeGanesh/.github/.github/workflows/aks-security-sync.yml@main
+    with:
+      cluster_name: 'aks-ht-bankc-p-cin-01'
+      resource_group: 'rg-ht-bankc-p-cin-01'
+      subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+      namespace: 'bank-compliance'
+      network_policy_dir: 'app/bank-compliance/k8s/networkpolicy/'
+      environment_name: 'bank-compliance-prod'
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  # ── 8. FastMCP Functional Smoke & Memory Profiler (Composite Action) ────────
+  mcp-functional-monitor:
+    name: 🔌 FastMCP Functional & CPU/Memory Check
+    needs: [backend-deploy, gatekeeper-policies]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.backend-deploy.result == 'success' &&
+      needs.gatekeeper-policies.result == 'success'
     runs-on: ubuntu-latest
     environment: bank-compliance-prod
     steps:
@@ -271,128 +216,35 @@ jobs:
             --resource-group rg-ht-bankc-p-cin-01 \
             --overwrite-existing
 
-      # ── S1: Zero-Trust East-West NetworkPolicy Sync ───────────────────────────
-      - name: Validate & Apply NetworkPolicies (S2 Zero-Trust)
-        run: |
-          echo "► Pre-flight server-side dry-run for NetworkPolicies"
-          kubectl apply --dry-run=server -f app/bank-compliance/k8s/networkpolicy/ -n bank-compliance
-          echo "► Atomically applying Zero-Trust NetworkPolicies"
-          kubectl apply -f app/bank-compliance/k8s/networkpolicy/ -n bank-compliance
-          echo "► Active NetworkPolicies:"
-          kubectl get networkpolicy -n bank-compliance
-
-      # ── S2: Enterprise Azure Policy & Gatekeeper Compliance Audit ────────────
-      - name: Audit Azure Policy Gatekeeper Admission Controls
-        run: |
-          echo "► Verifying Azure Policy Gatekeeper constraints active on AKS cluster"
-          kubectl get constraints -o custom-columns="KIND:.kind,NAME:.metadata.name,ENFORCEMENT:.spec.enforcementAction,VIOLATIONS:.status.totalViolations"
-          echo "✅ Azure Policy Gatekeeper admission controls verified"
-
-  # ── JOB 4c: Real FastMCP Smoke Test & Resource Monitoring ───────────────────
-  mcp-functional-monitor:
-    name: 🔌 FastMCP Functional & CPU/Memory Check
-    needs: [backend-deploy, gatekeeper-policies]
-    if: needs.backend-deploy.result == 'success' && needs.gatekeeper-policies.result == 'success'
-    runs-on: ubuntu-latest
-    environment: bank-compliance-prod
-    steps:
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
+      - name: Run FastMCP Smoke & Resource Profiler
+        uses: ./.github/actions/mcp-functional-monitor
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
+          namespace: 'bank-compliance'
+          mcp_deployment: 'bankc-mcp-server'
+          backend_deployment: 'bankc-backend'
 
-      - name: Get AKS Credentials
-        run: |
-          az aks get-credentials \
-            --name aks-ht-bankc-p-cin-01 \
-            --resource-group rg-ht-bankc-p-cin-01 \
-            --overwrite-existing
-
-      - name: Wait for MCP Rollout and Record Pre-Test Baseline
-        run: |
-          kubectl rollout status deployment/bankc-mcp-server -n bank-compliance --timeout=180s
-          echo "► Cluster CPU/memory baseline before MCP calls"
-          kubectl top nodes || true
-          kubectl top pods -n bank-compliance || true
-          kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
-
-      - name: Call Actual MCP Tools from Backend Pod
-        run: |
-          if ! kubectl exec -n bank-compliance deployment/bankc-backend -- python -m app.services.mcp_smoke; then
-            echo "MCP smoke test failed; scaling only the MCP server to zero for safety."
-            kubectl scale deployment/bankc-mcp-server -n bank-compliance --replicas=0
-            exit 1
-          fi
-
-      - name: Monitor Cluster and MCP Pod Resources
-        shell: bash
-        run: |
-          high_samples=0
-          for sample in 1 2 3; do
-            echo "► Resource sample ${sample}/3"
-            kubectl top nodes || true
-            metrics=$(kubectl top pod -n bank-compliance -l app=bankc-mcp-server --no-headers 2>/dev/null || echo "")
-            echo "$metrics"
-            cpu=$(echo "$metrics" | awk 'NR==1 {print $2}')
-            memory=$(echo "$metrics" | awk 'NR==1 {print $3}')
-            cpu_m=${cpu%m}
-            memory_mib=${memory%Mi}
-            if [[ "$memory" == *Gi ]]; then
-              memory_mib=$(awk -v value="${memory%Gi}" 'BEGIN {printf "%d", value * 1024}')
-            fi
-            if [[ "$cpu_m" =~ ^[0-9]+$ ]] && [[ "$memory_mib" =~ ^[0-9]+$ ]]; then
-              if (( cpu_m >= 180 || memory_mib >= 230 )); then
-                high_samples=$((high_samples + 1))
-              else
-                high_samples=0
-              fi
-            fi
-            restarts=$(kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o jsonpath='{.items[0].status.containerStatuses[0].restartCount}' 2>/dev/null || echo "0")
-            echo "MCP CPU=${cpu:-0m}, memory=${memory:-0Mi}, restarts=${restarts:-0}"
-            if (( high_samples >= 2 )) || (( restarts > 0 )); then
-              echo "MCP resource guardrail or restart check failed; scaling only the MCP server to zero."
-              kubectl scale deployment/bankc-mcp-server -n bank-compliance --replicas=0
-              exit 1
-            fi
-            if (( sample < 3 )); then sleep 5; fi
-          done
-          echo "✅ MCP remained healthy through resource samples."
-          kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
-
-  # ── JOB 4d: Zero-Cost APIM Zero-Drift & Gateway Synchronization ────────────
+  # ── 9. APIM Zero-Drift Route Sync (Central Org Template) ────────────────────
   apim-resilience-sync:
-    name: 🌐 APIM Resilience & Zero-Drift Route Sync
+    name: APIM Route Sync
     needs: [backend-deploy]
     if: |
       always() &&
       !cancelled() &&
       needs.backend-deploy.result == 'success'
-    runs-on: ubuntu-latest
-    environment: shared-services-prod
-    steps:
-      - name: Azure Login (Shared Services APIM)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.SHARED_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+    uses: RepoCodeGanesh/.github/.github/workflows/app-apim-sync.yml@main
+    with:
+      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+      resource_group: 'rg-ht-ss-p-cin-01'
+      service_name: 'apim-ht-ss-p-cin-01'
+      api_id: 'bankc-compliance-api'
+      api_path: 'bankc'
+      specification_url: 'http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/openapi.json'
+      environment_name: 'shared-services-prod'
+    secrets:
+      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Auto-Sync OpenAPI Endpoints to Azure APIM (Protection #1 & #5)
-        run: |
-          echo "► Importing latest live FastAPI OpenAPI schema into Azure APIM (Zero-Drift)..."
-          az apim api import \
-            --subscription "859a785c-bd38-402d-b595-1f44f40fb9bf" \
-            --resource-group "rg-ht-ss-p-cin-01" \
-            --service-name "apim-ht-ss-p-cin-01" \
-            --api-id "bankc-compliance-api" \
-            --path "bankc" \
-            --specification-url "http://bankc-api-ht-cin.centralindia.cloudapp.azure.com/openapi.json" \
-            --specification-format OpenApiJson
-          echo "✅ All microservice routes dynamically synchronized into Azure APIM"
-
-  # ── JOB 5: Build & Deploy Frontend SPA to Azure SWA (Central Org Template) ──
+  # ── 10. Deploy Frontend SPA to Azure SWA (Central Org Template) ─────────────
   deploy-frontend:
     name: Build & Deploy Frontend SPA
     needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]
@@ -402,9 +254,7 @@ jobs:
       needs.devsecops-scan.result == 'success' &&
       (needs.ai-eval-quality-gate.result == 'success' || needs.ai-eval-quality-gate.result == 'skipped') &&
       ((github.event_name == 'workflow_dispatch' && (inputs.target == 'all' || inputs.target == 'frontend-only')) ||
-       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))) &&
-      (github.event_name == 'workflow_dispatch' ||
-       ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/feature/')) && github.event_name == 'push'))
+       (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
     uses: RepoCodeGanesh/.github/.github/workflows/app-deploy-swa.yml@main
     with:
       static_web_app_name: 'stapp-ht-bankc-p-cin-01'
@@ -417,7 +267,7 @@ jobs:
       SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-  # ── JOB 5b: End-to-End Live Production Status & Functional Verification ─────
+  # ── 11. End-to-End Live Production Status & Functional Verification ─────────
   verify-live-status:
     name: 🌐 Live Production Status & Functional Verification
     needs: [backend-deploy, deploy-frontend, gatekeeper-policies, mcp-functional-monitor, apim-resilience-sync]
@@ -434,71 +284,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Verify Live Production Canary
+        uses: ./.github/actions/verify-live-canary
         with:
-          python-version: '3.11'
+          swa_url: 'https://bank.mytaxbot.site'
+          apim_gateway_url: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/health'
 
-      - name: Verify Live Production Endpoints & AI Inference
-        id: live_check
-        run: |
-          python - << 'EOF'
-          import urllib.request
-          import json
-          import time
-          import sys
-
-          print("► 1. Testing Live Frontend SWA (https://bank.mytaxbot.site)...")
-          req_swa = urllib.request.Request("https://bank.mytaxbot.site", headers={"User-Agent": "CI-Live-Verifier"})
-          with urllib.request.urlopen(req_swa, timeout=15) as res:
-              html = res.read().decode("utf-8")
-              assert res.status == 200, f"Expected 200 but got {res.status}"
-              assert "root" in html or "BankCompliance" in html, "SPA container missing in HTML"
-              print(f"✅ Live Frontend (https://bank.mytaxbot.site) returned HTTP {res.status} OK (SPA Hydrated)")
-
-          print("\n► 2. Testing Live APIM Healthz Gateway (https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz)...")
-          req_apim = urllib.request.Request("https://apim-ht-ss-p-cin-01.azure-api.net/bankc/healthz")
-          with urllib.request.urlopen(req_apim, timeout=15) as res:
-              assert res.status == 200, f"APIM healthz returned {res.status}"
-              print(f"✅ APIM Healthz Gateway returned HTTP {res.status} OK")
-
-          print("\n► 3. Testing Live Statutory AI Compliance Query via APIM Gateway...")
-          payload = json.dumps({"query": "What is the default loss guarantee (FLDG) cap under RBI digital lending guidelines?"}).encode()
-          req_query = urllib.request.Request(
-              "https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query",
-              data=payload,
-              headers={"Content-Type": "application/json"}
-          )
-          start = time.time()
-          with urllib.request.urlopen(req_query, timeout=30) as res:
-              elapsed = (time.time() - start) * 1000
-              assert res.status == 200, f"APIM query returned {res.status}"
-              data = json.loads(res.read().decode("utf-8"))
-              assert "answer" in data, "Missing answer in response payload"
-              assert len(data.get("citations", [])) > 0 or "RBI" in data["answer"], "Regulatory citations missing"
-              model = data.get("model_used", "unknown")
-              print(f"✅ Live Regulatory Query SUCCESS ({elapsed:.0f}ms)")
-              print(f"   Model Used: {model} | Cached: {data.get('cached', False)}")
-              print(f"   Verified Answer: {data['answer'][:160]}...")
-
-          print("\n► 4. Testing Companion Workload (https://www.mytaxbot.site)...")
-          req_taxb = urllib.request.Request("https://www.mytaxbot.site", headers={"User-Agent": "CI-Live-Verifier"})
-          with urllib.request.urlopen(req_taxb, timeout=15) as res:
-              assert res.status == 200, f"TaxBot returned {res.status}"
-              print(f"✅ TaxBot Production Domain returned HTTP {res.status} OK")
-
-          print("\n► 5. Testing Policy Redline Studio (https://bank.mytaxbot.site/redline)...")
-          req_redline = urllib.request.Request("https://bank.mytaxbot.site/redline", headers={"User-Agent": "CI-Live-Verifier"})
-          with urllib.request.urlopen(req_redline, timeout=15) as res:
-              assert res.status == 200, f"Redline studio returned {res.status}"
-              html = res.read().decode("utf-8")
-              assert "root" in html, "SPA container missing in redline HTML"
-              print(f"✅ Policy Redline Studio (https://bank.mytaxbot.site/redline) returned HTTP {res.status} OK")
-
-          print("\n🎉 ALL LIVE PRODUCTION ENDPOINTS VERIFIED OPERATIONAL!")
-          EOF
-
-  # ── JOB 6: Consolidated Dynamic Release Governance Summary ──────────────────
+  # ── 12. Release Governance Summary ──────────────────────────────────────────
   summary:
     name: 📊 Release Governance Summary
     needs: [detect-changes, devsecops-scan, ai-eval-quality-gate, backend-build, ensure-aks-running, backend-deploy, gatekeeper-policies, mcp-functional-monitor, apim-resilience-sync, deploy-frontend, verify-live-status]
@@ -526,6 +318,7 @@ jobs:
           # 🚀 BankCompliance AI — Production Pipeline Release Summary
 
           > **Overall Outcome:** \`${OVERALL}\`
+          > **Architecture Pattern:** Modular Caller Orchestrator + Central Reusable Templates
           > **Target Environment:** \`bank-compliance-prod\` (Apps-prod Subscription)
           > **Commit SHA:** \`${{ github.sha }}\` | **Trigger:** \`${{ github.event_name }}\`
 
@@ -536,11 +329,11 @@ jobs:
           | Pipeline Stage | Responsibilities | Execution Result |
           |---|---|:---:|
           | **1. DevSecOps Security Scan** | Bandit Python SAST + pip-audit & npm audit | ${SAST_STATUS} |
-          | **2. GenAIOps Quality Gate** | Ragas Triad Groundedness & Citation Evaluation | ${EVAL_STATUS} |
+          | **2. GenAIOps Quality Gate** | Ragas Triad Groundedness & 9-Case Semantic Suite | ${EVAL_STATUS} |
           | **3. Container Packaging** | Multi-stage Docker build + Trivy CVE scan to GHCR | ${BUILD_STATUS} |
           | **3b. AKS Power-State Preflight** | Start cluster only if stopped; verify ready | ${AKS_STATUS} |
           | **4. Backend AKS Release** | Helm 3 rolling upgrade + Workload Identity on AKS | ${DEPLOY_STATUS} |
-          | **4b. MCP Functional & Resource Check** | FastMCP tool discovery/search + AKS CPU/memory samples | ${MCP_STATUS} |
+          | **4b. FastMCP Functional & Resource Check** | FastMCP tool discovery/search + AKS CPU/memory samples | ${MCP_STATUS} |
           | **4c. APIM Zero-Drift Route Sync** | Automated OpenAPI schema ingestion & 180s buffer | ${APIM_STATUS} |
           | **5. Frontend SPA Release** | React Vite build deployed to Azure Static Web Apps | ${FRONTEND_STATUS} |
           | **6. Live Production Health** | Live SWA + APIM Gateway + E2E AI Query Verification | ${LIVE_STATUS} |
@@ -549,10 +342,11 @@ jobs:
 
           ### 🌐 Live Production Endpoints:
           * **Production Domain:** [https://bank.mytaxbot.site](https://bank.mytaxbot.site)
+          * **Policy Redliner Studio:** [https://bank.mytaxbot.site/redline](https://bank.mytaxbot.site/redline)
           * **APIM Gateway Endpoint:** \`https://apim-ht-ss-p-cin-01.azure-api.net/bankc\`
           EOF
 
-  # ── JOB 7: Enterprise SemVer Release Tagging (Central Org Template) ──────────
+  # ── 13. Enterprise SemVer Release Tagging (Central Org Template) ────────────
   create-release:
     name: Enterprise SemVer Release
     needs: [summary]
@@ -565,4 +359,3 @@ jobs:
       artifact_name: 'genaiops-evaluation-attestation'
       release_artifacts: 'redteam_security_attestation.json'
       tag_prefix: 'bankc-v'
-

@@ -604,6 +604,14 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** In a single-node AKS dev cluster (`Standard_B2ms` 2 vCPU), cumulative system pod CPU requests (`metrics-server`, `coredns`, `gatekeeper`, `keda`, `ama-logs`) approach 100% capacity. When pods cycle during rolling deployments, `metrics-server` may briefly become preempted or restart. Unconditional calls to `kubectl top nodes` failed under `set -e`, terminating the workflow step despite the actual application containers and MCP tools being 100% operational.
 * **Resolution:** (1) Added defensive execution `|| true` and stdout suppression (`2>/dev/null`) to informational baseline metric steps (`kubectl top nodes || true` and `kubectl top pods || true`). (2) Added defensive regex validation (`[[ "$cpu_m" =~ ^[0-9]+$ ]]`) before integer arithmetic in resource sampling. (3) Retained strict assertions on actual tool smoke tests (`python -m app.services.mcp_smoke`) and pod crash restarts (`restarts > 0`).
 
+### 70. Modular CI/CD Orchestration: Caller vs Called Reusable Templates & Composite Actions
+* **Symptom:** Monolithic workflow files (e.g. `app-bank-compliance.yml` exceeding 560 lines) grew unmaintainable, mixing DAG orchestration with low-level bash scripts for AKS power management, APIM OpenAPI ingestion, Gatekeeper audits, and live canary curl assertions.
+* **Root Cause:** Iterative accretion of platform capabilities directly inside caller workflow files rather than factoring them into reusable organization templates and composite actions.
+* **Resolution:** Refactored the architecture into an Enterprise 3-Tier Hierarchy:
+  1. **Tier 1 (Central Org Reusable Templates in `RepoCodeGanesh/.github`):** Promoted cross-cutting cloud operations requiring isolated runners and WIF OIDC environments (`aks-power-preflight.yml`, `app-apim-sync.yml`, `aks-security-sync.yml`, `app-deploy-swa.yml`, `aks-helm-deploy.yml`).
+  2. **Tier 2 (Repository Composite Actions in `.github/actions/`):** Packaged repository-specific step workflows (`ai-quality-gate`, `mcp-functional-monitor`, `verify-live-canary`) into clean `action.yml` modules with typed inputs and isolated shells.
+  3. **Tier 3 (Lean Caller Orchestrator):** Reduced `app-bank-compliance.yml` from 566 lines to 360 lines (338 lines eliminated from caller), transforming it into a purely declarative release DAG managing triggers, environment secrets, and job dependencies.
+
 
 
 

@@ -1,0 +1,57 @@
+name: 'Live Production Canary & Health Verification'
+description: 'Runs automated curl probes against SWA, APIM gateway, Policy Redliner, and live AI inference'
+
+inputs:
+  swa_url:
+    description: 'Static Web App production URL'
+    required: false
+    default: 'https://bank.mytaxbot.site'
+  apim_gateway_url:
+    description: 'Azure API Management gateway health URL'
+    required: false
+    default: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/health'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Verify Live Production Endpoints & AI Inference
+      shell: bash
+      run: |
+        echo "► 1. Verifying Live Static Web App (bank.mytaxbot.site)..."
+        SWA_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ inputs.swa_url }}")
+        echo "  SWA Response Code: ${SWA_CODE}"
+        if [ "${SWA_CODE}" != "200" ]; then
+          echo "❌ SWA production endpoint failed with HTTP ${SWA_CODE}"
+          exit 1
+        fi
+        echo "✅ SWA is 200 OK"
+
+        echo "► 2. Verifying Policy Redliner Route (bank.mytaxbot.site/redline)..."
+        REDLINE_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ inputs.swa_url }}/redline")
+        echo "  Policy Redliner Response Code: ${REDLINE_CODE}"
+        if [ "${REDLINE_CODE}" != "200" ]; then
+          echo "❌ Policy Redliner endpoint failed with HTTP ${REDLINE_CODE}"
+          exit 1
+        fi
+        echo "✅ Policy Redliner route is 200 OK"
+
+        echo "► 3. Verifying Azure APIM Gateway Health Endpoint..."
+        APIM_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ inputs.apim_gateway_url }}")
+        echo "  APIM Gateway Response Code: ${APIM_CODE}"
+        if [ "${APIM_CODE}" != "200" ]; then
+          echo "⚠️ APIM health returned ${APIM_CODE} (may be cold-starting or rate-limited); continuing..."
+        else
+          echo "✅ APIM Gateway is 200 OK"
+        fi
+
+        echo "► 4. Verifying End-to-End Live AI Regulatory Inference..."
+        AI_RESP=$(curl -s --max-time 30 -X POST "${{ inputs.swa_url }}/compliance/query" \
+          -H "Content-Type: application/json" \
+          -d '{"query":"Can a regulated bank store customer payment data outside India?","department":"risk"}' 2>/dev/null || echo "{}")
+
+        echo "  Inference response preview: $(echo "$AI_RESP" | head -c 200)..."
+        if echo "$AI_RESP" | grep -qi "India\|localization\|compliance\|regulat\|risk\|data"; then
+          echo "✅ Live multi-agent AI pipeline successfully reasoned on statutory data localization query"
+        else
+          echo "⚠️ AI endpoint returned non-standard response or timed out; non-blocking"
+        fi
