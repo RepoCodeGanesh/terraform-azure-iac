@@ -643,6 +643,11 @@ State files are path-keyed — **git repo location does not affect state**.
   ```
   The Linux kernel Completely Fair Scheduler (CFS) smoothly throttles CPU bursts in milliseconds without killing the pod or causing service outages, while Kubelet enforces hard memory limits at the kernel level 24/7/365, eliminating brittle CI/CD monitoring code entirely.
 
+### 74. Reusable Workflow Undeclared Input Rejection (`startup_failure` on `environment_name`)
+* **Symptom:** GitHub Actions run fails instantly at startup with `status: completed`, `conclusion: startup_failure`, and 0 jobs created.
+* **Root Cause:** A called reusable workflow (`reusable-serverless-workload-pipeline.yml`) passed `environment_name` to downstream template `app-deploy-func.yml`, but `app-deploy-func.yml` only defined `function_app_name`, `working_directory`, and `app_subscription_id`. GitHub Actions strictly validates and rejects any caller passing undeclared inputs across workflow boundaries.
+* **Resolution:** Declare `environment_name` under `on.workflow_call.inputs` with a default in the target template (`app-deploy-func.yml`), allowing dynamic environment parameterization across environments (`tax-advisor-prod`).
+
 
 
 
