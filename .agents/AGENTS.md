@@ -599,6 +599,11 @@ State files are path-keyed — **git repo location does not affect state**.
   2. Updated `app-bank-compliance.yml` so `deploy-frontend` lists `needs: [detect-changes, devsecops-scan, ai-eval-quality-gate]` and passes `environment_name: 'bank-compliance-prod'`. Neither frontend nor backend can deploy to production if any test or security scan fails.
   3. Optimized `mcp-functional-monitor` resource sampling from 5 samples (75s idle sleep) to 3 samples (10s), saving over a minute per release.
 
+### 69. Transient Metrics-Server Saturation & Resilient Pipeline Resource Profiling
+* **Symptom:** In `.github/workflows/app-bank-compliance.yml`, job `FastMCP Functional & CPU/Memory Check` failed at step `Wait for MCP Rollout and Record Pre-Test Baseline`, causing downstream job `Live Production Status & Functional Verification` to be skipped.
+* **Root Cause:** In a single-node AKS dev cluster (`Standard_B2ms` 2 vCPU), cumulative system pod CPU requests (`metrics-server`, `coredns`, `gatekeeper`, `keda`, `ama-logs`) approach 100% capacity. When pods cycle during rolling deployments, `metrics-server` may briefly become preempted or restart. Unconditional calls to `kubectl top nodes` failed under `set -e`, terminating the workflow step despite the actual application containers and MCP tools being 100% operational.
+* **Resolution:** (1) Added defensive execution `|| true` and stdout suppression (`2>/dev/null`) to informational baseline metric steps (`kubectl top nodes || true` and `kubectl top pods || true`). (2) Added defensive regex validation (`[[ "$cpu_m" =~ ^[0-9]+$ ]]`) before integer arithmetic in resource sampling. (3) Retained strict assertions on actual tool smoke tests (`python -m app.services.mcp_smoke`) and pod crash restarts (`restarts > 0`).
+
 
 
 

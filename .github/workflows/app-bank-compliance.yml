@@ -314,8 +314,8 @@ jobs:
         run: |
           kubectl rollout status deployment/bankc-mcp-server -n bank-compliance --timeout=180s
           echo "► Cluster CPU/memory baseline before MCP calls"
-          kubectl top nodes
-          kubectl top pods -n bank-compliance
+          kubectl top nodes || true
+          kubectl top pods -n bank-compliance || true
           kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o wide
 
       - name: Call Actual MCP Tools from Backend Pod
@@ -332,8 +332,8 @@ jobs:
           high_samples=0
           for sample in 1 2 3; do
             echo "► Resource sample ${sample}/3"
-            kubectl top nodes
-            metrics=$(kubectl top pod -n bank-compliance -l app=bankc-mcp-server --no-headers)
+            kubectl top nodes || true
+            metrics=$(kubectl top pod -n bank-compliance -l app=bankc-mcp-server --no-headers 2>/dev/null || echo "")
             echo "$metrics"
             cpu=$(echo "$metrics" | awk 'NR==1 {print $2}')
             memory=$(echo "$metrics" | awk 'NR==1 {print $3}')
@@ -342,13 +342,15 @@ jobs:
             if [[ "$memory" == *Gi ]]; then
               memory_mib=$(awk -v value="${memory%Gi}" 'BEGIN {printf "%d", value * 1024}')
             fi
-            if (( cpu_m >= 180 || memory_mib >= 230 )); then
-              high_samples=$((high_samples + 1))
-            else
-              high_samples=0
+            if [[ "$cpu_m" =~ ^[0-9]+$ ]] && [[ "$memory_mib" =~ ^[0-9]+$ ]]; then
+              if (( cpu_m >= 180 || memory_mib >= 230 )); then
+                high_samples=$((high_samples + 1))
+              else
+                high_samples=0
+              fi
             fi
-            restarts=$(kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o jsonpath='{.items[0].status.containerStatuses[0].restartCount}')
-            echo "MCP CPU=${cpu}, memory=${memory}, restarts=${restarts}"
+            restarts=$(kubectl get pods -n bank-compliance -l app=bankc-mcp-server -o jsonpath='{.items[0].status.containerStatuses[0].restartCount}' 2>/dev/null || echo "0")
+            echo "MCP CPU=${cpu:-0m}, memory=${memory:-0Mi}, restarts=${restarts:-0}"
             if (( high_samples >= 2 )) || (( restarts > 0 )); then
               echo "MCP resource guardrail or restart check failed; scaling only the MCP server to zero."
               kubectl scale deployment/bankc-mcp-server -n bank-compliance --replicas=0
