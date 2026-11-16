@@ -43,4 +43,4 @@ runs:
     - name: Run Frontend UI Integrity & Component Test Suite
       shell: bash
       run: |
-        python app/bank-compliance/frontend/test_ui_contract.py
+        python app/bank-compliance/frontend/test_ui_syntax_and_integrity.py
