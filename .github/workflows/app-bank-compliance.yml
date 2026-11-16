@@ -73,13 +73,15 @@ jobs:
   # ── 2. DevSecOps SAST & SCA Scan (Central Org Template) ─────────────────────
   devsecops-scan:
     name: DevSecOps SAST & SCA Scan
+    needs: [detect-changes]
     uses: RepoCodeGanesh/.github/.github/workflows/app-sec-scan.yml@main
     with:
-      working_directory: 'app/bank-compliance/backend'
-      frontend_directory: 'app/bank-compliance/frontend'
-      run_npm_audit: true
-      run_bandit: true
-      run_pip_audit: true
+      working_directory: 'app/bank-compliance'
+      key_vault_name: 'kv-ht-ss-p-cin-01'
+      shared_subscription_id: '859a785c-bd38-402d-b595-1f44f40fb9bf'
+    secrets:
+      SHARED_CLIENT_ID: ${{ secrets.SHARED_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
   # ── 3. AI Quality & Regression Gate (Composite Action) ──────────────────────
   ai-eval-quality-gate:
@@ -112,14 +114,10 @@ jobs:
        (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.backend == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')))
     uses: RepoCodeGanesh/.github/.github/workflows/container-build-push.yml@main
     with:
-      image_name: 'bank-compliance-backend'
-      dockerfile_path: 'app/bank-compliance/backend/Dockerfile'
-      context_path: 'app/bank-compliance/backend'
-      environment_name: 'bank-compliance-prod'
-    secrets:
-      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      context_dir: 'app/bank-compliance/backend'
+      image_name: '${{ github.repository_owner }}/bank-compliance-backend'
+      sha: ${{ github.sha }}
+    secrets: inherit
 
   # ── 5. Ensure AKS Is Running for Deployment (Central Org Template) ──────────
   ensure-aks-running:
@@ -154,15 +152,15 @@ jobs:
       resource_group: 'rg-ht-bankc-p-cin-01'
       subscription_id: 'f4ffefe1-d689-4059-969c-ccc73e2a11d4'
       environment_name: 'bank-compliance-prod'
-      chart_path: 'app/bank-compliance/chart'
+      chart_path: './app/bank-compliance/chart'
       release_name: 'bank-compliance'
       namespace: 'bank-compliance'
-      image_repository: 'ghcr.io/repocodeganesh/bank-compliance-backend'
+      image_repository: 'ghcr.io/${{ github.repository_owner }}/bank-compliance-backend'
       image_tag: ${{ github.sha }}
-      ingress_manifest: 'app/bank-compliance/k8s/ingress.yaml'
-      tuner_manifest: 'app/bank-compliance/k8s/finops-single-node-tuner.yaml'
-      extra_manifests_dir: 'app/bank-compliance/k8s'
-      health_endpoint: 'https://bank.mytaxbot.site/compliance/health'
+      ingress_manifest: './app/bank-compliance/k8s/nginx/ingress-nginx.yaml'
+      tuner_manifest: './app/bank-compliance/k8s/finops-single-node-tuner.yaml'
+      extra_manifests_dir: './app/bank-compliance/k8s/inference'
+      health_endpoint: 'https://apim-ht-ss-p-cin-01.azure-api.net/bankc/api/v1/compliance/query'
     secrets:
       APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
