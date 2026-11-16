@@ -52,8 +52,8 @@ mcp:
       cpu: 10m
       memory: 64Mi
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 150m
+      memory: 200Mi
 
 # LiteLLM AI Gateway Proxy
 litellm:
