@@ -1,15 +1,11 @@
 name: 'AI Quality & Semantic Regression Gate'
-description: 'Runs pytest, Ragas triad evals, and 9-case regulatory redline semantic suite'
+description: 'Runs GenAIOps evaluations, PyRIT benchmarks, and the 9-case redline semantic test suite'
 
 inputs:
   python-version:
     description: 'Python version to set up'
     required: false
     default: '3.11'
-  working-directory:
-    description: 'Working directory for backend tests'
-    required: false
-    default: 'app/bank-compliance'
 
 runs:
   using: 'composite'
@@ -18,30 +14,33 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
-        cache: 'pip'
-        cache-dependency-path: 'app/bank-compliance/backend/requirements.txt'
 
-    - name: Install Evaluation Dependencies
+    - name: Run GenAIOps Regression & Cost Evaluation
       shell: bash
       run: |
-        python -m pip install --upgrade pip
-        pip install -r app/bank-compliance/backend/requirements.txt
-        pip install pytest pytest-asyncio
+        python app/bank-compliance/eval/evaluate.py --mode fast --max-cost 0.05
 
-    - name: Run Redline Semantic Regression Test Suite
+    - name: Run PyRIT Adversarial Red Team Attack Benchmark
       shell: bash
-      env:
-        MOCK_INFERENCE: "true"
-        ENVIRONMENT: "ci"
       run: |
-        echo "► Running 9-case Redline Semantic Regression Suite (negation, unlisted nations, mathematical scoring)..."
-        python -m pytest app/bank-compliance/backend/test_redline_semantic_suite.py -v
+        python app/bank-compliance/eval/redteam_suite.py
 
-    - name: Run Synthetic Triad & Groundedness Evals
+    - name: Run 8-Task Enterprise AI Platform Test Suite
       shell: bash
-      env:
-        MOCK_INFERENCE: "true"
-        ENVIRONMENT: "ci"
       run: |
-        echo "► Running RAG Groundedness & Compliance Evaluation Suite..."
-        python -m pytest app/bank-compliance/eval/test_eval_pipeline.py -v
+        python app/bank-compliance/backend/test_all_8_tasks_suite.py
+
+    - name: Run 2026/2027 Frontier Test Suite (GraphRAG, MCP, Dossier)
+      shell: bash
+      run: |
+        python app/bank-compliance/backend/test_2026_frontier_suite.py
+
+    - name: Run Policy & Contract Redline Semantic Test Suite
+      shell: bash
+      run: |
+        python app/bank-compliance/backend/test_redline_semantic_suite.py
+
+    - name: Run Frontend UI Integrity & Component Test Suite
+      shell: bash
+      run: |
+        python app/bank-compliance/frontend/test_ui_contract.py
