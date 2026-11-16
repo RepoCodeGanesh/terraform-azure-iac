@@ -983,7 +983,7 @@ Provide a JSON response with this structure:
 
 Return ONLY valid JSON, no markdown."""
 
-        raw, model_used = execute_chat_completion(
+        raw, model_used, _ = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_tokens=1500,
@@ -1154,7 +1154,7 @@ Provide your response as a strict JSON object with this exact structure:
 
 Return ONLY the raw JSON object. Do NOT wrap in markdown fences or text."""
 
-        raw, model_used = execute_chat_completion(
+        raw, model_used, _ = execute_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
             max_tokens=2200,
