@@ -671,6 +671,11 @@ State files are path-keyed — **git repo location does not affect state**.
   ```
   Additionally, ensure drift detection workflows (`ops-drift-detection.yml`) echo failure logs via `::group::` and pin Terraform versions to match the central Golden Path standard (`1.15.8`).
 
+### 78. APIM Catch-All Proxy (`/*`) vs Declarative OpenAPI Operation Collisions
+* **Symptom:** Workload IaC pipelines (`workload-bank-compliance-aks.yml`) fail at `terraform apply` with `400 ValidationError: Operation with the same method and URL template already exists` (e.g. `compliance-redline-post`, `healthz-get`, `compliance-mcp-call-post`, `compliance-ingest-post`).
+* **Root Cause:** Microservice CD pipelines (`app-bank-compliance.yml` stage `apim-resilience-sync`) dynamically import all FastAPI and FastMCP endpoints from `/openapi.json` into APIM (`az apim api import`). Declaring duplicate static operations in Terraform (`workloads/bank-compliance-ai-aks/apim.tf`) causes ARM operation collisions when Terraform attempts to manage operations with the same HTTP method and URL template that the OpenAPI sync already created.
+* **Resolution:** In Terraform IaC, define only the universal wildcard catch-all route `"all-routes-proxy"` (`method = "*", url_template = "/*"`) pointing to the AKS internal backend. Leave granular microservice route specifications to the dynamic OpenAPI sync in the application release pipeline. This cleanly decouples infrastructure gateway provisioning from continuous microservice API contract iterations.
+
 
 
 
