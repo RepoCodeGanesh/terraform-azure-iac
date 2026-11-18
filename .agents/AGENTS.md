@@ -676,6 +676,15 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** Microservice CD pipelines (`app-bank-compliance.yml` stage `apim-resilience-sync`) dynamically import all FastAPI and FastMCP endpoints from `/openapi.json` into APIM (`az apim api import`). Declaring duplicate static operations in Terraform (`workloads/bank-compliance-ai-aks/apim.tf`) causes ARM operation collisions when Terraform attempts to manage operations with the same HTTP method and URL template that the OpenAPI sync already created.
 * **Resolution:** In Terraform IaC, define only the universal wildcard catch-all route `"all-routes-proxy"` (`method = "*", url_template = "/*"`) pointing to the AKS internal backend. Leave granular microservice route specifications to the dynamic OpenAPI sync in the application release pipeline. This cleanly decouples infrastructure gateway provisioning from continuous microservice API contract iterations.
 
+### 79. Suppressing Continuous False Drift from Cloud Control Plane Canonicalization (AKS Max Surge & APIM XML)
+* **Symptom:** Drift detection scans flag perpetual drift on AKS clusters (`upgrade_settings { max_surge = "10%" -> null }`) and APIM policies (`module.apim_api.azapi_resource.policy: diff in whitespace/tabs`).
+* **Root Cause:**
+  1. Azure automatically injects `upgrade_settings { max_surge = "10%" }` on any VMSS-backed default node pool. If omitted from Terraform configuration, Terraform continuously plans to remove it (`-> null`), generating persistent drift alerts.
+  2. Azure APIM canonicalizes XML policies using tab indentations (`\t`). When AzAPI compares the returned JSON payload with local heredoc XML formatted with spaces, Terraform detects a character mismatch on every execution.
+* **Resolution:**
+  1. Explicitly declare `upgrade_settings { max_surge = "10%" }` on `default_node_pool` in `modules/aks/main.tf` to align with the Azure ARM control plane default.
+  2. Add `lifecycle { ignore_changes = [body.properties.value] }` to `azapi_resource.policy` in `modules/apim_api/main.tf` so formatting canonicalization by APIM does not trigger false drift alarms.
+
 
 
 

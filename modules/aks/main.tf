@@ -57,6 +57,10 @@ resource "azurerm_kubernetes_cluster" "this" {
     type                        = "VirtualMachineScaleSets"
     temporary_name_for_rotation = "temppool"
     tags                        = var.tags
+
+    upgrade_settings {
+      max_surge = "10%"
+    }
   }
 
   network_profile {

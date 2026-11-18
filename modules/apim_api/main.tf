@@ -114,4 +114,10 @@ XML
     azapi_resource.operations,
     azurerm_api_management_backend.this
   ]
+
+  lifecycle {
+    ignore_changes = [
+      body.properties.value
+    ]
+  }
 }
