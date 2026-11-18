@@ -90,7 +90,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: '1.11.0'
+          terraform_version: '1.15.8'
           terraform_wrapper: false
 
       - name: Terraform Init & Drift Detection
@@ -155,6 +155,9 @@ jobs:
 
           echo "### $BADGE: ${{ matrix.name }}" >> $GITHUB_STEP_SUMMARY
           if [ $EXIT_CODE -ne 0 ]; then
+            echo "::group::Terraform Execution Logs (${{ matrix.name }})"
+            cat plan_output.txt
+            echo "::endgroup::"
             echo '```terraform' >> $GITHUB_STEP_SUMMARY
             tail -n 30 plan_output.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -168,17 +171,17 @@ jobs:
           path: ${{ matrix.root }}/status-${{ matrix.env_name }}.json
           retention-days: 7
 
-      - name: Upload Drift Plan Artifact
-        if: steps.drift_check.outputs.status == 'DRIFTED'
+      - name: Upload Drift Plan or Error Artifact
+        if: steps.drift_check.outputs.status == 'DRIFTED' || steps.drift_check.outputs.status == 'ERROR'
         uses: actions/upload-artifact@v4
         with:
-          name: drift-plan-${{ matrix.env_name }}
+          name: ${{ steps.drift_check.outputs.status == 'ERROR' && 'error-log' || 'drift-plan' }}-${{ matrix.env_name }}
           path: ${{ matrix.root }}/plan_output.txt
           retention-days: 7
 
-      # ─── Alerting: Open GitHub Issue on Drift ───────────────────────────────
-      - name: Create GitHub Issue on Drift
-        if: steps.drift_check.outputs.status == 'DRIFTED'
+      # ─── Alerting: Open GitHub Issue on Drift or Execution Failure ───────────
+      - name: Create GitHub Issue on Drift or Error
+        if: steps.drift_check.outputs.status == 'DRIFTED' || steps.drift_check.outputs.status == 'ERROR'
         uses: actions/github-script@v7
         with:
           script: |
@@ -188,25 +191,34 @@ jobs:
               planSnippet = fs.readFileSync('${{ matrix.root }}/plan_output.txt', 'utf8').slice(-3000);
             } catch (e) {}
 
-            const issueBody = `## ⚠️ Terraform Configuration Drift Alert\n\n` +
+            const isError = '${{ steps.drift_check.outputs.status }}' === 'ERROR';
+            const title = isError
+              ? `🚨 [Execution Error] Terraform failure in ${{ matrix.name }} (${{ matrix.root }})`
+              : `⚠️ [Drift Alert] Inconsistency detected in ${{ matrix.name }} (${{ matrix.root }})`;
+            const labels = isError
+              ? ['execution-error', 'iac-governance', 'bug']
+              : ['drift-detected', 'iac-governance', 'security'];
+
+            const issueBody = `## ${isError ? '🚨 Terraform Execution Failure' : '⚠️ Terraform Configuration Drift Alert'}\n\n` +
               `* **Target State Root:** \`${{ matrix.root }}\`\n` +
               `* **Target Scope:** ${{ matrix.name }}\n` +
               `* **Subscription ID:** \`${{ matrix.sub_id }}\`\n` +
               `* **Detection Timestamp:** ${new Date().toISOString()}\n` +
               `* **Alert Recipient:** \`${process.env.NOTIFICATION_EMAIL}\`\n\n` +
-              `### 📋 Drift Summary & Proposed Changes:\n` +
+              `### 📋 Detailed Diagnostics:\n` +
               `\`\`\`terraform\n${planSnippet}\n\`\`\`\n\n` +
               `### 🛠️ Recommended Reconciliation Actions:\n` +
-              `1. **If out-of-band change was unintentional:** Run the corresponding workflow to apply and self-heal.\n` +
-              `2. **If out-of-band change was intentional:** Update the \`${{ matrix.root }}\` code to match Azure and commit to \`main\`.\n\n` +
+              (isError
+                ? `1. Inspect the Terraform init/plan execution error log.\n2. Verify ARM and backend RBAC permissions on \`sthtbootpcin01\` and target subscriptions.\n`
+                : `1. **If out-of-band change was unintentional:** Run the corresponding workflow to apply and self-heal.\n2. **If out-of-band change was intentional:** Update the \`${{ matrix.root }}\` code to match Azure and commit to \`main\`.\n\n`) +
               `_Triggered by HappyTechies Automated GenAIOps & IaC Governance Engine._`;
 
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `⚠️ [Drift Alert] Inconsistency detected in ${{ matrix.name }} (${{ matrix.root }})`,
+              title: title,
               body: issueBody,
-              labels: ['drift-detected', 'iac-governance', 'security']
+              labels: labels
             });
 
   # ─── Consolidated Dynamic Governance Summary ────────────────────────────────

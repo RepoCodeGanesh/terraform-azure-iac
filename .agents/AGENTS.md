@@ -658,6 +658,19 @@ State files are path-keyed — **git repo location does not affect state**.
 * **Root Cause:** FastAPI route definition in the application's generated OpenAPI specification exposes `/healthz` for Kubernetes liveness/readiness, while the caller workflow passed `apim_gateway_url: '.../bankc/health'`.
 * **Resolution:** Align the APIM health probe URL in caller workflows to match the generated OpenAPI specification route `/bankc/healthz`.
 
+### 77. Cross-Subscription Terraform Remote State Backend RBAC (`Reader` on Storage Account)
+* **Symptom:** Multi-root Terraform drift detection or CI/CD pipelines fail at `terraform init` with `403 AuthorizationFailed: The client with object id '...' does not have authorization to perform action 'Microsoft.Storage/storageAccounts/read' over scope '/subscriptions/.../storageAccounts/sthtbootpcin01'`.
+* **Root Cause:** When Terraform initializes the AzureRM backend with `use_azuread_auth = true` under OIDC / ARM authentication, it queries the ARM control plane to discover the storage account properties and blob endpoint. If a workload deployment Service Principal (`APP_CLIENT_ID`) only has data-plane access (`Storage Blob Data Contributor` on the `tfstate` container) without the control-plane `Reader` role on the remote state storage account (`sthtbootpcin01`) in the Bootstrap subscription, `terraform init` fails immediately.
+* **Resolution:** Assign the `Reader` role to the Service Principal on the remote state storage account scope:
+  ```powershell
+  az role assignment create `
+    --role "Reader" `
+    --assignee-object-id "9630f661-27e7-42f0-8377-5565ba7db7cd" `
+    --assignee-principal-type "ServicePrincipal" `
+    --scope "/subscriptions/7689ad81-71ba-481b-a17c-e1b6be61bab1/resourceGroups/rg-ht-boot-p-cin-01/providers/Microsoft.Storage/storageAccounts/sthtbootpcin01"
+  ```
+  Additionally, ensure drift detection workflows (`ops-drift-detection.yml`) echo failure logs via `::group::` and pin Terraform versions to match the central Golden Path standard (`1.15.8`).
+
 
 
 
