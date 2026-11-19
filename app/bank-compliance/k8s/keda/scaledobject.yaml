@@ -13,7 +13,7 @@ metadata:
 spec:
   scaleTargetRef:
     name: bankc-backend
-  minReplicaCount: 0
+  minReplicaCount: 1
   maxReplicaCount: 5
   cooldownPeriod: 300
   triggers:
@@ -31,7 +31,7 @@ metadata:
 spec:
   scaleTargetRef:
     name: litellm-proxy
-  minReplicaCount: 0
+  minReplicaCount: 1
   maxReplicaCount: 3
   cooldownPeriod: 300
   triggers:
@@ -52,7 +52,7 @@ spec:
     apiVersion: apps/v1
     kind: StatefulSet
     name: qdrant
-  minReplicaCount: 0
+  minReplicaCount: 1
   maxReplicaCount: 1
   cooldownPeriod: 600
   triggers:

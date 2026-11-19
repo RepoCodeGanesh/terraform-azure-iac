@@ -188,7 +188,6 @@ async def query_compliance(request: QueryRequest):
     )
 
 @router.post("/compliance/query/v2", response_model=QueryResponse)
-@router.post("/v2/compliance/query", response_model=QueryResponse)
 async def query_compliance_v2(request: QueryRequest):
     """
     Skill Bridge Phase 2 (A1): LangGraph Cyclic StateGraph Orchestrator.

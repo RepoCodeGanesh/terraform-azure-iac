@@ -25,10 +25,10 @@ backend:
     targetPort: 8000
   resources:
     requests:
-      cpu: 1m
-      memory: 32Mi
+      cpu: 2m
+      memory: 64Mi
     limits:
-      cpu: 500m
+      cpu: 1000m
       memory: 512Mi
   env:
     contentSafetyEndpoint: "https://cs-ht-ss-p-sea-01.cognitiveservices.azure.com/"
@@ -49,10 +49,10 @@ mcp:
   serverUrl: "http://bankc-mcp-server:8080/sse"
   resources:
     requests:
-      cpu: 10m
+      cpu: 5m
       memory: 64Mi
     limits:
-      cpu: 150m
+      cpu: 200m
       memory: 200Mi
 
 # LiteLLM AI Gateway Proxy
@@ -67,8 +67,8 @@ litellm:
     targetPort: 4000
   resources:
     requests:
-      cpu: 1m
-      memory: 32Mi
+      cpu: 2m
+      memory: 64Mi
     limits:
       cpu: 500m
       memory: 300Mi

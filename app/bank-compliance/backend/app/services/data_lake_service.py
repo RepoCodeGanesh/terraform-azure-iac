@@ -150,6 +150,10 @@ class DataLakeService:
 
         # 4. Atomically update Qdrant in-memory & vector index
         qdrant_srv.LOADED_CLAUSES = all_chunks
+        try:
+            qdrant_srv.upsert_clauses_to_qdrant(all_chunks)
+        except Exception as q_err:
+            logger.warning("Background Qdrant sync deferred: %s", q_err)
 
         DATA_LAKE_STATS["last_sync_timestamp"] = datetime.utcnow().isoformat() + "Z"
         DATA_LAKE_STATS["total_circulars"] = file_count or 6

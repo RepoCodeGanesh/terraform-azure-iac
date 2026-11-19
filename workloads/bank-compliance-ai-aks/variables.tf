@@ -176,9 +176,9 @@ variable "aks_node_count" {
 }
 
 variable "aks_os_disk_size_gb" {
-  description = "OS disk size in GB (30GB fits ephemeral cache on Standard_B2ms/B4ms)."
+  description = "OS disk size in GB (64GB Managed Disk eliminates NodeHasDiskPressure taints on single-node VMSS)."
   type        = number
-  default     = 30
+  default     = 64
 }
 
 variable "enable_azure_policy" {

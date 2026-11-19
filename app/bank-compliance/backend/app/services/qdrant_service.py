@@ -4,18 +4,101 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-
 try:
     import httpx
 except ImportError:
     httpx = None
 
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.http import models as qmodels
+except ImportError:
+    QdrantClient = None
+    qmodels = None
+
+from app.core.config import settings
 from app.services.rbi_chunker import chunk_rbi_markdown
 
 logger = logging.getLogger(__name__)
 
 # Active In-Memory Collection of Chunks
 LOADED_CLAUSES: List[Dict[str, Any]] = []
+
+# Cached Qdrant Client Instance
+_QDRANT_CLIENT: Optional[Any] = None
+
+
+def get_qdrant_client() -> Optional[Any]:
+    """Returns a connected QdrantClient or None if unreachable."""
+    global _QDRANT_CLIENT
+    if _QDRANT_CLIENT is not None:
+        return _QDRANT_CLIENT
+    if QdrantClient is None:
+        logger.warning("qdrant-client package not installed; running in local in-memory fallback mode.")
+        return None
+
+    try:
+        client = QdrantClient(
+            host=settings.QDRANT_HOST,
+            port=settings.QDRANT_PORT,
+            timeout=2.0
+        )
+        # Test connectivity
+        client.get_collections()
+        _QDRANT_CLIENT = client
+        logger.info("Connected to Qdrant Vector DB at %s:%d", settings.QDRANT_HOST, settings.QDRANT_PORT)
+        return _QDRANT_CLIENT
+    except Exception as e:
+        logger.warning("Could not connect to Qdrant at %s:%d: %s. Using in-memory fallback.", settings.QDRANT_HOST, settings.QDRANT_PORT, e)
+        return None
+
+
+def ensure_qdrant_collection():
+    """Ensure the regulatory collection exists in Qdrant."""
+    client = get_qdrant_client()
+    if not client or not qmodels:
+        return
+    try:
+        collections = client.get_collections().collections
+        exists = any(c.name == settings.QDRANT_COLLECTION for c in collections)
+        if not exists:
+            client.create_collection(
+                collection_name=settings.QDRANT_COLLECTION,
+                vectors_config=qmodels.VectorParams(
+                    size=1536,
+                    distance=qmodels.Distance.COSINE
+                )
+            )
+            logger.info("Created Qdrant collection: %s", settings.QDRANT_COLLECTION)
+    except Exception as e:
+        logger.warning("Failed ensuring Qdrant collection: %s", e)
+
+
+def upsert_clauses_to_qdrant(clauses: List[Dict[str, Any]]):
+    """Upsert parsed regulatory clauses into Qdrant collection."""
+    client = get_qdrant_client()
+    if not client or not qmodels or not clauses:
+        return
+    try:
+        ensure_qdrant_collection()
+        points = []
+        for idx, item in enumerate(clauses):
+            points.append(
+                qmodels.PointStruct(
+                    id=idx + 1,
+                    vector=[0.0] * 1536,  # Placeholder or embedding vector
+                    payload=item
+                )
+            )
+        # Batch upsert
+        if points:
+            client.upsert(
+                collection_name=settings.QDRANT_COLLECTION,
+                points=points
+            )
+            logger.info("Successfully upserted %d points to Qdrant collection %s", len(points), settings.QDRANT_COLLECTION)
+    except Exception as e:
+        logger.warning("Failed upserting points to Qdrant: %s", e)
 
 def get_documents_directory() -> Path:
     candidates = [

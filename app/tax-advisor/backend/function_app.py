@@ -612,84 +612,21 @@ def rag_search(query: str, top: int = 5) -> str:
         logging.warning(f"RAG search failed: {e}")
         return ""
 
+from tax_calculator import (
+    calculate_new_regime_tax,
+    calculate_old_regime_tax,
+    apply_87a_rebate_new,
+    apply_87a_rebate_old,
+    add_cess,
+    format_inr,
+)
+
 def cors_response(status_code: int, body: dict) -> func.HttpResponse:
     return func.HttpResponse(
         body=json.dumps(body, ensure_ascii=False, default=str),
         status_code=status_code,
         headers=CORS_HEADERS,
     )
-
-def calculate_new_regime_tax(income: float) -> float:
-    """Calculate tax under New Tax Regime FY 2026-27."""
-    slabs = [
-        (400000, 0.0),
-        (400000, 0.05),   # 4L-8L
-        (400000, 0.10),   # 8L-12L
-        (400000, 0.15),   # 12L-16L
-        (400000, 0.20),   # 16L-20L
-        (400000, 0.25),   # 20L-24L
-        (float("inf"), 0.30),
-    ]
-    tax = 0.0
-    remaining = income
-    for slab_size, rate in slabs:
-        if remaining <= 0:
-            break
-        taxable = min(remaining, slab_size)
-        tax += taxable * rate
-        remaining -= taxable
-    return tax
-
-def calculate_old_regime_tax(income: float, is_senior: bool = False) -> float:
-    """Calculate tax under Old Tax Regime FY 2026-27."""
-    basic_exemption = 300000 if is_senior else 250000
-    if income <= basic_exemption:
-        return 0.0
-    slabs = []
-    if is_senior:
-        slabs = [
-            (200000, 0.05),   # 3L-5L
-            (500000, 0.20),   # 5L-10L
-            (float("inf"), 0.30),
-        ]
-        remaining = income - 300000
-    else:
-        slabs = [
-            (250000, 0.05),   # 2.5L-5L
-            (500000, 0.20),   # 5L-10L
-            (float("inf"), 0.30),
-        ]
-        remaining = income - 250000
-    tax = 0.0
-    for slab_size, rate in slabs:
-        if remaining <= 0:
-            break
-        taxable = min(remaining, slab_size)
-        tax += taxable * rate
-        remaining -= taxable
-    return tax
-
-def apply_87a_rebate_new(tax: float, net_income: float) -> float:
-    """Apply Section 87A rebate for new regime (₹60K rebate if income ≤ ₹12L)."""
-    if net_income <= 1200000:
-        return max(0, tax - min(tax, 60000))
-    # Marginal relief
-    excess = net_income - 1200000
-    if tax > excess:
-        return excess
-    return tax
-
-def apply_87a_rebate_old(tax: float, net_income: float) -> float:
-    """Apply Section 87A rebate for old regime (₹12,500 if income ≤ ₹5L)."""
-    if net_income <= 500000:
-        return max(0, tax - min(tax, 12500))
-    return tax
-
-def add_cess(tax: float) -> float:
-    return tax * 1.04  # 4% health + education cess
-
-def format_inr(amount: float) -> str:
-    return f"₹{amount:,.0f}"
 
 # ── Route: GET /health ─────────────────────────────────────────────────────────
 @app.route(route="health", methods=["GET", "OPTIONS"])
