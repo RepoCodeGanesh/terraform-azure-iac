@@ -12,8 +12,6 @@ resource "cloudflare_record" "bankc_cname" {
   type    = "CNAME"
   proxied = false
   ttl     = 1
-
-  depends_on = [module.bankc_frontend]
 }
 
 # ─── Wait 60s for Global DNS Edge Propagation (Prevents SWA Validation Race) ─
@@ -34,8 +32,6 @@ resource "azurerm_static_web_app_custom_domain" "bankc_custom_domain" {
   validation_type   = "cname-delegation"
 
   depends_on = [
-    module.bankc_frontend,
-    cloudflare_record.bankc_cname,
     time_sleep.wait_for_dns
   ]
 }

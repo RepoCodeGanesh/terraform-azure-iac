@@ -45,7 +45,7 @@ provider "azurerm" {
 }
 
 provider "cloudflare" {
-  api_token = data.azurerm_key_vault_secret.cloudflare_api_token.value
+  api_token = coalesce(var.cloudflare_api_token, try(data.azurerm_key_vault_secret.cloudflare_api_token.value, null))
 }
 
 provider "azapi" {}

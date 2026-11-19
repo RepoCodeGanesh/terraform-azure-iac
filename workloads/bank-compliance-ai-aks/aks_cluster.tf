@@ -8,7 +8,7 @@
 module "bank_compliance_aks" {
   source = "../../modules/aks"
 
-  name                       = module.bankc_aks_name.name
+  name                       = module.naming.names["aks"]
   resource_group_name        = azurerm_resource_group.bank_compliance.name
   location                   = azurerm_resource_group.bank_compliance.location
   dns_prefix                 = "aks-${var.project}-${var.workload}-${var.environment}-${var.location_short}"
@@ -35,7 +35,7 @@ module "bank_compliance_aks" {
 # ─── Application Pod Workload Identity (OIDC Federation) ──────────────────────
 
 resource "azurerm_user_assigned_identity" "bankc_app" {
-  name                = module.bankc_uami_name.name
+  name                = module.naming.names["uami"]
   resource_group_name = azurerm_resource_group.bank_compliance.name
   location            = azurerm_resource_group.bank_compliance.location
   tags                = local.tags
@@ -47,11 +47,6 @@ resource "azurerm_federated_identity_credential" "bankc_app" {
   issuer                    = module.bank_compliance_aks.oidc_issuer_url
   user_assigned_identity_id = azurerm_user_assigned_identity.bankc_app.id
   subject                   = "system:serviceaccount:bank-compliance:bankc-sa"
-
-  depends_on = [
-    module.bank_compliance_aks,
-    azurerm_user_assigned_identity.bankc_app
-  ]
 }
 
 # ─── Secondary Spot Instance Node Pool (FinOps 80%+ Cost Savings) ───────────
@@ -63,7 +58,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "spot" {
   vm_size               = var.aks_spot_vm_size
   vnet_subnet_id        = module.bankc_vnet.subnet_ids[0] # snet-aks
   os_disk_type          = "Managed"
-  os_disk_size_gb       = 30
+  os_disk_size_gb       = var.aks_os_disk_size_gb
 
   # Spot Pricing & Eviction Policy
   priority        = "Spot"
@@ -86,10 +81,6 @@ resource "azurerm_kubernetes_cluster_node_pool" "spot" {
   }
 
   tags = local.tags
-
-  depends_on = [
-    module.bank_compliance_aks
-  ]
 }
 
 # ─── Tertiary GPU Node Pool (A3 Phase 2: On-Demand vLLM Benchmark) ──────────
@@ -101,7 +92,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
   vm_size               = var.aks_gpu_vm_size
   vnet_subnet_id        = module.bankc_vnet.subnet_ids[0] # snet-aks
   os_disk_type          = "Managed"
-  os_disk_size_gb       = 64
+  os_disk_size_gb       = var.aks_os_disk_size_gb
 
   # Spot Pricing & Eviction Policy (₹35 / 2.5 hrs benchmark run)
   priority        = "Spot"
@@ -121,8 +112,4 @@ resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
   }
 
   tags = local.tags
-
-  depends_on = [
-    module.bank_compliance_aks
-  ]
 }

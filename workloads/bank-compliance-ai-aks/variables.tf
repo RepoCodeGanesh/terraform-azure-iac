@@ -235,6 +235,13 @@ variable "cloudflare_zone_id" {
   default     = "45acc43e2f88066e0406eca94edffc53"
 }
 
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token. If null, fetched from Key Vault secret data source."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
 variable "enable_custom_domain" {
   description = "Whether to bind the custom domain to the Static Web App (set to true after CNAME DNS record is added at registrar)."
   type        = bool

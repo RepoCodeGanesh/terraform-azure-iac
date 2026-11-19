@@ -9,7 +9,7 @@
 module "bankc_frontend" {
   source = "../../modules/static_web_app"
 
-  name                = module.bankc_stapp_name.name
+  name                = module.naming.names["stapp"]
   resource_group_name = azurerm_resource_group.bank_compliance.name
   location            = var.swa_location
   sku_tier            = "Free"
@@ -26,9 +26,4 @@ resource "azurerm_key_vault_secret" "bankc_swa_api_token" {
   value        = module.bankc_frontend.api_key
   key_vault_id = data.azurerm_key_vault.shared.id
   tags         = local.tags
-
-  depends_on = [
-    module.bankc_frontend,
-    data.azurerm_key_vault.shared
-  ]
 }

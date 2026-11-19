@@ -37,71 +37,11 @@ data "azurerm_key_vault_secret" "cloudflare_api_token" {
   key_vault_id = data.azurerm_key_vault.shared.id
 }
 
-# ─── CAF Resource Naming Modules ──────────────────────────────────────────────
+# ─── CAF Resource Naming Module (Batch Generation) ───────────────────────────
 
-module "bankc_rg_name" {
+module "naming" {
   source         = "../../modules/naming"
-  resource_type  = "rg"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
-module "bankc_vnet_name" {
-  source         = "../../modules/naming"
-  resource_type  = "vnet"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
-module "bankc_aks_name" {
-  source         = "../../modules/naming"
-  resource_type  = "aks"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
-module "bankc_uami_name" {
-  source         = "../../modules/naming"
-  resource_type  = "uami"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
-module "bankc_stapp_name" {
-  source         = "../../modules/naming"
-  resource_type  = "stapp"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
-module "bankc_appi_name" {
-  source         = "../../modules/naming"
-  resource_type  = "appi"
-  project        = var.project
-  workload       = var.workload
-  environment    = var.environment
-  location_short = var.location_short
-  instance       = var.instance
-}
-
-module "bankc_st_name" {
-  source         = "../../modules/naming"
-  resource_type  = "st"
+  resource_types = ["rg", "vnet", "aks", "uami", "stapp", "appi", "st"]
   project        = var.project
   workload       = var.workload
   environment    = var.environment
@@ -112,7 +52,7 @@ module "bankc_st_name" {
 # ─── Workload Resource Group ──────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "bank_compliance" {
-  name     = module.bankc_rg_name.name
+  name     = module.naming.names["rg"]
   location = var.location
   tags     = local.tags
 }
@@ -122,7 +62,7 @@ resource "azurerm_resource_group" "bank_compliance" {
 module "bank_compliance_appi" {
   source = "../../modules/application_insights"
 
-  name                = module.bankc_appi_name.name
+  name                = module.naming.names["appi"]
   location            = var.location
   resource_group_name = azurerm_resource_group.bank_compliance.name
   workspace_id        = data.azurerm_log_analytics_workspace.shared.id

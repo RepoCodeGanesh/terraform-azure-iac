@@ -10,7 +10,7 @@ module "bankc_vnet" {
 
   resource_group_name = azurerm_resource_group.bank_compliance.name
   location            = azurerm_resource_group.bank_compliance.location
-  vnet_name           = module.bankc_vnet_name.name
+  vnet_name           = module.naming.names["vnet"]
   address_space       = var.vnet_address_space
 
   subnet_names = [
@@ -54,8 +54,4 @@ module "spoke_to_hub_peering" {
   vnet_2_name = data.azurerm_virtual_network.hub.name
   vnet_2_rg   = data.azurerm_resource_group.hub.name
   vnet_2_id   = data.azurerm_virtual_network.hub.id
-
-  depends_on = [
-    module.bankc_vnet
-  ]
 }
