@@ -1,6 +1,13 @@
 variable "resource_type" {
-  description = "Azure resource type prefix (rg, kv, st, vnet, etc.)"
+  description = "Azure resource type prefix (rg, kv, st, vnet, etc.). Deprecated in favor of resource_types batch list."
   type        = string
+  default     = null
+}
+
+variable "resource_types" {
+  description = "List of Azure resource type prefixes to batch-generate names for."
+  type        = list(string)
+  default     = []
 }
 
 variable "project" {

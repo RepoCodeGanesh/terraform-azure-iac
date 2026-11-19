@@ -1,4 +1,4 @@
-+import azure.functions as func
+import azure.functions as func
 import json
 import logging
 import os
@@ -612,14 +612,29 @@ def rag_search(query: str, top: int = 5) -> str:
         logging.warning(f"RAG search failed: {e}")
         return ""
 
-from tax_calculator import (
-    calculate_new_regime_tax,
-    calculate_old_regime_tax,
-    apply_87a_rebate_new,
-    apply_87a_rebate_old,
-    add_cess,
-    format_inr,
-)
+import sys
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
+try:
+    from tax_calculator import (
+        calculate_new_regime_tax,
+        calculate_old_regime_tax,
+        apply_87a_rebate_new,
+        apply_87a_rebate_old,
+        add_cess,
+        format_inr,
+    )
+except ImportError:
+    from .tax_calculator import (
+        calculate_new_regime_tax,
+        calculate_old_regime_tax,
+        apply_87a_rebate_new,
+        apply_87a_rebate_old,
+        add_cess,
+        format_inr,
+    )
 
 def cors_response(status_code: int, body: dict) -> func.HttpResponse:
     return func.HttpResponse(
