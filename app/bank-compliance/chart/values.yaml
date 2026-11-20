@@ -73,6 +73,16 @@ litellm:
       cpu: 500m
       memory: 300Mi
 
+# KEDA Autoscaling (FinOps Scale-to-Zero & Bursting)
+keda:
+  enabled: true
+  backend:
+    minReplicaCount: 1
+    maxReplicaCount: 5
+  litellm:
+    minReplicaCount: 1
+    maxReplicaCount: 3
+
 # Secrets (Injected dynamically by CI/CD via --set or secret ref)
 secrets:
   openaiEndpoint: ""
