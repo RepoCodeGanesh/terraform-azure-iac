@@ -1,6 +1,7 @@
 # ==============================================================================
 # Enterprise BankCompliance AI — True Level 3 Golden Path Caller
 # Central Org Standard: RepoCodeGanesh/.github
+# Trigger: Deploy modernized Helm chart on fresh AKS landing zone
 # ==============================================================================
 
 name: App - BankCompliance AI CI/CD
