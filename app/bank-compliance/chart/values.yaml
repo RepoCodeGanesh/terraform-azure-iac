@@ -73,9 +73,9 @@ litellm:
       cpu: 500m
       memory: 300Mi
 
-# KEDA Autoscaling (FinOps Scale-to-Zero & Bursting)
+# KEDA Autoscaling (Optional; manage separately to decouple Helm --wait from KEDA CRD reconciliation)
 keda:
-  enabled: true
+  enabled: false
   backend:
     minReplicaCount: 1
     maxReplicaCount: 5
