@@ -49,7 +49,7 @@ resource "azurerm_federated_identity_credential" "bankc_app" {
   subject                   = "system:serviceaccount:bank-compliance:bankc-sa"
 }
 
-# ─── Secondary Spot Instance Node Pool (FinOps 80%+ Cost Savings) ───────────
+# ─── Secondary Spot Instance Node Pool  ───────────
 
 resource "azurerm_kubernetes_cluster_node_pool" "spot" {
   count                 = var.enable_spot_node_pool ? 1 : 0
@@ -83,7 +83,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "spot" {
   tags = local.tags
 }
 
-# ─── Tertiary GPU Node Pool (A3 Phase 2: On-Demand vLLM Benchmark) ──────────
+# ─── Tertiary GPU Node Pool ──────────
 
 resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
   count                 = var.enable_gpu_node_pool ? 1 : 0
@@ -94,7 +94,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
   os_disk_type          = "Managed"
   os_disk_size_gb       = var.aks_os_disk_size_gb
 
-  # Spot Pricing & Eviction Policy (₹35 / 2.5 hrs benchmark run)
+  # Spot Pricing & Eviction Policy 
   priority        = "Spot"
   eviction_policy = "Delete"
   spot_max_price  = 0.50
